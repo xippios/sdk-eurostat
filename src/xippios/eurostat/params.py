@@ -1,10 +1,11 @@
 """Packaged lists for Eurostat dissemination API (conventions §3, ADR-0022).
 
 The table of contents and twelve codelists ship inside the package under ``reference/``
-so that ``list_datasets`` and ``list_codes`` need no request;
-``scripts/refresh_reference.py`` writes them, never by hand, each a packaged-list file
-that ``PackagedList.load`` reads (``{"param", "endpoint", "fetched", "records"}`` and an
-optional ``note``):
+so that ``list_datasets`` and ``list_codes`` need no request, with an index of their
+release identifiers beside them; ``scripts/refresh_reference.py`` writes the fourteen
+JSON files, never by hand. The thirteen lists are packaged-list files that
+``PackagedList.load`` reads (``{"param", "endpoint", "fetched", "records"}`` and an
+optional ``note``); the index is plain JSON:
 
 - ``toc.json``: every leaf of the Catalogue API's table of contents
   (``catalogue/toc/xml``), datasets and tables, as ``models.Dataset`` records; ``param``

@@ -1,8 +1,9 @@
 # Reference data for Eurostat dissemination API
 
 The lists `list_datasets` and `list_codes` answer from ship here as JSON, versioned with
-the package, each a packaged-list file (conventions §3, ADR-0022) that
-`xippios.core.PackagedList.load` reads through `params.py`:
+the package: the thirteen lists are packaged-list files (conventions §3, ADR-0022) that
+`xippios.core.PackagedList.load` reads through `params.py`, and `lists.json` beside them
+is a plain derived index, read with `load_json`:
 
 ```python
 from xippios.core import PackagedList
