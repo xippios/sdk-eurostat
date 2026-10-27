@@ -15,10 +15,13 @@ documented body. The slices (``get_series``, ``get_latest_period``,
 ``get_cross_section``) each send one getData request, so their fixtures are getData
 answers too: ``*_series_*``, ``*_latest_*`` and ``*_cross_section_*``, plus two of
 ``get_data``'s whose URL a slice sends as well (``apro_cpnh1_AT_2022_2023``, a series
-refused, and ``unknown_code``, an empty cross-section).
+refused, and ``unknown_code``, an empty cross-section). The list tasks
+(``list_datasets``, ``list_codes``) send nothing: their tests read the packaged files
+under ``src/xippios/eurostat/reference/`` and take the expected values from them.
 """
 
 import json
+import re
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
@@ -29,7 +32,7 @@ import pytest
 import respx
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from xippios.core import InvalidRequestError, NotFoundError
+from xippios.core import InvalidRequestError, NotFoundError, UnknownCode
 from xippios.core.client import cache_key
 from xippios.core.testing import (
     CLOCK_SLACK,
@@ -41,11 +44,20 @@ from xippios.core.testing import (
     sent_urls,
 )
 
-from xippios.eurostat import get_cross_section, get_data, get_latest_period, get_series, tasks
+from xippios.eurostat import (
+    get_cross_section,
+    get_data,
+    get_latest_period,
+    get_series,
+    list_codes,
+    list_datasets,
+    params,
+    tasks,
+)
 from xippios.eurostat._client import config
 from xippios.eurostat.http import router
 from xippios.eurostat.mcp import server
-from xippios.eurostat.models import Cube, GeoLevel, Lang, Observation
+from xippios.eurostat.models import Code, Cube, Dataset, GeoLevel, Lang, LeafType, Observation
 
 FIXTURES = Path(__file__).parent / "fixtures"
 GUIDE = Path(__file__).parents[1] / "docs" / "upstream" / "user-guide" / "api-detailed-guidelines"
@@ -839,3 +851,218 @@ async def test_get_latest_period_tool_cuts_a_large_slice_with_its_note(
         "pin more dimensions in filters, one code each (geo, unit, a product), to see the rest"
     )
     assert payload["meta"]["request"]["last_time_period"] == 1
+
+
+# The list tasks answer from the packaged files under src/xippios/eurostat/reference/,
+# written by scripts/refresh_reference.py: no fixture and no request. The expected values
+# are read from the files themselves, so a refresh changes the data and not the tests.
+
+REFERENCE = Path(__file__).parents[1] / "src" / "xippios" / "eurostat" / "reference"
+
+
+def packaged_file(name: str) -> dict[str, Any]:
+    payload: dict[str, Any] = json.loads((REFERENCE / f"{name}.json").read_text(encoding="utf-8"))
+    return payload
+
+
+def index_record(name: str) -> dict[str, Any]:
+    records = packaged_file("lists")["records"]
+    return next(record for record in records if record["name"] == name)
+
+
+def fetched(name: str) -> datetime:
+    return datetime.fromisoformat(packaged_file(name)["fetched"])
+
+
+def test_list_datasets_answers_the_whole_table_of_contents() -> None:
+    result = list_datasets()
+    raw = packaged_file("toc")
+    assert len(result.data) == len(raw["records"]) == index_record("toc")["count"]
+    assert all(isinstance(leaf, Dataset) for leaf in result.data)
+    assert [leaf.dump_upstream() for leaf in result.data[:50]] == raw["records"][:50]
+    assert {leaf.type for leaf in result.data} == {LeafType.DATASET, LeafType.TABLE}
+    assert all(leaf.path for leaf in result.data), "every leaf sits in a folder"
+
+
+def test_list_datasets_meta_is_the_packaged_answer() -> None:
+    """ADR-0022 rule 1 and D4: the file's fetched, the operation, creationDate as
+    vintage and its naive time as published_at."""
+    result = list_datasets()
+    created = index_record("toc")["creationDate"]
+    assert result.meta.source == "eurostat"
+    assert result.meta.endpoint == "catalogue/toc/xml" == packaged_file("toc")["endpoint"]
+    assert result.meta.retrieved_at == fetched("toc")
+    assert result.meta.vintage == created
+    assert re.fullmatch(r"\d{8}T\d{4}", created)
+    assert result.meta.published_at == datetime.strptime(created, "%Y%m%dT%H%M")
+    assert result.meta.published_at.tzinfo is None
+    assert result.meta.published_at_naive is True
+    assert result.meta.request == {}
+    assert result.meta.total is None
+
+
+def test_list_datasets_search_keeps_code_or_title_ignoring_case() -> None:
+    result = list_datasets(search="MILK")
+    expected = [
+        record
+        for record in packaged_file("toc")["records"]
+        if "milk" in record["code"].casefold() or "milk" in record["title"].casefold()
+    ]
+    assert [leaf.dump_upstream() for leaf in result.data] == expected
+    assert "apro_mk_cola" in {leaf.code for leaf in result.data}
+    assert result.meta.request == {"search": "MILK"}
+
+
+def test_list_datasets_search_by_code() -> None:
+    result = list_datasets(search="apro_mk_cola")
+    assert [leaf.code for leaf in result.data] == ["apro_mk_cola"]
+    cola = result.data[0]
+    assert cola.type == LeafType.DATASET
+    assert cola.path.endswith(" > Milk and milk products")
+    assert re.fullmatch(r"\d{2}\.\d{2}\.\d{4}", cola.last_update), "as printed, day first"
+
+
+def test_list_datasets_search_without_a_match_is_empty() -> None:
+    assert list_datasets(search="no dataset is called this").data == []
+
+
+def test_list_datasets_returns_a_new_list_each_call() -> None:
+    first = list_datasets(search="apro_mk_cola")
+    first.data.clear()
+    assert list_datasets(search="apro_mk_cola").data
+
+
+@pytest.mark.parametrize("name", ["GEO", "geo", "Geo"])
+def test_list_codes_geo(name: str) -> None:
+    result = list_codes(name)
+    raw = packaged_file("geo")
+    info = index_record("geo")
+    assert [code.dump_upstream() for code in result.data] == raw["records"]
+    assert all(isinstance(code, Code) for code in result.data)
+    assert result.meta.endpoint == "sdmx/2.1/codelist/ESTAT/GEO" == raw["endpoint"]
+    assert result.meta.retrieved_at == fetched("geo")
+    assert result.meta.vintage == info["version"]
+    assert result.meta.published_at == datetime.fromisoformat(info["LAST_UPDATED"])
+    assert result.meta.published_at.utcoffset() is not None
+    assert result.meta.published_at_naive is False
+    assert result.meta.request == {"codelist": "GEO"}
+    assert result.meta.total is None
+
+
+@pytest.mark.parametrize("codelist", params.CODELISTS)
+def test_list_codes_serves_every_packaged_codelist(codelist: str) -> None:
+    result = list_codes(codelist.lower())
+    raw = packaged_file(codelist.lower())
+    assert raw["param"] == codelist.lower(), "the dimension code the Statistics API takes"
+    assert len(result.data) == len(raw["records"]) == index_record(codelist.lower())["count"]
+    assert result.meta.endpoint == f"sdmx/2.1/codelist/ESTAT/{codelist}"
+    assert result.meta.vintage == index_record(codelist.lower())["version"]
+    assert result.meta.published_at is not None
+    assert result.meta.request == {"codelist": codelist}
+
+
+def test_list_codes_search_keeps_code_or_label_ignoring_case() -> None:
+    result = list_codes("geo", search="austria")
+    assert Code(code="AT", label="Austria") in result.data
+    assert all("austria" in (code.label or "").casefold() for code in result.data)
+    assert result.meta.request == {"codelist": "GEO", "search": "austria"}
+    units = list_codes("unit", search="ths_t")
+    assert "THS_T" in {code.code for code in units.data}
+
+
+def test_list_codes_refuses_an_unknown_codelist_naming_the_closest() -> None:
+    with pytest.raises(UnknownCode) as refused:
+        list_codes("goe")
+    assert isinstance(refused.value, InvalidRequestError)
+    assert refused.value.closest[0][0] == "GEO"
+    message = str(refused.value)
+    day = f"{fetched('lists'):%Y-%m-%d}"
+    assert message.startswith(
+        f"'goe' is not a codelist in the packaged codelist list (fetched {day}). "
+        "Did you mean GEO (Geopolitical entity (reporting))"
+    )
+    assert tasks.UNPACKAGED_CODELIST in message
+
+
+def test_list_codes_refuses_a_codelist_the_package_does_not_carry() -> None:
+    with pytest.raises(UnknownCode, match=r"^'nace_r2' is not a codelist") as refused:
+        list_codes("nace_r2")
+    assert "the dimensions of apro_cpnh1, apro_mk_cola and ef_m_farmleg" in str(refused.value)
+
+
+@pytest.mark.anyio
+async def test_list_datasets_tool_cuts_the_whole_list_with_its_note() -> None:
+    payload = await mcp_call(server, "eurostat_list_datasets", {})
+    cap = tasks.MCP_CAPS["list_datasets"]
+    shown = len(payload["data"])
+    total = index_record("toc")["count"]
+    assert 0 < shown <= cap.max_rows
+    assert payload["note"] == (
+        f"showing {shown} of {total} rows (cap: {cap.max_rows} rows or {cap.max_bytes} bytes); "
+        "pass search, a word of the title or a part of the code (milk, apro_mk), to see the rest"
+    )
+    assert payload["meta"]["vintage"] == index_record("toc")["creationDate"]
+    assert payload["meta"]["published_at_naive"] is True
+
+
+@pytest.mark.anyio
+async def test_list_datasets_tool_end_to_end() -> None:
+    payload = await mcp_call(server, "eurostat_list_datasets", {"search": "apro_mk_cola"})
+    assert "note" not in payload
+    assert [leaf["code"] for leaf in payload["data"]] == ["apro_mk_cola"]
+    assert set(payload["data"][0]) == {
+        "code",
+        "type",
+        "title",
+        "path",
+        "last_update",
+        "last_modified",
+        "data_start",
+        "data_end",
+        "values",
+    }
+    assert payload["meta"]["endpoint"] == "catalogue/toc/xml"
+    assert payload["meta"]["request"] == {"search": "apro_mk_cola"}
+
+
+@pytest.mark.anyio
+async def test_list_codes_tool_cuts_geo_with_its_note() -> None:
+    payload = await mcp_call(server, "eurostat_list_codes", {"codelist": "geo"})
+    cap = tasks.MCP_CAPS["list_codes"]
+    shown = len(payload["data"])
+    total = index_record("geo")["count"]
+    assert 0 < shown <= cap.max_rows < total
+    assert payload["note"] == (
+        f"showing {shown} of {total} rows (cap: {cap.max_rows} rows or {cap.max_bytes} bytes); "
+        "pass search, a part of the code or of the label (AT, austria), to see the rest"
+    )
+    assert payload["meta"]["vintage"] == index_record("geo")["version"]
+
+
+@pytest.mark.anyio
+async def test_list_codes_tool_answers_unit_whole() -> None:
+    """UNIT, the largest codelist but GEO, fits the cap: 1,000 rows within 64 KB."""
+    payload = await mcp_call(server, "eurostat_list_codes", {"codelist": "UNIT"})
+    assert "note" not in payload
+    assert len(payload["data"]) == index_record("unit")["count"]
+    assert payload["meta"]["request"] == {"codelist": "UNIT"}
+
+
+@pytest.mark.anyio
+async def test_list_codes_tool_answers_the_refusal_as_text() -> None:
+    text = await mcp_call_text(server, "eurostat_list_codes", {"codelist": "goe"})
+    assert text.startswith("error: UnknownCode: 'goe' is not a codelist in the packaged codelist")
+    assert "Did you mean GEO" in text
+
+
+def test_list_codes_route_end_to_end() -> None:
+    """Scalar parameters make the route a GET with query parameters (ADR-0007)."""
+    app = FastAPI()
+    app.include_router(router)
+    with TestClient(app) as http:
+        answer = http.get("/eurostat/list_codes", params={"codelist": "geo", "search": "austria"})
+        refused = http.get("/eurostat/list_codes", params={"codelist": "goe"})
+    assert answer.status_code == 200
+    assert {"code": "AT", "label": "Austria"} in answer.json()["data"]
+    assert answer.json()["meta"]["vintage"] == index_record("geo")["version"]
+    assert refused.status_code == 422
