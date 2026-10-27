@@ -1,0 +1,2907 @@
+{
+  "param": "crops",
+  "endpoint": "sdmx/2.1/codelist/ESTAT/CROPS",
+  "fetched": "2026-10-27T19:55:23Z",
+  "records": [
+    {
+      "code": "CRP",
+      "label": "Crop products"
+    },
+    {
+      "code": "AA_WA_FA9",
+      "label": "Agricultural area, wooded area and other areas on the farms"
+    },
+    {
+      "code": "FA",
+      "label": "Farm area"
+    },
+    {
+      "code": "FA_OTH",
+      "label": "Other farmland"
+    },
+    {
+      "code": "FAXSAA",
+      "label": "Farm area excluding special agricultural production areas"
+    },
+    {
+      "code": "AA",
+      "label": "Agricultural area"
+    },
+    {
+      "code": "UAA",
+      "label": "Utilised agricultural area"
+    },
+    {
+      "code": "UAA09S",
+      "label": "Other utilised agricultural area n.e.c. - under glass or high accessible cover"
+    },
+    {
+      "code": "UAA_IB",
+      "label": "Irrigable utilised agricultural area"
+    },
+    {
+      "code": "UAA_IT",
+      "label": "Irrigated utilised agricultural area"
+    },
+    {
+      "code": "UAAT_IB",
+      "label": "Irrigable utilised agricultural area - outdoor"
+    },
+    {
+      "code": "UAAT",
+      "label": "Utilised agricultural area - outdoor"
+    },
+    {
+      "code": "UAAS",
+      "label": "Utilised agricultural area - under glass or high accessible cover"
+    },
+    {
+      "code": "UAAXK0000",
+      "label": "Utilised agricultural area excluding kitchen gardens"
+    },
+    {
+      "code": "UAAXK0000_ORG",
+      "label": "Fully converted and under conversion to organic farming utilised agricultural area (excluding kitchen gardens)"
+    },
+    {
+      "code": "ARA_J0000",
+      "label": "Arable land and/or permanent grassland"
+    },
+    {
+      "code": "ARA09S",
+      "label": "Other arable land crops n.e.c. - under glass or high accessible cover"
+    },
+    {
+      "code": "ARA",
+      "label": "Arable land"
+    },
+    {
+      "code": "ARA_IB",
+      "label": "Irrigable arable land"
+    },
+    {
+      "code": "ARAXIB",
+      "label": "Non-irrigable arable land"
+    },
+    {
+      "code": "FCONV_UCONV",
+      "label": "Fully converted and under conversion to organic farming"
+    },
+    {
+      "code": "C0000",
+      "label": "Cereals for the production of grain (including seed)"
+    },
+    {
+      "code": "C0000T",
+      "label": "Cereals for the production of grain (including seed) - outdoor"
+    },
+    {
+      "code": "C0000T_ORG",
+      "label": "Cereals for the production of grain (including seed) - outdoor - organic"
+    },
+    {
+      "code": "C0000X1500T",
+      "label": "Cereals for the production of grain (including seed) excluding rice, grain maize and corn-cob-mix - outdoor"
+    },
+    {
+      "code": "C1000",
+      "label": "Cereals (excluding rice) for the production of grain (including seed)"
+    },
+    {
+      "code": "C1000X1100",
+      "label": "Cereals (excluding wheat)"
+    },
+    {
+      "code": "C1000X1500",
+      "label": "Cereals (excluding rice, grain maize and corn-cob-mix) for the production of grain (including seed)"
+    },
+    {
+      "code": "C1000X1500T",
+      "label": "Cereals (excluding rice, grain maize and corn-cob-mix) for the production of grain (including seed) - outdoor"
+    },
+    {
+      "code": "C1100",
+      "label": "Wheat and spelt"
+    },
+    {
+      "code": "C1110",
+      "label": "Common wheat and spelt"
+    },
+    {
+      "code": "C1110T",
+      "label": "Common wheat and spelt - outdoor"
+    },
+    {
+      "code": "C1110T_ORG",
+      "label": "Common wheat and spelt - outdoor - organic"
+    },
+    {
+      "code": "C1111",
+      "label": "Common winter wheat and spelt"
+    },
+    {
+      "code": "C1112",
+      "label": "Common spring wheat and spelt"
+    },
+    {
+      "code": "C1120",
+      "label": "Durum wheat"
+    },
+    {
+      "code": "C1120T",
+      "label": "Durum wheat - outdoor"
+    },
+    {
+      "code": "C1120T_ORG",
+      "label": "Durum wheat - outdoor - organic"
+    },
+    {
+      "code": "C1121",
+      "label": "Winter durum wheat"
+    },
+    {
+      "code": "C1122",
+      "label": "Spring durum wheat"
+    },
+    {
+      "code": "C1200",
+      "label": "Rye and winter cereal mixtures (maslin)"
+    },
+    {
+      "code": "C1200T",
+      "label": "Rye and winter cereal mixtures (maslin) - outdoor"
+    },
+    {
+      "code": "C1210",
+      "label": "Rye"
+    },
+    {
+      "code": "C1211",
+      "label": "Winter rye"
+    },
+    {
+      "code": "C1212",
+      "label": "Spring rye"
+    },
+    {
+      "code": "C1220",
+      "label": "Winter cereal mixtures (maslin)"
+    },
+    {
+      "code": "C1300",
+      "label": "Barley"
+    },
+    {
+      "code": "C1300T",
+      "label": "Barley - outdoor"
+    },
+    {
+      "code": "C1300F",
+      "label": "Fodder barley"
+    },
+    {
+      "code": "C1310",
+      "label": "Winter barley"
+    },
+    {
+      "code": "C1320",
+      "label": "Spring barley"
+    },
+    {
+      "code": "C1320M",
+      "label": "Malting barley"
+    },
+    {
+      "code": "C1400",
+      "label": "Oats and spring cereal mixtures (mixed grain other than maslin)"
+    },
+    {
+      "code": "C1400T",
+      "label": "Oats and spring cereal mixtures (mixed grain other than maslin) - outdoor"
+    },
+    {
+      "code": "C1410",
+      "label": "Oats"
+    },
+    {
+      "code": "C1420",
+      "label": "Spring cereal mixtures (mixed grain other than maslin)"
+    },
+    {
+      "code": "C1500",
+      "label": "Grain maize and corn-cob-mix"
+    },
+    {
+      "code": "C1500T",
+      "label": "Grain maize and corn-cob-mix - outdoor"
+    },
+    {
+      "code": "C1510",
+      "label": "Grain maize"
+    },
+    {
+      "code": "C1520",
+      "label": "Corn-cob-mix"
+    },
+    {
+      "code": "C1600_1700_1900",
+      "label": "Other cereals (including triticale and sorghum)"
+    },
+    {
+      "code": "C1600",
+      "label": "Triticale"
+    },
+    {
+      "code": "C1600T",
+      "label": "Triticale - outdoor"
+    },
+    {
+      "code": "C1610",
+      "label": "Winter triticale"
+    },
+    {
+      "code": "C1700",
+      "label": "Sorghum"
+    },
+    {
+      "code": "C1700T",
+      "label": "Sorghum - outdoor"
+    },
+    {
+      "code": "C1900",
+      "label": "Other cereals n.e.c. (buckwheat, millet, canary seed, etc.)"
+    },
+    {
+      "code": "C1900T",
+      "label": "Other cereals n.e.c. (buckwheat, millet, canary seed, etc.) - outdoor"
+    },
+    {
+      "code": "C1920",
+      "label": "Pseudocereals"
+    },
+    {
+      "code": "C1921",
+      "label": "Buckwheat"
+    },
+    {
+      "code": "C1922",
+      "label": "Quinoa"
+    },
+    {
+      "code": "C1929",
+      "label": "Other pseudocereals n.e.c."
+    },
+    {
+      "code": "C1990",
+      "label": "Other cereals n.e.c. (millet, canary seed, etc.)"
+    },
+    {
+      "code": "C2000",
+      "label": "Rice"
+    },
+    {
+      "code": "C2000T",
+      "label": "Rice - outdoor"
+    },
+    {
+      "code": "C2000X2000B",
+      "label": "Rice (excluding broken rice) (equivalent milled rice)"
+    },
+    {
+      "code": "C2100",
+      "label": "Rice Indica"
+    },
+    {
+      "code": "C2200",
+      "label": "Rice Japonica"
+    },
+    {
+      "code": "C2000B",
+      "label": "Broken rice"
+    },
+    {
+      "code": "C2000Y",
+      "label": "Paddy rice"
+    },
+    {
+      "code": "C2001Y",
+      "label": "Paddy rice, long"
+    },
+    {
+      "code": "C2002Y",
+      "label": "Paddy rice, round"
+    },
+    {
+      "code": "C2003Y",
+      "label": "Paddy rice, medium"
+    },
+    {
+      "code": "C2000U",
+      "label": "Husked rice"
+    },
+    {
+      "code": "C2001U",
+      "label": "Husked rice, long"
+    },
+    {
+      "code": "C2002U",
+      "label": "Husked rice, round"
+    },
+    {
+      "code": "C2003U",
+      "label": "Husked rice, medium"
+    },
+    {
+      "code": "C2000L",
+      "label": "Milled rice"
+    },
+    {
+      "code": "C2001L",
+      "label": "Milled rice, long"
+    },
+    {
+      "code": "C2002L",
+      "label": "Milled rice, round"
+    },
+    {
+      "code": "C2003L",
+      "label": "Milled rice, medium"
+    },
+    {
+      "code": "P0000_I1130_G2000_V5000",
+      "label": "Leguminous crops"
+    },
+    {
+      "code": "P0000_I1130_G2000T",
+      "label": "Leguminous crops (excluding fresh pulses) - outdoor"
+    },
+    {
+      "code": "P0000_I1130_G2000",
+      "label": "Leguminous crops (excluding fresh pulses)"
+    },
+    {
+      "code": "P0000",
+      "label": "Dry pulses and protein crops for the production of grain (including seed and mixtures of cereals and pulses)"
+    },
+    {
+      "code": "P0000T",
+      "label": "Dry pulses and protein crops for the production of grain (including seed and mixtures of cereals and pulses) - outdoor"
+    },
+    {
+      "code": "P0000T_ORG",
+      "label": "Dry pulses and protein crops for the production of grain (including seed and mixtures of cereals and pulses) - outdoor - organic"
+    },
+    {
+      "code": "P1000",
+      "label": "Field peas, beans and sweet lupins"
+    },
+    {
+      "code": "P1000T",
+      "label": "Field peas, beans and sweet lupins - outdoor"
+    },
+    {
+      "code": "P1100",
+      "label": "Field peas"
+    },
+    {
+      "code": "P1200",
+      "label": "Broad and field beans"
+    },
+    {
+      "code": "P1210",
+      "label": "Broad beans"
+    },
+    {
+      "code": "P1220",
+      "label": "Field beans"
+    },
+    {
+      "code": "P1300",
+      "label": "Sweet lupins"
+    },
+    {
+      "code": "P9000",
+      "label": "Other dry pulses and protein crops n.e.c. (lentils, chickpeas, vetches, etc.)"
+    },
+    {
+      "code": "P9000T",
+      "label": "Other dry pulses and protein crops n.e.c. - outdoor"
+    },
+    {
+      "code": "P9100",
+      "label": "Lentils"
+    },
+    {
+      "code": "P9200",
+      "label": "Chickpeas"
+    },
+    {
+      "code": "P9300",
+      "label": "Haricot beans"
+    },
+    {
+      "code": "P9400",
+      "label": "Vetches"
+    },
+    {
+      "code": "P9900",
+      "label": "Other dry pulses and protein crops n.e.c."
+    },
+    {
+      "code": "R0000",
+      "label": "Root crops"
+    },
+    {
+      "code": "R0000T",
+      "label": "Root crops - outdoor"
+    },
+    {
+      "code": "R0000T_ORG",
+      "label": "Root crops - outdoor - organic"
+    },
+    {
+      "code": "R0000S",
+      "label": "Root crops - under glass or high accessible cover"
+    },
+    {
+      "code": "R1000",
+      "label": "Potatoes (including seed potatoes)"
+    },
+    {
+      "code": "R1000T",
+      "label": "Potatoes (including seed potatoes) - outdoor"
+    },
+    {
+      "code": "R1000T_ORG",
+      "label": "Potatoes (including seed potatoes) - outdoor - organic"
+    },
+    {
+      "code": "R1000S",
+      "label": "Potatoes (including seed potatoes) - under glass or high accessible cover"
+    },
+    {
+      "code": "R1100",
+      "label": "Potatoes for fresh consumption"
+    },
+    {
+      "code": "R1110",
+      "label": "Main harvest potatoes"
+    },
+    {
+      "code": "R1120",
+      "label": "Early potatoes"
+    },
+    {
+      "code": "R1900",
+      "label": "Other potatoes"
+    },
+    {
+      "code": "R1910",
+      "label": "Potatoes for processing"
+    },
+    {
+      "code": "R1911",
+      "label": "Starch potatoes"
+    },
+    {
+      "code": "R1919",
+      "label": "Other potatoes for processing n.e.c."
+    },
+    {
+      "code": "R1920",
+      "label": "Seed potatoes"
+    },
+    {
+      "code": "R1930",
+      "label": "Fodder potatoes"
+    },
+    {
+      "code": "R1990",
+      "label": "Other potatoes n.e.c."
+    },
+    {
+      "code": "R2000",
+      "label": "Sugar beet (excluding seed)"
+    },
+    {
+      "code": "R2000T",
+      "label": "Sugar beet (excluding seed) - outdoor"
+    },
+    {
+      "code": "R2000T_ORG",
+      "label": "Sugar beet (excluding seed) - outdoor - organic"
+    },
+    {
+      "code": "R2000SQ",
+      "label": "Sugar beet: standard quality"
+    },
+    {
+      "code": "R9000",
+      "label": "Other root crops n.e.c."
+    },
+    {
+      "code": "R9000T",
+      "label": "Other root crops n.e.c. - outdoor"
+    },
+    {
+      "code": "R9100",
+      "label": "Fodder root crops (including forage beet)"
+    },
+    {
+      "code": "I0000AM",
+      "label": "Industrial crops (agri-monetary)"
+    },
+    {
+      "code": "I0000",
+      "label": "Industrial crops"
+    },
+    {
+      "code": "I0000T",
+      "label": "Industrial crops - outdoor"
+    },
+    {
+      "code": "I0000T_ORG",
+      "label": "Industrial crops - outdoor - organic"
+    },
+    {
+      "code": "I0000S",
+      "label": "Industrial crops - under glass or high accessible cover"
+    },
+    {
+      "code": "I1000",
+      "label": "Oilseeds and oleaginous fruits"
+    },
+    {
+      "code": "I1100",
+      "label": "Oilseeds"
+    },
+    {
+      "code": "I1110-1130",
+      "label": "Rape, turnip rape, sunflower seeds and soya"
+    },
+    {
+      "code": "I1110",
+      "label": "Rape and turnip rape seeds"
+    },
+    {
+      "code": "I1110T",
+      "label": "Rape and turnip rape seeds - outdoor"
+    },
+    {
+      "code": "I1111",
+      "label": "Winter rape and turnip rape seeds"
+    },
+    {
+      "code": "I1112",
+      "label": "Spring rape and turnip rape seeds"
+    },
+    {
+      "code": "I1120",
+      "label": "Sunflower seed"
+    },
+    {
+      "code": "I1120T",
+      "label": "Sunflower seed - outdoor"
+    },
+    {
+      "code": "I1130",
+      "label": "Soya"
+    },
+    {
+      "code": "I1130T",
+      "label": "Soya - outdoor"
+    },
+    {
+      "code": "I1130T_ORG",
+      "label": "Soya - outdoor - organic"
+    },
+    {
+      "code": "I1140-1190",
+      "label": "Other oilseed crops"
+    },
+    {
+      "code": "I1140",
+      "label": "Linseed (oil flax)"
+    },
+    {
+      "code": "I1140T",
+      "label": "Linseed (oil flax) - outdoor"
+    },
+    {
+      "code": "I1150_2300",
+      "label": "Cotton seed and fibre"
+    },
+    {
+      "code": "I1150_2300T",
+      "label": "Cotton seed and fibre - outdoor"
+    },
+    {
+      "code": "I1150",
+      "label": "Cotton seed"
+    },
+    {
+      "code": "I1190",
+      "label": "Other oilseed crops n.e.c."
+    },
+    {
+      "code": "I1190T",
+      "label": "Other oilseeds and oleaginous fruits - outdoor"
+    },
+    {
+      "code": "I1900",
+      "label": "Other oilseeds and oleaginous fruits"
+    },
+    {
+      "code": "I1910",
+      "label": "Unshelled peanuts"
+    },
+    {
+      "code": "I1920AM",
+      "label": "Poppy (seeds)"
+    },
+    {
+      "code": "I2000",
+      "label": "Fibre crops"
+    },
+    {
+      "code": "I2000T",
+      "label": "Fibre crops - outdoor"
+    },
+    {
+      "code": "I2100_2200_2900",
+      "label": "Fibre flax, hemp and other fibre crops n.e.c."
+    },
+    {
+      "code": "I2100",
+      "label": "Fibre flax"
+    },
+    {
+      "code": "I2100T",
+      "label": "Fibre flax - outdoor"
+    },
+    {
+      "code": "I2200",
+      "label": "Hemp"
+    },
+    {
+      "code": "I2200T",
+      "label": "Hemp - outdoor"
+    },
+    {
+      "code": "I2300",
+      "label": "Cotton fibre"
+    },
+    {
+      "code": "I1190_2900",
+      "label": "Other oilseed and fibre crops"
+    },
+    {
+      "code": "I2900",
+      "label": "Other fibre crops n.e.c."
+    },
+    {
+      "code": "I2900T",
+      "label": "Other fibre crops n.e.c. - outdoor"
+    },
+    {
+      "code": "I3000",
+      "label": "Tobacco"
+    },
+    {
+      "code": "I3000T",
+      "label": "Tobacco - outdoor"
+    },
+    {
+      "code": "I3100",
+      "label": "Raw Tobacco"
+    },
+    {
+      "code": "I3100V1",
+      "label": "Raw tobacco - most important variety"
+    },
+    {
+      "code": "I3100V2",
+      "label": "Raw tobacco - 2nd most important variety"
+    },
+    {
+      "code": "I3110",
+      "label": "Raw tobacco - flue cured"
+    },
+    {
+      "code": "I3120",
+      "label": "Raw tobacco - light air cured"
+    },
+    {
+      "code": "I3130",
+      "label": "Raw tobacco - dark air cured"
+    },
+    {
+      "code": "I3140",
+      "label": "Raw tobacco - fire cured"
+    },
+    {
+      "code": "I3150",
+      "label": "Raw tobacco - sun cured"
+    },
+    {
+      "code": "I4000",
+      "label": "Hops"
+    },
+    {
+      "code": "I4000T",
+      "label": "Hops - outdoor"
+    },
+    {
+      "code": "I4000V1",
+      "label": "Hops - most important variety"
+    },
+    {
+      "code": "I5000_9000",
+      "label": "Other industrial crops including aromatic, medicinal and culinary plants"
+    },
+    {
+      "code": "I5000",
+      "label": "Aromatic, medicinal and culinary plants"
+    },
+    {
+      "code": "I5000T",
+      "label": "Aromatic, medicinal and culinary plants - outdoor"
+    },
+    {
+      "code": "I5000S",
+      "label": "Aromatic, medicinal and culinary plants - under glass or high accessible cover"
+    },
+    {
+      "code": "I6000_9000",
+      "label": "Other industrial crops including energy crops n.e.c."
+    },
+    {
+      "code": "I6000",
+      "label": "Energy crops n.e.c."
+    },
+    {
+      "code": "I6000T",
+      "label": "Energy crops n.e.c. - outdoor"
+    },
+    {
+      "code": "I9000",
+      "label": "Other industrial crops n.e.c."
+    },
+    {
+      "code": "I9000T",
+      "label": "Other industrial crops n.e.c. - outdoor"
+    },
+    {
+      "code": "I9000AM",
+      "label": "Other industrial crops (agri-monetary)"
+    },
+    {
+      "code": "I9900AM",
+      "label": "Other industrial crops (agri-monetary) n.e.c."
+    },
+    {
+      "code": "G0000_J0000",
+      "label": "Graminaceous, leguminous and oleaginous plants harvested green (including grazings)"
+    },
+    {
+      "code": "G0000_J1000_2000",
+      "label": "Plants harvested green, permanent pastures, meadows and rough grazings"
+    },
+    {
+      "code": "G0000_J1000_2000_R9000",
+      "label": "Plants harvested green, permanent pastures, meadows and rough grazings, and other root crops n.e.c."
+    },
+    {
+      "code": "G0000",
+      "label": "Plants harvested green from arable land"
+    },
+    {
+      "code": "G0000T",
+      "label": "Plants harvested green from arable land - outdoor"
+    },
+    {
+      "code": "G0000T_ORG",
+      "label": "Plants harvested green from arable land - outdoor - organic"
+    },
+    {
+      "code": "G0000X1000",
+      "label": "Plants harvested green from arable land excluding temporary grasses and grazings"
+    },
+    {
+      "code": "G0000X1000T",
+      "label": "Plants harvested green from arable land excluding temporary grasses and grazings - outdoor"
+    },
+    {
+      "code": "G1000",
+      "label": "Temporary grasses and grazings"
+    },
+    {
+      "code": "G1000T",
+      "label": "Temporary grasses and grazings - outdoor"
+    },
+    {
+      "code": "G1000T_ORG",
+      "label": "Temporary grasses and grazings - outdoor - organic"
+    },
+    {
+      "code": "G1100",
+      "label": "Temporary grasses"
+    },
+    {
+      "code": "G1200",
+      "label": "Temporary grazings"
+    },
+    {
+      "code": "G2000_9000",
+      "label": "Leguminous plants harvested green and other plants harvested green from arable land"
+    },
+    {
+      "code": "G2000",
+      "label": "Leguminous plants harvested green"
+    },
+    {
+      "code": "G2000T",
+      "label": "Leguminous plants harvested green - outdoor"
+    },
+    {
+      "code": "G2000T_ORG",
+      "label": "Leguminous plants harvested green - outdoor - organic"
+    },
+    {
+      "code": "G2100",
+      "label": "Lucerne"
+    },
+    {
+      "code": "G2900",
+      "label": "Other leguminous plants harvested green n.e.c. (clover etc.)"
+    },
+    {
+      "code": "G2910",
+      "label": "Clover and mixtures"
+    },
+    {
+      "code": "G2920",
+      "label": "Legume grass mixtures"
+    },
+    {
+      "code": "G2990",
+      "label": "Other leguminous plants harvested green n.e.c."
+    },
+    {
+      "code": "G3000",
+      "label": "Green maize"
+    },
+    {
+      "code": "G3000T",
+      "label": "Green maize - outdoor"
+    },
+    {
+      "code": "G9000",
+      "label": "Other plants harvested green from arable land"
+    },
+    {
+      "code": "G9000T",
+      "label": "Other plants harvested green from arable land - outdoor"
+    },
+    {
+      "code": "G9100",
+      "label": "Other cereals harvested green (excluding green maize)"
+    },
+    {
+      "code": "G9100T",
+      "label": "Other cereals harvested green (excluding green maize) - outdoor"
+    },
+    {
+      "code": "G9900",
+      "label": "Other plants harvested green from arable land n.e.c."
+    },
+    {
+      "code": "G9900T",
+      "label": "Other plants harvested green from arable land n.e.c. - outdoor"
+    },
+    {
+      "code": "G9100_9900T",
+      "label": "Other cereals harvested green (excluding green maize) and other plants harvested green from arable land n.e.c. - outdoor"
+    },
+    {
+      "code": "VSK",
+      "label": "Fresh vegetables (including melons) and strawberries (including kitchen gardens)"
+    },
+    {
+      "code": "V0000AM_PLF",
+      "label": "Fresh vegetables (including melons) and horticultural products"
+    },
+    {
+      "code": "VSNPECRS",
+      "label": "Vegetables, strawberries, permanent crops, flowers and ornamental plants under glass or high accessible cover"
+    },
+    {
+      "code": "V0000_S0000",
+      "label": "Fresh vegetables (including melons) and strawberries"
+    },
+    {
+      "code": "V0000_S0000_ORG",
+      "label": "Fresh vegetables (including melons) and strawberries - organic"
+    },
+    {
+      "code": "V0000_S0000T",
+      "label": "Fresh vegetables (including melons) and strawberries - outdoor"
+    },
+    {
+      "code": "V0000_S0000T_ORG",
+      "label": "Fresh vegetables (including melons) and strawberries - outdoor - organic"
+    },
+    {
+      "code": "V0000_S0000TO",
+      "label": "Fresh vegetables (including melons) and strawberries grown in rotation with non-horticultural crops (open field)"
+    },
+    {
+      "code": "V0000_S0000TK",
+      "label": "Fresh vegetables (including melons) and strawberries grown in rotation with horticultural crops (market gardening)"
+    },
+    {
+      "code": "V0000_S0000S",
+      "label": "Fresh vegetables (including melons) and strawberries - under glass or high accessible cover"
+    },
+    {
+      "code": "V0000_S0000S_ORG",
+      "label": "Fresh vegetables (including melons) and strawberries - under glass or high accessible cover - organic"
+    },
+    {
+      "code": "V0000X3500",
+      "label": "Fresh vegetables excluding melons"
+    },
+    {
+      "code": "V0000AM",
+      "label": "Fresh vegetables including melons (agri-monetary)"
+    },
+    {
+      "code": "V0000",
+      "label": "Fresh vegetables (including melons)"
+    },
+    {
+      "code": "V1000",
+      "label": "Brassicas"
+    },
+    {
+      "code": "V1100",
+      "label": "Cauliflower and broccoli"
+    },
+    {
+      "code": "V1110",
+      "label": "Cauliflower"
+    },
+    {
+      "code": "V1110Q1",
+      "label": "Cauliflower - quality I"
+    },
+    {
+      "code": "V1120",
+      "label": "Broccoli"
+    },
+    {
+      "code": "V1200_1900",
+      "label": "Brussels sprouts and other brassicas n.e.c"
+    },
+    {
+      "code": "V1200",
+      "label": "Brussels sprouts"
+    },
+    {
+      "code": "V1200Q1",
+      "label": "Brussels sprouts - quality I"
+    },
+    {
+      "code": "V1300",
+      "label": "Cabbages"
+    },
+    {
+      "code": "V1310",
+      "label": "White cabbage"
+    },
+    {
+      "code": "V1310Q1",
+      "label": "White cabbage - quality I"
+    },
+    {
+      "code": "V1320",
+      "label": "Red cabbage"
+    },
+    {
+      "code": "V1320Q1",
+      "label": "Red cabbage - quality I"
+    },
+    {
+      "code": "V1330",
+      "label": "Savoy cabbage"
+    },
+    {
+      "code": "V1330Q1",
+      "label": "Savoy cabbage - quality I"
+    },
+    {
+      "code": "V1900",
+      "label": "Other brassicas n.e.c"
+    },
+    {
+      "code": "V1910",
+      "label": "Kohlrabi"
+    },
+    {
+      "code": "V1920",
+      "label": "Chinese cabbage"
+    },
+    {
+      "code": "V2000",
+      "label": "Leafy and stalked vegetables (excluding brassicas)"
+    },
+    {
+      "code": "V2100",
+      "label": "Leeks"
+    },
+    {
+      "code": "V2100T",
+      "label": "Leeks - outdoor"
+    },
+    {
+      "code": "V2200",
+      "label": "Celery"
+    },
+    {
+      "code": "V2300",
+      "label": "Lettuces"
+    },
+    {
+      "code": "V2300T",
+      "label": "Lettuces - outdoor"
+    },
+    {
+      "code": "V2300TQ1",
+      "label": "Lettuces - outdoor - quality I"
+    },
+    {
+      "code": "V2300S",
+      "label": "Lettuces - under glass or high accessible cover"
+    },
+    {
+      "code": "V2300SQ1",
+      "label": "Lettuces - under glass or high accessible cover - quality I"
+    },
+    {
+      "code": "V2310",
+      "label": "Iceberg lettuce"
+    },
+    {
+      "code": "V2400",
+      "label": "Endives"
+    },
+    {
+      "code": "V2500",
+      "label": "Spinach"
+    },
+    {
+      "code": "V2600",
+      "label": "Asparagus"
+    },
+    {
+      "code": "V2600Q1",
+      "label": "Asparagus - quality I"
+    },
+    {
+      "code": "V2700",
+      "label": "Chicory"
+    },
+    {
+      "code": "V2710",
+      "label": "Chicory for fresh consumption"
+    },
+    {
+      "code": "V2720",
+      "label": "Chicory for processing"
+    },
+    {
+      "code": "V2800",
+      "label": "Artichokes"
+    },
+    {
+      "code": "V2900",
+      "label": "Other leafy or stalked vegetables n.e.c."
+    },
+    {
+      "code": "V3000",
+      "label": "Vegetables cultivated for fruit (including melons)"
+    },
+    {
+      "code": "V3100",
+      "label": "Tomatoes"
+    },
+    {
+      "code": "V3110",
+      "label": "Tomatoes for fresh consumption"
+    },
+    {
+      "code": "V3120",
+      "label": "Tomatoes for processing"
+    },
+    {
+      "code": "V3100T",
+      "label": "Tomatoes - outdoor"
+    },
+    {
+      "code": "V3101TQ1",
+      "label": "Tomatoes - outdoor - round; quality I"
+    },
+    {
+      "code": "V3102TQ1",
+      "label": "Tomatoes - outdoor - long; quality I"
+    },
+    {
+      "code": "V3100S",
+      "label": "Tomatoes - under glass or high accessible cover"
+    },
+    {
+      "code": "V3100SQ1",
+      "label": "Tomatoes - under glass or high accessible cover - quality I"
+    },
+    {
+      "code": "V3200_V3300",
+      "label": "Cucumbers and gherkins"
+    },
+    {
+      "code": "V3200S_V3300S",
+      "label": "Cucumbers and gherkins - under glass or high accessible cover"
+    },
+    {
+      "code": "V3200",
+      "label": "Cucumbers"
+    },
+    {
+      "code": "V3200T",
+      "label": "Cucumbers - outdoor"
+    },
+    {
+      "code": "V3200TQ1",
+      "label": "Cucumbers - outdoor - quality I"
+    },
+    {
+      "code": "V3200S",
+      "label": "Cucumbers - under glass or high accessible cover"
+    },
+    {
+      "code": "V3200SQ1",
+      "label": "Cucumbers - under glass or high accessible cover - quality I"
+    },
+    {
+      "code": "V3300",
+      "label": "Gherkins"
+    },
+    {
+      "code": "V3300T",
+      "label": "Gherkins - outdoor"
+    },
+    {
+      "code": "V3400",
+      "label": "Eggplants, courgettes (including marrows), gourds and pumpkins"
+    },
+    {
+      "code": "V3410",
+      "label": "Eggplants"
+    },
+    {
+      "code": "V3420",
+      "label": "Courgettes and marrows"
+    },
+    {
+      "code": "V3430",
+      "label": "Gourds and pumpkins"
+    },
+    {
+      "code": "V3500",
+      "label": "Melons"
+    },
+    {
+      "code": "V3510",
+      "label": "Muskmelons"
+    },
+    {
+      "code": "V3520",
+      "label": "Watermelons"
+    },
+    {
+      "code": "V3600",
+      "label": "Peppers (capsicum)"
+    },
+    {
+      "code": "V3600S",
+      "label": "Peppers (capsicum) - under glass or high accessible cover"
+    },
+    {
+      "code": "V3610",
+      "label": "Red peppers (capsicum)"
+    },
+    {
+      "code": "V3900",
+      "label": "Other vegetables cultivated for fruit n.e.c."
+    },
+    {
+      "code": "V4000",
+      "label": "Root, tuber and bulb vegetables"
+    },
+    {
+      "code": "V4100",
+      "label": "Carrots"
+    },
+    {
+      "code": "V4100Q1",
+      "label": "Carrots - quality I"
+    },
+    {
+      "code": "V4200",
+      "label": "Onions and shallots"
+    },
+    {
+      "code": "V4210",
+      "label": "Onions"
+    },
+    {
+      "code": "V4220",
+      "label": "Shallots"
+    },
+    {
+      "code": "V4300",
+      "label": "Beetroot"
+    },
+    {
+      "code": "V4400",
+      "label": "Celeriac"
+    },
+    {
+      "code": "V4500",
+      "label": "Radishes"
+    },
+    {
+      "code": "V4600",
+      "label": "Garlic"
+    },
+    {
+      "code": "V4900",
+      "label": "Other root, tuber and bulb vegetables n.e.c."
+    },
+    {
+      "code": "V4910",
+      "label": "Turnips"
+    },
+    {
+      "code": "V4920",
+      "label": "Fennel"
+    },
+    {
+      "code": "V4930",
+      "label": "Salsifies and scorzonera"
+    },
+    {
+      "code": "V5000AM",
+      "label": "Fresh pulses (agri-monetary)"
+    },
+    {
+      "code": "V5000",
+      "label": "Fresh pulses"
+    },
+    {
+      "code": "V5100",
+      "label": "Fresh peas"
+    },
+    {
+      "code": "V5100Q1",
+      "label": "Fresh peas - quality I"
+    },
+    {
+      "code": "V5200",
+      "label": "Fresh beans"
+    },
+    {
+      "code": "V5210",
+      "label": "French beans"
+    },
+    {
+      "code": "V5210Q1",
+      "label": "French beans - quality I"
+    },
+    {
+      "code": "V5220",
+      "label": "Runner beans"
+    },
+    {
+      "code": "V5900",
+      "label": "Other fresh pulses n.e.c."
+    },
+    {
+      "code": "V9000",
+      "label": "Other fresh vegetables n.e.c."
+    },
+    {
+      "code": "V9000AM",
+      "label": "Other fresh vegetables (agri-monetary)"
+    },
+    {
+      "code": "V9900AM",
+      "label": "Other fresh vegetables n.e.c. (agri-monetary)"
+    },
+    {
+      "code": "S0000",
+      "label": "Strawberries"
+    },
+    {
+      "code": "S0000T",
+      "label": "Strawberries - outdoor"
+    },
+    {
+      "code": "S0000S",
+      "label": "Strawberries - under glass or high accessible cover"
+    },
+    {
+      "code": "ARA9",
+      "label": "Other arable land crops"
+    },
+    {
+      "code": "ARA9T",
+      "label": "Other arable land crops - outdoor"
+    },
+    {
+      "code": "ARA9S",
+      "label": "Other arable land crops - under glass or high accessible cover"
+    },
+    {
+      "code": "PLF",
+      "label": "Plants and flowers"
+    },
+    {
+      "code": "NUP",
+      "label": "Nursery products and seedlings"
+    },
+    {
+      "code": "N0000_L0000",
+      "label": "Flowers, ornamental plants and nursery products"
+    },
+    {
+      "code": "N0000_X0000",
+      "label": "Flowers, ornamental plants and Christmas trees"
+    },
+    {
+      "code": "N0000",
+      "label": "Flowers and ornamental plants (excluding nurseries)"
+    },
+    {
+      "code": "N0000T",
+      "label": "Flowers and ornamental plants (excluding nurseries) - outdoor"
+    },
+    {
+      "code": "N0000S",
+      "label": "Flowers and ornamental plants (excluding nurseries) - under glass or high accessible cover"
+    },
+    {
+      "code": "N1001P",
+      "label": "Azaleas - potted"
+    },
+    {
+      "code": "N1002P",
+      "label": "Cyclamens - potted"
+    },
+    {
+      "code": "N1003P",
+      "label": "Poinsettias - potted"
+    },
+    {
+      "code": "N1004P",
+      "label": "Pelargonium - potted"
+    },
+    {
+      "code": "N1005P",
+      "label": "Ficus - potted"
+    },
+    {
+      "code": "N1006P",
+      "label": "Kalanchoe - potted"
+    },
+    {
+      "code": "N1007P",
+      "label": "Saint Paulia - potted"
+    },
+    {
+      "code": "N1008P",
+      "label": "Begonia - potted"
+    },
+    {
+      "code": "N1009",
+      "label": "Roses"
+    },
+    {
+      "code": "N1010",
+      "label": "Baccara roses"
+    },
+    {
+      "code": "N1011",
+      "label": "Carnations"
+    },
+    {
+      "code": "N1012",
+      "label": "Chrysanthemums"
+    },
+    {
+      "code": "N1012P",
+      "label": "Chrysanthemums - potted"
+    },
+    {
+      "code": "N1013",
+      "label": "Gladioli"
+    },
+    {
+      "code": "N1014",
+      "label": "Tulips"
+    },
+    {
+      "code": "N1015",
+      "label": "Freesias"
+    },
+    {
+      "code": "N1016",
+      "label": "Lilium"
+    },
+    {
+      "code": "N1017",
+      "label": "Dianthus"
+    },
+    {
+      "code": "N1018",
+      "label": "Gerbera"
+    },
+    {
+      "code": "N1019",
+      "label": "Cymbidium"
+    },
+    {
+      "code": "PLT",
+      "label": "Plantations"
+    },
+    {
+      "code": "E0000_ARA9",
+      "label": "Seeds, seedlings and other crops on arable land"
+    },
+    {
+      "code": "E0000",
+      "label": "Seeds and seedlings"
+    },
+    {
+      "code": "E0000T",
+      "label": "Seeds and seedlings - outdoor"
+    },
+    {
+      "code": "E0000S",
+      "label": "Seeds and seedlings - under glass or high accessible cover"
+    },
+    {
+      "code": "E1000",
+      "label": "Seeds"
+    },
+    {
+      "code": "E1000T",
+      "label": "Seeds - outdoor"
+    },
+    {
+      "code": "E1000S",
+      "label": "Seeds - under glass or high accessible cover"
+    },
+    {
+      "code": "E2000",
+      "label": "Seedlings"
+    },
+    {
+      "code": "E2000T",
+      "label": "Seedlings - outdoor"
+    },
+    {
+      "code": "E2000S",
+      "label": "Seedlings - under glass or high accessible cover"
+    },
+    {
+      "code": "E2100",
+      "label": "Flower bulbs"
+    },
+    {
+      "code": "ARA99",
+      "label": "Other arable land crops n.e.c."
+    },
+    {
+      "code": "ARA99T",
+      "label": "Other arable land crops n.e.c. - outdoor"
+    },
+    {
+      "code": "Q0000",
+      "label": "Fallow land"
+    },
+    {
+      "code": "Q0000T",
+      "label": "Fallow land - outdoor"
+    },
+    {
+      "code": "Q0000XS",
+      "label": "Fallow land without subsidies"
+    },
+    {
+      "code": "Q0000ES",
+      "label": "Fallow land not in use, eligible for subsidies"
+    },
+    {
+      "code": "FOP",
+      "label": "Forage plants"
+    },
+    {
+      "code": "FOP9",
+      "label": "Other forage plants"
+    },
+    {
+      "code": "FOP91",
+      "label": "Hay"
+    },
+    {
+      "code": "FOP92",
+      "label": "Straw"
+    },
+    {
+      "code": "FOP93",
+      "label": "Silage"
+    },
+    {
+      "code": "FOP99",
+      "label": "Other forage plants n.e.c."
+    },
+    {
+      "code": "J0000",
+      "label": "Permanent grassland"
+    },
+    {
+      "code": "J0000T",
+      "label": "Permanent grassland - outdoor"
+    },
+    {
+      "code": "J1000",
+      "label": "Permanent pastures and meadows, excluding rough grazings"
+    },
+    {
+      "code": "J1000T",
+      "label": "Permanent pastures and meadows - outdoor"
+    },
+    {
+      "code": "J1100",
+      "label": "Permanent pastures"
+    },
+    {
+      "code": "J1200",
+      "label": "Permanent meadows"
+    },
+    {
+      "code": "J2000",
+      "label": "Permanent rough grazings"
+    },
+    {
+      "code": "J2000T",
+      "label": "Permanent rough grazings - outdoor"
+    },
+    {
+      "code": "J3000",
+      "label": "Permanent agricultural grassland not in use"
+    },
+    {
+      "code": "J3000E",
+      "label": "Permanent grassland no longer used for production purposes and eligible for the payment of subsidies"
+    },
+    {
+      "code": "J3000ES",
+      "label": "Permanent agricultural grassland not in use, eligible for subsidies"
+    },
+    {
+      "code": "J3000TE",
+      "label": "Permanent agricultural grassland not in use, eligible for subsidies - outdoor"
+    },
+    {
+      "code": "PECR_K0000",
+      "label": "Permanent crops including kitchen gardens"
+    },
+    {
+      "code": "PECR",
+      "label": "Permanent crops"
+    },
+    {
+      "code": "PECRT",
+      "label": "Permanent crops - outdoor"
+    },
+    {
+      "code": "PECRS",
+      "label": "Permanent crops under glass or high accessible cover"
+    },
+    {
+      "code": "H0000_K2000",
+      "label": "Permanent crops for human consumption including those from kitchen gardens"
+    },
+    {
+      "code": "H0000",
+      "label": "Permanent crops for human consumption"
+    },
+    {
+      "code": "H0000T",
+      "label": "Permanent crops for human consumption - outdoor"
+    },
+    {
+      "code": "H0000S",
+      "label": "Permanent crops for human consumption - under glass or high accessible cover"
+    },
+    {
+      "code": "FRUAM",
+      "label": "Fruits, citrus fruits, berries (including strawberries), nuts, grapes, olives and dried fruits (agri-monetary)"
+    },
+    {
+      "code": "F0000AM",
+      "label": "Fresh fruits (agri-monetary)"
+    },
+    {
+      "code": "F0000",
+      "label": "Fruits, berries and nuts (excluding citrus fruits, grapes and strawberries)"
+    },
+    {
+      "code": "F0000T",
+      "label": "Fruits, berries and nuts (excluding citrus fruits, grapes and strawberries) - outdoor"
+    },
+    {
+      "code": "F0000X3000",
+      "label": "Fruits and nuts (excluding citrus fruits and grapes)"
+    },
+    {
+      "code": "F1000_3000",
+      "label": "Fruits and berries (excluding strawberries) from temperate climate zones"
+    },
+    {
+      "code": "F1000_2000",
+      "label": "Fruits from temperate, subtropical and tropical climate zones"
+    },
+    {
+      "code": "F1000",
+      "label": "Fruits from temperate climate zones"
+    },
+    {
+      "code": "F1100",
+      "label": "Pome fruits"
+    },
+    {
+      "code": "F1110_1120",
+      "label": "Apples and pears"
+    },
+    {
+      "code": "F1110",
+      "label": "Apples"
+    },
+    {
+      "code": "F1111",
+      "label": "Apples for fresh consumption"
+    },
+    {
+      "code": "F1111_01",
+      "label": "Boskoop group"
+    },
+    {
+      "code": "F1111_02",
+      "label": "Braeburn group"
+    },
+    {
+      "code": "F1111_03",
+      "label": "Cox's orange group"
+    },
+    {
+      "code": "F1111_031",
+      "label": "Cox's orange pippin apples"
+    },
+    {
+      "code": "F1111_04",
+      "label": "Cripps Pink group"
+    },
+    {
+      "code": "F1111_05",
+      "label": "Elstar apples group"
+    },
+    {
+      "code": "F1111_051",
+      "label": "Elstar apples"
+    },
+    {
+      "code": "F1111_06",
+      "label": "Fuji group"
+    },
+    {
+      "code": "F1111_07",
+      "label": "Gala group"
+    },
+    {
+      "code": "F1111_08",
+      "label": "Golden Delicious group"
+    },
+    {
+      "code": "F1111_081",
+      "label": "Golden Delicious apples"
+    },
+    {
+      "code": "F1111_09",
+      "label": "Granny Smith group"
+    },
+    {
+      "code": "F1111_10",
+      "label": "Idared group"
+    },
+    {
+      "code": "F1111_11",
+      "label": "Jonagold/Jonagored group"
+    },
+    {
+      "code": "F1111_111",
+      "label": "Jonagold apples"
+    },
+    {
+      "code": "F1111_112",
+      "label": "Jonathan apples"
+    },
+    {
+      "code": "F1111_12",
+      "label": "Lobo group"
+    },
+    {
+      "code": "F1111_13",
+      "label": "Morgenduft group"
+    },
+    {
+      "code": "F1111_14",
+      "label": "Pinova group"
+    },
+    {
+      "code": "F1111_15",
+      "label": "Red Delicious group"
+    },
+    {
+      "code": "F1111_16",
+      "label": "Reinette group"
+    },
+    {
+      "code": "F1111_17",
+      "label": "Shampion group"
+    },
+    {
+      "code": "F1111_90",
+      "label": "Other apples for fresh consumption"
+    },
+    {
+      "code": "F1111_901",
+      "label": "Egrement russet apples"
+    },
+    {
+      "code": "F1111_902",
+      "label": "Spartan apples"
+    },
+    {
+      "code": "F1111_909",
+      "label": "Other apples for fresh consumption n.e.c"
+    },
+    {
+      "code": "F1112",
+      "label": "Apples for processing"
+    },
+    {
+      "code": "F1112_01",
+      "label": "Cooking apples"
+    },
+    {
+      "code": "F1112_011",
+      "label": "Bramley's seedling cooking apples"
+    },
+    {
+      "code": "F1112_02",
+      "label": "Cider apples"
+    },
+    {
+      "code": "F1120",
+      "label": "Pears"
+    },
+    {
+      "code": "F1121",
+      "label": "Pears for fresh consumption"
+    },
+    {
+      "code": "F1121_01",
+      "label": "Abate group"
+    },
+    {
+      "code": "F1121_02",
+      "label": "Blanquilla group"
+    },
+    {
+      "code": "F1121_03",
+      "label": "Conference group"
+    },
+    {
+      "code": "F1121_04",
+      "label": "Coscia-Ercolini group"
+    },
+    {
+      "code": "F1121_05",
+      "label": "Decana group"
+    },
+    {
+      "code": "F1121_051",
+      "label": "Doyenne du comice pears"
+    },
+    {
+      "code": "F1121_06",
+      "label": "Guyot group"
+    },
+    {
+      "code": "F1121_07",
+      "label": "Kaiser group"
+    },
+    {
+      "code": "F1121_08",
+      "label": "Rocha group"
+    },
+    {
+      "code": "F1121_09",
+      "label": "Williams group"
+    },
+    {
+      "code": "F1121_091",
+      "label": "Williams pears"
+    },
+    {
+      "code": "F1121_90",
+      "label": "Other pears for fresh consumption n.e.c."
+    },
+    {
+      "code": "F1122",
+      "label": "Pears for processing"
+    },
+    {
+      "code": "F1190",
+      "label": "Other pome fruits n.e.c."
+    },
+    {
+      "code": "F1191",
+      "label": "Quinces"
+    },
+    {
+      "code": "F1200",
+      "label": "Stone fruits"
+    },
+    {
+      "code": "F1200T",
+      "label": "Stone fruits - outdoor"
+    },
+    {
+      "code": "F1200S",
+      "label": "Stone fruits - under glass or high accessible cover"
+    },
+    {
+      "code": "F1210-1230",
+      "label": "Peaches, nectarines and apricots"
+    },
+    {
+      "code": "F1210_1220",
+      "label": "Peaches and nectarines"
+    },
+    {
+      "code": "F1211_1221",
+      "label": "Peaches and nectarines for fresh consumption"
+    },
+    {
+      "code": "F1212_1222",
+      "label": "Peaches and nectarines for processing"
+    },
+    {
+      "code": "F1210",
+      "label": "Peaches"
+    },
+    {
+      "code": "F1211",
+      "label": "Peaches for fresh consumption"
+    },
+    {
+      "code": "F1211_01",
+      "label": "Yellow flesh peaches"
+    },
+    {
+      "code": "F1211_01VE",
+      "label": "Very early yellow flesh peaches"
+    },
+    {
+      "code": "F1211_01ER",
+      "label": "Early yellow flesh peaches"
+    },
+    {
+      "code": "F1211_01ME",
+      "label": "Medium-early yellow flesh peaches"
+    },
+    {
+      "code": "F1211_01LA",
+      "label": "Late yellow flesh peaches"
+    },
+    {
+      "code": "F1211_02",
+      "label": "White flesh peaches"
+    },
+    {
+      "code": "F1211_02VE",
+      "label": "Very early white flesh peaches"
+    },
+    {
+      "code": "F1211_02ER",
+      "label": "Early white flesh peaches"
+    },
+    {
+      "code": "F1211_02ME",
+      "label": "Medium-early white flesh peaches"
+    },
+    {
+      "code": "F1211_02LA",
+      "label": "Late white flesh peaches"
+    },
+    {
+      "code": "F1211_03",
+      "label": "Doughnut peaches"
+    },
+    {
+      "code": "F1212",
+      "label": "Peaches for processing"
+    },
+    {
+      "code": "F1220",
+      "label": "Nectarines"
+    },
+    {
+      "code": "F1221",
+      "label": "Nectarines for fresh consumption"
+    },
+    {
+      "code": "F1221_01",
+      "label": "Yellow flesh nectarines"
+    },
+    {
+      "code": "F1221_01VE",
+      "label": "Very early yellow flesh nectarines"
+    },
+    {
+      "code": "F1221_01ER",
+      "label": "Early yellow flesh nectarines"
+    },
+    {
+      "code": "F1221_01ME",
+      "label": "Medium-early yellow flesh nectarines"
+    },
+    {
+      "code": "F1221_01LA",
+      "label": "Late yellow flesh nectarines"
+    },
+    {
+      "code": "F1221_02",
+      "label": "White flesh nectarines"
+    },
+    {
+      "code": "F1221_02VE",
+      "label": "Very early white flesh nectarines"
+    },
+    {
+      "code": "F1221_02ER",
+      "label": "Early white flesh nectarines"
+    },
+    {
+      "code": "F1221_02ME",
+      "label": "Medium-early white flesh nectarines"
+    },
+    {
+      "code": "F1221_02LA",
+      "label": "Late white flesh nectarines"
+    },
+    {
+      "code": "F1222",
+      "label": "Nectarines for processing"
+    },
+    {
+      "code": "F1230",
+      "label": "Apricots"
+    },
+    {
+      "code": "F1230VE",
+      "label": "Very early apricots"
+    },
+    {
+      "code": "F1230ER",
+      "label": "Early apricots"
+    },
+    {
+      "code": "F1230ME",
+      "label": "Medium-early apricots"
+    },
+    {
+      "code": "F1230LA",
+      "label": "Late apricots"
+    },
+    {
+      "code": "F1240",
+      "label": "Cherries"
+    },
+    {
+      "code": "F1241",
+      "label": "Sour cherries"
+    },
+    {
+      "code": "F1242",
+      "label": "Sweet cherries"
+    },
+    {
+      "code": "F1250",
+      "label": "Plums"
+    },
+    {
+      "code": "F1251",
+      "label": "Quetsches"
+    },
+    {
+      "code": "F1252",
+      "label": "Greengages"
+    },
+    {
+      "code": "F1253",
+      "label": "Mirabelles"
+    },
+    {
+      "code": "F1259",
+      "label": "Plums for drying and other plums"
+    },
+    {
+      "code": "F1290",
+      "label": "Other stone fruits n.e.c"
+    },
+    {
+      "code": "F2000",
+      "label": "Fruits from subtropical and tropical climate zones"
+    },
+    {
+      "code": "F2000T",
+      "label": "Fruits from subtropical and tropical climate zones - outdoor"
+    },
+    {
+      "code": "F2000S",
+      "label": "Fruits from subtropical and tropical climate zones - under glass or high accessible cover"
+    },
+    {
+      "code": "F2100",
+      "label": "Figs"
+    },
+    {
+      "code": "F2200",
+      "label": "Kiwis"
+    },
+    {
+      "code": "F2300",
+      "label": "Avocados"
+    },
+    {
+      "code": "F2400",
+      "label": "Bananas"
+    },
+    {
+      "code": "F2900",
+      "label": "Other fruits from subtropical and tropical climate zones n.e.c."
+    },
+    {
+      "code": "F2910",
+      "label": "Dates"
+    },
+    {
+      "code": "F3000",
+      "label": "Berries (excluding strawberries)"
+    },
+    {
+      "code": "F3000T",
+      "label": "Berries (excluding strawberries) - outdoor"
+    },
+    {
+      "code": "F3000S",
+      "label": "Berries (excluding strawberries) - under glass or high accessible cover"
+    },
+    {
+      "code": "F3100",
+      "label": "Currants"
+    },
+    {
+      "code": "F3100T",
+      "label": "Currants - outdoor"
+    },
+    {
+      "code": "F3100S",
+      "label": "Currants - under glass or high accessible cover"
+    },
+    {
+      "code": "F3110",
+      "label": "Blackcurrants"
+    },
+    {
+      "code": "F3110T",
+      "label": "Blackcurrants - outdoor"
+    },
+    {
+      "code": "F3110S",
+      "label": "Blackcurrants - under glass or high accessible cover"
+    },
+    {
+      "code": "F3120",
+      "label": "Red currants"
+    },
+    {
+      "code": "F3120T",
+      "label": "Red currants - outdoor"
+    },
+    {
+      "code": "F3120S",
+      "label": "Red currants - under glass or high accessible cover"
+    },
+    {
+      "code": "F3200",
+      "label": "Raspberries"
+    },
+    {
+      "code": "F3200T",
+      "label": "Raspberries - outdoor"
+    },
+    {
+      "code": "F3200S",
+      "label": "Raspberries - under glass or high accessible cover"
+    },
+    {
+      "code": "F3300",
+      "label": "Blueberries"
+    },
+    {
+      "code": "F3300T",
+      "label": "Blueberries - outdoor"
+    },
+    {
+      "code": "F3300S",
+      "label": "Blueberries - under glass or high accessible cover"
+    },
+    {
+      "code": "F3900",
+      "label": "Other berries n.e.c."
+    },
+    {
+      "code": "F3900T",
+      "label": "Other berries n.e.c. - outdoor"
+    },
+    {
+      "code": "F3900S",
+      "label": "Other berries n.e.c. - under glass or high accessible cover"
+    },
+    {
+      "code": "F3910",
+      "label": "Gooseberries"
+    },
+    {
+      "code": "F4000_5000AM",
+      "label": "Nuts and dried fruit"
+    },
+    {
+      "code": "F4000",
+      "label": "Nuts"
+    },
+    {
+      "code": "F4000T",
+      "label": "Nuts - outdoor"
+    },
+    {
+      "code": "F4100",
+      "label": "Walnuts"
+    },
+    {
+      "code": "F4200",
+      "label": "Hazelnuts"
+    },
+    {
+      "code": "F4300",
+      "label": "Almonds"
+    },
+    {
+      "code": "F4400",
+      "label": "Chestnuts"
+    },
+    {
+      "code": "F4900",
+      "label": "Other nuts n.e.c."
+    },
+    {
+      "code": "F4910",
+      "label": "Pistachios"
+    },
+    {
+      "code": "F5000AM_9000AM",
+      "label": "Other fresh and dried fruits (agri-monetary)"
+    },
+    {
+      "code": "F5000AM",
+      "label": "Dried fruits (agri-monetary)"
+    },
+    {
+      "code": "F5100AM",
+      "label": "Dried figs (agri-monetary)"
+    },
+    {
+      "code": "F5900AM",
+      "label": "Other dried fruits n.e.c. (agri-monetary)"
+    },
+    {
+      "code": "F9000AM",
+      "label": "Other fresh fruits, nuts and dried fruits (agri-monetary)"
+    },
+    {
+      "code": "F9900AM",
+      "label": "Other fresh fruit n.e.c. (agri-monetary)"
+    },
+    {
+      "code": "T0000",
+      "label": "Citrus fruits"
+    },
+    {
+      "code": "T0000T",
+      "label": "Citrus fruits - outdoor"
+    },
+    {
+      "code": "T1000_2000_3000",
+      "label": "Oranges, small citrus and lemons"
+    },
+    {
+      "code": "T1000_2000_3100",
+      "label": "Oranges, small citrus fruits and yellow lemons"
+    },
+    {
+      "code": "T1000",
+      "label": "Oranges"
+    },
+    {
+      "code": "T1100",
+      "label": "Navel oranges"
+    },
+    {
+      "code": "T1100ER",
+      "label": "Early Navel oranges"
+    },
+    {
+      "code": "T1100ME",
+      "label": "Medium-early Navel oranges"
+    },
+    {
+      "code": "T1100LA",
+      "label": "Late Navel oranges"
+    },
+    {
+      "code": "T1110",
+      "label": "Washington Navel oranges"
+    },
+    {
+      "code": "T1200",
+      "label": "White oranges (blancas)"
+    },
+    {
+      "code": "T1200ER",
+      "label": "Early white oranges (blancas )"
+    },
+    {
+      "code": "T1200LA",
+      "label": "Late white oranges (blancas)"
+    },
+    {
+      "code": "T1210",
+      "label": "Valencia oranges"
+    },
+    {
+      "code": "T1300",
+      "label": "Blood oranges (sanguines)"
+    },
+    {
+      "code": "T1310",
+      "label": "Moro oranges"
+    },
+    {
+      "code": "T1320",
+      "label": "Sanguinello oranges"
+    },
+    {
+      "code": "T1330",
+      "label": "Tarocco oranges"
+    },
+    {
+      "code": "T1900",
+      "label": "Others oranges n.e.c"
+    },
+    {
+      "code": "T2000",
+      "label": "Small citrus fruits"
+    },
+    {
+      "code": "T2100",
+      "label": "Satsumas"
+    },
+    {
+      "code": "T2100VE",
+      "label": "Very early satsumas"
+    },
+    {
+      "code": "T2190",
+      "label": "Other satsumas"
+    },
+    {
+      "code": "T2200",
+      "label": "Clementines"
+    },
+    {
+      "code": "T2200ER",
+      "label": "Early clementines"
+    },
+    {
+      "code": "T2200ME",
+      "label": "Medium-early clementines"
+    },
+    {
+      "code": "T2200LA",
+      "label": "Late clementines"
+    },
+    {
+      "code": "T2900",
+      "label": "Other small citrus fruits and mandarin hybrids n.e.c."
+    },
+    {
+      "code": "T2910",
+      "label": "Mandarins"
+    },
+    {
+      "code": "T2920",
+      "label": "Tangerines"
+    },
+    {
+      "code": "T3000",
+      "label": "Lemons and acid limes"
+    },
+    {
+      "code": "T3000AM",
+      "label": "Lemons (agri-monetary)"
+    },
+    {
+      "code": "T3100",
+      "label": "Yellow lemons"
+    },
+    {
+      "code": "T3110",
+      "label": "Winter lemon varieties"
+    },
+    {
+      "code": "T3110_01",
+      "label": "Invernali lemons"
+    },
+    {
+      "code": "T3110_02",
+      "label": "Mesero lemons"
+    },
+    {
+      "code": "T3120",
+      "label": "Summer lemon varieties"
+    },
+    {
+      "code": "T3120_01",
+      "label": "Verdelli lemons"
+    },
+    {
+      "code": "T3120_02",
+      "label": "Verna lemons"
+    },
+    {
+      "code": "T3200",
+      "label": "Acid limes"
+    },
+    {
+      "code": "T4000",
+      "label": "Pomelos and grapefruits"
+    },
+    {
+      "code": "T9000",
+      "label": "Other citrus fruits n.e.c."
+    },
+    {
+      "code": "T9000AM",
+      "label": "Other citrus fruits n.e.c. (agri-monetary)"
+    },
+    {
+      "code": "W0000",
+      "label": "Grapes, must and wines"
+    },
+    {
+      "code": "W1000",
+      "label": "Grapes"
+    },
+    {
+      "code": "W1000T",
+      "label": "Grapes - outdoor"
+    },
+    {
+      "code": "W1000S",
+      "label": "Grapes - under glass or high accessible cover"
+    },
+    {
+      "code": "W1100",
+      "label": "Grapes for wines"
+    },
+    {
+      "code": "W1110_1120",
+      "label": "Grapes for wines with geographical indication (PDO/PGI)"
+    },
+    {
+      "code": "W1110",
+      "label": "Grapes for wines with protected designation of origin (PDO)"
+    },
+    {
+      "code": "W1120",
+      "label": "Grapes for wines with protected geographical indication (PGI)"
+    },
+    {
+      "code": "W1190",
+      "label": "Grapes for other wines n.e.c. (without PDO/PGI)"
+    },
+    {
+      "code": "W1190T",
+      "label": "Grapes for other wines n.e.c. (without PDO/PGI) - outdoor"
+    },
+    {
+      "code": "WDP",
+      "label": "Dual purpose grapes"
+    },
+    {
+      "code": "W1200_1300",
+      "label": "Grapes for table use and raisins"
+    },
+    {
+      "code": "W1200",
+      "label": "Grapes for table use"
+    },
+    {
+      "code": "W1200T",
+      "label": "Grapes for table use - outdoor"
+    },
+    {
+      "code": "W1210",
+      "label": "White grapes for table use"
+    },
+    {
+      "code": "W1211",
+      "label": "Seedless white grapes for table use"
+    },
+    {
+      "code": "W1212",
+      "label": "Normal white grapes for table use"
+    },
+    {
+      "code": "W1220",
+      "label": "Red grapes for table use"
+    },
+    {
+      "code": "W1221",
+      "label": "Seedless red grapes for table use"
+    },
+    {
+      "code": "W1222",
+      "label": "Normal red grapes for table use"
+    },
+    {
+      "code": "W1300",
+      "label": "Grapes for raisins"
+    },
+    {
+      "code": "W1300T",
+      "label": "Grapes for raisins - outdoor"
+    },
+    {
+      "code": "W1310",
+      "label": "Black Corinth grapes (currants)"
+    },
+    {
+      "code": "W1320",
+      "label": "Sultana grapes"
+    },
+    {
+      "code": "W1900",
+      "label": "Grapes for other purposes n.e.c."
+    },
+    {
+      "code": "W1900AM",
+      "label": "Other fresh grapes (agri-monetary)"
+    },
+    {
+      "code": "W2000",
+      "label": "Must"
+    },
+    {
+      "code": "W2100",
+      "label": "Vinified must"
+    },
+    {
+      "code": "W2200",
+      "label": "Non-vinified must"
+    },
+    {
+      "code": "W2210",
+      "label": "Concentrated must"
+    },
+    {
+      "code": "W2220",
+      "label": "Grape juice"
+    },
+    {
+      "code": "W3000",
+      "label": "Wines"
+    },
+    {
+      "code": "W3000R",
+      "label": "Wines - red and rosé"
+    },
+    {
+      "code": "W3000W",
+      "label": "Wines - white"
+    },
+    {
+      "code": "W3100",
+      "label": "Wines with geographical indication (PDO/PGI)"
+    },
+    {
+      "code": "W3100R",
+      "label": "Wines with PDO/PGI - red and rosé"
+    },
+    {
+      "code": "W3100W",
+      "label": "Wines with PDO/PGI - white"
+    },
+    {
+      "code": "W3110",
+      "label": "Wines with protected designation of origin (PDO)"
+    },
+    {
+      "code": "W3110R",
+      "label": "Wines with PDO - red and rosé"
+    },
+    {
+      "code": "W3110W",
+      "label": "Wines with PDO - white"
+    },
+    {
+      "code": "W3120",
+      "label": "Wines with protected geographical indication (PGI)"
+    },
+    {
+      "code": "W3120R",
+      "label": "Wines with PGI - red and rosé"
+    },
+    {
+      "code": "W3120W",
+      "label": "Wines with PGI - white"
+    },
+    {
+      "code": "W3200",
+      "label": "Wines without geographical indication (PDO/PGI), including varietal wines"
+    },
+    {
+      "code": "W3200R",
+      "label": "Wines without PDO/PGI, including varietal wines - red and rosé"
+    },
+    {
+      "code": "W3200W",
+      "label": "Wines without PDO/PGI, including varietal wines - white"
+    },
+    {
+      "code": "W3120_3210_3221",
+      "label": "Table wines"
+    },
+    {
+      "code": "W3120_3210_3221R",
+      "label": "Table wines - red and rosé"
+    },
+    {
+      "code": "W3120_3210_3221W",
+      "label": "Table wines - white"
+    },
+    {
+      "code": "W3210_3221",
+      "label": "Tables wines without geographical indication (PDO/PGI)"
+    },
+    {
+      "code": "W3210_3221R",
+      "label": "Table wines without PDO/PGI - red and rosé"
+    },
+    {
+      "code": "W3210_3221W",
+      "label": "Table wines without PDO/PGI - white"
+    },
+    {
+      "code": "W3210",
+      "label": "Varietal wines"
+    },
+    {
+      "code": "W3210R",
+      "label": "Varietal wines - red and rosé"
+    },
+    {
+      "code": "W3210W",
+      "label": "Varietal wines - white"
+    },
+    {
+      "code": "W3220",
+      "label": "Other wines"
+    },
+    {
+      "code": "W3220R",
+      "label": "Other wines - red and rosé"
+    },
+    {
+      "code": "W3220W",
+      "label": "Other wines - white"
+    },
+    {
+      "code": "W3221",
+      "label": "Other wines for direct human consumption without geographical indication (PDO/PGI) and without mention of variety"
+    },
+    {
+      "code": "W3221R",
+      "label": "Other wines for direct human consumption without PDO/PGI and without mention of variety - red and rosé"
+    },
+    {
+      "code": "W3221W",
+      "label": "Other wines for direct human consumption without PDO/PGI and without mention of variety - white"
+    },
+    {
+      "code": "W3222",
+      "label": "Other wines for processing n.e.c."
+    },
+    {
+      "code": "W3222R",
+      "label": "Other wines for processing n.e.c. - red and rosé"
+    },
+    {
+      "code": "W3222W",
+      "label": "Other wines for processing n.e.c. - white"
+    },
+    {
+      "code": "O0000",
+      "label": "Olives and olive oil"
+    },
+    {
+      "code": "O1000",
+      "label": "Olives"
+    },
+    {
+      "code": "O1000T",
+      "label": "Olives - outdoor"
+    },
+    {
+      "code": "O1100_1910",
+      "label": "Olives for table use and olive oil"
+    },
+    {
+      "code": "O1100",
+      "label": "Olives for table use"
+    },
+    {
+      "code": "O1100T",
+      "label": "Olives for table use - outdoor"
+    },
+    {
+      "code": "O1900",
+      "label": "Other olives"
+    },
+    {
+      "code": "O1910",
+      "label": "Olives for oil"
+    },
+    {
+      "code": "O1990",
+      "label": "Other olives n.e.c."
+    },
+    {
+      "code": "ODP",
+      "label": "Dual purpose olives"
+    },
+    {
+      "code": "O2000",
+      "label": "Olive oil"
+    },
+    {
+      "code": "O2100",
+      "label": "Extra virgin olive oil"
+    },
+    {
+      "code": "O2200",
+      "label": "Virgin olive oil"
+    },
+    {
+      "code": "O2210",
+      "label": "Virgin olive oil - superfine"
+    },
+    {
+      "code": "O2220",
+      "label": "Virgin olive oil - fine"
+    },
+    {
+      "code": "O2230",
+      "label": "Ordinary virgin olive oil - semi-fine/corrente"
+    },
+    {
+      "code": "O2300",
+      "label": "Refined (common) olive oil"
+    },
+    {
+      "code": "O2400",
+      "label": "Lampante virgin olive oil"
+    },
+    {
+      "code": "H9000",
+      "label": "Other permanent crops for human consumption n.e.c."
+    },
+    {
+      "code": "H9100",
+      "label": "Carobs"
+    },
+    {
+      "code": "L0000",
+      "label": "Nurseries"
+    },
+    {
+      "code": "L0000T",
+      "label": "Nurseries - outdoor"
+    },
+    {
+      "code": "L0000S",
+      "label": "Nurseries - under glass or high accessible cover"
+    },
+    {
+      "code": "PECR9_H9000",
+      "label": "Other permanent crops including other permanent crops for human consumption"
+    },
+    {
+      "code": "PECR9_H9000T",
+      "label": "Other permanent crops including other permanent crops for human consumption - outdoor"
+    },
+    {
+      "code": "PECR9_H9000S",
+      "label": "Other permanent crops including other permanent crops for human consumption - under glass or high accessible cover"
+    },
+    {
+      "code": "PECR9",
+      "label": "Other permanent crops"
+    },
+    {
+      "code": "PECR9T",
+      "label": "Other permanent crops - outdoor"
+    },
+    {
+      "code": "PECR9S",
+      "label": "Other permanent crops - under glass or high accessible cover"
+    },
+    {
+      "code": "X0000",
+      "label": "Christmas trees"
+    },
+    {
+      "code": "Z0000",
+      "label": "Plaiting, weaving and other permanent crops n.e.c."
+    },
+    {
+      "code": "Z1000",
+      "label": "Vegetative materials used primarily for plaiting"
+    },
+    {
+      "code": "K0000",
+      "label": "Kitchen gardens"
+    },
+    {
+      "code": "K0000T",
+      "label": "Kitchen gardens - outdoor"
+    },
+    {
+      "code": "K1000",
+      "label": "Vegetables from kitchen gardens"
+    },
+    {
+      "code": "K2000",
+      "label": "Fruits from kitchen gardens"
+    },
+    {
+      "code": "SAA",
+      "label": "Special agricultural production areas"
+    },
+    {
+      "code": "U0000",
+      "label": "Mushrooms"
+    },
+    {
+      "code": "U1000",
+      "label": "Cultivated mushrooms"
+    },
+    {
+      "code": "U1100",
+      "label": "Champignons"
+    },
+    {
+      "code": "U1900",
+      "label": "Other cultivated mushrooms n.e.c."
+    },
+    {
+      "code": "U2000",
+      "label": "Wild mushrooms"
+    },
+    {
+      "code": "SAA9",
+      "label": "Other special agricultural production areas"
+    },
+    {
+      "code": "NUAA",
+      "label": "Unutilised agricultural area"
+    },
+    {
+      "code": "WA",
+      "label": "Wooded areas"
+    },
+    {
+      "code": "SRCAA",
+      "label": "Short rotation coppice areas"
+    },
+    {
+      "code": "FA9",
+      "label": "Other areas on the farms"
+    },
+    {
+      "code": "CRP9",
+      "label": "Other crop products"
+    },
+    {
+      "code": "CRP9ORG",
+      "label": "Other organic crop products"
+    },
+    {
+      "code": "CRP9_RES",
+      "label": "Other crop products residues"
+    },
+    {
+      "code": "CRP99",
+      "label": "Other crop products n.e.c."
+    },
+    {
+      "code": "NONE",
+      "label": "None"
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "param": "strucpro",
+  "endpoint": "sdmx/2.1/codelist/ESTAT/STRUCPRO",
+  "fetched": "2026-10-27T19:55:25Z",
+  "records": [
+    {
+      "code": "AR_THS_HA",
+      "label": "Area (sown/harvested/production) - thousand hectares"
+    },
+    {
+      "code": "HPRD_THS_T",
+      "label": "Harvested production - thousand tonnes"
+    },
+    {
+      "code": "MAR_THS_HA",
+      "label": "Main area - thousand hectares"
+    },
+    {
+      "code": "HUMD_PC",
+      "label": "Humidity - percentage"
+    },
+    {
+      "code": "SUG_SB_PC",
+      "label": "Sugar content of sugar beet - percentage"
+    },
+    {
+      "code": "HUMD_EU_PC",
+      "label": "EU standard humidity - percentage"
+    },
+    {
+      "code": "HPRD_HUMD_EU_THS_T",
+      "label": "Harvested production in EU standard humidity - thousand tonnes"
+    },
+    {
+      "code": "YLD_T_HA",
+      "label": "Yield - tonnes per hectare"
+    },
+    {
+      "code": "YLD_HUMD_EU_T_HA",
+      "label": "Yield in EU standard humidity - tonnes per hectare"
+    },
+    {
+      "code": "AR_ORGC_HA",
+      "label": "Certified organic area (sown/harvested/production) - hectare"
+    },
+    {
+      "code": "HPRD_ORGC_T",
+      "label": "Certified organic harvested production - tonne"
+    },
+    {
+      "code": "MAR_ORGC_HA",
+      "label": "Main certified organic area - hectare"
+    },
+    {
+      "code": "MAR_UCONV_ORG_HA",
+      "label": "Main area under conversion to organic - hectare"
+    },
+    {
+      "code": "MAR_ORGC_UCONV_HA",
+      "label": "Main area certified or under conversion to organic - hectare"
+    },
+    {
+      "code": "HPRD_ORGC_HUMD_EU_T",
+      "label": "Certified organic harvested production in EU standard humidity - tonne"
+    },
+    {
+      "code": "YLD_ORGC_T_HA",
+      "label": "Certified organic yield - tonnes per hectare"
+    },
+    {
+      "code": "YLD_ORGC_HUMD_EU_T_HA",
+      "label": "Certified organic yield in EU standard humidity - tonnes per hectare"
+    },
+    {
+      "code": "AR_ORGC_PC",
+      "label": "Certified organic area - percentage of total area"
+    },
+    {
+      "code": "MAR_ORGC_PC",
+      "label": "Main certified organic area - percentage of main area"
+    },
+    {
+      "code": "MAR_UCONV_ORG_PC",
+      "label": "Main area under conversion to organic - percentage of main area"
+    },
+    {
+      "code": "MAR_ORGC_UCONV_PC",
+      "label": "Main area certified or under conversion to organic - percentage of main area"
+    },
+    {
+      "code": "HPRD_ORGC_PC",
+      "label": "Certified organic harvested production - percentage of total harvested production"
+    },
+    {
+      "code": "HOL",
+      "label": "Number of holders (1000)"
+    },
+    {
+      "code": "ANI",
+      "label": "Number of animals (1000)"
+    }
+  ]
+}

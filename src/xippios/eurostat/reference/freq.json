@@ -1,0 +1,55 @@
+{
+  "param": "freq",
+  "endpoint": "sdmx/2.1/codelist/ESTAT/FREQ",
+  "fetched": "2026-10-27T19:55:17Z",
+  "records": [
+    {
+      "code": "P",
+      "label": "Pluri-annual"
+    },
+    {
+      "code": "A",
+      "label": "Annual"
+    },
+    {
+      "code": "S",
+      "label": "Half-yearly, semesterly"
+    },
+    {
+      "code": "Q",
+      "label": "Quarterly"
+    },
+    {
+      "code": "M",
+      "label": "Monthly"
+    },
+    {
+      "code": "W",
+      "label": "Weekly"
+    },
+    {
+      "code": "B",
+      "label": "Daily - business week"
+    },
+    {
+      "code": "D",
+      "label": "Daily"
+    },
+    {
+      "code": "H",
+      "label": "Hourly"
+    },
+    {
+      "code": "I",
+      "label": "Irregular / A-periodic"
+    },
+    {
+      "code": "NAP",
+      "label": "Not applicable"
+    },
+    {
+      "code": "A3",
+      "label": "Triannual"
+    }
+  ]
+}

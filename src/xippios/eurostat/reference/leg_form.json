@@ -1,0 +1,119 @@
+{
+  "param": "leg_form",
+  "endpoint": "sdmx/2.1/codelist/ESTAT/LEG_FORM",
+  "fetched": "2026-10-27T19:55:30Z",
+  "records": [
+    {
+      "code": "TOTAL",
+      "label": "Total"
+    },
+    {
+      "code": "PER_PHY",
+      "label": "Physical person"
+    },
+    {
+      "code": "PER_NTL",
+      "label": "Natural person"
+    },
+    {
+      "code": "PER_LEG_HLD_GRP",
+      "label": "Legal person or group holding"
+    },
+    {
+      "code": "PER_LEG",
+      "label": "Legal person"
+    },
+    {
+      "code": "PER_LEG_EG",
+      "label": "Legal person which is part of an enterprise group"
+    },
+    {
+      "code": "PER_LEG_NEG",
+      "label": "Legal person which is not part of an enterprise group"
+    },
+    {
+      "code": "ENT_SOLE",
+      "label": "Sole proprietorship"
+    },
+    {
+      "code": "ENT_PA",
+      "label": "Partnership, co-operatives, associations, etc."
+    },
+    {
+      "code": "ENT_COOP",
+      "label": "Cooperative"
+    },
+    {
+      "code": "ENT_MUT",
+      "label": "Mutual enterprises"
+    },
+    {
+      "code": "ENT_LL",
+      "label": "Limited liability enterprise"
+    },
+    {
+      "code": "ENT_LL_NP",
+      "label": "Limited liability enterprise not publicly listed"
+    },
+    {
+      "code": "ENT_LL_P",
+      "label": "Limited liability enterprise publicly listed"
+    },
+    {
+      "code": "ENT_PLAW",
+      "label": "Public law enterprise"
+    },
+    {
+      "code": "ENT_BR_NEEA",
+      "label": "Branches of non European Economic Area (EEA) enterprise"
+    },
+    {
+      "code": "HLD_GRP",
+      "label": "Group holding"
+    },
+    {
+      "code": "FARM_HLD",
+      "label": "Farm managed by sole holder"
+    },
+    {
+      "code": "FARM_SPOUFAM",
+      "label": "Farm managed by the spouse or a family member of holder"
+    },
+    {
+      "code": "FARM_SPOU",
+      "label": "Farm managed by spouse of holder"
+    },
+    {
+      "code": "FARM_FAM",
+      "label": "Farm managed by a family member (not spouse) of holder"
+    },
+    {
+      "code": "FARM_NFAM",
+      "label": "Farm not managed by any family member of holder"
+    },
+    {
+      "code": "FARM_HLD_SPOUFAM",
+      "label": "Farm co-managed by holder and spouse or family member"
+    },
+    {
+      "code": "FARM_HLD_SPOU",
+      "label": "Farm co-managed by holder and spouse"
+    },
+    {
+      "code": "FARM_HLD_FAM",
+      "label": "Farm co-managed by holder and family member (not spouse)"
+    },
+    {
+      "code": "UNIT_CML",
+      "label": "Common land unit"
+    },
+    {
+      "code": "OTH",
+      "label": "Other"
+    },
+    {
+      "code": "UNK",
+      "label": "Unknown"
+    }
+  ]
+}

@@ -1,0 +1,671 @@
+{
+  "param": "dairyprod",
+  "endpoint": "sdmx/2.1/codelist/ESTAT/DAIRYPROD",
+  "fetched": "2026-10-27T19:55:26Z",
+  "records": [
+    {
+      "code": "D0000",
+      "label": "Milk, cheese and eggs"
+    },
+    {
+      "code": "D0100",
+      "label": "Milk products"
+    },
+    {
+      "code": "D0100AD",
+      "label": "Farm milk products delivered to dairies"
+    },
+    {
+      "code": "D0110",
+      "label": "Fresh products"
+    },
+    {
+      "code": "D0120",
+      "label": "Manufactured products"
+    },
+    {
+      "code": "D0200",
+      "label": "Milk products, other than"
+    },
+    {
+      "code": "D0210D",
+      "label": "Milk products, other than drinking milk, cream, butter and cheese, delivered to dairies"
+    },
+    {
+      "code": "D0220D",
+      "label": "Milk products, other than milk and cream, delivered to dairies"
+    },
+    {
+      "code": "D0230D",
+      "label": "Other milk products (than milk, cream, skimmed milk and buttermilk) delivered to dairies"
+    },
+    {
+      "code": "D1000",
+      "label": "Raw milk and cream"
+    },
+    {
+      "code": "D1100",
+      "label": "Milk or raw milk"
+    },
+    {
+      "code": "D1100A",
+      "label": "Raw milk, total available on farms"
+    },
+    {
+      "code": "D1100DU",
+      "label": "Raw milk, total available on dairies  (=total used)"
+    },
+    {
+      "code": "D1100D",
+      "label": "Raw milk delivered to dairies"
+    },
+    {
+      "code": "D1100F",
+      "label": "Raw milk for feed"
+    },
+    {
+      "code": "D1100DLA",
+      "label": "Raw milk, differences and losses on farms"
+    },
+    {
+      "code": "D1100DLD",
+      "label": "Raw milk, differences and losses in dairies"
+    },
+    {
+      "code": "D1100DP",
+      "label": "Raw milk, used by dairy enterprises for processing milk products"
+    },
+    {
+      "code": "D1100OUD",
+      "label": "Raw milk, other uses by dairies"
+    },
+    {
+      "code": "D1100UA",
+      "label": "Raw milk, directly used on agricultural holdings"
+    },
+    {
+      "code": "D1110",
+      "label": "Raw cows' milk"
+    },
+    {
+      "code": "D1110D",
+      "label": "Raw cows' milk delivered to dairies"
+    },
+    {
+      "code": "D1110A",
+      "label": "Raw cows' milk from farm"
+    },
+    {
+      "code": "D1110DAF",
+      "label": "Raw cows' milk, delivered to dairies from agricultural holdings in foreign agricultural holdings"
+    },
+    {
+      "code": "D1111A",
+      "label": "Dairy raw cows' milk from farm"
+    },
+    {
+      "code": "D1112A",
+      "label": "Non-dairy raw cows' milk from farm"
+    },
+    {
+      "code": "D1120",
+      "label": "Ewes' milk"
+    },
+    {
+      "code": "D1120D",
+      "label": "Ewes' milk delivered to dairies"
+    },
+    {
+      "code": "D1120A",
+      "label": "Ewes' milk from farm"
+    },
+    {
+      "code": "D1130",
+      "label": "Goats' milk"
+    },
+    {
+      "code": "D1130D",
+      "label": "Goats' milk delivered to dairies"
+    },
+    {
+      "code": "D1130A",
+      "label": "Goats' milk from farm"
+    },
+    {
+      "code": "D1140D",
+      "label": "Buffalos' milk delivered to dairies"
+    },
+    {
+      "code": "D1140A",
+      "label": "Buffalos' milk from farm"
+    },
+    {
+      "code": "D1190",
+      "label": "Raw milk from other species"
+    },
+    {
+      "code": "D1200A",
+      "label": "Raw cream from farm"
+    },
+    {
+      "code": "D1200D",
+      "label": "Raw cream delivered to dairies"
+    },
+    {
+      "code": "D1200DME",
+      "label": "Raw cream delivered to dairies (in milk equivalent)"
+    },
+    {
+      "code": "D2000",
+      "label": "Milk and cream, not concentrated nor containing added sugar or other sweetening matter"
+    },
+    {
+      "code": "D2000X",
+      "label": "Milk and cream in bulk - exports"
+    },
+    {
+      "code": "D2000Y",
+      "label": "Milk and cream in bulk - exports intra-EU"
+    },
+    {
+      "code": "D2100",
+      "label": "Drinking milk"
+    },
+    {
+      "code": "D2110",
+      "label": "Raw drinking milk"
+    },
+    {
+      "code": "D2110V",
+      "label": "Drinking milk - direct sales"
+    },
+    {
+      "code": "D2110H",
+      "label": "Drinking milk - home consumption"
+    },
+    {
+      "code": "D2120",
+      "label": "Whole milk"
+    },
+    {
+      "code": "D2120I",
+      "label": "Imports of whole milk (including raw milk)"
+    },
+    {
+      "code": "D2120J",
+      "label": "Imports (intra-EU) of whole milk (including raw milk)"
+    },
+    {
+      "code": "D2121",
+      "label": "Whole milk pasteurised"
+    },
+    {
+      "code": "D2122",
+      "label": "Whole milk sterilised"
+    },
+    {
+      "code": "D2123",
+      "label": "Whole milk uperised"
+    },
+    {
+      "code": "D2130",
+      "label": "Partly skimmed milk"
+    },
+    {
+      "code": "D2131",
+      "label": "Partly skimmed milk pasteurised"
+    },
+    {
+      "code": "D2132",
+      "label": "Partly skimmed milk sterilised"
+    },
+    {
+      "code": "D2133",
+      "label": "Partly skimmed milk uperised"
+    },
+    {
+      "code": "D2140_4200A",
+      "label": "Skimmed milk and buttermilk, total available on farms"
+    },
+    {
+      "code": "D2140_4200RD",
+      "label": "Skimmed milk and buttermilk returned by dairies"
+    },
+    {
+      "code": "D2140_4200BC",
+      "label": "Skimmed milk and buttermilk - balance of cream deliveries"
+    },
+    {
+      "code": "D2140_4200AB",
+      "label": "Skimmed milk and buttermilk from butter and cream production"
+    },
+    {
+      "code": "D2140_4200D",
+      "label": "Skimmed milk and buttermilk delivered to dairies"
+    },
+    {
+      "code": "D2140_4200I",
+      "label": "Imports of skimmed milk and buttermilk"
+    },
+    {
+      "code": "D2140_4200J",
+      "label": "Imports (intra-EU) of skimmed milk and buttermilk"
+    },
+    {
+      "code": "D2140",
+      "label": "Skimmed milk"
+    },
+    {
+      "code": "D2140RA",
+      "label": "Skimmed milk - returned to the farm"
+    },
+    {
+      "code": "D2140I",
+      "label": "Imports of skimmed milk"
+    },
+    {
+      "code": "D2140J",
+      "label": "Imports (intra-EU) of skimmed milk"
+    },
+    {
+      "code": "D2141",
+      "label": "Skimmed milk pasteurised"
+    },
+    {
+      "code": "D2142",
+      "label": "Skimmed milk sterilised"
+    },
+    {
+      "code": "D2143",
+      "label": "Skimmed milk uperised"
+    },
+    {
+      "code": "D2200_6110A",
+      "label": "Cream and butter from farm"
+    },
+    {
+      "code": "D2200",
+      "label": "Cream"
+    },
+    {
+      "code": "D2200V",
+      "label": "Cream for direct consumption"
+    },
+    {
+      "code": "D2201",
+      "label": "Cream of fat content by weight not exceeding 29 %"
+    },
+    {
+      "code": "D2202",
+      "label": "Cream of fat content by weight over 29 %"
+    },
+    {
+      "code": "D2203",
+      "label": "Cream of fat content by weight not exceeding 21 %"
+    },
+    {
+      "code": "D2204",
+      "label": "Cream of fat content by weight over 21 %"
+    },
+    {
+      "code": "D2200IME",
+      "label": "Imports of cream (in milk equivalent)"
+    },
+    {
+      "code": "D2200JME",
+      "label": "Imports (intra-EU) of cream (in milk equivalent)"
+    },
+    {
+      "code": "D3000",
+      "label": "Milk and cream, concentrated or containing added sugar or other sweetening matter"
+    },
+    {
+      "code": "D3100",
+      "label": "Powder products"
+    },
+    {
+      "code": "D3100_X_3113",
+      "label": "Milk and cream powders, excluding skimmed milk powders"
+    },
+    {
+      "code": "D3100_X_3130",
+      "label": "Milk and cream powders, excluding buttermilk powder"
+    },
+    {
+      "code": "D3110",
+      "label": "Milk powder"
+    },
+    {
+      "code": "D3111",
+      "label": "Whole milk powder"
+    },
+    {
+      "code": "D3111_3120",
+      "label": "Whole milk and cream powders"
+    },
+    {
+      "code": "D3112",
+      "label": "Partly skimmed milk powder"
+    },
+    {
+      "code": "D3113",
+      "label": "Skimmed milk powder"
+    },
+    {
+      "code": "D3120",
+      "label": "Cream milk powder"
+    },
+    {
+      "code": "D3130",
+      "label": "Buttermilk powder"
+    },
+    {
+      "code": "D3130_4200",
+      "label": "Buttermilk - liquid or powder"
+    },
+    {
+      "code": "D3190",
+      "label": "Other powder products"
+    },
+    {
+      "code": "D3200",
+      "label": "Concentrated milk"
+    },
+    {
+      "code": "D3210",
+      "label": "Concentrated milk not sweetened"
+    },
+    {
+      "code": "D3220",
+      "label": "Concentrated milk sweetened"
+    },
+    {
+      "code": "D4000",
+      "label": "Buttermilk, curdled milk and cream, yogurt, kephir and other fermented or acidified milk and cream"
+    },
+    {
+      "code": "D4100",
+      "label": "Acidified milk (yoghurts and other)"
+    },
+    {
+      "code": "D4110",
+      "label": "Acidified milk with additives"
+    },
+    {
+      "code": "D4120",
+      "label": "Acidified milk without additives"
+    },
+    {
+      "code": "D4200",
+      "label": "Buttermilk"
+    },
+    {
+      "code": "D5000",
+      "label": "Whey"
+    },
+    {
+      "code": "D5000_7000",
+      "label": "Cheese, processed cheese and whey"
+    },
+    {
+      "code": "D5100",
+      "label": "Whey (liquid)"
+    },
+    {
+      "code": "D5200",
+      "label": "Whey (concentrated)"
+    },
+    {
+      "code": "D5300",
+      "label": "Whey (in powder or in block)"
+    },
+    {
+      "code": "D5400",
+      "label": "Lactose (milk sugar)"
+    },
+    {
+      "code": "D5500",
+      "label": "Lactalbumin"
+    },
+    {
+      "code": "D6000",
+      "label": "Butter, incl. dehydrated butter and ghee, and other fats and oils derived from milk; dairy spreads"
+    },
+    {
+      "code": "D6100",
+      "label": "Butter"
+    },
+    {
+      "code": "D6100A",
+      "label": "Farm butter"
+    },
+    {
+      "code": "D6100AD",
+      "label": "Farm butter delivered to dairies"
+    },
+    {
+      "code": "D6110",
+      "label": "Traditional butter"
+    },
+    {
+      "code": "D6120",
+      "label": "Recombined butter"
+    },
+    {
+      "code": "D6130",
+      "label": "Whey butter"
+    },
+    {
+      "code": "D6200",
+      "label": "Rendered butter and butteroil"
+    },
+    {
+      "code": "D6900",
+      "label": "Other yellow fat dairy products"
+    },
+    {
+      "code": "D6910",
+      "label": "Reduced-fat butter"
+    },
+    {
+      "code": "D6990",
+      "label": "Other yellow fat dairy products (without reduced-fat butter)"
+    },
+    {
+      "code": "D7000",
+      "label": "Cheese and curd"
+    },
+    {
+      "code": "D7100",
+      "label": "Cheese"
+    },
+    {
+      "code": "D7100A",
+      "label": "Farm cheese"
+    },
+    {
+      "code": "D7100AD",
+      "label": "Farm cheese delivered to dairies"
+    },
+    {
+      "code": "D7110",
+      "label": "All types of cheese"
+    },
+    {
+      "code": "D7111",
+      "label": "Soft cheese"
+    },
+    {
+      "code": "D7112",
+      "label": "Medium soft cheese"
+    },
+    {
+      "code": "D7113",
+      "label": "Medium hard cheese"
+    },
+    {
+      "code": "D7114",
+      "label": "Hard cheese"
+    },
+    {
+      "code": "D7115",
+      "label": "Extra hard cheese"
+    },
+    {
+      "code": "D7116",
+      "label": "Fresh cheese"
+    },
+    {
+      "code": "D7120",
+      "label": "Cheese from animals"
+    },
+    {
+      "code": "D7121",
+      "label": "Cheese from cows'milk (pure)"
+    },
+    {
+      "code": "D7122",
+      "label": "Cheese from ewes milk (pure)"
+    },
+    {
+      "code": "D7123",
+      "label": "Cheese from goats milk (pure)"
+    },
+    {
+      "code": "D7129",
+      "label": "Others (cheese from buffalos'milk (pure) or mixed cheese)"
+    },
+    {
+      "code": "D7200",
+      "label": "Processed cheese"
+    },
+    {
+      "code": "D8000",
+      "label": "Eggs"
+    },
+    {
+      "code": "D8000H",
+      "label": "Eggs for consumption"
+    },
+    {
+      "code": "D8100",
+      "label": "Fertilised eggs from domestic bird species, for incubation"
+    },
+    {
+      "code": "D8110",
+      "label": "Hens' eggs"
+    },
+    {
+      "code": "D8120",
+      "label": "Ducks' eggs"
+    },
+    {
+      "code": "D8130",
+      "label": "Geeses' eggs"
+    },
+    {
+      "code": "D8140",
+      "label": "Turkeys' eggs"
+    },
+    {
+      "code": "D8150",
+      "label": "Guinea fowls' eggs"
+    },
+    {
+      "code": "D8190",
+      "label": "Eggs from other species"
+    },
+    {
+      "code": "D8200",
+      "label": "Eggs in shell from domestic birdspecies, not for incubation"
+    },
+    {
+      "code": "D8210",
+      "label": "Hens' eggs"
+    },
+    {
+      "code": "D8290",
+      "label": "Eggs from other species"
+    },
+    {
+      "code": "D8300",
+      "label": "Eggs not in shell"
+    },
+    {
+      "code": "D9000",
+      "label": "Other milk products"
+    },
+    {
+      "code": "D9000I",
+      "label": "Imports of other products"
+    },
+    {
+      "code": "D9000J",
+      "label": "Imports (intra-EU) of other products"
+    },
+    {
+      "code": "D9100",
+      "label": "Drinks with a milk base"
+    },
+    {
+      "code": "D9200",
+      "label": "Other fresh products (milk-based desserts, ice cream)"
+    },
+    {
+      "code": "D9300",
+      "label": "Caseins and caseinates"
+    },
+    {
+      "code": "D9400",
+      "label": "Other manufactured milk products"
+    },
+    {
+      "code": "D9500",
+      "label": "Other organic dairy products"
+    },
+    {
+      "code": "D9800",
+      "label": "Milk products, other than milk, cream, butter and cheese"
+    },
+    {
+      "code": "D9800A",
+      "label": "Milk products, other than milk, cream, butter, and cheese in agricultural holdings"
+    },
+    {
+      "code": "D9800D",
+      "label": "Milk products, other than milk, cream, butter and cheese delivered to dairy enterprises"
+    },
+    {
+      "code": "D9810",
+      "label": "Milk non-mineral constituents"
+    },
+    {
+      "code": "D9811",
+      "label": "Lactose"
+    },
+    {
+      "code": "D9813",
+      "label": "Other milk proteins (lactalbumin, lactoglobulin, mixed milk proteins, demineralised whey)"
+    },
+    {
+      "code": "D9820",
+      "label": "Drinks with a milk base and other liquid milk products n.e.c."
+    },
+    {
+      "code": "D9830",
+      "label": "Other milk products n.e.c."
+    },
+    {
+      "code": "D9900A",
+      "label": "Other products collected from farm"
+    },
+    {
+      "code": "D9900D",
+      "label": "Milk products, other than milk and cream, delivered to dairy enterprises"
+    },
+    {
+      "code": "D9910",
+      "label": "Honey"
+    }
+  ]
+}
