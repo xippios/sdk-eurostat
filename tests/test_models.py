@@ -147,15 +147,24 @@ def test_dense_value_reads_like_the_sparse_one() -> None:
     ("change", "message"),
     [
         ({"size": [1, 3, 10, 2, 1]}, "id names 6 dimensions, size 5"),
-        ({"size": [1, 3, 10, 2, 1, 3]}, "category.index does not hold the positions"),
+        (
+            {"size": [1, 3, 10, 2, 1, 3]},
+            "dimension 'time': category.index does not hold the positions 0 to 2 that size gives",
+        ),
         ({"value": {"120": 1.0}}, "cell index '120' is not one of the 120 cells"),
-        ({"status": {"x": "|C"}}, "cell index 'x'"),
+        ({"status": {"x": "|C"}}, "cell index 'x' is not one of the 120 cells"),
         ({"value": [1.0, 2.0]}, "value lists 2 cells, size gives 120"),
     ],
 )
 def test_incoherent_cube_is_refused(change: dict[str, Any], message: str) -> None:
-    """NOT RECORDED: the recorded cube with one member changed in memory."""
+    """NOT RECORDED: the recorded cube with one member changed in memory. Core's text
+    names the first error's location, type and message, and chains no pydantic error,
+    whose text would quote the input."""
     broken = dict(raw("apro_mk_cola_AT_2022_2023"), **change)
     with pytest.raises(ValidationError) as refused:
         parse(Cube, broken, source="eurostat", endpoint="getData")
-    assert message in str(refused.value.__cause__)
+    assert str(refused.value) == (
+        "eurostat getData: 1 validation error(s); first at <root> (value_error): "
+        f"Value error, {message}"
+    )
+    assert refused.value.__cause__ is None
