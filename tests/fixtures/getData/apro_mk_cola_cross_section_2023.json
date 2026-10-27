@@ -1,0 +1,49 @@
+{
+  "recorded_at": "2026-10-27T14:01:10.167110Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/apro_mk_cola?format=JSON&lang=EN&milkitem=PRD&dairyprod=D1110D&unit=THS_T&time=2023"
+  },
+  "response": {
+    "body": "{\"version\":\"2.0\",\"class\":\"dataset\",\"label\":\"Production of main cows' milk products - annual data\",\"source\":\"ESTAT\",\"updated\":\"2026-10-05T23:00:00+0200\",\"value\":{\"42\":51.71,\"25\":3242.85,\"39\":260.21,\"6\":4661.13,\"7\":689.53,\"37\":3303.38,\"18\":303.91,\"8\":3222.94,\"10\":32423.69,\"9\":5685.49,\"11\":859.5,\"13\":628.75,\"14\":7330.27,\"31\":2195.95,\"15\":23435.15,\"16\":377.03,\"22\":1652.19,\"12\":8709.56,\"35\":155.98,\"17\":12802.08,\"20\":1351.84,\"19\":828.72,\"40\":27.81,\"41\":116.4,\"23\":37.3,\"24\":13893.9,\"26\":13020.61,\"27\":1891.32,\"28\":1204.55,\"43\":796.76,\"32\":2818.53,\"29\":558.86,\"30\":807.42,\"44\":10219.99},\"status\":{\"7\":\"p\",\"14\":\"p\",\"1\":\"|C\",\"21\":\"|C\",\"40\":\"p\",\"28\":\"p\"},\"id\":[\"freq\",\"milkitem\",\"dairyprod\",\"unit\",\"geo\",\"time\"],\"size\":[1,1,1,1,45,1],\"dimension\":{\"freq\":{\"label\":\"Time frequency\",\"category\":{\"index\":{\"A\":0},\"label\":{\"A\":\"Annual\"}}},\"milkitem\":{\"label\":\"Item of milk\",\"category\":{\"index\":{\"PRD\":0},\"label\":{\"PRD\":\"Product obtained\"}}},\"dairyprod\":{\"label\":\"Dairy and other animal products (except meat)\",\"category\":{\"index\":{\"D1110D\":0},\"label\":{\"D1110D\":\"Raw cows' milk delivered to dairies\"}}},\"unit\":{\"label\":\"Unit of measure\",\"category\":{\"index\":{\"THS_T\":0},\"label\":{\"THS_T\":\"Thousand tonnes\"}}},\"geo\":{\"label\":\"Geopolitical entity (reporting)\",\"category\":{\"index\":{\"EU\":0,\"EU27_2020\":1,\"EU28\":2,\"EU27_2007\":3,\"EU25\":4,\"EU15\":5,\"BE\":6,\"BG\":7,\"CZ\":8,\"DK\":9,\"DE\":10,\"EE\":11,\"IE\":12,\"EL\":13,\"ES\":14,\"FR\":15,\"HR\":16,\"IT\":17,\"CY\":18,\"LV\":19,\"LT\":20,\"LU\":21,\"HU\":22,\"MT\":23,\"NL\":24,\"AT\":25,\"PL\":26,\"PT\":27,\"RO\":28,\"SI\":29,\"SK\":30,\"FI\":31,\"SE\":32,\"EEA\":33,\"EFTA\":34,\"IS\":35,\"NO\":36,\"CH\":37,\"UK\":38,\"BA\":39,\"ME\":40,\"MK\":41,\"AL\":42,\"RS\":43,\"TR\":44},\"label\":{\"EU\":\"European Union (EU6-1958, EU9-1973, EU10-1981, EU12-1986, EU15-1995, EU25-2004, EU27-2007, EU28-2013, EU27-2020)\",\"EU27_2020\":\"European Union - 27 countries (from 2020)\",\"EU28\":\"European Union - 28 countries (2013-2020)\",\"EU27_2007\":\"European Union - 27 countries (2007-2013)\",\"EU25\":\"European Union - 25 countries (2004-2006)\",\"EU15\":\"European Union - 15 countries (1995-2004)\",\"BE\":\"Belgium\",\"BG\":\"Bulgaria\",\"CZ\":\"Czechia\",\"DK\":\"Denmark\",\"DE\":\"Germany\",\"EE\":\"Estonia\",\"IE\":\"Ireland\",\"EL\":\"Greece\",\"ES\":\"Spain\",\"FR\":\"France\",\"HR\":\"Croatia\",\"IT\":\"Italy\",\"CY\":\"Cyprus\",\"LV\":\"Latvia\",\"LT\":\"Lithuania\",\"LU\":\"Luxembourg\",\"HU\":\"Hungary\",\"MT\":\"Malta\",\"NL\":\"Netherlands\",\"AT\":\"Austria\",\"PL\":\"Poland\",\"PT\":\"Portugal\",\"RO\":\"Romania\",\"SI\":\"Slovenia\",\"SK\":\"Slovakia\",\"FI\":\"Finland\",\"SE\":\"Sweden\",\"EEA\":\"European Economic Area (EEA18-1995, EEA28-2004, EEA30-2007, EEA31-2013, EEA30-2020)\",\"EFTA\":\"European Free Trade Association\",\"IS\":\"Iceland\",\"NO\":\"Norway\",\"CH\":\"Switzerland\",\"UK\":\"United Kingdom\",\"BA\":\"Bosnia and Herzegovina\",\"ME\":\"Montenegro\",\"MK\":\"North Macedonia\",\"AL\":\"Albania\",\"RS\":\"Serbia\",\"TR\":\"T\u00fcrkiye\"}}},\"time\":{\"label\":\"Time\",\"category\":{\"index\":{\"2023\":0},\"label\":{\"2023\":\"2023\"}}}},\"extension\":{\"lang\":\"EN\",\"id\":\"APRO_MK_COLA\",\"agencyId\":\"ESTAT\",\"version\":\"1.0\",\"datastructure\":{\"id\":\"APRO_MK_COLA\",\"agencyId\":\"ESTAT\",\"version\":\"60.0\"},\"annotation\":[{\"type\":\"CREATED\",\"date\":\"2025-02-24T13:29:25+0100\"},{\"type\":\"DISSEMINATION_DOI_XML\",\"title\":\"<adms:identifier xmlns:adms=\\\"http://www.w3.org/ns/adms#\\\" xmlns:skos=\\\"http://www.w3.org/2004/02/skos/core.html\\\" xmlns:dct=\\\"http://purl.org/dc/terms/\\\" xmlns:rdf=\\\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\\\"><adms:Identifier rdf:about=\\\"https://doi.org/10.2908/APRO_MK_COLA\\\"><skos:notation rdf:datatype=\\\"http://purl.org/spar/datacite/doi\\\">10.2908/APRO_MK_COLA</skos:notation><dct:creator rdf:resource=\\\"http://publications.europa.eu/resource/authority/corporate-body/ESTAT\\\"/><dct:issued rdf:datatype=\\\"http://www.w3.org/2001/XMLSchema#date\\\">2023-01-19</dct:issued></adms:Identifier></adms:identifier>\"},{\"type\":\"DISSEMINATION_OBJECT_TYPE\",\"title\":\"DATASET\"},{\"type\":\"DISSEMINATION_TIMESTAMP_DATA\",\"date\":\"2026-10-05T23:00:00+0200\"},{\"type\":\"DISSEMINATION_TIMESTAMP_GLOBAL\",\"date\":\"2026-10-05T23:00:00+0200\"},{\"type\":\"DISSEMINATION_TIMESTAMP_PLANNED\",\"date\":\"2026-10-05T23:00:00+0200\"},{\"type\":\"ESMS_HTML\",\"title\":\"Explanatory texts (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/cache/metadata/en/apro_anip_esms.htm\"},{\"type\":\"ESMS_SDMX\",\"title\":\"Explanatory texts (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/api/dissemination/files?file=metadata/apro_anip_esms.sdmx.zip\"},{\"type\":\"OBS_COUNT\",\"title\":\"9502\"},{\"type\":\"OBS_PERIOD_OVERALL_LATEST\",\"title\":\"2025\"},{\"type\":\"OBS_PERIOD_OVERALL_OLDEST\",\"title\":\"1968\"},{\"type\":\"SOURCE_INSTITUTIONS\",\"text\":\"Eurostat\"},{\"type\":\"UPDATE_DATA\",\"date\":\"2026-10-05T23:00:00+0200\"},{\"type\":\"UPDATE_STRUCTURE\",\"date\":\"2026-03-09T23:00:00+0100\"}],\"status\":{\"label\":{\"p\":\"provisional\",\"|C\":\"|confidential\"}},\"positions-with-no-data\":{\"freq\":[],\"milkitem\":[],\"dairyprod\":[],\"unit\":[],\"geo\":[0,2,3,4,5,33,34,36,38],\"time\":[]}}}",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Tue, 27 Oct 2026 14:01:06 GMT"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "x-oracle-dms-ecid",
+        "8f54b451-96e8-4e61-8ebc-d67f99829808-001cae3e"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "x-oracle-dms-rid",
+        "0"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ],
+      [
+        "set-cookie",
+        "REDACTED"
+      ]
+    ],
+    "status": 200
+  }
+}

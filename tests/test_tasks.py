@@ -11,10 +11,15 @@ print it.
 The fixtures are ``tests/fixtures/getData/<case>.json``, recorded on 2026-10-27; each
 test sends exactly the recorded URL, parameter order included. The asynchronous answer
 is not recorded (``tests/test_client.py`` says why); its test serves the user guide's
-documented body.
+documented body. The slices (``get_series``, ``get_latest_period``,
+``get_cross_section``) each send one getData request, so their fixtures are getData
+answers too: ``*_series_*``, ``*_latest_*`` and ``*_cross_section_*``, plus two of
+``get_data``'s whose URL a slice sends as well (``apro_cpnh1_AT_2022_2023``, a series
+refused, and ``unknown_code``, an empty cross-section).
 """
 
 import json
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, cast
@@ -36,11 +41,11 @@ from xippios.core.testing import (
     sent_urls,
 )
 
-from xippios.eurostat import get_data, tasks
+from xippios.eurostat import get_cross_section, get_data, get_latest_period, get_series, tasks
 from xippios.eurostat._client import config
 from xippios.eurostat.http import router
 from xippios.eurostat.mcp import server
-from xippios.eurostat.models import Cube, GeoLevel, Lang
+from xippios.eurostat.models import Cube, GeoLevel, Lang, Observation
 
 FIXTURES = Path(__file__).parent / "fixtures"
 GUIDE = Path(__file__).parents[1] / "docs" / "upstream" / "user-guide" / "api-detailed-guidelines"
@@ -422,3 +427,374 @@ def test_get_data_route_answers_a_refusal_with_422(replay_fixture: ReplayFixture
         )
     assert answer.status_code == 422
     assert "INVALID_QUERY_DIMENSION" in answer.text
+
+
+# The slices: get_series, get_latest_period, get_cross_section. Each sends one getData
+# request through get_data, so meta is get_data's; the fixtures are slices recorded on
+# 2026-10-27 through the same URL the task sends.
+
+MILK = {"milkitem": "PRD", "dairyprod": "D1110D", "unit": "THS_T"}
+"""apro_mk_cola's raw cows' milk delivered to dairies, in thousand tonnes."""
+
+FARMS = {
+    "statinfo": "TOTAL",
+    "leg_form": "PER_NTL",
+    "farmtype": "FT1",
+    "so_eur": "TOTAL",
+    "uaarea": "TOTAL",
+    "unit": "HLD",
+    "geo": "AT",
+}
+"""ef_m_farmleg's holdings of natural persons specialised in field crops, Austria."""
+
+
+def recorded_cube(case: str) -> Cube:
+    body = json.loads(load_fixture(FIXTURES / ENDPOINT / f"{case}.json").response.body)
+    return Cube.model_validate(body)
+
+
+def cube_order(cube: Cube) -> list[dict[str, str]]:
+    """Each cell's codes, in cell order, of the cells that have a value or a status."""
+    return [observation.codes for observation in cube.observations()]
+
+
+def test_get_series_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
+    case = "apro_mk_cola_series_AT_2015_2023"
+    route = replay_fixture(ENDPOINT, case)
+    before = datetime.now(UTC)
+    result = get_series("apro_mk_cola", {**MILK, "geo": "AT"}, since="2015", until="2023")
+    after = datetime.now(UTC)
+    assert sent_urls(route) == [recorded_url(case)]
+    assert all(isinstance(observation, Observation) for observation in result.data)
+    periods = [observation.codes["time"] for observation in result.data]
+    assert periods == [str(year) for year in range(2015, 2024)]
+    time_index = recorded_cube(case).dimension["time"].category.index
+    assert periods == sorted(time_index, key=time_index.__getitem__), "the time index's order"
+    assert {name: code for name, code in result.data[0].codes.items() if name != "time"} == {
+        "freq": "A",
+        **MILK,
+        "geo": "AT",
+    }
+    assert all(
+        observation.codes.keys() == result.data[0].codes.keys() for observation in result.data
+    )
+    assert result.data[-1].value == 3242.85
+    assert result.data[-1].labels["dairyprod"] == "Raw cows' milk delivered to dairies"
+    assert result.meta.source == "eurostat"
+    assert result.meta.endpoint == "getData"
+    assert result.meta.published_at == datetime(2026, 10, 5, 23, 0, tzinfo=CEST)
+    assert result.meta.vintage == "2026-10-05T23:00:00+0200" == recorded_updated(case)
+    assert result.meta.request == {
+        "dataset": "apro_mk_cola",
+        "filters": {**MILK, "geo": "AT"},
+        "lang": "EN",
+        "since_time_period": "2015",
+        "until_time_period": "2023",
+    }
+    assert result.meta.total is None
+    assert_time_between(result.meta.retrieved_at, before, after)
+
+
+def test_get_series_ef_m_farmleg_every_period(replay_fixture: ReplayFixture) -> None:
+    """Without since and until the series runs over every period the dataset has: the
+    farm structure survey's years, irregular, each value an integer count of holdings."""
+    case = "ef_m_farmleg_series_AT_PER_NTL_FT1"
+    route = replay_fixture(ENDPOINT, case)
+    result = get_series("ef_m_farmleg", FARMS)
+    assert sent_urls(route) == [recorded_url(case)]
+    assert [observation.codes["time"] for observation in result.data] == [
+        "2010",
+        "2013",
+        "2016",
+        "2020",
+        "2023",
+    ]
+    assert all(type(observation.value) is int for observation in result.data)
+    assert result.data[0].labels["leg_form"] == "Natural person"
+    assert result.meta.published_at == datetime(2026, 6, 17, 23, 0, tzinfo=CEST)
+    assert result.meta.vintage == recorded_updated(case)
+    assert result.meta.request == {"dataset": "ef_m_farmleg", "filters": FARMS, "lang": "EN"}
+
+
+def test_get_series_refuses_an_answer_of_two_series(replay_fixture: ReplayFixture) -> None:
+    """Two dairy products give two series: refused after the one request, which alone
+    shows it, naming the dimension to pin and its codes."""
+    case = "apro_mk_cola_series_two_dairyprod"
+    route = replay_fixture(ENDPOINT, case)
+    with pytest.raises(InvalidRequestError) as refused:
+        get_series(
+            "apro_mk_cola",
+            {"milkitem": "PRD", "dairyprod": ["D1110D", "D2100"], "unit": "THS_T", "geo": "AT"},
+            since="2022",
+            until="2023",
+        )
+    assert sent_urls(route) == [recorded_url(case)]
+    assert str(refused.value) == (
+        "the answer for apro_mk_cola spans 2 series, not one: pin each of these dimensions "
+        "to one code in filters: dairyprod (2 codes: D1110D, D2100)"
+    )
+
+
+def test_get_series_refusal_lists_at_most_twenty_codes(replay_fixture: ReplayFixture) -> None:
+    """crops (214 codes) and strucpro (5) left open: both named, crops' first 20 codes
+    and how many more."""
+    case = "apro_cpnh1_AT_2022_2023"
+    route = replay_fixture(ENDPOINT, case)
+    with pytest.raises(InvalidRequestError) as refused:
+        get_series("apro_cpnh1", {"geo": "AT"}, since="2022", until="2023")
+    assert sent_urls(route) == [recorded_url(case)]
+    crops = recorded_cube(case).dimension["crops"].category.index
+    first = ", ".join(sorted(crops, key=crops.__getitem__)[:20])
+    assert str(refused.value) == (
+        "the answer for apro_cpnh1 spans 1070 series, not one: pin each of these dimensions "
+        f"to one code in filters: crops (214 codes: {first} and 194 more); strucpro (5 codes: "
+        "AR_THS_HA, HPRD_THS_T, MAR_THS_HA, HUMD_PC, YLD_T_HA)"
+    )
+
+
+def test_get_series_unknown_code_is_an_empty_list(replay_fixture: ReplayFixture) -> None:
+    """An empty answer is an empty list, before the one-series check: the empty cube has
+    size 0 on geo."""
+    case = "apro_mk_cola_series_XX"
+    route = replay_fixture(ENDPOINT, case)
+    result = get_series("apro_mk_cola", {**MILK, "geo": "XX"}, since="2015", until="2023")
+    assert sent_urls(route) == [recorded_url(case)]
+    assert result.data == []
+    assert result.meta.vintage == recorded_updated(case)
+    assert result.meta.request["filters"] == {**MILK, "geo": "XX"}
+
+
+def test_get_latest_period_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
+    case = "apro_mk_cola_latest_AT"
+    route = replay_fixture(ENDPOINT, case)
+    before = datetime.now(UTC)
+    result = get_latest_period("apro_mk_cola", {**MILK, "geo": "AT"})
+    after = datetime.now(UTC)
+    assert sent_urls(route) == [recorded_url(case)]
+    assert len(result.data) == 1
+    assert result.data[0].codes == {"freq": "A", **MILK, "geo": "AT", "time": "2025"}
+    assert result.data[0].value == 3503.31
+    assert result.meta.endpoint == "getData"
+    assert result.meta.published_at == datetime(2026, 10, 5, 23, 0, tzinfo=CEST)
+    assert result.meta.vintage == recorded_updated(case)
+    assert result.meta.request == {
+        "dataset": "apro_mk_cola",
+        "filters": {**MILK, "geo": "AT"},
+        "lang": "EN",
+        "last_time_period": 1,
+    }
+    assert result.meta.total is None
+    assert_time_between(result.meta.retrieved_at, before, after)
+
+
+def test_get_latest_period_apro_cpnh1_several_series(replay_fixture: ReplayFixture) -> None:
+    """One crop, strucpro left open: four series with a cell in 2026, the dataset's
+    latest period, in cube order; one cell carries a status."""
+    case = "apro_cpnh1_latest_AT_C1110"
+    route = replay_fixture(ENDPOINT, case)
+    result = get_latest_period("apro_cpnh1", {"crops": "C1110", "geo": "AT"})
+    assert sent_urls(route) == [recorded_url(case)]
+    assert [observation.codes for observation in result.data] == cube_order(recorded_cube(case))
+    assert [observation.codes["strucpro"] for observation in result.data] == [
+        "AR_THS_HA",
+        "HPRD_THS_T",
+        "HUMD_PC",
+        "YLD_T_HA",
+    ]
+    assert {observation.codes["time"] for observation in result.data} == {"2026"}
+    assert [observation.status for observation in result.data] == [None, None, "i", None]
+    assert result.meta.published_at == datetime(2026, 9, 28, 23, 0, tzinfo=CEST)
+    assert result.meta.request == {
+        "dataset": "apro_cpnh1",
+        "filters": {"crops": "C1110", "geo": "AT"},
+        "lang": "EN",
+        "last_time_period": 1,
+    }
+
+
+def test_get_latest_period_unknown_code_is_an_empty_list(replay_fixture: ReplayFixture) -> None:
+    case = "apro_mk_cola_latest_XX"
+    route = replay_fixture(ENDPOINT, case)
+    result = get_latest_period("apro_mk_cola", {**MILK, "geo": "XX"})
+    assert sent_urls(route) == [recorded_url(case)]
+    assert result.data == []
+    assert result.meta.vintage == recorded_updated(case)
+
+
+def test_get_cross_section_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
+    """geo left out: every geo code the dataset holds for 2023, in cube order."""
+    case = "apro_mk_cola_cross_section_2023"
+    route = replay_fixture(ENDPOINT, case)
+    before = datetime.now(UTC)
+    result = get_cross_section("apro_mk_cola", "2023", MILK)
+    after = datetime.now(UTC)
+    assert sent_urls(route) == [recorded_url(case)]
+    cube = recorded_cube(case)
+    assert cube.size[cube.id.index("geo")] == 45
+    assert [observation.codes for observation in result.data] == cube_order(cube)
+    assert len(result.data) == 36
+    assert {observation.codes["time"] for observation in result.data} == {"2023"}
+    assert len({observation.codes["geo"] for observation in result.data}) == 36
+    assert result.meta.endpoint == "getData"
+    assert result.meta.published_at == datetime(2026, 10, 5, 23, 0, tzinfo=CEST)
+    assert result.meta.vintage == recorded_updated(case)
+    assert result.meta.request == {
+        "dataset": "apro_mk_cola",
+        "filters": {**MILK, "time": "2023"},
+        "lang": "EN",
+    }
+    assert result.meta.total is None
+    assert_time_between(result.meta.retrieved_at, before, after)
+
+
+def test_get_cross_section_apro_cpnh1_one_crop(replay_fixture: ReplayFixture) -> None:
+    """One crop over every geo code, strucpro left open: strucpro outer, geo inner."""
+    case = "apro_cpnh1_cross_section_C1110_2024"
+    route = replay_fixture(ENDPOINT, case)
+    result = get_cross_section("apro_cpnh1", "2024", {"crops": "C1110"})
+    assert sent_urls(route) == [recorded_url(case)]
+    cube = recorded_cube(case)
+    assert cube.size == [1, 1, 5, 41, 1]
+    assert [observation.codes for observation in result.data] == cube_order(cube)
+    assert len(result.data) == 151
+    strucpro = [observation.codes["strucpro"] for observation in result.data]
+    assert strucpro == sorted(strucpro, key=cube.dimension["strucpro"].category.index.__getitem__)
+    assert result.meta.published_at == datetime(2026, 9, 28, 23, 0, tzinfo=CEST)
+    assert result.meta.request == {
+        "dataset": "apro_cpnh1",
+        "filters": {"crops": "C1110", "time": "2024"},
+        "lang": "EN",
+    }
+
+
+def test_get_cross_section_unknown_code_is_an_empty_list(replay_fixture: ReplayFixture) -> None:
+    """The recorded empty cube of PR 4: the same URL, geo=XX and time=2023."""
+    case = "unknown_code"
+    route = replay_fixture(ENDPOINT, case)
+    result = get_cross_section("apro_mk_cola", "2023", {"geo": "XX"})
+    assert sent_urls(route) == [recorded_url(case)]
+    assert result.data == []
+    assert result.meta.request["filters"] == {"geo": "XX", "time": "2023"}
+
+
+SLICES: list[tuple[str, Callable[..., Any], tuple[Any, ...], dict[str, Any]]] = [
+    ("get_series", get_series, ("apro_mk_cola",), {"since": "2015"}),
+    ("get_latest_period", get_latest_period, ("apro_mk_cola",), {}),
+    ("get_cross_section", get_cross_section, ("apro_mk_cola", "2023"), {}),
+]
+"""Each slice with its leading arguments, for the refusals before sending."""
+
+
+@pytest.mark.parametrize("time", ["time", "TIME_PERIOD"])
+@pytest.mark.parametrize(
+    ("name", "task", "args", "kwargs"), SLICES, ids=[name for name, *_ in SLICES]
+)
+def test_slices_refuse_a_time_filter(
+    respx_mock: respx.MockRouter,
+    time: str,
+    name: str,
+    task: Callable[..., Any],
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+) -> None:
+    """Each slice selects its periods itself; a time filter is refused before any
+    request, in the task's own terms."""
+    with pytest.raises(InvalidRequestError, match=rf"^filters\['{time}'\]: {name} ") as refused:
+        task(*args, filters={**MILK, time: "2023"}, **kwargs)
+    assert "get_data" not in str(refused.value)
+    assert not respx_mock.calls, "refused before any request"
+
+
+@pytest.mark.parametrize(
+    ("name", "task", "args", "kwargs"), SLICES, ids=[name for name, *_ in SLICES]
+)
+def test_slices_refuse_a_parameter_as_a_filter(
+    respx_mock: respx.MockRouter,
+    name: str,
+    task: Callable[..., Any],
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+) -> None:
+    with pytest.raises(InvalidRequestError) as refused:
+        task(*args, filters={**MILK, "lastTimePeriod": "2"}, **kwargs)
+    assert str(refused.value).startswith(
+        "filters['lastTimePeriod']: lastTimePeriod is a parameter of the Statistics API, "
+        "not a dimension; format is always JSON"
+    )
+    assert f"lang is an argument of {name}" in str(refused.value)
+    assert not respx_mock.calls, "refused before any request"
+
+
+@pytest.mark.anyio
+async def test_get_series_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
+    case = "apro_mk_cola_series_AT_2015_2023"
+    route = replay_fixture(ENDPOINT, case)
+    payload = await mcp_call(
+        server,
+        "eurostat_get_series",
+        {
+            "dataset": "apro_mk_cola",
+            "filters": {**MILK, "geo": "AT"},
+            "since": "2015",
+            "until": "2023",
+        },
+    )
+    assert sent_urls(route) == [recorded_url(case)]
+    assert [row["codes"]["time"] for row in payload["data"]] == [str(y) for y in range(2015, 2024)]
+    assert "note" not in payload, "nine rows: nothing cut"
+    assert payload["meta"]["endpoint"] == "getData"
+    assert payload["meta"]["request"]["since_time_period"] == "2015"
+    assert payload["meta"]["published_at"] == "2026-10-05T23:00:00+02:00"
+
+
+@pytest.mark.anyio
+async def test_get_series_tool_answers_the_refusal_as_text(replay_fixture: ReplayFixture) -> None:
+    replay_fixture(ENDPOINT, "apro_mk_cola_series_two_dairyprod")
+    text = await mcp_call_text(
+        server,
+        "eurostat_get_series",
+        {
+            "dataset": "apro_mk_cola",
+            "filters": {
+                "milkitem": "PRD",
+                "dairyprod": ["D1110D", "D2100"],
+                "unit": "THS_T",
+                "geo": "AT",
+            },
+            "since": "2022",
+            "until": "2023",
+        },
+    )
+    assert text.startswith("error: InvalidRequestError: the answer for apro_mk_cola spans 2 series")
+
+
+@pytest.mark.anyio
+async def test_get_cross_section_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
+    case = "apro_cpnh1_cross_section_C1110_2024"
+    route = replay_fixture(ENDPOINT, case)
+    payload = await mcp_call(
+        server,
+        "eurostat_get_cross_section",
+        {"dataset": "apro_cpnh1", "period": "2024", "filters": {"crops": "C1110"}},
+    )
+    assert sent_urls(route) == [recorded_url(case)]
+    assert len(payload["data"]) == 151
+    assert "note" not in payload, "151 rows and 38,752 bytes of rows: within the cap"
+    assert payload["meta"]["request"]["filters"] == {"crops": "C1110", "time": "2024"}
+
+
+def test_get_latest_period_route_end_to_end(replay_fixture: ReplayFixture) -> None:
+    """A mapping parameter makes the route a POST with a JSON body (ADR-0007)."""
+    case = "apro_mk_cola_latest_AT"
+    route = replay_fixture(ENDPOINT, case)
+    app = FastAPI()
+    app.include_router(router)
+    with TestClient(app) as http:
+        answer = http.post(
+            "/eurostat/get_latest_period",
+            json={"dataset": "apro_mk_cola", "filters": {**MILK, "geo": "AT"}},
+        )
+    assert answer.status_code == 200
+    assert sent_urls(route) == [recorded_url(case)]
+    assert answer.json()["data"][0]["codes"]["time"] == "2025"
+    assert answer.json()["meta"]["request"]["last_time_period"] == 1

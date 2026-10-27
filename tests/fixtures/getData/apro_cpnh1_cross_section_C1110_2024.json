@@ -1,0 +1,49 @@
+{
+  "recorded_at": "2026-10-27T14:01:09.155592Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/apro_cpnh1?format=JSON&lang=EN&crops=C1110&time=2024"
+  },
+  "response": {
+    "body": "{\"version\":\"2.0\",\"class\":\"dataset\",\"label\":\"Crop production in national humidity\",\"source\":\"ESTAT\",\"updated\":\"2026-09-28T23:00:00+0200\",\"value\":{\"37\":46.00,\"22\":247.96,\"34\":59.57,\"3\":164.54,\"4\":1170.04,\"32\":84.45,\"15\":4.33,\"5\":771.61,\"7\":2566.70,\"6\":475.60,\"8\":173.32,\"10\":93.28,\"11\":1717.46,\"0\":20321.73,\"1\":20321.73,\"28\":214.80,\"12\":4214.57,\"13\":139.59,\"19\":872.24,\"9\":47.73,\"30\":0.05,\"14\":520.31,\"17\":836.67,\"18\":12.54,\"16\":540.00,\"35\":0.66,\"36\":67.23,\"20\":0.00,\"21\":95.85,\"31\":59.21,\"23\":2385.69,\"24\":20.30,\"25\":2263.50,\"38\":549.03,\"29\":475.02,\"27\":270.04,\"39\":5691.00,\"40\":80.06,\"78\":180.81,\"63\":1427.50,\"75\":281.16,\"44\":1092.58,\"45\":6743.19,\"73\":310.73,\"56\":6.86,\"46\":4598.29,\"48\":18241.20,\"47\":3387.40,\"49\":744.75,\"51\":273.58,\"52\":6372.81,\"41\":111583.87,\"42\":111583.87,\"69\":750.70,\"53\":25673.69,\"54\":812.11,\"60\":5003.63,\"50\":413.58,\"71\":0.10,\"55\":2562.97,\"58\":4218.28,\"59\":65.26,\"57\":2465.90,\"76\":1.87,\"77\":229.31,\"61\":0.00,\"62\":675.71,\"72\":230.00,\"64\":12414.59,\"65\":65.94,\"66\":9259.21,\"79\":2900.54,\"70\":2930.60,\"68\":1470.91,\"80\":16403.00,\"81\":344.27,\"160\":14.00,\"145\":13.50,\"157\":13.00,\"126\":14.20,\"127\":11.00,\"155\":14.00,\"138\":11.20,\"128\":14.00,\"130\":14.00,\"129\":15.00,\"131\":14.00,\"133\":14.00,\"134\":13.40,\"123\":14.00,\"124\":14.00,\"151\":13.00,\"135\":15.00,\"136\":13.00,\"142\":14.00,\"132\":19.21,\"153\":15.00,\"137\":12.16,\"140\":14.00,\"141\":14.05,\"139\":14.00,\"158\":13.00,\"159\":13.00,\"144\":14.96,\"154\":15.00,\"146\":15.60,\"147\":11.00,\"148\":14.00,\"161\":14.00,\"152\":14.00,\"149\":14.00,\"150\":14.00,\"162\":10.70,\"163\":12.30,\"201\":3.93,\"186\":5.76,\"198\":4.72,\"167\":6.64,\"168\":5.76,\"196\":3.68,\"179\":1.59,\"169\":5.96,\"171\":7.11,\"170\":7.12,\"172\":4.30,\"174\":2.93,\"175\":3.71,\"192\":3.50,\"176\":6.09,\"177\":5.82,\"183\":5.74,\"173\":8.67,\"194\":2.00,\"178\":4.93,\"181\":5.04,\"182\":5.20,\"180\":4.57,\"199\":2.84,\"200\":3.41,\"185\":7.05,\"187\":5.20,\"188\":3.25,\"189\":4.09,\"202\":5.28,\"193\":6.17,\"190\":5.47,\"191\":5.45,\"203\":2.90,\"204\":4.30},\"status\":{\"34\":\"e\",\"15\":\"p\",\"10\":\"e\",\"26\":\"u\",\"75\":\"e\",\"56\":\"p\",\"51\":\"e\",\"67\":\"u\",\"157\":\"e\",\"138\":\"p\",\"133\":\"e\",\"153\":\"e\",\"158\":\"e\",\"198\":\"e\",\"179\":\"e\",\"174\":\"e\"},\"id\":[\"freq\",\"crops\",\"strucpro\",\"geo\",\"time\"],\"size\":[1,1,5,41,1],\"dimension\":{\"freq\":{\"label\":\"Time frequency\",\"category\":{\"index\":{\"A\":0},\"label\":{\"A\":\"Annual\"}}},\"crops\":{\"label\":\"Crops\",\"category\":{\"index\":{\"C1110\":0},\"label\":{\"C1110\":\"Common wheat and spelt\"}}},\"strucpro\":{\"label\":\"Structure of production\",\"category\":{\"index\":{\"AR_THS_HA\":0,\"HPRD_THS_T\":1,\"MAR_THS_HA\":2,\"HUMD_PC\":3,\"YLD_T_HA\":4},\"label\":{\"AR_THS_HA\":\"Area (sown/harvested/production) - thousand hectares\",\"HPRD_THS_T\":\"Harvested production - thousand tonnes\",\"MAR_THS_HA\":\"Main area - thousand hectares\",\"HUMD_PC\":\"Humidity - percentage\",\"YLD_T_HA\":\"Yield - tonnes per hectare\"}}},\"geo\":{\"label\":\"Geopolitical entity (reporting)\",\"category\":{\"index\":{\"EU\":0,\"EU27_2020\":1,\"EU28\":2,\"BE\":3,\"BG\":4,\"CZ\":5,\"DK\":6,\"DE\":7,\"EE\":8,\"IE\":9,\"EL\":10,\"ES\":11,\"FR\":12,\"HR\":13,\"IT\":14,\"CY\":15,\"LV\":16,\"LT\":17,\"LU\":18,\"HU\":19,\"MT\":20,\"NL\":21,\"AT\":22,\"PL\":23,\"PT\":24,\"RO\":25,\"SI\":26,\"SK\":27,\"FI\":28,\"SE\":29,\"IS\":30,\"NO\":31,\"CH\":32,\"UK\":33,\"BA\":34,\"ME\":35,\"MK\":36,\"AL\":37,\"RS\":38,\"TR\":39,\"XK\":40},\"label\":{\"EU\":\"European Union (EU6-1958, EU9-1973, EU10-1981, EU12-1986, EU15-1995, EU25-2004, EU27-2007, EU28-2013, EU27-2020)\",\"EU27_2020\":\"European Union - 27 countries (from 2020)\",\"EU28\":\"European Union - 28 countries (2013-2020)\",\"BE\":\"Belgium\",\"BG\":\"Bulgaria\",\"CZ\":\"Czechia\",\"DK\":\"Denmark\",\"DE\":\"Germany\",\"EE\":\"Estonia\",\"IE\":\"Ireland\",\"EL\":\"Greece\",\"ES\":\"Spain\",\"FR\":\"France\",\"HR\":\"Croatia\",\"IT\":\"Italy\",\"CY\":\"Cyprus\",\"LV\":\"Latvia\",\"LT\":\"Lithuania\",\"LU\":\"Luxembourg\",\"HU\":\"Hungary\",\"MT\":\"Malta\",\"NL\":\"Netherlands\",\"AT\":\"Austria\",\"PL\":\"Poland\",\"PT\":\"Portugal\",\"RO\":\"Romania\",\"SI\":\"Slovenia\",\"SK\":\"Slovakia\",\"FI\":\"Finland\",\"SE\":\"Sweden\",\"IS\":\"Iceland\",\"NO\":\"Norway\",\"CH\":\"Switzerland\",\"UK\":\"United Kingdom\",\"BA\":\"Bosnia and Herzegovina\",\"ME\":\"Montenegro\",\"MK\":\"North Macedonia\",\"AL\":\"Albania\",\"RS\":\"Serbia\",\"TR\":\"T\u00fcrkiye\",\"XK\":\"Kosovo*\"}}},\"time\":{\"label\":\"Time\",\"category\":{\"index\":{\"2024\":0},\"label\":{\"2024\":\"2024\"}}}},\"extension\":{\"lang\":\"EN\",\"id\":\"APRO_CPNH1\",\"agencyId\":\"ESTAT\",\"version\":\"1.0\",\"datastructure\":{\"id\":\"APRO_CPNH1\",\"agencyId\":\"ESTAT\",\"version\":\"54.0\"},\"annotation\":[{\"type\":\"CREATED\",\"date\":\"2018-02-21T16:56:21+0100\"},{\"type\":\"DISSEMINATION_DOI_XML\",\"title\":\"<adms:identifier xmlns:adms=\\\"http://www.w3.org/ns/adms#\\\" xmlns:skos=\\\"http://www.w3.org/2004/02/skos/core.html\\\" xmlns:dct=\\\"http://purl.org/dc/terms/\\\" xmlns:rdf=\\\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\\\"><adms:Identifier rdf:about=\\\"https://doi.org/10.2908/APRO_CPNH1\\\"><skos:notation rdf:datatype=\\\"http://purl.org/spar/datacite/doi\\\">10.2908/APRO_CPNH1</skos:notation><dct:creator rdf:resource=\\\"http://publications.europa.eu/resource/authority/corporate-body/ESTAT\\\"/><dct:issued rdf:datatype=\\\"http://www.w3.org/2001/XMLSchema#date\\\">2023-01-23</dct:issued></adms:Identifier></adms:identifier>\"},{\"type\":\"DISSEMINATION_EXPLANATORY_LINK\",\"title\":\"text-category\",\"href\":\"https://ec.europa.eu/eurostat/databrowser-backend/api/public/explanatory-notes/get/Info_note_APRO_CROPS_20260331.pdf\"},{\"type\":\"DISSEMINATION_EXPLANATORY_LINK\",\"title\":\"text-category\",\"href\":\"https://ec.europa.eu/eurostat/databrowser-backend/api/public/explanatory-notes/get/Info_note_APRO_CROPS_20260331.pdf\"},{\"type\":\"DISSEMINATION_EXPLANATORY_LINK\",\"title\":\"text-category\",\"href\":\"https://ec.europa.eu/eurostat/databrowser-backend/api/public/explanatory-notes/get/Info_note_APRO_CROPS_20260331.pdf\",\"text\":\"Information note\"},{\"type\":\"DISSEMINATION_OBJECT_TYPE\",\"title\":\"DATASET\"},{\"type\":\"DISSEMINATION_TIMESTAMP_DATA\",\"date\":\"2026-09-28T23:00:00+0200\"},{\"type\":\"DISSEMINATION_TIMESTAMP_GLOBAL\",\"date\":\"2026-10-26T23:00:00+0100\"},{\"type\":\"DISSEMINATION_TIMESTAMP_PLANNED\",\"date\":\"2026-10-26T23:00:00+0100\"},{\"type\":\"ESMS_HTML\",\"title\":\"Explanatory texts (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/cache/metadata/en/apro_cp_esms.htm\"},{\"type\":\"ESMS_SDMX\",\"title\":\"Explanatory texts (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/api/dissemination/files?file=metadata/apro_cp_esms.sdmx.zip\"},{\"type\":\"FOOTNOTE\",\"title\":\"Footnote (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/cache/metadata/Annexes/apro_cp_esms_an_Footnotes_on_crop_production_i.xlsx\"},{\"type\":\"OBS_COUNT\",\"title\":\"369972\"},{\"type\":\"OBS_PERIOD_OVERALL_LATEST\",\"title\":\"2026\"},{\"type\":\"OBS_PERIOD_OVERALL_OLDEST\",\"title\":\"2000\"},{\"type\":\"SOURCE_INSTITUTIONS\",\"text\":\"Eurostat\"},{\"type\":\"UPDATE_DATA\",\"date\":\"2026-09-28T23:00:00+0200\"},{\"type\":\"UPDATE_FOOTNOTES\",\"date\":\"2026-10-26T14:00:09Z\"},{\"type\":\"UPDATE_STRUCTURE\",\"date\":\"2026-05-19T23:00:00+0200\"}],\"status\":{\"label\":{\"e\":\"estimated\",\"p\":\"provisional\",\"u\":\"low reliability\"}},\"positions-with-no-data\":{\"freq\":[],\"crops\":[],\"strucpro\":[2],\"geo\":[2,33],\"time\":[]}}}",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Tue, 27 Oct 2026 14:01:08 GMT"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "x-oracle-dms-ecid",
+        "19b2d50e-5e6e-4698-893a-3a3f3a599dfa-00218d67"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "x-oracle-dms-rid",
+        "0"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ],
+      [
+        "set-cookie",
+        "REDACTED"
+      ]
+    ],
+    "status": 200
+  }
+}
