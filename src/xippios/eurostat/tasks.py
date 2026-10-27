@@ -591,8 +591,8 @@ list_datasets = sync(list_datasets_async)
 
 UNPACKAGED_CODELIST = (
     "The package carries the codelists of the dimensions of apro_cpnh1, apro_mk_cola and "
-    "ef_m_farmleg only; get_data's cube lists every dimension's codes with their labels "
-    "for any other dataset."
+    "ef_m_farmleg only; for any other dataset, get_data's cube lists the codes it answers "
+    "with on each dimension, with their labels."
 )
 """Why ``list_codes`` refuses a codelist the package does not carry."""
 
@@ -605,7 +605,7 @@ async def list_codes_async(codelist: str, search: str | None = None) -> Result[l
     UNIT, CROPS, STRUCPRO, MILKITEM, DAIRYPROD, STATINFO, LEG_FORM, FARMTYPE, SO_EUR and
     UAAREA, the codelists of the dimensions of apro_cpnh1, apro_mk_cola and
     ef_m_farmleg, each named as its dimension is in upper case. A codelist holds every
-    code Eurostat defines in it, more than one dataset uses: GEO has thousands. A
+    code Eurostat defines in it, more than any one dataset uses: GEO has thousands. A
     dimension's filter takes its codes, e.g. ``get_data("apro_mk_cola", {"geo": "AT"})``.
     ``search`` keeps the codes whose code or label contains the text, ignoring case.
     A codelist the package does not carry raises ``UnknownCode`` naming the closest it
