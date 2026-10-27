@@ -16,13 +16,16 @@ by dataset (``OBS_FLAG`` and ``CONF_STATUS`` in apro_mk_cola; ``OBS_FLAG``,
 ``models.SdmxCsvRow`` with nothing renamed or computed (ADR-0020 decision 2);
 ``OBS_VALUE`` is parsed as a ``Decimal``.
 
-A plain file is read through core's ``decode_csv`` (ADR-0019 decision 2). A file that
+The header row is read first, with the standard library's ``csv``, and checked before
+any row, so a file of another layout is refused even without rows. The rows of a plain
+file are then read through core's ``decode_csv`` (ADR-0019 decision 2). A file that
 starts with gzip's magic bytes, as ``compressed=true`` answers, is opened with the
 standard library's ``gzip`` and read with its ``csv.DictReader`` as ``decode_csv`` reads
-a path (UTF-8, a byte order mark stripped, headers as printed), since ``decode_csv``
-takes a path or a response, not an open stream: a decompressed copy on disk would write
-the whole file again before its first row could be read. Either way the rows are read
-lazily, never the whole file at once.
+a path (UTF-8, a byte order mark stripped, headers as printed), its errors worded alike,
+since ``decode_csv`` takes a path or a response, not an open stream: a decompressed copy
+on disk would write the whole file again before its first row could be read (Johannes,
+2026-10-27; gap, row 125). Either way the rows are read lazily, never the whole file at
+once.
 """
 
 import csv
@@ -30,8 +33,9 @@ import gzip
 import os
 import zlib
 from collections.abc import Generator, Iterator
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import IO, Any
 
 import pydantic
 from xippios.core import ValidationError, parse
@@ -58,31 +62,49 @@ NAMED_ATTRIBUTES = ("OBS_FLAG", "CONF_STATUS")
 
 
 def _refuse(path: Path, reason: str) -> ValidationError:
-    return ValidationError(f"{SOURCE} {FILE_KIND}: {path.name} {reason}", raw="", source=SOURCE)
+    """A refusal worded as ``decode_csv`` words its own: ``"eurostat: <file> <reason>"``."""
+    return ValidationError(f"{SOURCE}: {path.name} {reason}", raw="", source=SOURCE)
 
 
-def _gzip_records(path: Path) -> Iterator[dict[str, str]]:
-    """The rows of a gzip-compressed CSV file, as ``decode_csv`` gives a plain file's."""
+def _is_gzip(path: Path) -> bool:
+    with path.open("rb") as handle:
+        return handle.read(len(GZIP_MAGIC)) == GZIP_MAGIC
+
+
+def _text(path: Path, packed: bool) -> IO[str]:
+    """The file as text, UTF-8 with a byte order mark stripped, decompressed if ``packed``."""
+    if packed:
+        return gzip.open(path, "rt", encoding="utf-8-sig", newline="")
+    return path.open(encoding="utf-8-sig", newline="")
+
+
+@contextmanager
+def _reading(path: Path) -> Iterator[None]:
+    """Map what reading the file as CSV can raise to ``ValidationError``, as ``decode_csv``."""
     try:
-        with gzip.open(path, "rt", encoding="utf-8-sig", newline="") as text:
-            yield from csv.DictReader(text)
+        yield
     except UnicodeDecodeError as exc:
-        raise _refuse(path, f"is not UTF-8 text once decompressed: {exc.reason}") from None
+        raise _refuse(path, f"is not UTF-8 text: {exc.reason}") from None
     except csv.Error as exc:
         raise _refuse(path, f"is not CSV the csv module reads: {exc}") from None
     except (gzip.BadGzipFile, EOFError, zlib.error) as exc:
         raise _refuse(path, f"is not a whole gzip file: {exc}") from None
 
 
-def _records(path: Path) -> Iterator[dict[str, str]]:
-    """The rows of ``path`` as text mappings, gzip told by its first two bytes."""
-    with path.open("rb") as handle:
-        packed = handle.read(len(GZIP_MAGIC)) == GZIP_MAGIC
-    return _gzip_records(path) if packed else decode_csv(path, source=SOURCE)
+def _header(path: Path, packed: bool) -> list[str] | None:
+    """The header row as printed, or ``None`` for an empty file."""
+    with _reading(path), _text(path, packed) as text:
+        return next(csv.reader(text), None)
+
+
+def _gzip_records(path: Path) -> Iterator[dict[str, str]]:
+    """The rows of a gzip-compressed CSV file, as ``decode_csv`` gives a plain file's."""
+    with _reading(path), _text(path, packed=True) as text:
+        yield from csv.DictReader(text)
 
 
 class _Layout:
-    """Where a header puts the dimensions and the attributes, read from the first row."""
+    """Where a header puts the dimensions and the attributes, checked before any row."""
 
     def __init__(self, path: Path, columns: list[str]) -> None:
         if (
@@ -119,8 +141,9 @@ def parse_sdmx_csv(path: str | os.PathLike[str]) -> Generator[SdmxCsvRow, None, 
 
     Plain or gzip-compressed, told by the file's first two bytes, not by its name. A
     generator: the file is read as the rows are taken and closed when the generator ends
-    or is closed; ``list(parse_sdmx_csv(path))`` reads it all. A file with a header and
-    no row yields nothing.
+    or is closed; ``list(parse_sdmx_csv(path))`` reads it all. The header is checked
+    first, before any row; a file with a header and no row, or an empty one, yields
+    nothing.
 
     Args:
         path: The file, e.g. ``result.data.path`` of ``download_dataset``, or
@@ -130,15 +153,19 @@ def parse_sdmx_csv(path: str | os.PathLike[str]) -> Generator[SdmxCsvRow, None, 
         ValidationError: The file is not SDMX-CSV: its header lacks the columns above in
             their order, a row has more or fewer values than the header, a value of
             ``OBS_VALUE`` is not a number, the text is not UTF-8 or not CSV, or a gzip
-            file is cut short or damaged. Raised at the row where it is found.
+            file is cut short or damaged. Raised when the header is read, or at the row
+            where it is found.
     """
     file = Path(path)
-    layout: _Layout | None = None
-    for line, record in enumerate(_records(file), start=2):
+    packed = _is_gzip(file)
+    columns = _header(file, packed)
+    if columns is None:
+        return
+    layout = _Layout(file, columns)
+    records = _gzip_records(file) if packed else decode_csv(file, source=SOURCE)
+    for line, record in enumerate(records, start=2):
         if None in record or None in record.values():
             raise _refuse(file, f"has a row, line {line}, whose values do not match its header")
-        if layout is None:
-            layout = _Layout(file, list(record))
         raw = layout.raw(record)
         try:
             yield SdmxCsvRow.model_validate(raw)
