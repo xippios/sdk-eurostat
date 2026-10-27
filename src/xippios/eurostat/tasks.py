@@ -354,10 +354,8 @@ async def get_series_async(
     if not observations:
         return Result(data=[], meta=answer.meta)
     _one_series(dataset, cube)
-    time = _time_dimension(cube)
-    if time is not None:
-        index = cube.dimension[time].category.index
-        observations.sort(key=lambda observation: index[observation.codes[time]])
+    # One series: every other dimension has one code, so a cell's index is its period's
+    # position in the time dimension, and cube order is the time category's index order.
     return Result(data=observations, meta=answer.meta)
 
 
