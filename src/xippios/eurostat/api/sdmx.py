@@ -31,8 +31,9 @@ takes ``firstNObservations``, ``lastNObservations``, ``detail``, ``format``, ``l
 - the key "defines values of the dimensions in the order of structure", "a dot ('.')
   separated list of dimension filtered values": a dimension left empty is not filtered,
   and "Explicit listing of values for a dimension is done using the plus '+' character"
-  (``A.CP_MEUR.B1GQ.BE+LU``); without a key, ``data/{flowRef}``, every dimension is
-  unfiltered (``data/ef_m_farmleg`` answered the whole dataset on 2026-10-27);
+  (``A.CP_MEUR.B1GQ.BE+LU``); without a key, ``data/{flowRef}``, no dimension is
+  filtered (``data/ef_m_farmleg?format=SDMX-CSV``, 6.2 million values, answered HTTP 200
+  with SDMX-CSV on 2026-10-27, its status and headers probed);
 - ``startPeriod`` and ``endPeriod`` filter on time (the guide's; the WADL lists
   neither), and ``lastNObservations`` is "The maximum number of observations to be
   returned for each of the matching series, counting back from the most recent

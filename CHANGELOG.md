@@ -78,7 +78,6 @@ All notable changes to this project are documented here. The format follows
   a derived index in plain JSON (`fetched` and `lists`) that holds upstream's release
   identifiers of every list; `--samples` cuts the parser tests' samples under
   `tests/fixtures/files/` from the same run. Thirteen keyless requests.
-
 - `download_dataset(dataset, key="", *, since=None, until=None,
   last_n_observations=None, dest)`, the bulk task: one SDMX 2.1 data query through the
   new wrapper `api.sdmx.dataQuery` (`sdmx/2.1/data/{flowRef}/{key}`, `format=SDMX-CSV`,
