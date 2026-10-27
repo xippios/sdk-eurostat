@@ -4,7 +4,7 @@ The public API (ADR-0001, layer 2). A task composes endpoint wrappers from ``api
 resolves pagination and reference lookups, and returns ``Result[T]`` with full
 ``ResultMeta``. Write the async version, derive the sync one with ``xippios.core.sync``,
 and list the sync name in ``__all__``: the MCP server and the HTTP router register
-exactly what is named there.
+exactly what is named there minus ``BULK_TASKS``.
 
 Docstrings are read by agents: one sentence first, then ``Args:`` with examples of
 valid values for every parameter. ``/add-endpoint`` walks through the whole recipe.
@@ -703,9 +703,10 @@ async def download_dataset_async(
     ``LAST UPDATE`` as printed (``"05/10/26 23:00:00"``, day first) and
     ``meta.published_at`` the same time, which Eurostat prints without a zone
     (``meta.published_at_naive``); both are ``None`` when the file holds no row. ``key``
-    is Eurostat's own: the dataset's dimensions in structure order, dot-separated, empty
-    for every code of a dimension, ``+`` between codes, as the dataset's SDMX-CSV columns
-    or ``get_data``'s cube (``id``) list them; it is sent as given, never looked up. A
+    is Eurostat's own: the dataset's dimensions but time, in structure order,
+    dot-separated, empty for every code of a dimension, ``+`` between codes, as the
+    dataset's SDMX-CSV columns before ``TIME_PERIOD`` or ``get_data``'s cube (``id``,
+    without its last, ``time``) list them; it is sent as given, never looked up. A
     query Eurostat would answer asynchronously or refuses as too large (the user guide
     names 500,000 and 5,000,000 cells for a query it has not cached) raises
     ``InvalidRequestError`` naming how to narrow it, and ``dest`` is left untouched; a

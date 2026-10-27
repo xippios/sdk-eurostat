@@ -133,7 +133,8 @@ from xippios.eurostat.parse import parse_sdmx_csv
 milk = download_dataset(
     "apro_mk_cola", "A...THS_T.AT", since="2022", until="2023", dest=Path("milk.csv.gz")
 )
-milk.data.path, milk.data.bytes  # (PosixPath("milk.csv.gz"), 335): gzip-compressed SDMX-CSV
+milk.data.path  # PosixPath("milk.csv.gz"): the gzip-compressed SDMX-CSV file
+milk.data.bytes  # 335
 milk.data.filename  # "estat_apro_mk_cola_filtered_en.csv.gz", Eurostat's name for it
 milk.meta.vintage  # "05/10/26 23:00:00": LAST UPDATE as printed, day first
 milk.meta.published_at  # 2026-10-05 23:00 without a zone, meta.published_at_naive set
@@ -149,17 +150,18 @@ dest)` sends one SDMX 2.1 data query (`dataQuery`, `sdmx/2.1/data/{flowRef}/{key
 it in memory or caching it; it returns core's `Downloaded` (path, size, content type,
 Eurostat's file name, retrieval time). It is a bulk task: Python only, so the MCP server
 and the router skip it and no agent is handed a file path. `key` is Eurostat's series
-key, the dimensions in the dataset's order, dot-separated, empty for every code of a
-dimension, `+` between codes (`"A...THS_T.AT+DE"`); `""` downloads the whole dataset.
+key, the dimensions but time in the dataset's order, dot-separated, empty for every code
+of a dimension, `+` between codes (`"A...THS_T.AT+DE"`); `""` downloads the whole
+dataset.
 `since`, `until` and `last_n_observations` are Eurostat's `startPeriod`, `endPeriod` and
 `lastNObservations`. `meta.vintage` is the file's `LAST UPDATE` as printed and
 `meta.published_at` the same time, which Eurostat prints without a zone; both are `None`
-for a file without a row. A query Eurostat would answer asynchronously, or refuses as too
-large, raises `InvalidRequestError` naming how to narrow it. `parse_sdmx_csv(path)` reads
-the file, gzip-compressed or plain, row by row: each `SdmxCsvRow` has the `dataflow`, the
-`last_update`, the `dimensions` in column order, the `time_period`, the `obs_value` as a
-`Decimal` (`None` when empty), `obs_flag`, `conf_status` and any other `attributes` of
-the dataset, as Eurostat prints them.
+for a file without a row. A query Eurostat would answer asynchronously, or refuses as
+too large, raises `InvalidRequestError` naming how to narrow it. `parse_sdmx_csv(path)`
+reads the file, gzip-compressed or plain, row by row: each `SdmxCsvRow` has the
+`dataflow`, the `last_update`, the `dimensions` in column order, the `time_period`, the
+`obs_value` as a `Decimal` (`None` when empty), `obs_flag`, `conf_status` and any other
+`attributes` of the dataset, as Eurostat prints them.
 
 ## MCP
 

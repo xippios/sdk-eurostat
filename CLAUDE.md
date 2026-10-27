@@ -33,9 +33,10 @@ wrapper from memory of the API.
 ## The one rule: three layers (ADR-0001)
 
 ```
-api/<operation>.py   one async function per upstream operation, upstream names, returns models
+api/<service>.py     one async function per upstream operation, upstream names, returns models
 tasks.py             the public API: composes wrappers, returns Result[T], sync facade via sync()
-mcp.py  http.py      adapters: register tasks.__all__, nothing else. Never edited to add an endpoint.
+mcp.py  http.py      adapters: register tasks.__all__ minus BULK_TASKS, nothing else.
+                     Never edited to add an endpoint.
 ```
 
 Adapters call only task functions. Tasks call only endpoint wrappers and reference
@@ -50,7 +51,8 @@ src/xippios/eurostat/
   _version.py      __version__ from distribution metadata
   _client.py       the one configured AsyncClient (base URL, key, rate limit)
   models.py        pydantic models mirroring upstream payloads (UpstreamModel)
-  api/             endpoint wrappers, one module per upstream operation
+  api/             endpoint wrappers, one module per upstream service (statistics,
+                   catalogue, sdmx), one function per operation
   tasks.py         task functions; __all__ is what the adapters register, MCP_CAPS any
                    per-tool result caps, BULK_TASKS the Python-only tasks they skip
                    (download_dataset)
@@ -68,7 +70,7 @@ scripts/
 tests/
   conftest.py      enables xippios.core.testing.plugin, which keeps the run offline
   fixtures/        recorded responses, <endpoint>/<case>.json, never hand-written;
-                   files/<kind>/ the parser tests' samples, their provenance in its README
+                   files/<kind>/ the parser tests' samples, provenance in its README
   test_family.py   core's family check, one line: namespace levels, py.typed, __version__,
                    the adapters serving exactly the tasks, task shapes and docstrings, the
                    README status table, the template tag, the core bound
@@ -96,8 +98,8 @@ Run `/add-endpoint <upstream operation>`. In short:
 1. Read the operation in `docs/upstream/`. Names, parameters and semantics come from
    there, snake_cased, nothing renamed, nothing normalised across sources.
 2. `models.py`: an `UpstreamModel` per payload object; dates, numbers and enums typed.
-3. `api/<operation>.py`: one async wrapper that calls `_client.client` and returns
-   models through `xippios.core.parse`.
+3. `api/<service>.py`: one async wrapper per operation that calls `_client.client`
+   and returns models through `xippios.core.parse`.
 4. `tasks.py`: an async task that composes wrappers and returns `Result[T]` with full
    `ResultMeta` (source, endpoint, request parameters, `published_at`/`vintage` when the
    upstream gives them). Derive the sync one with `sync()`, add its name to `__all__`,
