@@ -12,7 +12,7 @@ upstream's current answers with the same functions.
 import importlib.util
 import json
 import re
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -168,16 +168,24 @@ def test_samples_are_listed_with_their_provenance() -> None:
 
 
 def test_every_packaged_list_is_indexed() -> None:
-    index = PackagedList.load(params.PACKAGE, params.INDEX)
-    assert index.param == "codelist"
-    infos = {info.name: info for info in index.parse(params.ListInfo, source="eurostat")}
-    assert set(params.PACKAGED_LISTS) == {params.INDEX, *infos}
+    """``lists.json`` is plain JSON with keys of its own, no packaged list: it names no
+    upstream operation; every packaged list has one record in it."""
+    raw = json.loads((REFERENCE / "lists.json").read_text(encoding="utf-8"))
+    assert list(raw) == ["fetched", "lists"]
+    index = params.index()
+    assert index.fetched == datetime.fromisoformat(raw["fetched"])
+    infos = params.list_info()
+    assert list(infos) == list(params.PACKAGED_LISTS)
     for name, info in infos.items():
         packaged = PackagedList.load(params.PACKAGE, name)
         assert len(packaged.records) == info.count
-        assert packaged.fetched.tzinfo is not None
+        assert packaged.fetched <= index.fetched + timedelta(seconds=5)
     assert {info.id for info in infos.values() if info.kind == "codelist"} == set(params.CODELISTS)
-    assert sorted(path.stem for path in REFERENCE.glob("*.json")) == sorted(params.PACKAGED_LISTS)
+    stems = sorted(path.stem for path in REFERENCE.glob("*.json"))
+    assert stems == sorted([params.INDEX, *params.PACKAGED_LISTS])
+    readme = (REFERENCE / "README.md").read_text(encoding="utf-8")
+    assert "| `lists.json` |" not in readme, "a derived index has no origin row"
+    assert all(f"| `{name}.json` |" in readme for name in params.PACKAGED_LISTS)
 
 
 def test_render_only_reproduces_the_committed_enums(

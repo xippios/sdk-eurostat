@@ -12,11 +12,14 @@ optional ``note``):
 - ``<codelist>.json``, the codelist's id lower-cased (``geo.json``): the codes of one
   SDMX codelist (``sdmx/2.1/codelist/ESTAT/<ID>``) as ``models.Code`` records; ``param``
   the dimension code the Statistics API takes (``geo``).
-- ``lists.json``: one ``ListInfo`` record per packaged list, with the release identifiers
-  upstream gives each, which a packaged-list file has no key for (ADR-0022, amendment 8):
-  the TOC's ``creationDate``, a codelist's ``version`` and ``LAST_UPDATED``. The list
-  tasks read their ``vintage`` and ``published_at`` from it, and ``list_codes`` the
-  codelists it knows.
+- ``lists.json``: not a packaged list but the package's derived index, plain JSON read
+  with ``load_json`` (``ListIndex``): when the run's last answer arrived and one
+  ``ListInfo`` record per packaged list, with the release identifiers upstream gives
+  each, which a packaged-list file has no key for (ADR-0022, amendment 8; gap, row 111):
+  the TOC's ``creationDate``, a codelist's ``version`` and ``LAST_UPDATED``. It is
+  derived from the thirteen answers the packaged lists come from and names no upstream
+  operation. The list tasks read their ``vintage`` and ``published_at`` from it, and
+  ``list_codes`` the codelists it knows.
 
 No enum is generated from them (too large for one, the design round of 2026-10-27);
 ``enums.py`` holds none. ``reference/README.md`` carries the provenance of every file.
@@ -24,8 +27,8 @@ No enum is generated from them (too large for one, the design round of 2026-10-2
 
 import functools
 
-from pydantic import Field
-from xippios.core import PackagedList, UpstreamModel
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
+from xippios.core import PackagedList, UpstreamModel, load_json, parse
 
 from xippios.eurostat._client import SOURCE
 from xippios.eurostat.models import Code, Dataset
@@ -37,9 +40,11 @@ __all__ = [
     "PACKAGE",
     "PACKAGED_LISTS",
     "TOC",
+    "ListIndex",
     "ListInfo",
     "codes",
     "datasets",
+    "index",
     "list_info",
     "packaged",
 ]
@@ -71,10 +76,11 @@ TOC = "toc"
 """The packaged table of contents, ``reference/toc.json``."""
 
 INDEX = "lists"
-"""The index of the packaged lists, ``reference/lists.json``."""
+"""The index of the packaged lists, ``reference/lists.json``; not a packaged list."""
 
-PACKAGED_LISTS: tuple[str, ...] = (INDEX, TOC, *(codelist.lower() for codelist in CODELISTS))
-"""The names of the files under ``reference/``, without ``.json``."""
+PACKAGED_LISTS: tuple[str, ...] = (TOC, *(codelist.lower() for codelist in CODELISTS))
+"""The packaged-list files under ``reference/``, without ``.json``; ``lists.json``, the
+index, is not one."""
 
 
 class ListInfo(UpstreamModel):
@@ -109,6 +115,36 @@ class ListInfo(UpstreamModel):
     count: int
 
 
+class ListIndex(BaseModel):
+    """``reference/lists.json``: the package's derived index of its packaged lists.
+
+    Plain JSON with keys of its own, not a packaged list: it is derived from the answers
+    the packaged lists come from and names no upstream operation.
+
+    Attributes:
+        fetched: When the refresh run's last answer arrived, timezone-aware UTC, e.g.
+            2026-10-27 19:55:36 UTC.
+        lists: One record per packaged list, the TOC first.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    fetched: AwareDatetime
+    lists: list[ListInfo]
+
+
+@functools.cache
+def index() -> ListIndex:
+    """``reference/lists.json``, read once per process with ``load_json``.
+
+    Raises:
+        ValidationError: The file is not the index ``ListIndex`` describes.
+    """
+    return parse(
+        ListIndex, load_json(PACKAGE, f"{INDEX}.json"), source=SOURCE, endpoint=f"{INDEX}.json"
+    )
+
+
 @functools.cache
 def packaged(name: str) -> PackagedList:
     """The packaged list ``reference/<name>.json``, read once per process.
@@ -123,8 +159,7 @@ def packaged(name: str) -> PackagedList:
 @functools.cache
 def list_info() -> dict[str, ListInfo]:
     """``reference/lists.json``'s records by ``name``, read once per process."""
-    index = packaged(INDEX)
-    return {info.name: info for info in index.parse(ListInfo, source=SOURCE)}
+    return {info.name: info for info in index().lists}
 
 
 @functools.cache

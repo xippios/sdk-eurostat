@@ -5,24 +5,28 @@ contents (TOC) and the twelve codelists in ``params.CODELISTS``, each too large 
 enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
 ``reference/<name>.json`` (conventions §3, ADR-0022):
 
-- ``toc.json``: the TOC, streamed to a temporary file through ``api.catalogue.getTocXml``
-  (core's ``download``, 23 MB on 2026-10-27) and read with the standard library's
-  ``xml.etree.ElementTree`` as it streams (``TocParser``): every ``leaf``, datasets and
-  tables alike, with its code, type, English title, the English titles of the folders
-  above it joined with ``" > "`` (``path``), ``lastUpdate``, ``lastModified``,
-  ``dataStart``, ``dataEnd`` and ``values`` as printed. This script is the only code
-  that parses XML (D44; ADR-0020 decision 3).
+- ``toc.json``: the TOC, downloaded whole to a temporary file through
+  ``api.catalogue.getTocXml`` (core's ``download``, which streams the body to disk; 23 MB
+  on 2026-10-27), then read from that file a megabyte at a time with the standard
+  library's ``xml.etree.ElementTree`` pull parser (``TocParser``), each element cleared
+  once read: every ``leaf``, datasets and tables alike, with its code, type, English
+  title, the English titles of the folders above it joined with ``" > "`` (``path``),
+  ``lastUpdate``, ``lastModified``, ``dataStart``, ``dataEnd`` and ``values`` as printed.
+  This script is the only code that parses XML (D44; ADR-0020 decision 3).
 - ``<codelist>.json``: one codelist each, the latest version in JSON-stat through
   ``api.sdmx.codeListQuery`` with English labels (Johannes, 2026-10-27, D1 and D2), its
   codes and labels in upstream's order.
-- ``lists.json``: one record per packaged list with what upstream gives each as its
-  release (the TOC's ``creationDate``, a codelist's ``version`` and ``LAST_UPDATED``),
-  since a packaged file holds its four keys and a ``note`` and nothing else (ADR-0022,
-  amendment 8).
+- ``lists.json``: not a packaged list but a derived index, plain JSON with keys of its
+  own (``params.ListIndex``): ``fetched``, when the run's last answer arrived, and
+  ``lists``, one record per packaged list with what upstream gives each as its release
+  (the TOC's ``creationDate``, a codelist's ``version`` and ``LAST_UPDATED``), since a
+  packaged file holds its four keys and a ``note`` and nothing else (ADR-0022,
+  amendment 8; gap, row 111). It names no upstream operation: it is derived from the
+  thirteen answers.
 
-Each file's ``fetched`` is the time its answer arrived, UTC to the second. The provenance
-table of ``reference/README.md`` is rewritten from the files. Run from the repository
-root, without a key (the API takes none)::
+Each packaged file's ``fetched`` is the time its answer arrived, UTC to the second. The
+provenance table of ``reference/README.md`` is rewritten from the packaged files. Run
+from the repository root, without a key (the API takes none)::
 
     uv run python scripts/refresh_reference.py
 
@@ -31,7 +35,9 @@ Thirteen keyless requests: the TOC and twelve codelists, paced by the package cl
 request of its own: a folder of the TOC with two of its leaves and the folders above it
 under ``tests/fixtures/files/toc/``, and the STATINFO codelist whole under
 ``tests/fixtures/files/codelist/``, their provenance in ``tests/fixtures/files/README.md``
-(ADR-0020 decision 6, conventions §10).
+(ADR-0020 decision 6, conventions §10). The TOC's cut parses the whole file again with
+``ElementTree.parse``, about 200 MB at its peak: fine for a one-off run, not for the
+plain refresh, which reads the file a megabyte at a time.
 
 Value lists and lists of integer ids would become enums: a value list in ``LISTS`` a
 ``StrEnum``, a list of ids and names in ``ID_LISTS``, through ``id_name_pairs``, an
@@ -91,16 +97,6 @@ PATH_SEPARATOR = " > "
 TOC_PARAM = "datasetCode"
 """What a TOC leaf's code feeds: the Statistics API's ``datasetCode`` (``getData``)."""
 
-INDEX_ENDPOINT = f"sdmx/2.1/codelist/{params.AGENCY}"
-"""``lists.json``'s endpoint: the operation that lists the agency's codelists."""
-
-INDEX_NOTE = (
-    "One record per packaged list, derived from the answers the other files were "
-    "packaged from: the TOC's creationDate (catalogue/toc/xml), a codelist's id, label, "
-    "version and LAST_UPDATED annotation (sdmx/2.1/codelist/ESTAT/<ID>?format=JSON&lang=en), "
-    "as printed; name, kind and count, the records of the packaged file, are the package's."
-)
-
 LANG = "en"
 """The codelists' language: English labels, as the TOC's English titles."""
 
@@ -150,10 +146,11 @@ class _Node:
 
 
 class TocParser:
-    """Reads the TOC's XML as it arrives: ``feed`` it bytes, then ``close`` it.
+    """Reads the TOC's XML incrementally: ``feed`` it bytes in pieces, then ``close`` it.
 
-    ``creation_date`` is known once the root element has started, and ``completed``
-    counts the leaves read so far, so a reader of a stream can stop early. Every
+    The refresh feeds it the downloaded file a megabyte at a time; the live smoke test
+    feeds it a stream. ``creation_date`` is known once the root element has started, and
+    ``completed`` counts the leaves read so far, so a reader of a stream can stop early. Every
     ``leaf`` becomes one ``Dataset``, wherever it sits: under a folder, or under a
     dataset, as a pre-defined table can. Its ``path`` joins the English titles of every
     branch and leaf above it, top first. Each element is cleared once read, so the tree
@@ -438,7 +435,11 @@ README_TABLE = "| File | Origin | Fetched |\n| --- | --- | --- |\n"
 
 
 def write_reference_readme(written: Mapping[str, PackagedList]) -> None:
-    """Rewrite the provenance table at the end of ``reference/README.md``."""
+    """Rewrite the provenance table at the end of ``reference/README.md``.
+
+    One row per packaged list; ``lists.json``, the derived index, has no origin and no
+    row, and the README's text says so.
+    """
     path = REFERENCE / "README.md"
     text = path.read_text(encoding="utf-8")
     head, found, _ = text.partition(README_TABLE)
@@ -449,6 +450,22 @@ def write_reference_readme(written: Mapping[str, PackagedList]) -> None:
         for name, packaged in written.items()
     )
     path.write_text(head + README_TABLE + rows, encoding="utf-8")
+
+
+def write_index(infos: Sequence[ListInfo], fetched: datetime) -> None:
+    """Write ``reference/lists.json``, the derived index, as plain JSON (``params.ListIndex``).
+
+    ``fetched`` is written to the second, as ISO 8601 UTC with ``Z``; the records under
+    upstream's names where they are upstream's (``LAST_UPDATED``, ``creationDate``).
+    """
+    index = params.ListIndex(fetched=fetched.replace(microsecond=0), lists=list(infos))
+    payload = {
+        "fetched": _utc(index.fetched),
+        "lists": [info.dump_upstream() for info in index.lists],
+    }
+    path = REFERENCE / f"{params.INDEX}.json"
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"{path.name}: {len(index.lists)} lists")  # noqa: T201
 
 
 def write(name: str, packaged: PackagedList) -> None:
@@ -526,15 +543,8 @@ def refresh(*, samples: bool = False) -> None:
         fetched = sync(fetch_all)(Path(work), samples=samples)
     for name, packaged in fetched.written.items():
         write(name, packaged)
-    index = PackagedList(
-        param="codelist",
-        endpoint=INDEX_ENDPOINT,
-        fetched=max(packaged.fetched for packaged in fetched.written.values()),
-        note=INDEX_NOTE,
-        records=[info.dump_upstream() for info in fetched.infos],
-    )
-    write(params.INDEX, index)
-    write_reference_readme({params.INDEX: index, **fetched.written})
+    write_index(fetched.infos, max(packaged.fetched for packaged in fetched.written.values()))
+    write_reference_readme(fetched.written)
     if fetched.samples:
         write_samples_readme(fetched.samples)
         for sample in fetched.samples:

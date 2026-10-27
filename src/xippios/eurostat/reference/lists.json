@@ -1,9 +1,6 @@
 {
-  "param": "codelist",
-  "endpoint": "sdmx/2.1/codelist/ESTAT",
   "fetched": "2026-10-27T19:55:36Z",
-  "note": "One record per packaged list, derived from the answers the other files were packaged from: the TOC's creationDate (catalogue/toc/xml), a codelist's id, label, version and LAST_UPDATED annotation (sdmx/2.1/codelist/ESTAT/<ID>?format=JSON&lang=en), as printed; name, kind and count, the records of the packaged file, are the package's.",
-  "records": [
+  "lists": [
     {
       "name": "toc",
       "kind": "toc",

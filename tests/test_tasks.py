@@ -866,7 +866,7 @@ def packaged_file(name: str) -> dict[str, Any]:
 
 
 def index_record(name: str) -> dict[str, Any]:
-    records = packaged_file("lists")["records"]
+    records = packaged_file("lists")["lists"]
     return next(record for record in records if record["name"] == name)
 
 

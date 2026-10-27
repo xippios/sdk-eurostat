@@ -555,11 +555,12 @@ async def list_datasets_async(search: str | None = None) -> Result[list[Dataset]
 
     Answers from the package's copy of Eurostat's table of contents (``catalogue/toc/xml``),
     without a request: every dataset and pre-defined table of the navigation tree, over
-    10,000 leaves, one per place in the tree (a code filed under two folders appears
-    twice). Each has its ``code``, its ``type`` (``"dataset"`` or ``"table"``), its
-    English ``title``, the folders above it (``path``, their titles joined with
-    ``" > "``), its last data update and structure change as Eurostat prints them, day
-    first (``"02.10.2026"``), its first and last period and its number of values.
+    10,000 leaves, one per listing in the tree, as the TOC lists them (a code filed under
+    two folders appears twice). Each has its ``code``, its ``type`` (``"dataset"`` or
+    ``"table"``), its English ``title``, the folders above it (``path``, their titles
+    joined with ``" > "``), its last data update and structure change as Eurostat prints
+    them, day first (``"02.10.2026"``), its first and last period and its number of
+    values.
     ``search`` keeps the leaves whose code or title contains the text, ignoring case:
     give one, since the whole list is far more than one answer shows. A dataset's
     ``code`` is what ``get_data`` and the slices take as ``dataset``. ``meta.vintage`` is
@@ -633,7 +634,7 @@ async def list_codes_async(codelist: str, search: str | None = None) -> Result[l
             "codelist",
             codelist,
             list_name="codelist",
-            fetched=params.packaged(params.INDEX).fetched,
+            fetched=params.index().fetched,
             closest=closest(codelist, {code: entry.label or code for code, entry in known.items()}),
             reason=UNPACKAGED_CODELIST,
             source=SOURCE,
