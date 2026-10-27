@@ -59,9 +59,12 @@ NO_RESULTS = 100
 
 NARROW_HINT = "narrow the query with fewer codes per dimension or a shorter period"
 """What a refusal of a too-large request tells the caller to do, in no task's terms:
-``classify`` serves every task, whose parameters differ. The bulk task, which the user
-guide's advice for large extractions points to (``asynchronous-api.md``, "Fair use of the
-service"), joins the hint when the package has one."""
+``classify`` serves every task, whose parameters differ. It names no other task:
+``download_dataset`` goes through the SDMX 2.1 data API, whose thresholds bind it as well
+(``asynchronous-api.md``: asynchronous from 500,000 cells, refused over 5,000,000), and it
+is Python-only, no tool an agent could be pointed to (conventions §8). The user guide's
+advice for large extractions, the bulk download facility ("Fair use of the service"), is
+another service this package does not wrap."""
 
 AGAIN_LATER = (
     "the Statistics API prepares the answer meanwhile and does not say when it is ready: "
