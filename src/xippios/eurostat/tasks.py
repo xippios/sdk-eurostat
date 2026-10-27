@@ -8,9 +8,42 @@ exactly what is named there.
 
 Docstrings are read by agents: one sentence first, then ``Args:`` with examples of
 valid values for every parameter. ``/add-endpoint`` walks through the whole recipe.
+
+``get_data`` answers one Statistics API request (``api.statistics.getData``) as the
+JSON-stat cube it returns. Release metadata: ``meta.published_at`` is the cube's
+``updated``, the dataset's last update with its zone; ``meta.vintage`` is the same
+member as upstream printed it (``"2026-10-05T23:00:00+0200"``), Eurostat's only release
+identifier for a dataset (``docs/upstream/user-guide/api-introduction.md``: "there is no
+versioning or documentation of past versions of the data"; ADR-0022 decision 2). A
+``updated`` without a zone, never seen, would leave ``published_at`` empty, since
+``ResultMeta`` takes only a zoned time on core 0.2.1. ``meta.endpoint`` is the operation's
+name, ``"getData"``; ``meta.request`` holds what was sent, a parameter left ``None``
+omitted; ``meta.total`` stays ``None``: the answer counts no records for the request
+(its ``OBS_COUNT`` annotation counts the whole dataset's, ADR-0012).
 """
 
-__all__: list[str] = []
+from collections.abc import Mapping, Sequence
+from datetime import UTC, datetime
+from typing import Any
+
+from xippios.core import InvalidRequestError, Result, ResultMeta, sync
+
+from xippios.eurostat import api
+from xippios.eurostat._client import SOURCE
+from xippios.eurostat.api.statistics import ENDPOINT
+from xippios.eurostat.models import Cube
+
+__all__ = ["get_data"]
+
+BULK_TASKS: frozenset[str] = frozenset()
+"""Tasks the adapters skip (ADR-0019 decision 4): none yet. Written by hand until
+template v0.3.0 renders it (D33)."""
+
+RESERVED_PARAMETERS = frozenset(
+    {"format", "lang", "sincetimeperiod", "untiltimeperiod", "lasttimeperiod", "geolevel"}
+)
+"""The Statistics API's own parameters, lower-cased: not dimension filters. ``format`` is
+fixed to ``JSON``; the others are ``get_data``'s own arguments."""
 
 # MCP_CAPS, only where a tool needs a result cap of its own: a list an agent needs whole
 # (conventions §8, ADR-0016), keyed by task function name; mcp.py reads it with getattr,
@@ -24,3 +57,112 @@ __all__: list[str] = []
 #     MCP_CAPS: "Mapping[str, ResultCap]" = {}
 # else:
 #     MCP_CAPS = {"list_<thing>": ResultCap(max_rows=400)}
+
+
+def _filters(filters: Mapping[str, str | Sequence[str]] | None) -> dict[str, str | list[str]]:
+    """The filters as sent: one code or a list of codes per dimension; refusals first.
+
+    Raises:
+        InvalidRequestError: A filter names one of the API's own parameters, or gives an
+            empty list of codes, which would send no filter for that dimension.
+    """
+    sent: dict[str, str | list[str]] = {}
+    for code, values in (filters or {}).items():
+        if code.lower() in RESERVED_PARAMETERS:
+            raise InvalidRequestError(
+                f"filters[{code!r}]: {code} is a parameter of the Statistics API, not a "
+                "dimension; format is always JSON, and lang, since_time_period, "
+                "until_time_period, last_time_period and geo_level are arguments of "
+                "get_data",
+                source=SOURCE,
+            )
+        listed = values if isinstance(values, str) else list(values)
+        if not listed:
+            raise InvalidRequestError(
+                f"filters[{code!r}] lists no code: give one code or several, or leave "
+                "the dimension out to get all of its codes",
+                source=SOURCE,
+            )
+        sent[code] = listed
+    return sent
+
+
+async def get_data_async(
+    dataset: str,
+    filters: Mapping[str, str | Sequence[str]] | None = None,
+    *,
+    lang: str = "EN",
+    since_time_period: str | None = None,
+    until_time_period: str | None = None,
+    last_time_period: int | None = None,
+    geo_level: str | None = None,
+) -> Result[Cube]:
+    """Get one Eurostat dataset, or a slice of it, as a JSON-stat 2.0 cube.
+
+    One request to the Statistics API. The cube lists the dataset's dimensions in order
+    (``id``, ``size``), each dimension's codes with their positions and labels
+    (``dimension``), and the cells that hold a value or a status (``value``,
+    ``status``), keyed by cell index: row-major over ``size``, the last dimension
+    varying fastest. ``updated`` is the dataset's last update; ``extension`` carries
+    Eurostat's annotations as sent. In Python, ``result.data.observations()`` reads the
+    cells out one by one with their codes and labels. Keep slices small (a country or
+    two, a few periods): the whole slice comes back at once. A filter code that matches
+    nothing gives an empty cube (size 0 on that dimension, no values), not an error. An
+    unknown dataset raises ``NotFoundError``; a query Eurostat refuses (an unknown
+    dimension, ``geo`` with ``geo_level``, two time parameters other than since and
+    until) raises ``InvalidRequestError`` with Eurostat's message, and so does a request
+    Eurostat would answer asynchronously or judges too large, naming how to narrow it.
+
+    Args:
+        dataset: The dataset's online data code, case-insensitive, e.g.
+            ``"apro_mk_cola"`` (cows' milk collection and dairy products, annual),
+            ``"apro_cpnh1"`` (crop production) or ``"ef_m_farmleg"`` (farm indicators by
+            legal status).
+        filters: Dimension code to one code or a list of codes, each sent as
+            ``DIMENSION_CODE=VALUE``; any dimension of the dataset, codes as in the
+            cube's ``dimension``, case-insensitive, e.g. ``{"geo": "AT", "time":
+            ["2022", "2023"]}`` or ``{"geo": "AT", "milkitem": "PRD"}``; ``time`` (or
+            ``time_period``) filters periods. ``None`` asks for every code of every
+            dimension.
+        lang: Language of the labels: ``"EN"`` (the default), ``"FR"`` or ``"DE"``.
+        since_time_period: The first time period, included, e.g. ``"2022"``; combines
+            with ``until_time_period`` and with no other time parameter.
+        until_time_period: The last time period, included, e.g. ``"2023"``.
+        last_time_period: The number of most recent time periods, e.g. ``2``; alone,
+            without another time parameter.
+        geo_level: Selects geo codes by level instead of a ``geo`` filter:
+            ``"aggregate"``, ``"country"``, ``"nuts1"``, ``"nuts2"``, ``"nuts3"`` or
+            ``"city"``; never together with ``filters["geo"]``.
+    """
+    sent = _filters(filters)
+    answer = await api.statistics.getData(
+        dataset,
+        lang=lang,
+        filters=sent,
+        since_time_period=since_time_period,
+        until_time_period=until_time_period,
+        last_time_period=last_time_period,
+        geo_level=geo_level,
+    )
+    request: dict[str, Any] = {
+        "dataset": dataset,
+        "filters": sent or None,
+        "lang": lang,
+        "since_time_period": since_time_period,
+        "until_time_period": until_time_period,
+        "last_time_period": last_time_period,
+        "geo_level": geo_level,
+    }
+    updated = answer.cube.updated
+    meta = ResultMeta(
+        source=SOURCE,
+        endpoint=ENDPOINT,
+        retrieved_at=answer.stored_at or datetime.now(UTC),
+        published_at=updated if updated is not None and updated.tzinfo is not None else None,
+        vintage=answer.updated,
+        request={name: value for name, value in request.items() if value is not None},
+    )
+    return Result(data=answer.cube, meta=meta)
+
+
+get_data = sync(get_data_async)
