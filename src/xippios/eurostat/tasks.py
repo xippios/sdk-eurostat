@@ -20,6 +20,12 @@ versioning or documentation of past versions of the data"; ADR-0022 decision 2).
 operation's name, ``"getData"``; ``meta.request`` holds what was sent, a parameter left
 ``None`` omitted; ``meta.total`` stays ``None``: the answer counts no records for the
 request (its ``OBS_COUNT`` annotation counts the whole dataset's, ADR-0012).
+
+The slices, ``get_series``, ``get_latest_period`` and ``get_cross_section``, each send one
+``get_data`` request (``sinceTimePeriod`` and ``untilTimePeriod``, ``lastTimePeriod=1``,
+``time=<period>``) and return the cube's observations as a list, with ``get_data``'s
+``meta``: ``meta.request`` names what was sent, in ``get_data``'s terms. Nothing here
+compares datasets or sources (ADR-0003).
 """
 
 import math
@@ -334,17 +340,17 @@ async def get_series_async(
     """Get one time series of a Eurostat dataset, its observations ordered by period.
 
     One request to the Statistics API. ``filters`` pins every dimension but time to one
-    code, so that the answer is one series; ``since`` and ``until`` bound its periods.
-    Each observation carries its code and label on every dimension, its value and its
-    status (``"|C"`` confidential, say). A dimension left out of ``filters`` is fine when
-    the dataset has one code there (``freq`` ``"A"`` in an annual dataset). An answer
-    that spans more than one series, a dimension other than time with more than one
-    code, raises ``InvalidRequestError`` naming each such dimension and its codes: pin
-    one and ask again (the request is spent, since only the answer shows it). A code
-    that matches nothing gives an empty list. A ``time`` filter is refused before any
-    request: ``since`` and ``until`` select the periods. An unknown dataset raises
-    ``NotFoundError``; a query Eurostat refuses or judges too large,
-    ``InvalidRequestError`` with its message.
+    code, so that the answer is one series; ``since`` and ``until`` bound its periods, which
+    come in the order of the dataset's time dimension (oldest first in apro_mk_cola and
+    ef_m_farmleg). Each observation carries its code and label on every dimension, its value
+    and its status (``"|C"`` confidential, say). A dimension left out of ``filters`` is fine
+    when the dataset has one code there (``freq`` ``"A"`` in an annual dataset). An answer
+    that spans more than one series, a dimension other than time with more than one code,
+    raises ``InvalidRequestError`` naming each such dimension and its codes: pin one and ask
+    again (the request is spent, since only the answer shows it). A code that matches
+    nothing gives an empty list. A ``time`` filter is refused before any request: ``since``
+    and ``until`` select the periods. An unknown dataset raises ``NotFoundError``; a query
+    Eurostat refuses or judges too large, ``InvalidRequestError`` with its message.
 
     Args:
         dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk

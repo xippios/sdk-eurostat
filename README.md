@@ -55,6 +55,34 @@ too: this package does not poll asynchronous answers, and the Statistics API's o
 is to send the same request again later. Ask for small slices: the cube comes back
 whole, and over MCP a result above 64 KB is replaced by a preview and a note.
 
+### Slices
+
+```python
+from xippios.eurostat import get_cross_section, get_latest_period, get_series
+
+milk = {"milkitem": "PRD", "dairyprod": "D1110D", "unit": "THS_T"}
+series = get_series("apro_mk_cola", {**milk, "geo": "AT"}, since="2015", until="2023")
+[(o.codes["time"], o.value) for o in series.data]  # [("2015", 3102.56), ..., ("2023", 3242.85)]
+latest = get_latest_period("apro_mk_cola", {**milk, "geo": "AT"})
+latest.data[0].codes["time"], latest.data[0].value  # ("2025", 3503.31)
+section = get_cross_section("apro_mk_cola", "2023", milk)  # every geo code the dataset holds
+len(section.data)  # 36: the geo codes with a value or a status in 2023
+section.meta.request  # {"dataset": "apro_mk_cola", "filters": {..., "time": "2023"}, "lang": "EN"}
+```
+
+Each slice sends one `get_data` request and returns the cube's observations as a list
+of `Observation`, with `get_data`'s `meta`: `meta.request` names what was sent
+(`since_time_period`, `last_time_period`, the `time` filter).
+`get_series(dataset, filters, *, since=None, until=None, lang=Lang.EN)` wants every
+dimension but time pinned to one code; an answer that spans more than one series raises
+`InvalidRequestError` naming each dimension still open and its codes.
+`get_latest_period(dataset, filters=None, *, lang=Lang.EN)` asks for `lastTimePeriod=1`,
+the most recent period, and `get_cross_section(dataset, period, filters=None, *,
+lang=Lang.EN)` for `time=<period>`; both return any number of series in cube order. Each
+refuses a `time` filter before sending, since it selects the periods itself. A code that
+matches nothing gives an empty list. Over MCP each slice keeps the family's cap, 200
+rows or 64 KB, with a note of its own on how to see the rest.
+
 ## MCP
 
 ```json
