@@ -12,27 +12,27 @@ packages no tenant data, only reference lists that are the same for every tenant
    `docs/upstream/`; a wrapper for it belongs in `api/` (`/add-endpoint`).
 3. Add the list to `scripts/refresh_reference.py`, by its shape, then run the script from
    the repository root with whatever the list endpoints need in the environment (a key
-   only where they take one). It writes `reference/<name>.json` with the fetch date and
-   regenerates `enums.py`, ASCII-only and ruff-clean as core renders it, committed as
-   rendered with no formatting step after it (ADR-0008):
+   only where they take one). It writes `reference/<name>.json` with the fetch date,
+   regenerates `enums.py` with one `xippios.core.reference.render_enums` call, ASCII-only,
+   and runs `ruff format` and `ruff check --fix` on it; commit it as formatted (ADR-0008,
+   amendment 2026-10-27):
    - a list of strings goes into `LISTS` (name as upstream calls it, fetcher through
-     `api/`) and `PACKAGED_LISTS` in `params.py`; `render_str_enums` makes one `StrEnum`
-     of it. A value with no identifier to derive (a non-Latin label, a name too long for
-     a line) is named once through `member_names=` in the script's `render_str_enums`
-     call;
+     `api/`) and `PACKAGED_LISTS` in `params.py`; `render_enums` makes one `StrEnum` of
+     it. A value whose derived member name collides or that has none (an empty or a
+     non-Latin label) is named once through `member_names=` in the script's
+     `render_enums` call;
    - a list of integer ids and names goes into `ID_LISTS` (id field and name field as
      upstream names them, fetcher of the records through `api/`); the records are
      packaged under upstream's field names, `id_name_pairs` builds their `(id, name)`
-     pairs and `render_int_enums` one `IntEnum`, so a member equals the id in upstream's
+     pairs and `render_enums` one `IntEnum`, so a member equals the id in upstream's
      data (conventions §3). `member_names=` takes ids there.
 
-   Each renderer writes a whole module, so `enums.py` holds one kind and the script
-   refuses to run with both mappings filled; a source with lists of both kinds keeps the
-   second kind in a module of its own and says so in the PR. Tables that are not plain
+   One module holds both kinds; a list's name goes into one of the two mappings, and the
+   script refuses a name in both. Tables that are not plain
    value lists go under `reference/` as CSV with upstream column names, written by the
    same script. `uv run python scripts/refresh_reference.py --render-only` regenerates
    `enums.py` from the packaged files alone, without a request or a key, as an adoption
-   does after a core release changes the renderers (`/adopt-release`).
+   does after a core release changes the renderer (`/adopt-release`).
 4. Update the provenance table in `reference/README.md`: file, origin (endpoint or
    URL), fetch date.
 5. If agents have no lookup task for this list yet, add one with `/add-endpoint` so they
