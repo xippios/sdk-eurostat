@@ -153,8 +153,9 @@ class Cube(UpstreamModel):
         label: The dataset's title, e.g. ``"Production of main cows' milk products -
             annual data"``.
         source: The producer, ``"ESTAT"``.
-        updated: The dataset's last update, with its zone, e.g. 2026-10-05 23:00 +02:00
-            for upstream's ``"2026-10-05T23:00:00+0200"``.
+        updated: The dataset's last update, with the zone upstream prints, e.g.
+            2026-10-05 23:00 +02:00 for upstream's ``"2026-10-05T23:00:00+0200"``; naive
+            if upstream prints none (never seen).
         value: The cells that have a value, by cell index as upstream prints it, each
             number as upstream's JSON has it, an integer staying an ``int``, e.g.
             ``{"40": 3247.05, "44": 0}``; JSON-stat's dense form, one entry per cell with

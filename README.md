@@ -45,13 +45,15 @@ being `since_time_period` with `until_time_period`; any other combination is ref
 before sending. `lang` takes `Lang.EN`, `Lang.FR` or `Lang.DE` and `geo_level` a
 `GeoLevel` (`aggregate`, `country`, `nuts1`, `nuts2`, `nuts3`, `city`), both in
 `xippios.eurostat.models`; a plain string such as `"FR"` works too. A code that matches
-nothing gives an empty cube, size 0 on that dimension. An unknown dataset, and
-Eurostat's "No results found", raise `NotFoundError`; a query Eurostat refuses or judges
-too large raises `InvalidRequestError` with Eurostat's message and how to narrow it. A
-query Eurostat would answer asynchronously raises it too: this package does not poll
-asynchronous answers, and the Statistics API's own route is to send the same request
-again later. Ask for small slices: the cube comes back whole, and over MCP a result
-above 64 KB is replaced by a preview and a note.
+nothing gives an empty cube, size 0 on that dimension. `meta.published_at` is the cube's
+`updated` with Eurostat's zone; one printed without a zone, never seen, is kept as
+printed with `meta.published_at_naive` set, and `meta.vintage` holds the text either
+way. An unknown dataset, and Eurostat's "No results found", raise `NotFoundError`; a
+query Eurostat refuses or judges too large raises `InvalidRequestError` with Eurostat's
+message and how to narrow it. A query Eurostat would answer asynchronously raises it
+too: this package does not poll asynchronous answers, and the Statistics API's own route
+is to send the same request again later. Ask for small slices: the cube comes back
+whole, and over MCP a result above 64 KB is replaced by a preview and a note.
 
 ## MCP
 

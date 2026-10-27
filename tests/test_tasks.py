@@ -73,6 +73,7 @@ def test_get_data_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
     assert result.meta.published_at == datetime(2026, 10, 5, 23, 0, tzinfo=CEST)
     assert result.meta.published_at == result.data.updated
     assert result.meta.published_at.utcoffset() == timedelta(hours=2)
+    assert result.meta.published_at_naive is False, "a zoned updated is no naive time"
     assert result.meta.vintage == "2026-10-05T23:00:00+0200" == recorded_updated(case)
     assert result.meta.request == {
         "dataset": "apro_mk_cola",
@@ -283,11 +284,12 @@ def test_get_data_refuses_an_empty_list_of_codes(respx_mock: respx.MockRouter) -
     assert not respx_mock.calls
 
 
-def test_get_data_leaves_published_at_empty_for_an_updated_without_zone(
+def test_get_data_keeps_an_updated_without_zone_as_a_naive_published_at(
     respx_mock: respx.MockRouter,
 ) -> None:
     """NOT RECORDED: the recorded cube with ``updated`` stripped of its zone in memory, a
-    form never seen; ``ResultMeta`` takes a zoned time only, the text stays the vintage."""
+    form never seen; ``published_at`` keeps it as printed, no zone invented, with
+    ``published_at_naive`` set, and the text stays the vintage (ADR-0022 rule 2)."""
     fixture = load_fixture(FIXTURES / ENDPOINT / "apro_mk_cola_AT_2022_2023.json")
     body: dict[str, Any] = json.loads(fixture.response.body)
     body["updated"] = "2026-10-05T23:00:00"
@@ -295,7 +297,9 @@ def test_get_data_leaves_published_at_empty_for_an_updated_without_zone(
         return_value=httpx.Response(200, json=body)
     )
     result = tasks.get_data("apro_mk_cola", {"geo": "AT", "time": ["2022", "2023"]})
-    assert result.meta.published_at is None
+    assert result.meta.published_at == datetime(2026, 10, 5, 23, 0)
+    assert result.meta.published_at.tzinfo is None
+    assert result.meta.published_at_naive is True
     assert result.meta.vintage == "2026-10-05T23:00:00"
 
 
@@ -320,6 +324,7 @@ async def test_get_data_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
     assert payload["meta"]["endpoint"] == "getData"
     assert payload["meta"]["vintage"] == "2026-10-05T23:00:00+0200"
     assert payload["meta"]["published_at"] == "2026-10-05T23:00:00+02:00"
+    assert payload["meta"]["published_at_naive"] is False
 
 
 @pytest.mark.anyio

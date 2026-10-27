@@ -15,12 +15,11 @@ JSON-stat cube it returns. Release metadata: ``meta.published_at`` is the cube's
 member as upstream printed it (``"2026-10-05T23:00:00+0200"``), Eurostat's only release
 identifier for a dataset (``docs/upstream/user-guide/api-introduction.md``: "there is no
 versioning or documentation of past versions of the data"; ADR-0022 decision 2). An
-``updated`` without a zone, never seen, would leave ``published_at`` empty, since
-``ResultMeta`` takes only a zoned time on a core without ADR-0022's flag.
-``meta.endpoint`` is the operation's
-name, ``"getData"``; ``meta.request`` holds what was sent, a parameter left ``None``
-omitted; ``meta.total`` stays ``None``: the answer counts no records for the request
-(its ``OBS_COUNT`` annotation counts the whole dataset's, ADR-0012).
+``updated`` without a zone, never seen, goes into ``published_at`` as printed with
+``published_at_naive`` set, no zone invented (ADR-0022 rule 2). ``meta.endpoint`` is the
+operation's name, ``"getData"``; ``meta.request`` holds what was sent, a parameter left
+``None`` omitted; ``meta.total`` stays ``None``: the answer counts no records for the
+request (its ``OBS_COUNT`` annotation counts the whole dataset's, ADR-0012).
 """
 
 from collections.abc import Mapping, Sequence
@@ -223,7 +222,8 @@ async def get_data_async(
         source=SOURCE,
         endpoint=ENDPOINT,
         retrieved_at=answer.retrieved_at,
-        published_at=updated if updated is not None and updated.tzinfo is not None else None,
+        published_at=updated,
+        published_at_naive=updated is not None and updated.tzinfo is None,
         vintage=answer.updated,
         request=request,
     )

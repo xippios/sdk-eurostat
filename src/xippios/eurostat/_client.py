@@ -112,7 +112,7 @@ config = ClientConfig(
 
 # An upstream that reports an hourly or daily quota installs one QuotaPolicy, from
 # xippios.core, on config: it reads the quota headers of every answer and never sends
-# into a spent quota, waiting within the retry backoff or raising RateLimitError
+# into a spent quota, waiting within the policy's pause_cap or raising RateLimitError
 # (ADR-0015; ADR-0010 decisions 3 and 4). Name only headers that count that quota, never
 # a pace (None turns one off); window is the fallback wait, 86400.0 for a daily quota.
 # classify, the ClientConfig hook, maps upstream's answer to a spent quota to
