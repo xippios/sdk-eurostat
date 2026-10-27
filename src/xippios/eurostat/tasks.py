@@ -26,21 +26,48 @@ The slices, ``get_series``, ``get_latest_period`` and ``get_cross_section``, eac
 ``time=<period>``) and return the cube's observations as a list, with ``get_data``'s
 ``meta``: ``meta.request`` names what was sent, in ``get_data``'s terms. Nothing here
 compares datasets or sources (ADR-0003).
+
+The list tasks, ``list_datasets`` and ``list_codes``, answer from the packaged lists
+(``params``) without a request, by ADR-0022 rule 1: ``meta.retrieved_at`` is the list's
+``fetched``, ``meta.endpoint`` the operation it was fetched from (``catalogue/toc/xml``,
+``sdmx/2.1/codelist/ESTAT/<ID>``), ``meta.total`` ``None``. Their release metadata
+(Johannes, 2026-10-27, D4) comes from ``reference/lists.json``: for the table of contents
+``meta.vintage`` is its ``creationDate`` as printed (``"20261027T1000"``) and
+``meta.published_at`` the same time without a zone, ``published_at_naive`` set (ADR-0022
+rule 2); for a codelist ``meta.vintage`` is its version (``"28.0"``) and
+``meta.published_at`` its ``LAST_UPDATED`` annotation with the zone Eurostat prints.
 """
 
 import math
 from collections.abc import Mapping, Sequence
+from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
-from xippios.core import InvalidRequestError, Result, ResultCap, ResultMeta, sync
+from xippios.core import (
+    InvalidRequestError,
+    Result,
+    ResultCap,
+    ResultMeta,
+    UnknownCode,
+    closest,
+    matches,
+    sync,
+)
 
-from xippios.eurostat import api
+from xippios.eurostat import api, params
 from xippios.eurostat._client import SOURCE
 from xippios.eurostat.api.statistics import ENDPOINT
-from xippios.eurostat.models import Cube, GeoLevel, Lang, Observation
+from xippios.eurostat.models import Code, Cube, Dataset, GeoLevel, Lang, Observation
 
-__all__ = ["get_cross_section", "get_data", "get_latest_period", "get_series"]
+__all__ = [
+    "get_cross_section",
+    "get_data",
+    "get_latest_period",
+    "get_series",
+    "list_codes",
+    "list_datasets",
+]
 
 BULK_TASKS: frozenset[str] = frozenset()
 """Tasks the adapters skip (ADR-0019 decision 4): none yet. Written by hand until
@@ -78,6 +105,16 @@ MCP_CAPS: Mapping[str, ResultCap] = {
             "geo a list of codes, to see the rest"
         ),
     ),
+    "list_datasets": ResultCap(
+        note=(
+            "pass search, a word of the title or a part of the code (milk, apro_mk), "
+            "to see the rest"
+        ),
+    ),
+    "list_codes": ResultCap(
+        max_rows=1000,
+        note="pass search, a part of the code or of the label (AT, austria), to see the rest",
+    ),
 }
 """MCP result caps of their own, by task function name (conventions §8, ADR-0016).
 
@@ -89,6 +126,14 @@ code; 151 rows, five series over every geo code) comes whole, and the latest per
 a whole ef_m_farmleg table for one country (1,810 rows) is cut. What each cap adds is
 its note, naming the task's own way to see the rest. ``get_data`` returns a cube, not a
 list, and keeps the default cap.
+
+The list tasks' caps add the note that names ``search``. ``list_datasets`` keeps the
+family's 200 rows or 64 KB: no agent needs the whole table of contents at once (over
+10,000 leaves, about 400 bytes each as compact JSON, so the bytes cut it at about 150),
+and a search narrows it to what it looks for. ``list_codes`` takes up to 1,000 rows within
+the family's 64 KB (ADR-0016 decision 4): a code is about 45 to 70 bytes, so a codelist
+comes whole up to the byte bound, eleven of the twelve packaged on 2026-10-27 (UNIT's 773
+codes are 57,670 bytes), and GEO's thousands are cut with the note.
 """
 
 
@@ -489,3 +534,121 @@ async def get_cross_section_async(
 
 
 get_cross_section = sync(get_cross_section_async)
+
+
+def _release_time(text: str | None, form: str | None = None) -> datetime | None:
+    """A release time as printed, parsed: ``form`` for ``strptime``, else ISO 8601.
+
+    ``None`` when there is no text.
+    """
+    if text is None:
+        return None
+    return datetime.strptime(text, form) if form else datetime.fromisoformat(text)
+
+
+CREATION_DATE = "%Y%m%dT%H%M"
+"""How the TOC prints its ``creationDate``: ``"20261027T1000"``, no zone."""
+
+
+async def list_datasets_async(search: str | None = None) -> Result[list[Dataset]]:
+    """Find Eurostat datasets and tables by code or title in the table of contents.
+
+    Answers from the package's copy of Eurostat's table of contents (``catalogue/toc/xml``),
+    without a request: every dataset and pre-defined table of the navigation tree, over
+    10,000 leaves, one per place in the tree (a code filed under two folders appears
+    twice). Each has its ``code``, its ``type`` (``"dataset"`` or ``"table"``), its
+    English ``title``, the folders above it (``path``, their titles joined with
+    ``" > "``), its last data update and structure change as Eurostat prints them, day
+    first (``"02.10.2026"``), its first and last period and its number of values.
+    ``search`` keeps the leaves whose code or title contains the text, ignoring case:
+    give one, since the whole list is far more than one answer shows. A dataset's
+    ``code`` is what ``get_data`` and the slices take as ``dataset``. ``meta.vintage`` is
+    the table of contents' ``creationDate`` as printed (``"20261027T1000"``) and
+    ``meta.published_at`` the same time, which Eurostat prints without a zone
+    (``meta.published_at_naive``); ``meta.retrieved_at`` is when the package's copy was
+    fetched. A dataset Eurostat added since is missing until the package is refreshed.
+
+    Args:
+        search: Text to look for in the code or the English title, ignoring case, e.g.
+            ``"milk"``, ``"apro_mk"`` or ``"crop production"``; ``None`` lists every
+            leaf.
+    """
+    toc = params.packaged(params.TOC)
+    created = params.list_info()[params.TOC].creation_date
+    found = [leaf for leaf in params.datasets() if matches(search, leaf.code, leaf.title)]
+    meta = toc.meta(
+        SOURCE,
+        request={"search": search},
+        vintage=created,
+        published_at=_release_time(created, CREATION_DATE),
+        published_at_naive=created is not None,
+    )
+    return Result(data=found, meta=meta)
+
+
+list_datasets = sync(list_datasets_async)
+
+
+UNPACKAGED_CODELIST = (
+    "The package carries the codelists of the dimensions of apro_cpnh1, apro_mk_cola and "
+    "ef_m_farmleg only; get_data's cube lists every dimension's codes with their labels "
+    "for any other dataset."
+)
+"""Why ``list_codes`` refuses a codelist the package does not carry."""
+
+
+async def list_codes_async(codelist: str, search: str | None = None) -> Result[list[Code]]:
+    """List the codes of one Eurostat codelist, the values a dimension filter takes.
+
+    Answers from the package's copies of twelve SDMX codelists
+    (``sdmx/2.1/codelist/ESTAT/<ID>``, English labels), without a request: FREQ, GEO,
+    UNIT, CROPS, STRUCPRO, MILKITEM, DAIRYPROD, STATINFO, LEG_FORM, FARMTYPE, SO_EUR and
+    UAAREA, the codelists of the dimensions of apro_cpnh1, apro_mk_cola and
+    ef_m_farmleg, each named as its dimension is in upper case. A codelist holds every
+    code Eurostat defines in it, more than one dataset uses: GEO has thousands. A
+    dimension's filter takes its codes, e.g. ``get_data("apro_mk_cola", {"geo": "AT"})``.
+    ``search`` keeps the codes whose code or label contains the text, ignoring case.
+    A codelist the package does not carry raises ``UnknownCode`` naming the closest it
+    does. ``meta.vintage`` is the codelist's version (``"28.0"``) and
+    ``meta.published_at`` its last update, with Eurostat's zone; ``meta.retrieved_at``
+    is when the package's copy was fetched. A code Eurostat added since is missing until
+    the package is refreshed.
+
+    Args:
+        codelist: The codelist, case-insensitive: ``"geo"``, ``"unit"``, ``"freq"``,
+            ``"crops"``, ``"strucpro"``, ``"milkitem"``, ``"dairyprod"``,
+            ``"statinfo"``, ``"leg_form"``, ``"farmtype"``, ``"so_eur"`` or
+            ``"uaarea"``.
+        search: Text to look for in the code or the English label, ignoring case, e.g.
+            ``"austria"``, ``"AT"`` or ``"wheat"``; ``None`` lists every code.
+    """
+    known = {
+        info.id: info
+        for info in params.list_info().values()
+        if info.kind == "codelist" and info.id is not None
+    }
+    info = known.get(codelist.strip().upper())
+    if info is None or info.id is None:
+        raise UnknownCode(
+            "codelist",
+            codelist,
+            list_name="codelist",
+            fetched=params.packaged(params.INDEX).fetched,
+            closest=closest(codelist, {code: entry.label or code for code, entry in known.items()}),
+            reason=UNPACKAGED_CODELIST,
+            source=SOURCE,
+        )
+    packaged = params.packaged(info.name)
+    found = [entry for entry in params.codes(info.name) if matches(search, entry.code, entry.label)]
+    published = _release_time(info.last_updated)
+    meta = packaged.meta(
+        SOURCE,
+        request={"codelist": info.id, "search": search},
+        vintage=info.version,
+        published_at=published,
+        published_at_naive=published is not None and published.tzinfo is None,
+    )
+    return Result(data=found, meta=meta)
+
+
+list_codes = sync(list_codes_async)
