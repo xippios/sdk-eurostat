@@ -6,12 +6,20 @@ small slice its fixture holds: ``apro_mk_cola`` (milk collection), ``apro_cpnh1`
 production) and ``ef_m_farmleg`` (farm indicators by legal status), Austria, two periods.
 The slices have one each, on the slices their first fixtures hold: ``get_series`` and
 ``get_cross_section`` on ``apro_mk_cola``, ``get_latest_period`` on ``apro_cpnh1``.
-A run sends seven keyless requests, the reachability check included. The tests assert
+The list tasks answer from the packaged lists, so theirs check upstream's side: that the
+answers ``scripts/refresh_reference.py`` packages still read as it reads them, through
+the script's own functions; ``list_datasets``'s reads the start of the table of contents
+only (its test says why), ``list_codes``'s fetches the STATINFO codelist.
+A run sends nine keyless requests, the reachability check included. The tests assert
 shape and release metadata, never values, which Eurostat revises twice a day, nor which
 period is the latest.
 """
 
+import importlib.util
 import re
+from datetime import datetime
+from pathlib import Path
+from types import ModuleType
 
 import httpx
 import pytest
@@ -19,7 +27,8 @@ from xippios.core import Result
 
 from xippios.eurostat import tasks
 from xippios.eurostat._client import BASE_URL, config
-from xippios.eurostat.models import Cube, Observation
+from xippios.eurostat.api import catalogue
+from xippios.eurostat.models import Code, Cube, Dataset, Observation
 
 pytestmark = [pytest.mark.live, pytest.mark.anyio]
 
@@ -111,3 +120,74 @@ async def test_get_cross_section_apro_mk_cola() -> None:
     _check_slice(result)
     assert {observation.codes["time"] for observation in result.data} == {"2023"}
     assert len({observation.codes["geo"] for observation in result.data}) > 1, "every geo code"
+
+
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "refresh_reference.py"
+
+
+def load_script() -> ModuleType:
+    spec = importlib.util.spec_from_file_location("refresh_reference", SCRIPT)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+async def test_list_datasets_upstream_toc_still_reads() -> None:
+    """The table of contents upstream serves still reads as the refresh script reads it.
+
+    ``list_datasets`` answers from the packaged copy, so this checks upstream's side. The
+    TOC is 23 MB, too much to fetch every night for a smoke test, so the test streams it
+    and stops after the first complete leaf, a few kilobytes: one request, closed early,
+    sent with a plain ``httpx`` client and the family's User-Agent, since core's client
+    streams only to a file. It checks the root's ``creationDate`` and the first leaf's
+    shape through the script's ``TocParser``; the packaged answer's metadata is checked
+    on the way, without a request.
+    """
+    script = load_script()
+    parser = script.TocParser()
+    async with (
+        httpx.AsyncClient(
+            headers={"User-Agent": config.user_agent}, timeout=config.timeouts.to_httpx()
+        ) as http,
+        http.stream("GET", f"{BASE_URL}/{catalogue.PATH}") as response,
+    ):
+        assert response.status_code == 200
+        async for chunk in response.aiter_bytes():
+            parser.feed(chunk)
+            if parser.completed:
+                break
+    assert parser.creation_date is not None
+    assert re.fullmatch(r"\d{8}T\d{4}", parser.creation_date)
+    datetime.strptime(parser.creation_date, tasks.CREATION_DATE)
+    first = parser.leaves()[0]
+    assert isinstance(first, Dataset)
+    assert first.code
+    assert first.title
+    assert first.path
+    result = await tasks.list_datasets_async(search="apro_mk_cola")
+    assert result.data
+    assert result.meta.published_at_naive is True
+
+
+async def test_list_codes_upstream_statinfo_still_reads() -> None:
+    """The STATINFO codelist upstream serves still reads as the refresh script reads it.
+
+    One request through the package's client and the script's ``fetch_codelist``: the
+    codes in order with their labels, the version and a ``LAST_UPDATED`` with a zone.
+    """
+    script = load_script()
+    answer = await script.fetch_codelist("STATINFO")
+    packaged = script.codelist_list(answer.codelist, answer.retrieved_at)
+    info = script.codelist_info(answer.codelist)
+    assert packaged.endpoint == "sdmx/2.1/codelist/ESTAT/STATINFO"
+    assert packaged.records
+    assert all(Code.model_validate(record).code for record in packaged.records)
+    assert info.id == "STATINFO"
+    assert info.version
+    assert info.last_updated is not None
+    assert datetime.fromisoformat(info.last_updated).utcoffset() is not None
+    result = await tasks.list_codes_async("statinfo")
+    assert result.data
+    assert result.meta.vintage is not None
