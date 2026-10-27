@@ -30,11 +30,19 @@ list tasks return. ``Codelist`` mirrors the SDMX 2.1 API's codelist answer in JS
 (``sdmx/2.1/codelist/{agencyID}/{resourceID}?format=JSON``,
 ``docs/upstream/user-guide/api-detailed-guidelines/sdmx2-1/structure-queries.md``), which
 only the refresh script reads; the TOC's XML is parsed in that script alone (D44).
+
+``SdmxCsvRow`` is one row of an SDMX-CSV 1.0 file, the SDMX 2.1 API's
+``format=SDMX-CSV`` answer that ``download_dataset`` writes to disk and
+``parse.parse_sdmx_csv`` reads (the user guide's ``sdmx2-1/data-query.md`` and the
+sample ``docs/upstream/samples/apro_mk_cola-sdmx-csv.csv``): one observation, its
+columns under their headers snake_cased, the dimensions and the other attributes kept
+by their column names (ADR-0020 decision 2).
 """
 
 import math
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from datetime import datetime
+from decimal import Decimal
 from enum import StrEnum
 from typing import Any, Self
 
@@ -55,6 +63,7 @@ __all__ = [
     "Lang",
     "LeafType",
     "Observation",
+    "SdmxCsvRow",
 ]
 
 
@@ -415,3 +424,45 @@ class Codelist(UpstreamModel):
         ``None`` when the codelist carries no such annotation.
         """
         return next((item.title for item in self.extension.annotation if item.type == type_), None)
+
+
+class SdmxCsvRow(UpstreamModel):
+    """One row of an SDMX-CSV file: one observation with its dimensions and attributes.
+
+    The columns as Eurostat prints them, in order: ``DATAFLOW``, ``LAST UPDATE``, one
+    column per dimension in structure order, ``TIME_PERIOD``, ``OBS_VALUE``, then the
+    observation's attributes (``OBS_FLAG`` and ``CONF_STATUS`` in apro_mk_cola;
+    ``OBS_FLAG``, ``LTAA_FLAG`` and ``LTAA`` in the user guide's ENV_WAT_RES). Nothing is
+    renamed: each field is its column's header snake_cased, and the dimensions and the
+    other attributes keep their headers as keys. Every value is text as printed but
+    ``obs_value``, a number; an empty cell is ``None`` except in a dimension.
+
+    Attributes:
+        dataflow: The dataflow and its version, e.g. ``"ESTAT:APRO_MK_COLA(1.0)"``;
+            upstream's ``DATAFLOW``.
+        last_update: The dataset's last update as printed, day first, without a zone,
+            e.g. ``"05/10/26 23:00:00"``; upstream's ``LAST UPDATE``.
+        dimensions: The row's code on each dimension, in column order, e.g. ``{"freq":
+            "A", "milkitem": "PRD", "dairyprod": "D1110D", "unit": "THS_T", "geo":
+            "AT"}``: the columns between ``LAST UPDATE`` and ``TIME_PERIOD``.
+        time_period: The period, as the dataset prints it, e.g. ``"2022"``; upstream's
+            ``TIME_PERIOD``.
+        obs_value: The value, e.g. ``Decimal("3247.05")``; ``None`` when the cell is
+            empty (a confidential value, say). Upstream's ``OBS_VALUE``.
+        obs_flag: The observation's flag, e.g. ``"e"`` (estimated); ``None`` when empty
+            or when the file has no such column. Upstream's ``OBS_FLAG``.
+        conf_status: The confidentiality status, e.g. ``"C"``; ``None`` when empty or
+            when the file has no such column. Upstream's ``CONF_STATUS``.
+        attributes: The other attribute columns after ``OBS_VALUE``, in column order,
+            e.g. ``{"LTAA_FLAG": None, "LTAA": "715.53"}`` in ENV_WAT_RES; empty in
+            apro_mk_cola, whose attributes are ``OBS_FLAG`` and ``CONF_STATUS``.
+    """
+
+    dataflow: str = Field(validation_alias="DATAFLOW")
+    last_update: str = Field(validation_alias="LAST UPDATE")
+    dimensions: Mapping[str, str]
+    time_period: str = Field(validation_alias="TIME_PERIOD")
+    obs_value: Decimal | None = Field(validation_alias="OBS_VALUE")
+    obs_flag: str | None = Field(default=None, validation_alias="OBS_FLAG")
+    conf_status: str | None = Field(default=None, validation_alias="CONF_STATUS")
+    attributes: Mapping[str, str | None] = Field(default_factory=dict)
