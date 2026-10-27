@@ -6,5 +6,6 @@ in ``_client`` are internal.
 """
 
 from xippios.eurostat._version import __version__
+from xippios.eurostat.tasks import get_data
 
-__all__ = ["__version__"]
+__all__ = ["__version__", "get_data"]

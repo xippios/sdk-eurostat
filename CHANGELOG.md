@@ -21,6 +21,23 @@ All notable changes to this project are documented here. The format follows
   fetched and why, and Eurostat's licence and reuse lines, its exceptions to commercial
   reuse, its clause on modified reuse with the snapshot's disclaimer, and its citation
   form.
+- `get_data(dataset, filters=None, *, lang=Lang.EN, since_time_period=None,
+  until_time_period=None, last_time_period=None, geo_level=None)`: one Statistics API
+  request (`getData`, `statistics/1.0/data/{datasetCode}`) answered as a `Cube`, the
+  JSON-stat 2.0 dataset member by member, with `Cube.observations()` reading out the
+  cells that have a value or a status, each an `Observation` with its codes and labels;
+  `meta.published_at` is the cube's `updated`, with `meta.published_at_naive` set should
+  Eurostat print it without a zone (never seen; ADR-0022 rule 2), and `meta.vintage` its
+  text as printed. The StrEnums `Lang` and `GeoLevel` type `lang` and `geo_level`; more
+  than one time parameter, other than `since_time_period` with `until_time_period`, is
+  refused before sending. The MCP tool `eurostat_get_data` and the route
+  `POST /eurostat/get_data`.
+- `classify` for the Statistics API's refusals (`errors.py`): an unknown dataset, and an
+  HTTP 400 whose faults are all 100 ("No results found"), are `NotFoundError`; any other
+  HTTP 400 `error`, as an array or as one object, is `InvalidRequestError` with
+  Eurostat's label; the asynchronous answer is `InvalidRequestError` saying to send the
+  request again later or to narrow it, and an HTTP 413 `InvalidRequestError` naming how
+  to narrow it. An unknown code is an empty cube, not an error.
 
 ### Changed
 
@@ -38,3 +55,8 @@ All notable changes to this project are documented here. The format follows
   Hand-apply entry; `scripts/` is the package's, so template v0.3.0 reaches it only
   through its Hand-apply list. `enums.py` is not re-rendered, since no list is packaged
   yet; the reference README and `/refresh-reference-data` name the new call.
+- The client caches answers of HTTP 200 in core's `MemoryCache`, five minutes each, up
+  to core's `cache_max_bytes` of 8 MiB a body, so a larger cube is fetched again
+  (ADR-0019 decision 3); `getData` reads its answer with core 0.3.0's
+  `AsyncClient.get_answer`, so `get_data`'s `meta.retrieved_at` on a cache hit is the
+  time the answer was stored (conventions §4, ADR-0015 decision 5).

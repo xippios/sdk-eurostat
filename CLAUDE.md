@@ -12,7 +12,7 @@ that works here; the family rules it points to apply as well.
 | API base URL | `https://ec.europa.eu/eurostat/api/dissemination` |
 | Documentation | https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-introduction, snapshotted in `docs/upstream/` |
 | Credentials | none; the API is open |
-| Rate limit | 30 requests per minute, burst 1; a self-imposed pace, upstream documents none (ADR-0010); enforced client-side in `_client.py` |
+| Rate limit | 30 requests per minute, burst 1; a self-imposed pace, upstream documents no rate in numbers (ADR-0010); the user guide states a fair-use rule without a number: past thresholds it does not give on concurrent requests, requests and extraction cost per day, 7 and 30 days, requests are answered asynchronously (`docs/upstream/user-guide/api-detailed-guidelines/asynchronous-api.md`, "Fair use of the service"); enforced client-side in `_client.py` |
 | Write tools | no, this package is read-only |
 
 The snapshot in `docs/upstream/` is the reference for names, parameters and semantics.

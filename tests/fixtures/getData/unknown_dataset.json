@@ -1,0 +1,45 @@
+{
+  "recorded_at": "2026-10-27T12:36:47.243220Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/no_such_dataset?format=JSON&lang=EN"
+  },
+  "response": {
+    "body": "{ \"error\": [{\"status\": 404,\"id\": 100,\"label\": \"ERR_NOT_FOUND_4: NO_SUCH_DATASET (DATA_FLOW:ALL,1.0) is not available for dissemination.\"}]}",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Tue, 27 Oct 2026 12:36:44 GMT"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ],
+      [
+        "strict-transport-security",
+        "max-age=0;"
+      ],
+      [
+        "set-cookie",
+        "REDACTED"
+      ]
+    ],
+    "status": 404
+  }
+}
