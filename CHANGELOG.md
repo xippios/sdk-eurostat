@@ -51,6 +51,32 @@ All notable changes to this project are documented here. The format follows
   each with a result cap of its own in `MCP_CAPS` (the family's 200 rows or 64 KB, with
   a note on how to see the rest), and the routes `POST /eurostat/get_series`,
   `/eurostat/get_latest_period` and `/eurostat/get_cross_section`.
+- `list_datasets(search=None)` and `list_codes(codelist, search=None)`: packaged answers
+  (ADR-0022) without a request. `list_datasets` reads the Catalogue API's table of
+  contents (`catalogue/toc/xml`, 10,375 leaves on 2026-10-27), each leaf a `Dataset`
+  with its code, type (`LeafType`), English title, the folders above it as `path`,
+  `lastUpdate`, `lastModified`, `dataStart`, `dataEnd` and `values` as printed;
+  `meta.vintage` is the TOC's `creationDate` as printed and `meta.published_at` its
+  time without a zone, `published_at_naive` set. `list_codes` reads one of the twelve
+  codelists of the dimensions of apro_cpnh1, apro_mk_cola and ef_m_farmleg (FREQ, GEO,
+  UNIT, CROPS, STRUCPRO, MILKITEM, DAIRYPROD, STATINFO, LEG_FORM, FARMTYPE, SO_EUR,
+  UAAREA; `sdmx/2.1/codelist/ESTAT/<ID>`, latest version, English labels), each code a
+  `Code`; the name is case-insensitive, an unknown one raises `UnknownCode` naming the
+  closest; `meta.vintage` is the codelist's version and `meta.published_at` its
+  `LAST_UPDATED`. `search` keeps the records whose code or title (label) contains the
+  text, ignoring case. `meta.retrieved_at` is the list's fetch time. The MCP tools
+  `eurostat_list_datasets` (the family's cap) and `eurostat_list_codes` (1,000 rows
+  within the family's 64 KB), each with a note naming `search`, and the routes
+  `GET /eurostat/list_datasets` and `/eurostat/list_codes`.
+- `scripts/refresh_reference.py` fetches the table of contents (streamed to a temporary
+  file with core's `download` and read with the standard library's ElementTree as it
+  streams, the only XML the package parses) and the twelve codelists as JSON-stat
+  through the new endpoint wrappers `api.catalogue.getTocXml` and
+  `api.sdmx.codeListQuery`, and writes `reference/toc.json`, one
+  `reference/<codelist>.json` each and `reference/lists.json`, which holds upstream's
+  release identifiers of every list, with `PackagedList.write`; `--samples` cuts the
+  parser tests' samples under `tests/fixtures/files/` from the same run. Thirteen
+  keyless requests.
 
 ### Changed
 
@@ -66,8 +92,9 @@ All notable changes to this project are documented here. The format follows
   with `ruff format` and `ruff check --fix`, since core 0.3.0 removed `render_str_enums`
   and `render_int_enums` (ADR-0008, amendment 2026-10-27): the port of core 0.3.0's
   Hand-apply entry; `scripts/` is the package's, so template v0.3.0 reaches it only
-  through its Hand-apply list. `enums.py` is not re-rendered, since no list is packaged
-  yet; the reference README and `/refresh-reference-data` name the new call.
+  through its Hand-apply list. `enums.py` is re-rendered by the script's first run, the
+  renderer's empty module, since Eurostat's packaged lists are tables and none is an
+  enum; the reference README and `/refresh-reference-data` name the new call.
 - The client caches answers of HTTP 200 in core's `MemoryCache`, five minutes each, up
   to core's `cache_max_bytes` of 8 MiB a body, so a larger cube is fetched again
   (ADR-0019 decision 3); `getData` reads its answer with core 0.3.0's
