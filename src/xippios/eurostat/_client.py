@@ -1,24 +1,119 @@
 """The configured ``xippios.core`` client for Eurostat dissemination API.
 
 One ``AsyncClient`` for the whole package: task functions share its rate limiter and
-cache, and the same instance serves the sync facades and the MCP server.
+cache, and the same instance serves the sync facades and the MCP server. ``classify``
+maps the Statistics API's documented refusals onto the family's taxonomy once
+(ADR-0008); ``errors`` reads them. The client keeps no response cache: core 0.2.1 bounds
+no cached body's size, and a cube can run to hundreds of megabytes (ADR-0019 decision 3
+brings the bound with core 0.3.0).
 """
 
-from xippios.core import AsyncClient, ClientConfig, RateLimit
+from datetime import UTC, datetime
+
+import httpx
+from xippios.core import (
+    AsyncClient,
+    ClientConfig,
+    InvalidRequestError,
+    NotFoundError,
+    RateLimit,
+    XippiosError,
+)
 
 from xippios.eurostat._version import __version__
+from xippios.eurostat.errors import (
+    ASYNCHRONOUS_LABEL,
+    NARROW_HINT,
+    error_faults,
+    fault_payload,
+    soap_faultstring,
+    warning_fault,
+)
 
 SOURCE = "eurostat"
 BASE_URL = "https://ec.europa.eu/eurostat/api/dissemination"
 API_KEY_ENV: str | None = None
-# A self-imposed pace: upstream documents no limit (ADR-0010 decision 1).
+# A self-imposed pace: upstream documents no rate in numbers, only a fair-use rule
+# without one (ADR-0010 decision 1).
 RATE_LIMIT = RateLimit(per_minute=30, burst=1)
+
+
+def _where(response: httpx.Response) -> str:
+    """The request's method and path, never its host or query (conventions §5)."""
+    return f"{response.request.method} {response.request.url.path}"
+
+
+def classify(response: httpx.Response) -> XippiosError | None:
+    """The Statistics API's documented refusals, mapped once (ADR-0008).
+
+    - A ``warning`` whose status is 413 or whose label starts ``ASYNCHRONOUS_RESPONSE``,
+      at any HTTP status: the service will treat the request asynchronously, which this
+      package does not poll (design round Q4, 2026-10-27): ``InvalidRequestError`` naming
+      how to narrow the query.
+    - HTTP 404 with an ``error`` member: ``NotFoundError`` with upstream's label
+      (recorded for an unknown dataset, fault 100).
+    - HTTP 400 with an ``error`` member, an array or one object: ``InvalidRequestError``
+      with upstream's label (recorded for an unknown dimension, fault 150, and for
+      ``geo`` with ``geoLevel``).
+    - HTTP 413 otherwise, the SOAP fault ``EXTRACTION_TOO_BIG`` the user guide documents
+      for the SDMX APIs among them: ``InvalidRequestError`` naming how to narrow it.
+
+    Everything else falls through to core's status mapping, a 5xx included, so that it
+    is retried. An unknown code (``geo=XX``) is no error: the service answers HTTP 200
+    with an empty cube (``tests/fixtures/getData/unknown_code.json``).
+    """
+    status = response.status_code
+    payload = fault_payload(response)
+    if payload is not None:
+        warning = warning_fault(payload)
+        if warning is not None and (
+            warning.status == 413 or warning.label.startswith(ASYNCHRONOUS_LABEL)
+        ):
+            return InvalidRequestError(
+                f"Eurostat will answer {_where(response)} asynchronously "
+                f"({warning.label}), and this package does not poll asynchronous answers: "
+                f"{NARROW_HINT}.",
+                source=SOURCE,
+            )
+        faults = error_faults(payload)
+        if faults and status in (400, 404):
+            described = "; ".join(fault.describe() for fault in faults)
+            if status == 404:
+                return NotFoundError(
+                    f"Eurostat answered {_where(response)} with HTTP 404 ({described}).",
+                    source=SOURCE,
+                )
+            return InvalidRequestError(
+                f"Eurostat refused the query {_where(response)} with HTTP 400 ({described}).",
+                source=SOURCE,
+            )
+    if status == 413:
+        fault = soap_faultstring(response)
+        return InvalidRequestError(
+            f"Eurostat refused {_where(response)} as too large "
+            f"(HTTP 413{': ' + fault if fault else ''}): {NARROW_HINT}.",
+            source=SOURCE,
+        )
+    return None
+
+
+def stored_at(response: httpx.Response) -> datetime | None:
+    """When the client's cache stored ``response``, as UTC; ``None`` for an answer from the wire.
+
+    Core marks a hit with ``extensions["xippios_cache_stored_at"]``, epoch seconds; on a
+    hit a task's ``meta.retrieved_at`` is that time (conventions §4, ADR-0015). The
+    client has no cache yet, so every answer is from the wire for now.
+    """
+    stamp = response.extensions.get("xippios_cache_stored_at")
+    return None if stamp is None else datetime.fromtimestamp(stamp, UTC)
+
 
 config = ClientConfig(
     source=SOURCE,
     version=__version__,
     base_url=BASE_URL,
     rate_limit=RATE_LIMIT,
+    classify=classify,
 )
 
 # An upstream that reports an hourly or daily quota installs one QuotaPolicy, from
@@ -44,6 +139,8 @@ __all__ = [
     "BASE_URL",
     "RATE_LIMIT",
     "SOURCE",
+    "classify",
     "client",
     "config",
+    "stored_at",
 ]
