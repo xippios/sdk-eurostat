@@ -108,6 +108,9 @@ def test_parse_sdmx_csv_is_a_generator(tmp_path: Path) -> None:
     header_only = tmp_path / "header.csv"
     header_only.write_bytes(PLAIN.read_bytes().split(b"\r\n", 1)[0] + b"\r\n")
     assert list(parse_sdmx_csv(header_only)) == [], "a header and no row yields nothing"
+    empty = tmp_path / "empty.csv"
+    empty.write_bytes(b"")
+    assert list(parse_sdmx_csv(empty)) == [], "an empty file yields nothing"
 
 
 def documented_lines(heading: str) -> str:
@@ -182,10 +185,13 @@ def test_parse_sdmx_csv_refuses_an_obs_value_that_is_no_number(tmp_path: Path) -
     ), "the line and the column, never the value"
 
 
-def test_parse_sdmx_csv_refuses_another_file_kind() -> None:
-    """The TOC sample, XML, is no SDMX-CSV."""
-    with pytest.raises(ValidationError, match=r"apro_mk\.xml (does not have SDMX-CSV|has a row)"):
-        list(parse_sdmx_csv(FIXTURES / "files" / "toc" / "apro_mk.xml"))
+@pytest.mark.parametrize("sample", ["toc/apro_mk.xml", "codelist/statinfo.json"])
+def test_parse_sdmx_csv_refuses_another_file_kind(sample: str) -> None:
+    """The TOC sample, XML, and the codelist sample, JSON on one line, are no SDMX-CSV:
+    refused at the header, before any row."""
+    path = FIXTURES / "files" / sample
+    with pytest.raises(ValidationError, match=rf"^eurostat: {re.escape(path.name)} does not "):
+        next(parse_sdmx_csv(path))
 
 
 def test_parse_sdmx_csv_refuses_a_header_out_of_order(tmp_path: Path) -> None:
@@ -195,3 +201,61 @@ def test_parse_sdmx_csv_refuses_a_header_out_of_order(tmp_path: Path) -> None:
     path.write_bytes(data)
     with pytest.raises(ValidationError, match="does not have SDMX-CSV's columns"):
         list(parse_sdmx_csv(path))
+
+
+def write(path: Path, data: bytes, *, packed: bool) -> Path:
+    """``data`` at ``path``, gzip-compressed when ``packed``, as ``compressed=true`` sends it."""
+    path.write_bytes(gzip.compress(data) if packed else data)
+    return path
+
+
+@pytest.mark.parametrize("packed", [False, True], ids=["plain", "gzip"])
+def test_parse_sdmx_csv_refuses_a_header_only_file_of_another_layout(
+    tmp_path: Path, packed: bool
+) -> None:
+    """NOT RECORDED: the plain sample's header line alone, OBS_VALUE and TIME_PERIOD swapped
+    in memory. The header is checked before any row, so a file without rows is refused
+    too."""
+    header = PLAIN.read_bytes().split(b"\r\n", 1)[0]
+    swapped = header.replace(b"TIME_PERIOD,OBS_VALUE", b"OBS_VALUE,TIME_PERIOD")
+    path = write(tmp_path / "swapped.csv", swapped + b"\r\n", packed=packed)
+    with pytest.raises(ValidationError) as refused:
+        list(parse_sdmx_csv(path))
+    assert str(refused.value).startswith(
+        "eurostat: swapped.csv does not have SDMX-CSV's columns: DATAFLOW, LAST UPDATE, the "
+        "dimensions, TIME_PERIOD, OBS_VALUE, the attributes; its header is DATAFLOW, "
+    )
+
+
+@pytest.mark.parametrize("packed", [False, True], ids=["plain", "gzip"])
+def test_parse_sdmx_csv_refuses_text_that_is_not_utf8(tmp_path: Path, packed: bool) -> None:
+    """NOT RECORDED: the plain sample's rows repeated past 64 KiB, its last row with a byte
+    that is no UTF-8, in memory. The header reads, so the rows' reader refuses it: the
+    plain file's ``decode_csv``, the gzip file's standard library, worded alike."""
+    header, rows = PLAIN.read_bytes().split(b"\r\n", 1)
+    body = rows * (64 * 1024 // len(rows) + 1)
+    last = body.rindex(b"ESTAT:")
+    data = header + b"\r\n" + body[:last] + b"ESTAT\xff:" + body[last + len(b"ESTAT:") :]
+    path = write(tmp_path / "latin.csv", data, packed=packed)
+    rows_read = parse_sdmx_csv(path)
+    assert next(rows_read).dataflow == "ESTAT:APRO_MK_COLA(1.0)", "the header and first rows read"
+    with pytest.raises(ValidationError) as refused:
+        list(rows_read)
+    assert str(refused.value) == "eurostat: latin.csv is not UTF-8 text: invalid start byte"
+
+
+@pytest.mark.parametrize("packed", [False, True], ids=["plain", "gzip"])
+def test_parse_sdmx_csv_refuses_csv_the_csv_module_cannot_read(
+    tmp_path: Path, packed: bool
+) -> None:
+    """NOT RECORDED: the plain sample with one OBS_FLAG cell made longer than the csv
+    module's field limit (131,072 characters) in memory."""
+    lines = PLAIN.read_bytes().split(b"\r\n")
+    lines[1] = lines[1].replace(b",,", b"," + b"e" * (csv.field_size_limit() + 1) + b",", 1)
+    path = write(tmp_path / "wide.csv", b"\r\n".join(lines), packed=packed)
+    with pytest.raises(ValidationError) as refused:
+        list(parse_sdmx_csv(path))
+    assert str(refused.value) == (
+        "eurostat: wide.csv is not CSV the csv module reads: field larger than field limit "
+        f"({csv.field_size_limit()})"
+    )

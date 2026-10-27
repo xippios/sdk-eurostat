@@ -37,7 +37,13 @@ import respx
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
-from xippios.core import Downloaded, InvalidRequestError, NotFoundError, UnknownCode
+from xippios.core import (
+    Downloaded,
+    InvalidRequestError,
+    NotFoundError,
+    UnknownCode,
+    ValidationError,
+)
 from xippios.core.client import cache_key
 from xippios.core.testing import (
     CLOCK_SLACK,
@@ -1185,11 +1191,32 @@ def test_download_dataset_answers_an_empty_file_without_a_release(
     respx_mock.route(method="GET", host="ec.europa.eu").mock(
         return_value=httpx.Response(200, headers=recorded.response.headers, content=header)
     )
-    result = download_dataset("apro_mk_cola", "A..XX", dest=tmp_path / "empty.csv")
+    result = download_dataset("apro_mk_cola", MILK_KEY, dest=tmp_path / "empty.csv")
     assert result.data.bytes == len(header)
     assert result.meta.vintage is None
     assert result.meta.published_at is None
     assert result.meta.published_at_naive is False
+
+
+def test_download_dataset_refuses_a_last_update_it_cannot_read(
+    respx_mock: respx.MockRouter, tmp_path: Path
+) -> None:
+    """NOT RECORDED: the recorded plain answer with its LAST UPDATE printed year first in
+    memory, served with its recorded headers. The file is written and stays at ``dest``;
+    the message names the form expected, never the text."""
+    recorded = recorded_data(MILK_SLICE)
+    body = recorded.response.content.replace(b"05/10/26 23:00:00", b"2026-10-05 23:00:00")
+    respx_mock.route(method="GET", host="ec.europa.eu").mock(
+        return_value=httpx.Response(200, headers=recorded.response.headers, content=body)
+    )
+    dest = tmp_path / "milk.csv"
+    with pytest.raises(ValidationError) as refused:
+        download_dataset("apro_mk_cola", MILK_KEY, dest=dest)
+    assert str(refused.value) == (
+        "eurostat dataQuery: the first row's LAST UPDATE is not printed as dd/mm/yy HH:MM:SS"
+    )
+    assert dest.read_bytes() == body, "the file stays at dest"
+    assert leftovers(tmp_path) == ["milk.csv"]
 
 
 @pytest.mark.parametrize("key", [".", ".."])
