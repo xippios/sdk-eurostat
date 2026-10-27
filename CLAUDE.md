@@ -55,7 +55,8 @@ src/xippios/eurostat/
                    per-tool result caps
   mcp.py           xippios-eurostat-mcp entry point
   http.py          FastAPI router
-  params.py        packaged value lists: PACKAGED_LISTS, packaged_values()
+  params.py        packaged lists: PACKAGED_LISTS, packaged(), list_info() (lists.json),
+                   datasets() (the TOC), codes() (a codelist)
   enums.py         StrEnums (IntEnums for integer ids) generated from the packaged lists;
                    never edited by hand
   reference/       packaged code lists (CSV/JSON) plus README with provenance
@@ -68,6 +69,7 @@ tests/
                    the adapters serving exactly the tasks, task shapes and docstrings, the
                    README status table, the template tag, the core bound
   test_tasks.py    per-task replay tests
+  test_refresh_reference.py  the refresh script's readers on tests/fixtures/files/
   test_live.py     @pytest.mark.live smoke tests, one per task
 docs/upstream/     documentation snapshot and FETCHED.md
 .github/workflows/ ci.yml (the required ci check, with the CHANGELOG and fixture-size steps),
