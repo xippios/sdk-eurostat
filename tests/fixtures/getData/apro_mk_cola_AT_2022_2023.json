@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-10-27T12:36:03.120855Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/apro_mk_cola?format=JSON&lang=EN&geo=AT&time=2022&time=2023"
+  },
+  "response": {
+    "body": "{\"version\":\"2.0\",\"class\":\"dataset\",\"label\":\"Production of main cows' milk products - annual data\",\"source\":\"ESTAT\",\"updated\":\"2026-10-05T23:00:00+0200\",\"value\":{\"40\":3247.05,\"41\":3242.85,\"44\":0,\"45\":0,\"48\":751.04,\"49\":708.54,\"52\":71.43,\"53\":72.27,\"56\":1.92,\"57\":2.02,\"60\":5.45,\"61\":5.24,\"68\":271.53,\"69\":264.36,\"72\":34.38,\"73\":33.46,\"76\":220.73,\"77\":226.63},\"status\":{\"64\":\"|C\",\"65\":\"|C\"},\"id\":[\"freq\",\"milkitem\",\"dairyprod\",\"unit\",\"geo\",\"time\"],\"size\":[1,3,10,2,1,2],\"dimension\":{\"freq\":{\"label\":\"Time frequency\",\"category\":{\"index\":{\"A\":0},\"label\":{\"A\":\"Annual\"}}},\"milkitem\":{\"label\":\"Item of milk\",\"category\":{\"index\":{\"PTEN\":0,\"PRD\":1,\"FAT\":2},\"label\":{\"PTEN\":\"Protein content\",\"PRD\":\"Product obtained\",\"FAT\":\"Fat content (t)\"}}},\"dairyprod\":{\"label\":\"Dairy and other animal products (except meat)\",\"category\":{\"index\":{\"D1110D\":0,\"D1200DME\":1,\"D2100\":2,\"D2200V\":3,\"D3100_X_3113\":4,\"D3113\":5,\"D3200\":6,\"D4100\":7,\"D6000\":8,\"D7121\":9},\"label\":{\"D1110D\":\"Raw cows' milk delivered to dairies\",\"D1200DME\":\"Raw cream delivered to dairies (in milk equivalent)\",\"D2100\":\"Drinking milk\",\"D2200V\":\"Cream for direct consumption\",\"D3100_X_3113\":\"Milk and cream powders, excluding skimmed milk powders\",\"D3113\":\"Skimmed milk powder\",\"D3200\":\"Concentrated milk\",\"D4100\":\"Acidified milk (yoghurts and other)\",\"D6000\":\"Butter, incl. dehydrated butter and ghee, and other fats and oils derived from milk; dairy spreads\",\"D7121\":\"Cheese from cows'milk (pure)\"}}},\"unit\":{\"label\":\"Unit of measure\",\"category\":{\"index\":{\"THS_T\":0,\"PC\":1},\"label\":{\"THS_T\":\"Thousand tonnes\",\"PC\":\"Percentage\"}}},\"geo\":{\"label\":\"Geopolitical entity (reporting)\",\"category\":{\"index\":{\"AT\":0},\"label\":{\"AT\":\"Austria\"}}},\"time\":{\"label\":\"Time\",\"category\":{\"index\":{\"2022\":0,\"2023\":1},\"label\":{\"2022\":\"2022\",\"2023\":\"2023\"}}}},\"extension\":{\"lang\":\"EN\",\"id\":\"APRO_MK_COLA\",\"agencyId\":\"ESTAT\",\"version\":\"1.0\",\"datastructure\":{\"id\":\"APRO_MK_COLA\",\"agencyId\":\"ESTAT\",\"version\":\"60.0\"},\"annotation\":[{\"type\":\"CREATED\",\"date\":\"2025-02-24T13:29:25+0100\"},{\"type\":\"DISSEMINATION_DOI_XML\",\"title\":\"<adms:identifier xmlns:adms=\\\"http://www.w3.org/ns/adms#\\\" xmlns:skos=\\\"http://www.w3.org/2004/02/skos/core.html\\\" xmlns:dct=\\\"http://purl.org/dc/terms/\\\" xmlns:rdf=\\\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\\\"><adms:Identifier rdf:about=\\\"https://doi.org/10.2908/APRO_MK_COLA\\\"><skos:notation rdf:datatype=\\\"http://purl.org/spar/datacite/doi\\\">10.2908/APRO_MK_COLA</skos:notation><dct:creator rdf:resource=\\\"http://publications.europa.eu/resource/authority/corporate-body/ESTAT\\\"/><dct:issued rdf:datatype=\\\"http://www.w3.org/2001/XMLSchema#date\\\">2023-01-19</dct:issued></adms:Identifier></adms:identifier>\"},{\"type\":\"DISSEMINATION_OBJECT_TYPE\",\"title\":\"DATASET\"},{\"type\":\"DISSEMINATION_TIMESTAMP_DATA\",\"date\":\"2026-10-05T23:00:00+0200\"},{\"type\":\"DISSEMINATION_TIMESTAMP_GLOBAL\",\"date\":\"2026-10-05T23:00:00+0200\"},{\"type\":\"DISSEMINATION_TIMESTAMP_PLANNED\",\"date\":\"2026-10-05T23:00:00+0200\"},{\"type\":\"ESMS_HTML\",\"title\":\"Explanatory texts (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/cache/metadata/en/apro_anip_esms.htm\"},{\"type\":\"ESMS_SDMX\",\"title\":\"Explanatory texts (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/api/dissemination/files?file=metadata/apro_anip_esms.sdmx.zip\"},{\"type\":\"OBS_COUNT\",\"title\":\"9502\"},{\"type\":\"OBS_PERIOD_OVERALL_LATEST\",\"title\":\"2025\"},{\"type\":\"OBS_PERIOD_OVERALL_OLDEST\",\"title\":\"1968\"},{\"type\":\"SOURCE_INSTITUTIONS\",\"text\":\"Eurostat\"},{\"type\":\"UPDATE_DATA\",\"date\":\"2026-10-05T23:00:00+0200\"},{\"type\":\"UPDATE_STRUCTURE\",\"date\":\"2026-03-09T23:00:00+0100\"}],\"status\":{\"label\":{\"|C\":\"|confidential\"}},\"positions-with-no-data\":{\"freq\":[],\"milkitem\":[0,2],\"dairyprod\":[],\"unit\":[1],\"geo\":[],\"time\":[]}}}",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Tue, 27 Oct 2026 12:36:01 GMT"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ],
+      [
+        "set-cookie",
+        "REDACTED"
+      ]
+    ],
+    "status": 200
+  }
+}

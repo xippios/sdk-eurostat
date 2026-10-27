@@ -1,0 +1,49 @@
+{
+  "recorded_at": "2026-10-27T12:36:53.326182Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/apro_mk_cola?format=JSON&lang=EN&geo=AT&geoLevel=country"
+  },
+  "response": {
+    "body": "{ \"error\": [{\"status\": 400,\"id\": 400,\"label\": \"'geo' parameter and 'geoLevel' parameter cannot be set at the same time. Please choose one or the other.\"}]}",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Tue, 27 Oct 2026 12:36:52 GMT"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "x-oracle-dms-ecid",
+        "19b2d50e-5e6e-4698-893a-3a3f3a599dfa-001eb6c1"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "x-oracle-dms-rid",
+        "0"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ],
+      [
+        "set-cookie",
+        "REDACTED"
+      ]
+    ],
+    "status": 400
+  }
+}
