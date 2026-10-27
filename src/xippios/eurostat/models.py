@@ -26,12 +26,65 @@ is computed beyond that reading. No dataframe type (ADR-0002, ADR-0003).
 import math
 from collections.abc import Iterator
 from datetime import datetime
+from enum import StrEnum
 from typing import Any, Self
 
 from pydantic import Field, model_validator
 from xippios.core import UpstreamModel
 
-__all__ = ["Category", "Cube", "Dimension", "Observation"]
+__all__ = ["Category", "Cube", "Dimension", "GeoLevel", "Lang", "Observation"]
+
+
+# Lang and GeoLevel are written by hand from
+# docs/upstream/user-guide/api-detailed-guidelines/api-statistics.md, since no endpoint
+# lists them; enums.py holds only what scripts/refresh_reference.py generates from the
+# packaged lists, and the script rewrites it whole. The adapters publish each docstring
+# as the schema's description.
+
+
+class Lang(StrEnum):
+    """The language of the labels: "EN" (English, the default), "FR" or "DE".
+
+    "The Language parameter ("lang") can have only three values: "EN", "FR", and "DE".
+    In case the parameter isn't specified, the default value "EN" is taken."
+    """
+
+    EN = "EN"
+    """English, the default."""
+    FR = "FR"
+    """French."""
+    DE = "DE"
+    """German."""
+
+
+class GeoLevel(StrEnum):
+    """Geo codes by their level: "aggregate", "country", "nuts1", "nuts2", "nuts3", "city".
+
+    aggregate: European aggregates based on a white list - EU15, EU25, EU27_2007,
+    EU27_2019, EU28, EA19, etc. country: any country code (EU Member States, or EFTA, or
+    Candidate Countries or other countries) - any 2 digits - i.e. FR. nuts1: NUTS code
+    level 1: major socio-economic regions - 3 digits - i.e. FR4. nuts2: NUTS code level 2:
+    basic regions for the application of regional policies - 4 digits - i.e. FR41. nuts3:
+    NUTS code level 3: small regions for specific diagnoses - 5 digits - i.e. FR413. city:
+    code at city level - 7 digits - i.e. DE_DEL1 (Karlsruhe). "The "geo" dimension
+    parameter filter and the "geoLevel" parameter are mutually exclusive."
+    """
+
+    AGGREGATE = "aggregate"
+    """European aggregates based on a white list - EU15, EU25, EU27_2007, EU27_2019, EU28,
+    EA19, etc."""
+    COUNTRY = "country"
+    """Any country code (EU Member States, or EFTA, or Candidate Countries or other
+    countries) - any 2 digits - i.e. FR."""
+    NUTS1 = "nuts1"
+    """NUTS code level 1: major socio-economic regions - 3 digits - i.e. FR4."""
+    NUTS2 = "nuts2"
+    """NUTS code level 2: basic regions for the application of regional policies - 4
+    digits - i.e. FR41."""
+    NUTS3 = "nuts3"
+    """NUTS code level 3: small regions for specific diagnoses - 5 digits - i.e. FR413."""
+    CITY = "city"
+    """Code at city level - 7 digits - i.e. DE_DEL1 (Karlsruhe)."""
 
 
 class Category(UpstreamModel):

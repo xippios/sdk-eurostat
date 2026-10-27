@@ -24,25 +24,19 @@ The answer is one JSON-stat 2.0 dataset (``models.Cube``;
 
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import Literal, NamedTuple
+from typing import NamedTuple
 from urllib.parse import quote
 
 from xippios.core import parse
 from xippios.core.client import decode_json
 
 from xippios.eurostat._client import SOURCE, client, stored_at
-from xippios.eurostat.models import Cube
+from xippios.eurostat.models import Cube, GeoLevel, Lang
 
-__all__ = ["DataAnswer", "GeoLevel", "Lang", "getData"]
+__all__ = ["DataAnswer", "getData"]
 
 ENDPOINT = "getData"
 """The operation's name, the WADL's method id."""
-
-Lang = Literal["EN", "FR", "DE"]
-"""``lang``'s values: "can have only three values: 'EN', 'FR', and 'DE'" (api-statistics.md)."""
-
-GeoLevel = Literal["aggregate", "country", "nuts1", "nuts2", "nuts3", "city"]
-"""``geoLevel``'s values, the six api-statistics.md lists under "The geoLevel parameter"."""
 
 
 class DataAnswer(NamedTuple):
@@ -76,15 +70,14 @@ async def getData(
     Args:
         dataset_code: ``datasetCode``, the dataset's online data code, e.g.
             ``"apro_mk_cola"``.
-        lang: ``lang``, ``"EN"``, ``"FR"`` or ``"DE"``; ``None`` leaves it out (upstream:
-            ``EN``).
+        lang: ``lang``, e.g. ``Lang.FR``; ``None`` leaves it out (upstream: ``EN``).
         filters: ``DIMENSION_CODE=VALUE`` filters, a dimension code to one code or a
             sequence of codes, each sent as a parameter of its own, e.g.
             ``{"geo": "AT", "time": ["2022", "2023"]}``.
         since_time_period: ``sinceTimePeriod``, e.g. ``"2022"``.
         until_time_period: ``untilTimePeriod``, e.g. ``"2023"``.
         last_time_period: ``lastTimePeriod``, e.g. ``2``.
-        geo_level: ``geoLevel``, e.g. ``"country"``.
+        geo_level: ``geoLevel``, e.g. ``GeoLevel.COUNTRY``.
 
     Returns:
         The cube, the ``updated`` text as printed and the cache's stored time.
@@ -96,7 +89,7 @@ async def getData(
     """
     params: dict[str, str | int | list[str]] = {"format": "JSON"}
     if lang is not None:
-        params["lang"] = lang
+        params["lang"] = str(lang)
     for code, values in (filters or {}).items():
         params[code] = values if isinstance(values, str) else list(values)
     if since_time_period is not None:
@@ -106,7 +99,7 @@ async def getData(
     if last_time_period is not None:
         params["lastTimePeriod"] = last_time_period
     if geo_level is not None:
-        params["geoLevel"] = geo_level
+        params["geoLevel"] = str(geo_level)
     path = f"/statistics/1.0/data/{quote(dataset_code, safe='')}"
     response = await client.get(path, params=params)
     raw = decode_json(response, source=SOURCE, path=path)

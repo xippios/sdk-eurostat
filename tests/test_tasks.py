@@ -17,7 +17,7 @@ documented body.
 import json
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import httpx
 import pytest
@@ -36,7 +36,7 @@ from xippios.core.testing import (
 from xippios.eurostat import get_data, tasks
 from xippios.eurostat.http import router
 from xippios.eurostat.mcp import server
-from xippios.eurostat.models import Cube
+from xippios.eurostat.models import Cube, GeoLevel, Lang
 
 FIXTURES = Path(__file__).parent / "fixtures"
 GUIDE = Path(__file__).parents[1] / "docs" / "upstream" / "user-guide" / "api-detailed-guidelines"
@@ -143,11 +143,35 @@ def test_get_data_unknown_dimension(replay_fixture: ReplayFixture) -> None:
         tasks.get_data("apro_mk_cola", {"nosuchdim": "AT"})
 
 
-def test_get_data_geo_with_geo_level(replay_fixture: ReplayFixture) -> None:
+@pytest.mark.parametrize("level", [GeoLevel.COUNTRY, "country"], ids=["member", "plain"])
+def test_get_data_geo_with_geo_level(replay_fixture: ReplayFixture, level: str) -> None:
+    """A plain string is accepted where the enumeration is expected, and sent as it."""
     route = replay_fixture(ENDPOINT, "geo_with_geo_level")
     with pytest.raises(InvalidRequestError, match="cannot be set at the same time"):
-        tasks.get_data("apro_mk_cola", {"geo": "AT"}, geo_level="country")
+        tasks.get_data("apro_mk_cola", {"geo": "AT"}, geo_level=cast(GeoLevel, level))
     assert sent_urls(route) == [recorded_url("geo_with_geo_level")]
+
+
+def test_get_data_takes_lang_as_a_plain_string(replay_fixture: ReplayFixture) -> None:
+    case = "apro_mk_cola_AT_2022_2023"
+    route = replay_fixture(ENDPOINT, case)
+    result = tasks.get_data(
+        "apro_mk_cola", {"geo": "AT", "time": ["2022", "2023"]}, lang=cast(Lang, "EN")
+    )
+    assert sent_urls(route) == [recorded_url(case)]
+    assert result.meta.request["lang"] == "EN"
+    assert type(result.meta.request["lang"]) is str, "meta.request holds the plain value"
+
+
+@pytest.mark.parametrize(
+    ("argument", "value"), [("lang", "en"), ("lang", "IT"), ("geo_level", "region")]
+)
+def test_get_data_refuses_a_value_outside_the_enumeration(
+    respx_mock: respx.MockRouter, argument: str, value: str
+) -> None:
+    with pytest.raises(InvalidRequestError, match=f"{argument}={value!r} is not one of"):
+        tasks.get_data("apro_mk_cola", {"geo": "AT"}, **{argument: cast(Any, value)})
+    assert not respx_mock.calls, "refused before any request"
 
 
 @pytest.mark.parametrize(
@@ -252,15 +276,37 @@ async def test_get_data_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
     payload = await mcp_call(
         server,
         "eurostat_get_data",
-        {"dataset": "apro_mk_cola", "filters": {"geo": "AT", "time": ["2022", "2023"]}},
+        {
+            "dataset": "apro_mk_cola",
+            "filters": {"geo": "AT", "time": ["2022", "2023"]},
+            "lang": "EN",
+        },
     )
     assert sent_urls(route) == [recorded_url(case)]
+    assert payload["meta"]["request"]["lang"] == "EN"
     assert payload["data"]["id"] == ["freq", "milkitem", "dairyprod", "unit", "geo", "time"]
     assert payload["data"]["class_"] == "dataset"
     assert payload["data"]["value"]["40"] == 3247.05
     assert payload["meta"]["endpoint"] == "getData"
     assert payload["meta"]["vintage"] == "2026-10-05T23:00:00+0200"
     assert payload["meta"]["published_at"] == "2026-10-05T23:00:00+02:00"
+
+
+@pytest.mark.anyio
+async def test_get_data_tool_schema_lists_the_enumerations() -> None:
+    """The MCP schema carries ``Lang`` and ``GeoLevel`` as enumerations of strings, so an
+    agent sees the valid values; the tool validates a string against them."""
+    schema = (await server.list_tools())[0].input_schema
+    assert schema["properties"]["lang"] == {"$ref": "#/$defs/Lang", "default": "EN"}
+    assert schema["$defs"]["Lang"]["enum"] == ["EN", "FR", "DE"]
+    assert schema["$defs"]["GeoLevel"]["enum"] == [
+        "aggregate",
+        "country",
+        "nuts1",
+        "nuts2",
+        "nuts3",
+        "city",
+    ]
 
 
 def test_get_data_route_end_to_end(replay_fixture: ReplayFixture) -> None:
@@ -272,10 +318,15 @@ def test_get_data_route_end_to_end(replay_fixture: ReplayFixture) -> None:
     with TestClient(app) as http:
         answer = http.post(
             "/eurostat/get_data",
-            json={"dataset": "apro_mk_cola", "filters": {"geo": "AT", "time": ["2022", "2023"]}},
+            json={
+                "dataset": "apro_mk_cola",
+                "filters": {"geo": "AT", "time": ["2022", "2023"]},
+                "lang": "EN",
+            },
         )
     assert answer.status_code == 200
     assert sent_urls(route) == [recorded_url(case)]
+    assert answer.json()["meta"]["request"]["lang"] == "EN"
     assert answer.json()["meta"]["request"]["filters"] == {"geo": "AT", "time": ["2022", "2023"]}
 
 

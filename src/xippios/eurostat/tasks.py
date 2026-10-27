@@ -25,14 +25,15 @@ omitted; ``meta.total`` stays ``None``: the answer counts no records for the req
 
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any
 
 from xippios.core import InvalidRequestError, Result, ResultMeta, sync
 
 from xippios.eurostat import api
 from xippios.eurostat._client import SOURCE
-from xippios.eurostat.api.statistics import ENDPOINT, GeoLevel, Lang
-from xippios.eurostat.models import Cube
+from xippios.eurostat.api.statistics import ENDPOINT
+from xippios.eurostat.models import Cube, GeoLevel, Lang
 
 __all__ = ["get_data"]
 
@@ -93,6 +94,21 @@ def _filters(filters: Mapping[str, str | Sequence[str]] | None) -> dict[str, str
     return sent
 
 
+def _member[E: StrEnum](enum: type[E], value: str, name: str) -> E:
+    """``value`` as a member of ``enum``; a plain string is accepted, an unknown one refused.
+
+    Raises:
+        InvalidRequestError: ``value`` is none of the enumeration's values.
+    """
+    try:
+        return enum(value)
+    except ValueError:
+        allowed = ", ".join(repr(member.value) for member in enum)
+        raise InvalidRequestError(
+            f"{name}={value!r} is not one of {allowed}", source=SOURCE
+        ) from None
+
+
 def _check_time_parameters(
     sent: Mapping[str, str | list[str]],
     since_time_period: str | None,
@@ -134,7 +150,7 @@ async def get_data_async(
     dataset: str,
     filters: Mapping[str, str | Sequence[str]] | None = None,
     *,
-    lang: Lang = "EN",
+    lang: Lang = Lang.EN,
     since_time_period: str | None = None,
     until_time_period: str | None = None,
     last_time_period: int | None = None,
@@ -182,6 +198,9 @@ async def get_data_async(
     """
     sent = _filters(filters)
     _check_time_parameters(sent, since_time_period, until_time_period, last_time_period)
+    lang = _member(Lang, lang, "lang")
+    if geo_level is not None:
+        geo_level = _member(GeoLevel, geo_level, "geo_level")
     answer = await api.statistics.getData(
         dataset,
         lang=lang,
@@ -194,11 +213,11 @@ async def get_data_async(
     request: dict[str, Any] = {
         "dataset": dataset,
         "filters": sent or None,
-        "lang": lang,
+        "lang": lang.value,
         "since_time_period": since_time_period,
         "until_time_period": until_time_period,
         "last_time_period": last_time_period,
-        "geo_level": geo_level,
+        "geo_level": None if geo_level is None else geo_level.value,
     }
     updated = answer.cube.updated
     meta = ResultMeta(
