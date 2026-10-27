@@ -35,18 +35,23 @@ milk.meta.vintage  # "2026-10-05T23:00:00+0200": the same, as Eurostat prints it
 milk.meta.request  # {"dataset": "apro_mk_cola", "filters": {...}, "lang": "EN"}
 ```
 
-`get_data(dataset, filters=None, *, lang="EN", since_time_period=None,
+`get_data(dataset, filters=None, *, lang=Lang.EN, since_time_period=None,
 until_time_period=None, last_time_period=None, geo_level=None)` sends one request to the
 Statistics API (`statistics/1.0/data/{datasetCode}`). `filters` maps any dimension of the
-dataset to one code or a list of codes (`{"geo": "AT", "milkitem": "PRD"}`); `time`
-filters periods, and the three time parameters select ranges (only
-`since_time_period` and `until_time_period` combine). A code that matches nothing gives
-an empty cube, size 0 on that dimension. An unknown dataset, and Eurostat's "No results
-found", raise `NotFoundError`; a query Eurostat refuses or judges too large raises
-`InvalidRequestError` with Eurostat's message and how to narrow it. A query Eurostat would
-answer asynchronously raises it too: this package does not poll asynchronous answers, and
-the Statistics API's own route is to send the same request again later. Ask for small slices: the cube comes back whole, and over
-MCP a result above 64 KB is replaced by a preview and a note.
+dataset to one code or a list of codes (`{"geo": "AT", "milkitem": "PRD"}`); a `time`
+filter selects periods, and so do `since_time_period`, `until_time_period` and
+`last_time_period`. Eurostat accepts one time parameter per query, the one exception
+being `since_time_period` with `until_time_period`; any other combination is refused
+before sending. `lang` takes `Lang.EN`, `Lang.FR` or `Lang.DE` and `geo_level` a
+`GeoLevel` (`aggregate`, `country`, `nuts1`, `nuts2`, `nuts3`, `city`), both in
+`xippios.eurostat.models`; a plain string such as `"FR"` works too. A code that matches
+nothing gives an empty cube, size 0 on that dimension. An unknown dataset, and
+Eurostat's "No results found", raise `NotFoundError`; a query Eurostat refuses or judges
+too large raises `InvalidRequestError` with Eurostat's message and how to narrow it. A
+query Eurostat would answer asynchronously raises it too: this package does not poll
+asynchronous answers, and the Statistics API's own route is to send the same request
+again later. Ask for small slices: the cube comes back whole, and over MCP a result
+above 64 KB is replaced by a preview and a note.
 
 ## MCP
 

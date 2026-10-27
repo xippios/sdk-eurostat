@@ -21,13 +21,15 @@ All notable changes to this project are documented here. The format follows
   fetched and why, and Eurostat's licence and reuse lines, its exceptions to commercial
   reuse, its clause on modified reuse with the snapshot's disclaimer, and its citation
   form.
-- `get_data(dataset, filters=None, *, lang="EN", since_time_period=None,
+- `get_data(dataset, filters=None, *, lang=Lang.EN, since_time_period=None,
   until_time_period=None, last_time_period=None, geo_level=None)`: one Statistics API
   request (`getData`, `statistics/1.0/data/{datasetCode}`) answered as a `Cube`, the
   JSON-stat 2.0 dataset member by member, with `Cube.observations()` reading out the
   cells that have a value or a status, each an `Observation` with its codes and labels;
   `meta.published_at` is the cube's `updated`, `meta.vintage` its text as printed. The
-  MCP tool `eurostat_get_data` and the route `POST /eurostat/get_data`.
+  StrEnums `Lang` and `GeoLevel` type `lang` and `geo_level`; more than one time
+  parameter, other than `since_time_period` with `until_time_period`, is refused before
+  sending. The MCP tool `eurostat_get_data` and the route `POST /eurostat/get_data`.
 - `classify` for the Statistics API's refusals (`errors.py`): an unknown dataset, and an
   HTTP 400 whose faults are all 100 ("No results found"), are `NotFoundError`; any other
   HTTP 400 `error`, as an array or as one object, is `InvalidRequestError` with
