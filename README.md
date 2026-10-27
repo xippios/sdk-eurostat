@@ -106,7 +106,7 @@ Both answer from lists packaged with this version, without a request: `meta.retr
 is when the package fetched the list, `meta.endpoint` the operation it came from.
 `list_datasets(search=None)` reads Eurostat's table of contents (`catalogue/toc/xml`):
 every dataset and pre-defined table of the navigation tree, over 10,000 leaves, one per
-place in the tree, each with its code, type, English title, the folders above it
+listing in the tree, each with its code, type, English title, the folders above it
 (`path`, joined with `" > "`), its last update and structure change, its first and last
 period and its number of values as Eurostat prints them. `meta.vintage` is the table of
 contents' `creationDate` as printed and `meta.published_at` the same time, which

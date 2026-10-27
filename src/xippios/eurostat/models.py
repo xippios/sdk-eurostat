@@ -290,7 +290,8 @@ class Dataset(UpstreamModel):
 
     The leaf's elements as the TOC's XML prints them, the English title only, plus the
     folders it sits in. A code classified at several places of the navigation tree is
-    one leaf per place, each with its own ``path``.
+    one leaf per place, each with its own ``path``; the TOC also lists a few leaves twice
+    under one folder, which are packaged twice, as listed.
 
     Attributes:
         code: The leaf's code, e.g. ``"apro_mk_cola"``.

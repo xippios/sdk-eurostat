@@ -68,15 +68,16 @@ All notable changes to this project are documented here. The format follows
   `eurostat_list_datasets` (the family's cap) and `eurostat_list_codes` (1,000 rows
   within the family's 64 KB), each with a note naming `search`, and the routes
   `GET /eurostat/list_datasets` and `/eurostat/list_codes`.
-- `scripts/refresh_reference.py` fetches the table of contents (streamed to a temporary
-  file with core's `download` and read with the standard library's ElementTree as it
-  streams, the only XML the package parses) and the twelve codelists as JSON-stat
-  through the new endpoint wrappers `api.catalogue.getTocXml` and
-  `api.sdmx.codeListQuery`, and writes `reference/toc.json`, one
-  `reference/<codelist>.json` each and `reference/lists.json`, which holds upstream's
-  release identifiers of every list, with `PackagedList.write`; `--samples` cuts the
-  parser tests' samples under `tests/fixtures/files/` from the same run. Thirteen
-  keyless requests.
+- `scripts/refresh_reference.py` fetches the table of contents (downloaded whole to a
+  temporary file with core's `download`, which streams the body to disk, then read from
+  that file a megabyte at a time with the standard library's ElementTree pull parser;
+  the script is the only code that parses XML, the package parses none) and the twelve
+  codelists as JSON-stat through the new endpoint wrappers `api.catalogue.getTocXml`
+  and `api.sdmx.codeListQuery`. It writes `reference/toc.json` and one
+  `reference/<codelist>.json` each with `PackagedList.write`, and `reference/lists.json`,
+  a derived index in plain JSON (`fetched` and `lists`) that holds upstream's release
+  identifiers of every list; `--samples` cuts the parser tests' samples under
+  `tests/fixtures/files/` from the same run. Thirteen keyless requests.
 
 ### Changed
 
