@@ -4,8 +4,11 @@ Every task function gets one live smoke test here, next to the reachability chec
 ``get_data`` has one per dataset of the design round's question 6 (2026-10-27), each the
 small slice its fixture holds: ``apro_mk_cola`` (milk collection), ``apro_cpnh1`` (crop
 production) and ``ef_m_farmleg`` (farm indicators by legal status), Austria, two periods.
-A run sends four keyless requests, the reachability check included. The tests assert
-shape and release metadata, never values, which Eurostat revises twice a day.
+The slices have one each, on the slices their first fixtures hold: ``get_series`` and
+``get_cross_section`` on ``apro_mk_cola``, ``get_latest_period`` on ``apro_cpnh1``.
+A run sends seven keyless requests, the reachability check included. The tests assert
+shape and release metadata, never values, which Eurostat revises twice a day, nor which
+period is the latest.
 """
 
 import re
@@ -16,7 +19,7 @@ from xippios.core import Result
 
 from xippios.eurostat import tasks
 from xippios.eurostat._client import BASE_URL, config
-from xippios.eurostat.models import Cube
+from xippios.eurostat.models import Cube, Observation
 
 pytestmark = [pytest.mark.live, pytest.mark.anyio]
 
@@ -71,3 +74,40 @@ async def test_get_data_ef_m_farmleg() -> None:
         "ef_m_farmleg", {"geo": "AT", "unit": "HLD"}, last_time_period=2
     )
     _check(result, periods=2)
+
+
+MILK = {"milkitem": "PRD", "dairyprod": "D1110D", "unit": "THS_T"}
+
+
+def _check_slice(result: Result[list[Observation]]) -> None:
+    assert result.data, "the slice has observations"
+    assert all(isinstance(observation, Observation) for observation in result.data)
+    assert result.meta.endpoint == "getData"
+    assert result.meta.vintage is not None
+    assert UPDATED.fullmatch(result.meta.vintage)
+    assert result.meta.published_at is not None
+    assert result.meta.published_at.tzinfo is not None
+
+
+async def test_get_series_apro_mk_cola() -> None:
+    result = await tasks.get_series_async(
+        "apro_mk_cola", {**MILK, "geo": "AT"}, since="2015", until="2023"
+    )
+    _check_slice(result)
+    periods = [observation.codes["time"] for observation in result.data]
+    assert periods == sorted(periods), "annual periods, oldest first"
+    assert set(periods) <= {str(year) for year in range(2015, 2024)}
+    assert {observation.codes["geo"] for observation in result.data} == {"AT"}
+
+
+async def test_get_latest_period_apro_cpnh1() -> None:
+    result = await tasks.get_latest_period_async("apro_cpnh1", {"crops": "C1110", "geo": "AT"})
+    _check_slice(result)
+    assert len({observation.codes["time"] for observation in result.data}) == 1, "one period"
+
+
+async def test_get_cross_section_apro_mk_cola() -> None:
+    result = await tasks.get_cross_section_async("apro_mk_cola", "2023", MILK)
+    _check_slice(result)
+    assert {observation.codes["time"] for observation in result.data} == {"2023"}
+    assert len({observation.codes["geo"] for observation in result.data}) > 1, "every geo code"
