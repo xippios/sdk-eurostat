@@ -51,18 +51,45 @@ TIME_FILTERS = frozenset({"time", "time_period"})
 "time_period" parameters are accepted in the URL to address the TIME_PERIOD dimension"
 (api-statistics.md, "The Time parameter")."""
 
-# MCP_CAPS, only where a tool needs a result cap of its own: a list an agent needs whole
-# (conventions §8, ADR-0016), keyed by task function name; mcp.py reads it with getattr,
-# so a source without one adds nothing. ResultCap needs the mcp extra, which a base
-# install lacks, so its import is guarded and a base install, which serves no tool, gets
-# an empty mapping (the annotation quoted, Mapping from collections.abc):
-#
-# try:
-#     from xippios.core.mcp import ResultCap
-# except ImportError:  # pragma: no cover - a base install has no MCP server
-#     MCP_CAPS: "Mapping[str, ResultCap]" = {}
-# else:
-#     MCP_CAPS = {"list_<thing>": ResultCap(max_rows=400)}
+try:
+    from xippios.core.mcp import ResultCap
+except ImportError:  # pragma: no cover - a base install, without the mcp extra, has no server
+    MCP_CAPS: "Mapping[str, ResultCap]" = {}
+else:
+    MCP_CAPS = {
+        "get_series": ResultCap(
+            max_rows=200,
+            note=(
+                "rows run oldest period first: pass since, the period after the last row "
+                "shown, to see the later ones"
+            ),
+        ),
+        "get_latest_period": ResultCap(
+            max_rows=200,
+            note=(
+                "pin more dimensions in filters, one code each (geo, unit, a product), to see "
+                "the rest"
+            ),
+        ),
+        "get_cross_section": ResultCap(
+            max_rows=200,
+            note=(
+                "pin more dimensions in filters, one code each (a product, a unit), or give "
+                "geo a list of codes, to see the rest"
+            ),
+        ),
+    }
+"""MCP result caps of their own, by task function name (conventions §8, ADR-0016).
+
+The slices serve lists of observations, 250 to 400 bytes each as compact JSON in the
+recorded answers, so the family's 64 KB holds about 160 to 250 rows and the 200 rows
+stay the family's too: every recorded series (9 and 5 rows) and cross-section (36 and
+151 rows, one series over every geo code) comes whole, and the latest period of a whole
+ef_m_farmleg table for one country (1,810 rows) is cut. What each cap adds is its note,
+naming the task's own way to see the rest. ``get_data`` returns a cube, not a list, and
+keeps the default cap. ``ResultCap`` lives in ``xippios.core.mcp``, which needs the
+``mcp`` extra, so a base install, which serves no MCP tool, has no caps.
+"""
 
 
 GET_DATA_ARGUMENTS = (

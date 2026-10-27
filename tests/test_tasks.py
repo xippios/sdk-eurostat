@@ -798,3 +798,28 @@ def test_get_latest_period_route_end_to_end(replay_fixture: ReplayFixture) -> No
     assert sent_urls(route) == [recorded_url(case)]
     assert answer.json()["data"][0]["codes"]["time"] == "2025"
     assert answer.json()["meta"]["request"]["last_time_period"] == 1
+
+
+@pytest.mark.anyio
+async def test_get_latest_period_tool_cuts_a_large_slice_with_its_note(
+    replay_fixture: ReplayFixture,
+) -> None:
+    """The latest period of ef_m_farmleg for one country, every other dimension open:
+    1,810 observations, about 719 KB of rows, cut by MCP_CAPS' byte bound (the
+    family's 64 KB) with the task's own note (ADR-0016)."""
+    case = "ef_m_farmleg_latest_AT_HLD"
+    route = replay_fixture(ENDPOINT, case)
+    payload = await mcp_call(
+        server,
+        "eurostat_get_latest_period",
+        {"dataset": "ef_m_farmleg", "filters": {"geo": "AT", "unit": "HLD"}},
+    )
+    assert sent_urls(route) == [recorded_url(case)]
+    cap = tasks.MCP_CAPS["get_latest_period"]
+    shown = len(payload["data"])
+    assert 0 < shown < cap.max_rows
+    assert payload["note"] == (
+        f"showing {shown} of 1810 rows (cap: {cap.max_rows} rows or {cap.max_bytes} bytes); "
+        "pin more dimensions in filters, one code each (geo, unit, a product), to see the rest"
+    )
+    assert payload["meta"]["request"]["last_time_period"] == 1
