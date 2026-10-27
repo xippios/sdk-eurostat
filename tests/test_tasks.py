@@ -25,15 +25,19 @@ import respx
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from xippios.core import InvalidRequestError, NotFoundError
+from xippios.core.client import cache_key
 from xippios.core.testing import (
+    CLOCK_SLACK,
     ReplayFixture,
     assert_time_between,
     load_fixture,
     mcp_call,
+    mcp_call_text,
     sent_urls,
 )
 
 from xippios.eurostat import get_data, tasks
+from xippios.eurostat._client import config
 from xippios.eurostat.http import router
 from xippios.eurostat.mcp import server
 from xippios.eurostat.models import Cube, GeoLevel, Lang
@@ -78,6 +82,32 @@ def test_get_data_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
     assert result.meta.total is None
     assert result.meta.tenant is None
     assert_time_between(result.meta.retrieved_at, before, after)
+
+
+def test_get_data_answers_a_repeated_request_from_the_cache(replay_fixture: ReplayFixture) -> None:
+    """The same request twice is one request on the wire: the client's cache answers the
+    second, whose ``meta.retrieved_at`` is the time the first answer was stored
+    (conventions §4; ADR-0015 decision 5), within the readings around the first call. The
+    testing plugin clears the cache around each test, so the first call is a miss."""
+    case = "apro_mk_cola_AT_2022_2023"
+    route = replay_fixture(ENDPOINT, case)
+    filters = {"geo": "AT", "time": ["2022", "2023"]}
+    before = datetime.now(UTC)
+    first = tasks.get_data("apro_mk_cola", filters)
+    after = datetime.now(UTC)
+    second = tasks.get_data("apro_mk_cola", filters)
+    assert sent_urls(route) == [recorded_url(case)], "one request on the wire"
+    assert config.cache is not None
+    entry = config.cache.get(cache_key("GET", httpx.URL(recorded_url(case))))
+    assert entry is not None
+    assert second.meta.retrieved_at == datetime.fromtimestamp(entry.stored_at, UTC)
+    assert_time_between(first.meta.retrieved_at, before, after)
+    assert_time_between(second.meta.retrieved_at, before, after)
+    assert abs(second.meta.retrieved_at - first.meta.retrieved_at) <= CLOCK_SLACK
+    assert second.data == first.data
+    assert second.meta.model_dump(exclude={"retrieved_at"}) == first.meta.model_dump(
+        exclude={"retrieved_at"}
+    )
 
 
 def test_get_data_apro_cpnh1_since_until(replay_fixture: ReplayFixture) -> None:
@@ -307,6 +337,52 @@ async def test_get_data_tool_schema_lists_the_enumerations() -> None:
         "nuts3",
         "city",
     ]
+
+
+SCHEMA_REFUSALS = [
+    ({"lang": "IT"}, "lang: Input should be 'EN', 'FR' or 'DE'"),
+    ({"lang": "en"}, "lang: Input should be 'EN', 'FR' or 'DE'"),
+    (
+        {"geo_level": "region"},
+        "geo_level: Input should be 'aggregate', 'country', 'nuts1', 'nuts2', 'nuts3' or 'city'",
+    ),
+    (
+        {"last_time_period": "two"},
+        "last_time_period: Input should be a valid integer, unable to parse string as an integer",
+    ),
+]
+"""Arguments the tool's schema refuses (the StrEnums ``Lang`` and ``GeoLevel``, an int),
+with core's text for each: the argument and pydantic's message, never the input."""
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(("arguments", "message"), SCHEMA_REFUSALS)
+async def test_get_data_tool_refuses_an_argument_its_schema_refuses(
+    respx_mock: respx.MockRouter, arguments: dict[str, Any], message: str
+) -> None:
+    """Core's argument middleware answers before the tool runs (ADR-0014, amendment
+    2026-10-27; conventions §8), in the family's error form."""
+    text = await mcp_call_text(
+        server, "eurostat_get_data", {"dataset": "apro_mk_cola", **arguments}
+    )
+    assert text == f"error: InvalidRequestError: {message}"
+    assert not respx_mock.calls, "refused before any request"
+
+
+@pytest.mark.parametrize(("arguments", "message"), SCHEMA_REFUSALS)
+def test_get_data_route_refuses_an_argument_its_schema_refuses(
+    respx_mock: respx.MockRouter, arguments: dict[str, Any], message: str
+) -> None:
+    """FastAPI validates the body before the task runs and answers 422 naming the
+    argument; core installs no handler of its own for it."""
+    app = FastAPI()
+    app.include_router(router)
+    with TestClient(app) as http:
+        answer = http.post("/eurostat/get_data", json={"dataset": "apro_mk_cola", **arguments})
+    assert answer.status_code == 422
+    argument = message.split(":", 1)[0]
+    assert answer.json()["detail"][0]["loc"] == ["body", argument]
+    assert not respx_mock.calls, "refused before any request"
 
 
 def test_get_data_route_end_to_end(replay_fixture: ReplayFixture) -> None:

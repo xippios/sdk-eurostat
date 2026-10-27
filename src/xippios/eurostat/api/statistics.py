@@ -28,9 +28,8 @@ from typing import NamedTuple
 from urllib.parse import quote
 
 from xippios.core import parse
-from xippios.core.client import decode_json
 
-from xippios.eurostat._client import SOURCE, client, stored_at
+from xippios.eurostat._client import SOURCE, client
 from xippios.eurostat.models import Cube, GeoLevel, Lang
 
 __all__ = ["DataAnswer", "getData"]
@@ -46,13 +45,14 @@ class DataAnswer(NamedTuple):
         cube: The answer, parsed.
         updated: The ``updated`` member as upstream printed it, e.g.
             ``"2026-10-05T23:00:00+0200"``; ``None`` when the answer has none.
-        stored_at: When the client's cache stored the answer, as UTC; ``None`` for an
-            answer from the wire.
+        retrieved_at: When the answer was retrieved, timezone-aware UTC: on a cache hit
+            the time the entry was stored, else the time the answer arrived
+            (``AsyncClient.get_answer``); the task's ``meta.retrieved_at``.
     """
 
     cube: Cube
     updated: str | None
-    stored_at: datetime | None
+    retrieved_at: datetime
 
 
 async def getData(
@@ -80,7 +80,7 @@ async def getData(
         geo_level: ``geoLevel``, e.g. ``GeoLevel.COUNTRY``.
 
     Returns:
-        The cube, the ``updated`` text as printed and the cache's stored time.
+        The cube, the ``updated`` text as printed and when the answer was retrieved.
 
     Raises:
         NotFoundError: No such dataset (HTTP 404).
@@ -101,12 +101,11 @@ async def getData(
     if geo_level is not None:
         params["geoLevel"] = str(geo_level)
     path = f"/statistics/1.0/data/{quote(dataset_code, safe='')}"
-    response = await client.get(path, params=params)
-    raw = decode_json(response, source=SOURCE, path=path)
-    updated = raw.get("updated") if isinstance(raw, dict) else None
-    cube = parse(Cube, raw, source=SOURCE, endpoint=ENDPOINT)
+    answer = await client.get_answer(path, params=params)
+    updated = answer.payload.get("updated") if isinstance(answer.payload, dict) else None
+    cube = parse(Cube, answer.payload, source=SOURCE, endpoint=ENDPOINT)
     return DataAnswer(
         cube=cube,
         updated=updated if isinstance(updated, str) else None,
-        stored_at=stored_at(response),
+        retrieved_at=answer.retrieved_at,
     )

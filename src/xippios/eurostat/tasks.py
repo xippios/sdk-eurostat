@@ -24,7 +24,6 @@ omitted; ``meta.total`` stays ``None``: the answer counts no records for the req
 """
 
 from collections.abc import Mapping, Sequence
-from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
@@ -223,10 +222,10 @@ async def get_data_async(
     meta = ResultMeta(
         source=SOURCE,
         endpoint=ENDPOINT,
-        retrieved_at=answer.stored_at or datetime.now(UTC),
+        retrieved_at=answer.retrieved_at,
         published_at=updated if updated is not None and updated.tzinfo is not None else None,
         vintage=answer.updated,
-        request={name: value for name, value in request.items() if value is not None},
+        request=request,
     )
     return Result(data=answer.cube, meta=meta)
 

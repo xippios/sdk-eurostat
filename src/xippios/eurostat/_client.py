@@ -3,11 +3,10 @@
 One ``AsyncClient`` for the whole package: task functions share its rate limiter, and
 the same instance serves the sync facades and the MCP server. ``classify`` maps the
 Statistics API's documented refusals onto the family's taxonomy once (ADR-0008);
-``errors`` reads them. The response cache is off until core bounds the size of a cached
-body (``cache_max_bytes``, ADR-0019 decision 3): a cube can run to hundreds of megabytes.
+``errors`` reads them. Answers of HTTP 200 are cached in core's ``MemoryCache`` with its
+default lifetime of five minutes, up to core's ``cache_max_bytes`` of 8 MiB a body
+(ADR-0019 decision 3), so a larger cube is returned and fetched again the next time.
 """
-
-from datetime import UTC, datetime
 
 import httpx
 from xippios.core import (
@@ -18,6 +17,7 @@ from xippios.core import (
     RateLimit,
     XippiosError,
 )
+from xippios.core.client import MemoryCache
 
 from xippios.eurostat._version import __version__
 from xippios.eurostat.errors import (
@@ -101,23 +101,13 @@ def classify(response: httpx.Response) -> XippiosError | None:
     return None
 
 
-def stored_at(response: httpx.Response) -> datetime | None:
-    """When the client's cache stored ``response``, as UTC; ``None`` for an answer from the wire.
-
-    Core marks a hit with ``extensions["xippios_cache_stored_at"]``, epoch seconds; on a
-    hit a task's ``meta.retrieved_at`` is that time (conventions §4, ADR-0015). The
-    client has no cache yet, so every answer is from the wire for now.
-    """
-    stamp = response.extensions.get("xippios_cache_stored_at")
-    return None if stamp is None else datetime.fromtimestamp(stamp, UTC)
-
-
 config = ClientConfig(
     source=SOURCE,
     version=__version__,
     base_url=BASE_URL,
     rate_limit=RATE_LIMIT,
     classify=classify,
+    cache=MemoryCache(),
 )
 
 # An upstream that reports an hourly or daily quota installs one QuotaPolicy, from
@@ -146,5 +136,4 @@ __all__ = [
     "classify",
     "client",
     "config",
-    "stored_at",
 ]

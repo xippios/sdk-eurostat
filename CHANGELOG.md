@@ -53,3 +53,8 @@ All notable changes to this project are documented here. The format follows
   Hand-apply entry; `scripts/` is the package's, so template v0.3.0 reaches it only
   through its Hand-apply list. `enums.py` is not re-rendered, since no list is packaged
   yet; the reference README and `/refresh-reference-data` name the new call.
+- The client caches answers of HTTP 200 in core's `MemoryCache`, five minutes each, up to
+  core's `cache_max_bytes` of 8 MiB a body, so a larger cube is fetched again (ADR-0019
+  decision 3); `getData` reads its answer with core 0.3.0's `AsyncClient.get_answer`, so
+  `get_data`'s `meta.retrieved_at` on a cache hit is the time the answer was stored
+  (conventions §4, ADR-0015 decision 5).

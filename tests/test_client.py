@@ -25,9 +25,10 @@ from pathlib import Path
 import httpx
 import pytest
 from xippios.core import InvalidRequestError, NotFoundError
+from xippios.core.client import MemoryCache
 from xippios.core.testing import load_fixture, response_from_fixture
 
-from xippios.eurostat._client import BASE_URL, RATE_LIMIT, classify, config, stored_at
+from xippios.eurostat._client import BASE_URL, RATE_LIMIT, classify, config
 
 FIXTURES = Path(__file__).parent / "fixtures" / "getData"
 GUIDE = Path(__file__).parents[1] / "docs" / "upstream" / "user-guide" / "api-detailed-guidelines"
@@ -95,7 +96,8 @@ def assert_host_and_query_free(error: Exception) -> None:
 
 def test_config() -> None:
     assert config.classify is classify
-    assert config.cache is None, "the cache is off until core bounds a cached body"
+    assert isinstance(config.cache, MemoryCache), "core's backend, its default lifetime"
+    assert config.cache_max_bytes == 8 * 1024 * 1024, "core's bound, ADR-0019 decision 3"
     assert RATE_LIMIT.per_minute == 30
     assert RATE_LIMIT.capacity == 1
 
@@ -221,10 +223,3 @@ def test_a_cube_and_the_empty_cube_are_no_error() -> None:
 def test_other_answers_fall_through_to_core(status: int, body: str) -> None:
     """NOT RECORDED: a 5xx stays core's, so it is retried; a body of no known shape too."""
     assert classify(answer(status, body)) is None
-
-
-def test_stored_at_reads_the_cache_mark() -> None:
-    hit = answer(200, "{}")
-    hit.extensions["xippios_cache_stored_at"] = 1_793_000_000.0
-    assert stored_at(hit) is not None
-    assert stored_at(answer(200, "{}")) is None
