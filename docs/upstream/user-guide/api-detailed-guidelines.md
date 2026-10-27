@@ -1,0 +1,16 @@
+# API - Detailed guidelines
+
+- [API - Detailed guidelines - API Statistics](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/api-statistics)
+- [API - Detailed guidelines - SDMX3.0 API](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/sdmx3-0)
+  - [API - Detailed guidelines - SDMX3.0 API - data query](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/sdmx3-0/data-query)
+  - [API - Detailed guidelines - SDMX3.0 API - structure queries](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/sdmx3-0/structure-queries)
+- [API - Detailed guidelines - SDMX2.1 API](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/sdmx2-1)
+  - [API - Detailed guidelines - SDMX2.1 API - data query](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/sdmx2-1/data-query)
+  - [API - Detailed guidelines - SDMX2.1 API - structure queries](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/sdmx2-1/structure-queries)
+- [API - Detailed guidelines - Catalogue API](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/catalogue-api)
+  - [API - Detailed guidelines - Catalogue API - Metabase](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/catalogue-api/metabase)
+  - [API - Detailed guidelines - Catalogue API - TOC](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/catalogue-api/toc)
+  - [API - Detailed guidelines - Catalogue API - RSS](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/catalogue-api/rss)
+  - [API - Detailed guidelines - Catalogue API - DCAT](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/catalogue-api/dcat)
+- [API - Detailed guidelines - Asynchronous API](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/asynchronous-api)
+- [API - Detailed guidelines - DS- prefixed datasets from Comext database](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/prefixed-datasets)
