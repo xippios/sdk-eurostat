@@ -2,15 +2,20 @@
 
 Recorded on 2026-10-27 (``tests/fixtures/getData/``): an unknown dataset, an unknown
 dimension and ``geo`` with ``geoLevel``, all with ``error`` as an array, and the empty
-cube of an unknown code. The tests named ``test_documented_shape_*`` serve shapes the
-service was not seen to send: each reads its body verbatim from the snapshot's user guide
-at test time, so it is neither recorded nor hand-written. They are the single-object
-``error`` the guide shows for ``geo`` with ``geoLevel``, the fault table's "No results
-found" at HTTP 400 and the asynchronous answer (``api-statistics.md``), and the SOAP fault
-``EXTRACTION_TOO_BIG`` (``asynchronous-api.md``). Four unfiltered requests to datasets of
-624,554 to 853,146 values answered synchronously on 2026-10-27 and probing stopped there;
-the first asynchronous answer ever seen is recorded and replaces its test (Johannes,
-2026-10-27; gap row 83).
+cube of an unknown code. Not recorded, two kinds of tests serve answers the service was
+not seen to send:
+
+- ``test_documented_shape_*`` read a documented body verbatim from the snapshot's user
+  guide at test time, so it is neither recorded nor hand-written: the asynchronous
+  ``warning`` and the single-object ``error`` the guide shows for ``geo`` with
+  ``geoLevel`` (``api-statistics.md``), and the SOAP fault ``EXTRACTION_TOO_BIG``
+  (``asynchronous-api.md``). Four unfiltered requests to datasets of 624,554 to 853,146
+  values answered synchronously on 2026-10-27 and probing stopped there; the first
+  asynchronous answer ever seen is recorded and replaces its test (Johannes,
+  2026-10-27; gap row 83).
+- ``test_fault_table_*`` compose a body from a row of the fault table
+  (``api-statistics.md``), read at test time, in the recorded ``error`` array form: the
+  guide documents the fault codes, not their bodies (faults 100, 140 and 150 at HTTP 400).
 """
 
 import json
@@ -136,11 +141,10 @@ def test_documented_shape_geo_with_geo_level_object_is_refused() -> None:
     )
 
 
-def test_documented_shape_no_results_at_400_is_not_found() -> None:
-    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written: the fault table's row "100 No results found | 400 Bad request | The
-    result from the query is empty.", in the recorded ``error`` array form, its name and
-    description as the label. Upstream signals absence: ``NotFoundError``."""
+def test_fault_table_no_results_at_400_is_not_found() -> None:
+    """NOT RECORDED: composed from the fault table's row in the recorded array form, "100
+    No results found | 400 Bad request | The result from the query is empty.", its name
+    and description as the label. Upstream signals absence: ``NotFoundError``."""
     name, description = documented_fault_row(100, 400)
     assert (name, description) == ("No results found", "The result from the query is empty.")
     body = json.dumps({"error": [{"status": 400, "id": 100, "label": f"{name}: {description}"}]})
@@ -153,9 +157,9 @@ def test_documented_shape_no_results_at_400_is_not_found() -> None:
 
 
 @pytest.mark.parametrize(("code", "status"), [(140, 400), (150, 400)])
-def test_documented_shape_syntax_and_semantic_errors_are_refused(code: int, status: int) -> None:
-    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written: the fault table's 140 and 150 rows at HTTP 400 stay refusals."""
+def test_fault_table_syntax_and_semantic_errors_are_refused(code: int, status: int) -> None:
+    """NOT RECORDED: composed from the fault table's row in the recorded array form; the
+    140 and 150 rows at HTTP 400 stay refusals."""
     name, description = documented_fault_row(code, status)
     body = json.dumps(
         {"error": [{"status": status, "id": code, "label": f"{name}: {description}"}]}
