@@ -80,8 +80,9 @@ dimension but time pinned to one code; an answer that spans more than one series
 the most recent period, and `get_cross_section(dataset, period, filters=None, *,
 lang=Lang.EN)` for `time=<period>`; both return any number of series in cube order. Each
 refuses a `time` filter before sending, since it selects the periods itself, and
-`get_cross_section` an empty `period`. A code that matches nothing gives an empty list. Over MCP each slice keeps the family's cap, 200
-rows or 64 KB, with a note of its own on how to see the rest.
+`get_cross_section` an empty `period`. A code that matches nothing gives an empty list.
+Over MCP each slice keeps the family's cap, 200 rows or 64 KB, with a note of its own on
+how to see the rest.
 
 ## MCP
 

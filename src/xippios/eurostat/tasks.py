@@ -33,7 +33,7 @@ from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from typing import Any
 
-from xippios.core import InvalidRequestError, Result, ResultMeta, sync
+from xippios.core import InvalidRequestError, Result, ResultCap, ResultMeta, sync
 
 from xippios.eurostat import api
 from xippios.eurostat._client import SOURCE
@@ -57,34 +57,28 @@ TIME_FILTERS = frozenset({"time", "time_period"})
 "time_period" parameters are accepted in the URL to address the TIME_PERIOD dimension"
 (api-statistics.md, "The Time parameter")."""
 
-try:
-    from xippios.core.mcp import ResultCap
-except ImportError:  # pragma: no cover - a base install, without the mcp extra, has no server
-    MCP_CAPS: "Mapping[str, ResultCap]" = {}
-else:
-    MCP_CAPS = {
-        "get_series": ResultCap(
-            max_rows=200,
-            note=(
-                "rows run in cube order, which runs oldest period first in every recorded "
-                "cube: pass since, the period after the last row shown, to see the later ones"
-            ),
+MCP_CAPS: Mapping[str, ResultCap] = {
+    "get_series": ResultCap(
+        max_rows=200,
+        note=(
+            "rows run in cube order, which runs oldest period first in every recorded "
+            "cube: pass since, the period after the last row shown, to see the later ones"
         ),
-        "get_latest_period": ResultCap(
-            max_rows=200,
-            note=(
-                "pin more dimensions in filters, one code each (geo, unit, a product), to see "
-                "the rest"
-            ),
+    ),
+    "get_latest_period": ResultCap(
+        max_rows=200,
+        note=(
+            "pin more dimensions in filters, one code each (geo, unit, a product), to see the rest"
         ),
-        "get_cross_section": ResultCap(
-            max_rows=200,
-            note=(
-                "pin more dimensions in filters, one code each (a product, a unit), or give "
-                "geo a list of codes, to see the rest"
-            ),
+    ),
+    "get_cross_section": ResultCap(
+        max_rows=200,
+        note=(
+            "pin more dimensions in filters, one code each (a product, a unit), or give "
+            "geo a list of codes, to see the rest"
         ),
-    }
+    ),
+}
 """MCP result caps of their own, by task function name (conventions §8, ADR-0016).
 
 The slices serve lists of observations, 234 to 453 bytes each as compact JSON (UTF-8,
@@ -93,10 +87,8 @@ as ``cap_result`` counts them) in the seven recorded slice answers, so the famil
 recorded series (9 and 5 rows) and cross-section (36 rows, one series over every geo
 code; 151 rows, five series over every geo code) comes whole, and the latest period of
 a whole ef_m_farmleg table for one country (1,810 rows) is cut. What each cap adds is
-its note,
-naming the task's own way to see the rest. ``get_data`` returns a cube, not a list, and
-keeps the default cap. ``ResultCap`` lives in ``xippios.core.mcp``, which needs the
-``mcp`` extra, so a base install, which serves no MCP tool, has no caps.
+its note, naming the task's own way to see the rest. ``get_data`` returns a cube, not a
+list, and keeps the default cap.
 """
 
 

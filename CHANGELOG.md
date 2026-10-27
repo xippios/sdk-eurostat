@@ -46,11 +46,11 @@ All notable changes to this project are documented here. The format follows
   `Observation` with `get_data`'s `meta`. `get_series` refuses, after the request, an
   answer that spans more than one series, naming the dimensions to pin and their codes;
   each slice refuses a `time` filter before sending, and `get_cross_section` an empty
-  `period`; a code that matches nothing gives an empty list. The MCP tools `eurostat_get_series`, `eurostat_get_latest_period` and
-  `eurostat_get_cross_section`, each with a result cap of its own in `MCP_CAPS` (the
-  family's 200 rows or 64 KB, with a note on how to see the rest), and the routes
-  `POST /eurostat/get_series`, `/eurostat/get_latest_period` and
-  `/eurostat/get_cross_section`.
+  `period`; a code that matches nothing gives an empty list. The MCP tools
+  `eurostat_get_series`, `eurostat_get_latest_period` and `eurostat_get_cross_section`,
+  each with a result cap of its own in `MCP_CAPS` (the family's 200 rows or 64 KB, with
+  a note on how to see the rest), and the routes `POST /eurostat/get_series`,
+  `/eurostat/get_latest_period` and `/eurostat/get_cross_section`.
 
 ### Changed
 
