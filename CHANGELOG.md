@@ -27,12 +27,14 @@ All notable changes to this project are documented here. The format follows
 - `xippios-core` 0.3.0 from PyPI (`core_version` 0.3.0: `~=0.3.0` and its `mcp`, `http`
   and `testing` extras likewise), with no git pin; the template stays v0.2.2, and the
   adoption of template v0.3.0 follows as a PR of its own. Core 0.3.0 keeps the SDMX
-  series `key` of this keyless source as data, not as a credential (C10), and brings
-  `AsyncClient.download`, `decode_text` and `decode_csv` for bulk files (C15,
-  ADR-0019); `pydantic-settings`, which core no longer depends on, leaves `uv.lock`.
+  series `key` of this keyless source as data, not as a credential (ADR-0019,
+  decision 6), and brings `AsyncClient.download`, `decode_text` and `decode_csv` for
+  bulk files (ADR-0019, decisions 1 and 2); `pydantic-settings`, which core no longer
+  depends on, and `python-dotenv` with it leave `uv.lock`.
 - `scripts/refresh_reference.py` renders `enums.py` with one `render_enums` call, value
   lists and id lists in one module, each list with its own fetch date, and formats it
   with `ruff format` and `ruff check --fix`, since core 0.3.0 removed `render_str_enums`
-  and `render_int_enums` (ADR-0008, amendment 2026-10-27): a hand-port ahead of template
-  v0.3.0, which renders it. `enums.py` is not re-rendered, since no list is packaged
+  and `render_int_enums` (ADR-0008, amendment 2026-10-27): the port of core 0.3.0's
+  Hand-apply entry; `scripts/` is the package's, so template v0.3.0 reaches it only
+  through its Hand-apply list. `enums.py` is not re-rendered, since no list is packaged
   yet; the reference README and `/refresh-reference-data` name the new call.
