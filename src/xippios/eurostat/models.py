@@ -71,8 +71,9 @@ class Observation(UpstreamModel):
             "geo": "AT", "time": "2022"}``.
         labels: The label of each of those codes, e.g. ``{"freq": "Annual", ...,
             "geo": "Austria", "time": "2022"}``; ``None`` where upstream gives none.
-        value: The cell's value, e.g. ``3247.05``; ``None`` when the cell carries a
-            status only (a confidential value, say).
+        value: The cell's value as upstream's JSON number, an ``int`` for an integer
+            (``110780``) and a ``float`` otherwise (``3247.05``); ``None`` when the cell
+            carries a status only (a confidential value, say).
         status: The cell's status as upstream writes it, e.g. ``"|C"`` or ``"n"``;
             ``None`` when it has none. The cube's ``extension["status"]["label"]`` names
             them (``"|C"``: ``"|confidential"``).
@@ -80,7 +81,7 @@ class Observation(UpstreamModel):
 
     codes: dict[str, str]
     labels: dict[str, str | None]
-    value: float | None
+    value: int | float | None
     status: str | None
 
 
@@ -101,9 +102,10 @@ class Cube(UpstreamModel):
         source: The producer, ``"ESTAT"``.
         updated: The dataset's last update, with its zone, e.g. 2026-10-05 23:00 +02:00
             for upstream's ``"2026-10-05T23:00:00+0200"``.
-        value: The cells that have a value, by cell index as upstream prints it, e.g.
-            ``{"40": 3247.05, "44": 0.0}``; JSON-stat's dense form, one entry per cell
-            with ``None`` for a null, is read too.
+        value: The cells that have a value, by cell index as upstream prints it, each
+            number as upstream's JSON has it, an integer staying an ``int``, e.g.
+            ``{"40": 3247.05, "44": 0}``; JSON-stat's dense form, one entry per cell with
+            ``None`` for a null, is read too.
         status: The cells that have a status, by cell index, e.g. ``{"64": "|C"}``;
             ``None`` when upstream sends no ``status`` member (the empty cube).
         id: The dimension codes in order, e.g. ``["freq", "milkitem", "dairyprod",
@@ -122,7 +124,7 @@ class Cube(UpstreamModel):
     label: str | None = None
     source: str | None = None
     updated: datetime | None = None
-    value: dict[str, float | None] | list[float | None]
+    value: dict[str, int | float | None] | list[int | float | None]
     status: dict[str, str] | None = None
     id: list[str]
     size: list[int]

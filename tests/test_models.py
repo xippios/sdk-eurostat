@@ -62,6 +62,9 @@ def test_cube_mirrors_json_stat() -> None:
     assert milk.status == {"64": "|C", "65": "|C"}
     assert isinstance(milk.value, dict)
     assert len(milk.value) == 18
+    assert milk.value["44"] == 0
+    assert isinstance(milk.value["44"], int), "an integer stays an integer"
+    assert isinstance(milk.value["40"], float)
     assert milk.extension is not None
     assert milk.extension["status"] == {"label": {"|C": "|confidential"}}
 
@@ -106,6 +109,9 @@ def test_observation_codes_labels_and_value_of_known_cells() -> None:
         value=raw("apro_mk_cola_AT_2022_2023")["value"]["40"],
         status=None,
     )
+    cream = by_codes[("A", "PRD", "D1200DME", "THS_T", "AT", "2022")]  # cell 44
+    assert cream.value == 0
+    assert isinstance(cream.value, int), "an integer stays an integer"
     confidential = by_codes[("A", "PRD", "D3200", "THS_T", "AT", "2022")]
     assert (confidential.value, confidential.status) == (None, "|C")
     assert confidential.labels["dairyprod"] == "Concentrated milk"
