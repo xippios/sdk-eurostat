@@ -91,7 +91,8 @@ from xippios.eurostat import list_codes, list_datasets
 
 milk = list_datasets(search="milk")  # 18 leaves of the table of contents
 cola = list_datasets(search="apro_mk_cola").data[0]
-cola.code, cola.type, cola.title  # ("apro_mk_cola", "dataset", "Production of main cows' milk products - annual data")
+cola.code, cola.type  # ("apro_mk_cola", "dataset")
+cola.title  # "Production of main cows' milk products - annual data"
 cola.path  # "Database by themes > Agriculture, forestry and fisheries > ... > Milk and milk products"
 cola.last_update, cola.data_start, cola.data_end  # ("05.10.2026", "1968", "2025"), as printed
 milk.meta.vintage, milk.meta.published_at  # "20261027T1000", 2026-10-27 10:00 without a zone
