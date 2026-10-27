@@ -122,6 +122,45 @@ contains the text, ignoring case. Over MCP `eurostat_list_datasets` keeps the fa
 cap and `eurostat_list_codes` takes up to 1,000 codes within the family's 64 KB, so
 every packaged codelist but GEO comes whole; both notes name `search`.
 
+### Bulk download
+
+```python
+from pathlib import Path
+
+from xippios.eurostat import download_dataset
+from xippios.eurostat.parse import parse_sdmx_csv
+
+milk = download_dataset(
+    "apro_mk_cola", "A...THS_T.AT", since="2022", until="2023", dest=Path("milk.csv.gz")
+)
+milk.data.path, milk.data.bytes  # (PosixPath("milk.csv.gz"), 335): gzip-compressed SDMX-CSV
+milk.data.filename  # "estat_apro_mk_cola_filtered_en.csv.gz", Eurostat's name for it
+milk.meta.vintage  # "05/10/26 23:00:00": LAST UPDATE as printed, day first
+milk.meta.published_at  # 2026-10-05 23:00 without a zone, meta.published_at_naive set
+rows = parse_sdmx_csv(milk.data.path)  # one SdmxCsvRow per observation, read lazily
+first = next(rows)
+first.dimensions  # {"freq": "A", "milkitem": "PRD", "dairyprod": "D1110D", ...}
+first.time_period, first.obs_value  # ("2022", Decimal("3247.05"))
+```
+
+`download_dataset(dataset, key="", *, since=None, until=None, last_n_observations=None,
+dest)` sends one SDMX 2.1 data query (`dataQuery`, `sdmx/2.1/data/{flowRef}/{key}`) with
+`format=SDMX-CSV` and `compressed=true` and streams the answer to `dest`, never holding
+it in memory or caching it; it returns core's `Downloaded` (path, size, content type,
+Eurostat's file name, retrieval time). It is a bulk task: Python only, so the MCP server
+and the router skip it and no agent is handed a file path. `key` is Eurostat's series
+key, the dimensions in the dataset's order, dot-separated, empty for every code of a
+dimension, `+` between codes (`"A...THS_T.AT+DE"`); `""` downloads the whole dataset.
+`since`, `until` and `last_n_observations` are Eurostat's `startPeriod`, `endPeriod` and
+`lastNObservations`. `meta.vintage` is the file's `LAST UPDATE` as printed and
+`meta.published_at` the same time, which Eurostat prints without a zone; both are `None`
+for a file without a row. A query Eurostat would answer asynchronously, or refuses as too
+large, raises `InvalidRequestError` naming how to narrow it. `parse_sdmx_csv(path)` reads
+the file, gzip-compressed or plain, row by row: each `SdmxCsvRow` has the `dataflow`, the
+`last_update`, the `dimensions` in column order, the `time_period`, the `obs_value` as a
+`Decimal` (`None` when empty), `obs_flag`, `conf_status` and any other `attributes` of
+the dataset, as Eurostat prints them.
+
 ## MCP
 
 ```json
@@ -154,6 +193,7 @@ exactly tasks.__all__ and tasks_write.__all__. -->
 | `getData` with `time` | `get_cross_section(dataset, period, filters)`, the observations of one period | `eurostat_get_cross_section` | alpha |
 | `getTocXml` (`catalogue/toc/xml`), packaged | `list_datasets(search)`, the datasets and tables of the table of contents | `eurostat_list_datasets` | alpha |
 | `codeListQuery` (`sdmx/2.1/codelist/ESTAT/{resourceID}`), packaged | `list_codes(codelist, search)`, the codes of one of twelve codelists | `eurostat_list_codes` | alpha |
+| `dataQuery` (`sdmx/2.1/data/{flowRef}/{key}`), SDMX-CSV | `download_dataset(dataset, key, dest)`, a gzip-compressed SDMX-CSV file on disk | none: a bulk task, Python only, which the adapters skip | alpha |
 
 ## Upstream terms and attribution
 

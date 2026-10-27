@@ -52,7 +52,10 @@ src/xippios/eurostat/
   models.py        pydantic models mirroring upstream payloads (UpstreamModel)
   api/             endpoint wrappers, one module per upstream operation
   tasks.py         task functions; __all__ is what the adapters register, MCP_CAPS any
-                   per-tool result caps
+                   per-tool result caps, BULK_TASKS the Python-only tasks they skip
+                   (download_dataset)
+  parse/           file parsers, one module per file kind (ADR-0020): sdmx_csv.py,
+                   parse_sdmx_csv for the SDMX-CSV file download_dataset writes
   mcp.py           xippios-eurostat-mcp entry point
   http.py          FastAPI router
   params.py        packaged lists: PACKAGED_LISTS, packaged(), list_info() (lists.json),
@@ -64,12 +67,14 @@ scripts/
   refresh_reference.py   fetches the packaged lists through api/ and regenerates enums.py
 tests/
   conftest.py      enables xippios.core.testing.plugin, which keeps the run offline
-  fixtures/        recorded responses, <endpoint>/<case>.json, never hand-written
+  fixtures/        recorded responses, <endpoint>/<case>.json, never hand-written;
+                   files/<kind>/ the parser tests' samples, their provenance in its README
   test_family.py   core's family check, one line: namespace levels, py.typed, __version__,
                    the adapters serving exactly the tasks, task shapes and docstrings, the
                    README status table, the template tag, the core bound
   test_tasks.py    per-task replay tests
   test_refresh_reference.py  the refresh script's readers on tests/fixtures/files/
+  test_parse.py    parse_sdmx_csv on the samples under tests/fixtures/files/sdmx-csv/
   test_live.py     @pytest.mark.live smoke tests, one per task
 docs/upstream/     documentation snapshot and FETCHED.md
 .github/workflows/ ci.yml (the required ci check, with the CHANGELOG and fixture-size steps),

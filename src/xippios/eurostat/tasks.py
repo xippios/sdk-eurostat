@@ -36,20 +36,34 @@ The list tasks, ``list_datasets`` and ``list_codes``, answer from the packaged l
 ``meta.published_at`` the same time without a zone, ``published_at_naive`` set (ADR-0022
 rule 2); for a codelist ``meta.vintage`` is its version (``"28.0"``) and
 ``meta.published_at`` its ``LAST_UPDATED`` annotation with the zone Eurostat prints.
+
+``download_dataset`` is the bulk task, named in ``BULK_TASKS`` and so Python-only: the
+adapters skip it, no tool or route returns a file path (ADR-0019 decision 4). It streams
+one SDMX 2.1 data query (``api.sdmx.dataQuery``) as gzip-compressed SDMX-CSV to the file
+the caller names and returns ``Result[Downloaded]``; ``parse.parse_sdmx_csv`` reads the
+file. Its release metadata comes from the file's first row, read through the parser:
+``meta.vintage`` is ``LAST UPDATE`` as printed (``"05/10/26 23:00:00"``) and
+``meta.published_at`` the same time without a zone, ``published_at_naive`` set
+(ADR-0022 rule 2); ``meta.endpoint`` is ``"dataQuery"``.
 """
 
 import math
+import os
 from collections.abc import Mapping, Sequence
+from contextlib import closing
 from datetime import datetime
 from enum import StrEnum
+from pathlib import Path
 from typing import Any
 
 from xippios.core import (
+    Downloaded,
     InvalidRequestError,
     Result,
     ResultCap,
     ResultMeta,
     UnknownCode,
+    ValidationError,
     closest,
     matches,
     sync,
@@ -59,8 +73,10 @@ from xippios.eurostat import api, params
 from xippios.eurostat._client import SOURCE
 from xippios.eurostat.api.statistics import ENDPOINT
 from xippios.eurostat.models import Code, Cube, Dataset, GeoLevel, Lang, Observation
+from xippios.eurostat.parse import parse_sdmx_csv
 
 __all__ = [
+    "download_dataset",
     "get_cross_section",
     "get_data",
     "get_latest_period",
@@ -69,9 +85,9 @@ __all__ = [
     "list_datasets",
 ]
 
-BULK_TASKS: frozenset[str] = frozenset()
-"""Tasks the adapters skip (ADR-0019 decision 4): none yet. Written by hand until
-template v0.3.0 renders it (D33)."""
+BULK_TASKS: frozenset[str] = frozenset({"download_dataset"})
+"""Tasks the adapters skip (ADR-0019 decision 4): ``download_dataset``, which writes a
+file and is Python-only. Written by hand until template v0.3.0 renders it (D33)."""
 
 RESERVED_PARAMETERS = frozenset(
     {"format", "lang", "sincetimeperiod", "untiltimeperiod", "lasttimeperiod", "geolevel"}
@@ -653,3 +669,118 @@ async def list_codes_async(codelist: str, search: str | None = None) -> Result[l
 
 
 list_codes = sync(list_codes_async)
+
+
+LAST_UPDATE = "%d/%m/%y %H:%M:%S"
+"""How SDMX-CSV prints ``LAST UPDATE``: ``"05/10/26 23:00:00"``, day first, no zone.
+
+The order is fixed by the snapshot's two answers for apro_mk_cola of 2026-10-27: the
+JSON-stat sample's ``updated`` is ``"2026-10-05T23:00:00+0200"`` and the SDMX-CSV
+sample's ``LAST UPDATE`` ``"05/10/26 23:00:00"``, the same time without its zone."""
+
+DOT_SEGMENTS = frozenset({".", ".."})
+"""Keys a URL resolves away as a path segment before sending."""
+
+
+async def download_dataset_async(
+    dataset: str,
+    key: str = "",
+    *,
+    since: str | None = None,
+    until: str | None = None,
+    last_n_observations: int | None = None,
+    dest: str | os.PathLike[str],
+) -> Result[Downloaded]:
+    """Download a Eurostat dataset, or a slice of it, as a gzip-compressed SDMX-CSV file.
+
+    Python only, no MCP tool or HTTP route (a bulk task). One request to the SDMX 2.1 API
+    (``sdmx/2.1/data/{dataset}/{key}?format=SDMX-CSV&compressed=true``), streamed to
+    ``dest``, never held in memory or cached; the file holds the answer as Eurostat sends
+    it, gzip-compressed whatever ``dest``'s name, and ``parse_sdmx_csv(result.data.path)``
+    from ``xippios.eurostat.parse`` reads it row by row. ``result.data`` is core's
+    ``Downloaded``: the path, its size, the content type and Eurostat's file name
+    (``"estat_apro_mk_cola_filtered_en.csv.gz"``). ``meta.vintage`` is the first row's
+    ``LAST UPDATE`` as printed (``"05/10/26 23:00:00"``, day first) and
+    ``meta.published_at`` the same time, which Eurostat prints without a zone
+    (``meta.published_at_naive``); both are ``None`` when the file holds no row. ``key``
+    is Eurostat's own: the dataset's dimensions in structure order, dot-separated, empty
+    for every code of a dimension, ``+`` between codes, as the dataset's SDMX-CSV columns
+    or ``get_data``'s cube (``id``) list them; it is sent as given, never looked up. A
+    query Eurostat would answer asynchronously or refuses as too large (the user guide
+    names 500,000 and 5,000,000 cells for a query it has not cached) raises
+    ``InvalidRequestError`` naming how to narrow it, and ``dest`` is left untouched; a
+    file that is not SDMX-CSV raises ``ValidationError`` and stays at ``dest``. ``dest``
+    must name a file in a directory that exists: a directory, or a missing one, is
+    refused before any request.
+
+    Args:
+        dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
+            collection and dairy products, annual) or ``"ef_m_farmleg"`` (farm
+            indicators by legal status).
+        key: Eurostat's series key, e.g. ``"A...THS_T.AT"`` for apro_mk_cola (freq A,
+            every milkitem and dairyprod, unit THS_T, geo AT) or ``"A.PRD.D1110D.THS_T.AT+DE"``
+            (two geo codes); ``""``, the default, downloads every code of every
+            dimension, the whole dataset.
+        since: The first period, included, as the dataset prints it, e.g. ``"2022"`` or
+            ``"2026-08"``; Eurostat's ``startPeriod``. ``None`` starts at the first.
+        until: The last period, included, e.g. ``"2023"``; Eurostat's ``endPeriod``.
+            ``None`` runs to the latest.
+        last_n_observations: The most recent observations of each series, e.g. ``2``;
+            Eurostat's ``lastNObservations``. ``None`` keeps them all.
+        dest: The file to write, e.g. ``"apro_mk_cola.csv.gz"`` or
+            ``Path("data") / "ef_m_farmleg.csv.gz"``, in a directory that exists; a file
+            there is replaced once the download is complete.
+    """
+    if key in DOT_SEGMENTS:
+        raise InvalidRequestError(
+            f"key={key!r} wildcards every dimension, which a URL cannot carry as a path "
+            'segment: pass key="" for every code of every dimension',
+            source=SOURCE,
+        )
+    target = Path(dest)
+    if target.is_dir():
+        raise InvalidRequestError("dest is a directory; name the file to write", source=SOURCE)
+    if not target.parent.is_dir():
+        raise InvalidRequestError("dest's directory does not exist; create it first", source=SOURCE)
+    downloaded = await api.sdmx.dataQuery(
+        dataset,
+        target,
+        key=key,
+        start_period=since,
+        end_period=until,
+        last_n_observations=last_n_observations,
+        compressed=True,
+    )
+    with closing(parse_sdmx_csv(downloaded.path)) as rows:
+        first = next(rows, None)
+    vintage = None if first is None else first.last_update
+    try:
+        published = None if vintage is None else datetime.strptime(vintage, LAST_UPDATE)
+    except ValueError:
+        raise ValidationError(
+            f"{SOURCE} {api.sdmx.DATA_ENDPOINT}: the first row's LAST UPDATE is not printed "
+            "as dd/mm/yy HH:MM:SS",
+            raw=vintage,
+            source=SOURCE,
+        ) from None
+    meta = ResultMeta(
+        source=SOURCE,
+        endpoint=api.sdmx.DATA_ENDPOINT,
+        retrieved_at=downloaded.retrieved_at,
+        published_at=published,
+        published_at_naive=published is not None,
+        vintage=vintage,
+        request={
+            "dataset": dataset,
+            "key": key,
+            "start_period": since,
+            "end_period": until,
+            "last_n_observations": last_n_observations,
+            "format": api.sdmx.DATA_FORMAT,
+            "compressed": True,
+        },
+    )
+    return Result(data=downloaded, meta=meta)
+
+
+download_dataset = sync(download_dataset_async)
