@@ -530,7 +530,7 @@ def test_get_series_refuses_an_answer_of_two_series(replay_fixture: ReplayFixtur
         )
     assert sent_urls(route) == [recorded_url(case)]
     assert str(refused.value) == (
-        "the answer for apro_mk_cola spans 2 series, not one: pin each of these dimensions "
+        "the answer for apro_mk_cola spans up to 2 series, not one: pin each of these dimensions "
         "to one code in filters: dairyprod (2 codes: D1110D, D2100)"
     )
 
@@ -546,7 +546,7 @@ def test_get_series_refusal_lists_at_most_twenty_codes(replay_fixture: ReplayFix
     crops = recorded_cube(case).dimension["crops"].category.index
     first = ", ".join(sorted(crops, key=crops.__getitem__)[:20])
     assert str(refused.value) == (
-        "the answer for apro_cpnh1 spans 1070 series, not one: pin each of these dimensions "
+        "the answer for apro_cpnh1 spans up to 1070 series, not one: pin each of these dimensions "
         f"to one code in filters: crops (214 codes: {first} and 194 more); strucpro (5 codes: "
         "AR_THS_HA, HPRD_THS_T, MAR_THS_HA, HUMD_PC, YLD_T_HA)"
     )
@@ -667,6 +667,20 @@ def test_get_cross_section_apro_cpnh1_one_crop(replay_fixture: ReplayFixture) ->
     }
 
 
+@pytest.mark.parametrize("period", ["", "  "])
+def test_get_cross_section_refuses_an_empty_period(
+    respx_mock: respx.MockRouter, period: str
+) -> None:
+    """Refused in the task's own terms, not as get_data's empty time filter."""
+    with pytest.raises(InvalidRequestError) as refused:
+        get_cross_section("apro_mk_cola", period, MILK)
+    assert str(refused.value) == (
+        f"period={period!r}: give one period as the dataset's time dimension prints it, "
+        'e.g. "2023" or "2026-08"'
+    )
+    assert not respx_mock.calls, "refused before any request"
+
+
 def test_get_cross_section_unknown_code_is_an_empty_list(replay_fixture: ReplayFixture) -> None:
     """The recorded empty cube of PR 4: the same URL, geo=XX and time=2023."""
     case = "unknown_code"
@@ -765,7 +779,9 @@ async def test_get_series_tool_answers_the_refusal_as_text(replay_fixture: Repla
             "until": "2023",
         },
     )
-    assert text.startswith("error: InvalidRequestError: the answer for apro_mk_cola spans 2 series")
+    assert text.startswith(
+        "error: InvalidRequestError: the answer for apro_mk_cola spans up to 2 series"
+    )
 
 
 @pytest.mark.anyio

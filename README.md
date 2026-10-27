@@ -79,8 +79,8 @@ dimension but time pinned to one code; an answer that spans more than one series
 `get_latest_period(dataset, filters=None, *, lang=Lang.EN)` asks for `lastTimePeriod=1`,
 the most recent period, and `get_cross_section(dataset, period, filters=None, *,
 lang=Lang.EN)` for `time=<period>`; both return any number of series in cube order. Each
-refuses a `time` filter before sending, since it selects the periods itself. A code that
-matches nothing gives an empty list. Over MCP each slice keeps the family's cap, 200
+refuses a `time` filter before sending, since it selects the periods itself, and
+`get_cross_section` an empty `period`. A code that matches nothing gives an empty list. Over MCP each slice keeps the family's cap, 200
 rows or 64 KB, with a note of its own on how to see the rest.
 
 ## MCP
@@ -110,7 +110,7 @@ exactly tasks.__all__ and tasks_write.__all__. -->
 | Upstream operation | Task function | MCP tool | Status |
 | --- | --- | --- | --- |
 | `getData` (`statistics/1.0/data/{datasetCode}`) | `get_data(dataset, filters)`, a JSON-stat cube | `eurostat_get_data` | alpha |
-| `getData` with `sinceTimePeriod` and `untilTimePeriod` | `get_series(dataset, filters, since, until)`, one series as observations ordered by period | `eurostat_get_series` | alpha |
+| `getData` with `sinceTimePeriod` and `untilTimePeriod` | `get_series(dataset, filters, since, until)`, one series as observations in cube order, which runs oldest period first in every recorded cube | `eurostat_get_series` | alpha |
 | `getData` with `lastTimePeriod=1` | `get_latest_period(dataset, filters)`, the observations of the most recent period | `eurostat_get_latest_period` | alpha |
 | `getData` with `time` | `get_cross_section(dataset, period, filters)`, the observations of one period | `eurostat_get_cross_section` | alpha |
 

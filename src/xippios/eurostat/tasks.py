@@ -66,8 +66,8 @@ else:
         "get_series": ResultCap(
             max_rows=200,
             note=(
-                "rows run oldest period first: pass since, the period after the last row "
-                "shown, to see the later ones"
+                "rows run in cube order, which runs oldest period first in every recorded "
+                "cube: pass since, the period after the last row shown, to see the later ones"
             ),
         ),
         "get_latest_period": ResultCap(
@@ -87,11 +87,13 @@ else:
     }
 """MCP result caps of their own, by task function name (conventions §8, ADR-0016).
 
-The slices serve lists of observations, 250 to 400 bytes each as compact JSON in the
-recorded answers, so the family's 64 KB holds about 160 to 250 rows and the 200 rows
-stay the family's too: every recorded series (9 and 5 rows) and cross-section (36 and
-151 rows, one series over every geo code) comes whole, and the latest period of a whole
-ef_m_farmleg table for one country (1,810 rows) is cut. What each cap adds is its note,
+The slices serve lists of observations, 234 to 453 bytes each as compact JSON (UTF-8,
+as ``cap_result`` counts them) in the seven recorded slice answers, so the family's
+64 KB holds about 145 to 280 rows and the 200 rows stay the family's too: every
+recorded series (9 and 5 rows) and cross-section (36 rows, one series over every geo
+code; 151 rows, five series over every geo code) comes whole, and the latest period of
+a whole ef_m_farmleg table for one country (1,810 rows) is cut. What each cap adds is
+its note,
 naming the task's own way to see the rest. ``get_data`` returns a cube, not a list, and
 keeps the default cap. ``ResultCap`` lives in ``xippios.core.mcp``, which needs the
 ``mcp`` extra, so a base install, which serves no MCP tool, has no caps.
@@ -323,7 +325,7 @@ def _one_series(dataset: str, cube: Cube) -> None:
         named.append(f"{name} ({size} codes: {', '.join(codes[:SHOWN_CODES])}{more})")
     series = math.prod(size for _, size in spread)
     raise InvalidRequestError(
-        f"the answer for {dataset} spans {series} series, not one: pin each of these "
+        f"the answer for {dataset} spans up to {series} series, not one: pin each of these "
         f"dimensions to one code in filters: {'; '.join(named)}",
         source=SOURCE,
     )
@@ -337,7 +339,7 @@ async def get_series_async(
     until: str | None = None,
     lang: Lang = Lang.EN,
 ) -> Result[list[Observation]]:
-    """Get one time series of a Eurostat dataset, its observations ordered by period.
+    """Get one time series of a Eurostat dataset as observations, in its time dimension's order.
 
     One request to the Statistics API. ``filters`` pins every dimension but time to one
     code, so that the answer is one series; ``since`` and ``until`` bound its periods, which
@@ -363,10 +365,10 @@ async def get_series_async(
             "so_eur": "TOTAL", "uaarea": "TOTAL", "unit": "HLD", "geo": "AT"}`` for
             ef_m_farmleg.
         since: The first period, included, as the dataset's time dimension prints it,
-            e.g. ``"2015"``; ``None`` starts at the dataset's first period.
-            Eurostat's ``sinceTimePeriod``.
-        until: The last period, included, e.g. ``"2023"``; ``None`` runs to the latest.
-            Eurostat's ``untilTimePeriod``.
+            e.g. ``"2015"`` (annual) or ``"2026-08"`` (monthly, as in apro_ec_poulm);
+            ``None`` starts at the dataset's first period. Eurostat's ``sinceTimePeriod``.
+        until: The last period, included, e.g. ``"2023"`` or ``"2026-09"``; ``None`` runs
+            to the latest. Eurostat's ``untilTimePeriod``.
         lang: Language of the labels: ``"EN"`` (the default), ``"FR"`` or ``"DE"``.
     """
     sent = _filters(
@@ -404,14 +406,15 @@ async def get_latest_period_async(
     """Get the observations of a Eurostat dataset's most recent period, for the filters.
 
     One request to the Statistics API with ``lastTimePeriod=1``, Eurostat's "most recent
-    data": the latest position of the time dimension. Any number of series, in cube
-    order (the dimensions in the dataset's order, the last varying fastest), each
-    observation with its code and label on every dimension, its value and its status.
+    data": the latest position of the time dimension, one period for the whole answer, not
+    each series' own latest; a series without a cell in that period is absent. Any number of
+    series, in cube order (the dimensions in the dataset's order, the last varying fastest),
+    each observation with its code and label on every dimension, its value and its status.
     Keep the slice small with ``filters`` (a country, a product): it comes back whole. A
-    code that matches nothing gives an empty list. A ``time`` filter is refused before
-    any request: the task asks for the latest period itself (``get_cross_section``
-    takes one period). An unknown dataset raises ``NotFoundError``; a query Eurostat
-    refuses or judges too large, ``InvalidRequestError`` with its message.
+    code that matches nothing gives an empty list. A ``time`` filter is refused before any
+    request: the task asks for the latest period itself (``get_cross_section`` takes one
+    period). An unknown dataset raises ``NotFoundError``; a query Eurostat refuses or judges
+    too large, ``InvalidRequestError`` with its message.
 
     Args:
         dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
@@ -458,15 +461,16 @@ async def get_cross_section_async(
     leave ``geo`` out of ``filters`` for every geo code the dataset holds, European
     aggregates (``"EU27_2020"``) and countries alike. Keep the slice small with
     ``filters`` (one product, one unit): it comes back whole. A code that matches nothing
-    gives an empty list. A ``time`` filter is refused before any request: ``period`` is
-    the one period. An unknown dataset raises ``NotFoundError``; a query Eurostat refuses
-    or judges too large, ``InvalidRequestError`` with its message.
+    gives an empty list. A ``time`` filter, and an empty ``period``, are refused before any
+    request: ``period`` is the one period. An unknown dataset raises ``NotFoundError``; a
+    query Eurostat refuses or judges too large, ``InvalidRequestError`` with its message.
 
     Args:
         dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
             collection and dairy products, annual) or ``"apro_cpnh1"`` (crop
             production).
-        period: The period, as the dataset's time dimension prints it, e.g. ``"2023"``.
+        period: The period, as the dataset's time dimension prints it, e.g. ``"2023"``
+            (annual) or ``"2026-08"`` (monthly, as in apro_ec_poulm).
         filters: Dimension code to one code or a list of codes, any dimension but time,
             codes as in ``get_data``'s cube, case-insensitive, e.g. ``{"milkitem":
             "PRD", "dairyprod": "D1110D", "unit": "THS_T"}`` for apro_mk_cola or
@@ -482,6 +486,12 @@ async def get_cross_section_async(
         ),
         time_rule="get_cross_section takes its one period as period; leave time out of filters",
     )
+    if not period.strip():
+        raise InvalidRequestError(
+            f"period={period!r}: give one period as the dataset's time dimension prints it, "
+            'e.g. "2023" or "2026-08"',
+            source=SOURCE,
+        )
     answer = await get_data_async(dataset, {**sent, "time": period}, lang=lang)
     return Result(data=list(answer.data.observations()), meta=answer.meta)
 
