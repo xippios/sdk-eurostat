@@ -14,9 +14,10 @@ JSON-stat cube it returns. Release metadata: ``meta.published_at`` is the cube's
 ``updated``, the dataset's last update with its zone; ``meta.vintage`` is the same
 member as upstream printed it (``"2026-10-05T23:00:00+0200"``), Eurostat's only release
 identifier for a dataset (``docs/upstream/user-guide/api-introduction.md``: "there is no
-versioning or documentation of past versions of the data"; ADR-0022 decision 2). A
+versioning or documentation of past versions of the data"; ADR-0022 decision 2). An
 ``updated`` without a zone, never seen, would leave ``published_at`` empty, since
-``ResultMeta`` takes only a zoned time on core 0.2.1. ``meta.endpoint`` is the operation's
+``ResultMeta`` takes only a zoned time on a core without ADR-0022's flag.
+``meta.endpoint`` is the operation's
 name, ``"getData"``; ``meta.request`` holds what was sent, a parameter left ``None``
 omitted; ``meta.total`` stays ``None``: the answer counts no records for the request
 (its ``OBS_COUNT`` annotation counts the whole dataset's, ADR-0012).
@@ -30,7 +31,7 @@ from xippios.core import InvalidRequestError, Result, ResultMeta, sync
 
 from xippios.eurostat import api
 from xippios.eurostat._client import SOURCE
-from xippios.eurostat.api.statistics import ENDPOINT
+from xippios.eurostat.api.statistics import ENDPOINT, GeoLevel, Lang
 from xippios.eurostat.models import Cube
 
 __all__ = ["get_data"]
@@ -91,11 +92,11 @@ async def get_data_async(
     dataset: str,
     filters: Mapping[str, str | Sequence[str]] | None = None,
     *,
-    lang: str = "EN",
+    lang: Lang = "EN",
     since_time_period: str | None = None,
     until_time_period: str | None = None,
     last_time_period: int | None = None,
-    geo_level: str | None = None,
+    geo_level: GeoLevel | None = None,
 ) -> Result[Cube]:
     """Get one Eurostat dataset, or a slice of it, as a JSON-stat 2.0 cube.
 
@@ -114,10 +115,9 @@ async def get_data_async(
     Eurostat would answer asynchronously or judges too large, naming how to narrow it.
 
     Args:
-        dataset: The dataset's online data code, case-insensitive, e.g.
-            ``"apro_mk_cola"`` (cows' milk collection and dairy products, annual),
-            ``"apro_cpnh1"`` (crop production) or ``"ef_m_farmleg"`` (farm indicators by
-            legal status).
+        dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
+            collection and dairy products, annual), ``"apro_cpnh1"`` (crop production)
+            or ``"ef_m_farmleg"`` (farm indicators by legal status).
         filters: Dimension code to one code or a list of codes, each sent as
             ``DIMENSION_CODE=VALUE``; any dimension of the dataset, codes as in the
             cube's ``dimension``, case-insensitive, e.g. ``{"geo": "AT", "time":

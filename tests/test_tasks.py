@@ -150,9 +150,12 @@ def test_get_data_geo_with_geo_level(replay_fixture: ReplayFixture) -> None:
     assert sent_urls(route) == [recorded_url("geo_with_geo_level")]
 
 
-def test_get_data_refuses_an_asynchronous_answer(respx_mock: respx.MockRouter) -> None:
-    """Documented shape, not recorded: the asynchronous answer of api-statistics.md,
-    verbatim; the recorded fixture follows when the service answers asynchronously."""
+def test_documented_shape_get_data_refuses_an_asynchronous_answer(
+    respx_mock: respx.MockRouter,
+) -> None:
+    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
+    hand-written: the asynchronous answer of api-statistics.md. The first asynchronous
+    answer seen is recorded and replaces this test (Johannes, 2026-10-27)."""
     documented = next(
         line.strip()
         for line in (GUIDE / "api-statistics.md").read_text(encoding="utf-8").splitlines()
@@ -165,6 +168,7 @@ def test_get_data_refuses_an_asynchronous_answer(respx_mock: respx.MockRouter) -
     ).mock(return_value=httpx.Response(200, content=documented.encode("utf-8")))
     with pytest.raises(InvalidRequestError, match="asynchronously") as refused:
         tasks.get_data("apro_ec_poulm")
+    assert "send the same request again later" in str(refused.value)
     assert "fewer codes per dimension" in str(refused.value)
 
 

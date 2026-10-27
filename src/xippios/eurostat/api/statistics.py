@@ -24,7 +24,7 @@ The answer is one JSON-stat 2.0 dataset (``models.Cube``;
 
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 from urllib.parse import quote
 
 from xippios.core import parse
@@ -33,10 +33,16 @@ from xippios.core.client import decode_json
 from xippios.eurostat._client import SOURCE, client, stored_at
 from xippios.eurostat.models import Cube
 
-__all__ = ["DataAnswer", "getData"]
+__all__ = ["DataAnswer", "GeoLevel", "Lang", "getData"]
 
 ENDPOINT = "getData"
 """The operation's name, the WADL's method id."""
+
+Lang = Literal["EN", "FR", "DE"]
+"""``lang``'s values: "can have only three values: 'EN', 'FR', and 'DE'" (api-statistics.md)."""
+
+GeoLevel = Literal["aggregate", "country", "nuts1", "nuts2", "nuts3", "city"]
+"""``geoLevel``'s values, the six api-statistics.md lists under "The geoLevel parameter"."""
 
 
 class DataAnswer(NamedTuple):
@@ -58,12 +64,12 @@ class DataAnswer(NamedTuple):
 async def getData(
     dataset_code: str,
     *,
-    lang: str | None = None,
+    lang: Lang | None = None,
     filters: Mapping[str, str | Sequence[str]] | None = None,
     since_time_period: str | None = None,
     until_time_period: str | None = None,
     last_time_period: int | None = None,
-    geo_level: str | None = None,
+    geo_level: GeoLevel | None = None,
 ) -> DataAnswer:
     """Call ``getData``: one dataset, or a slice of it, as a JSON-stat cube.
 
