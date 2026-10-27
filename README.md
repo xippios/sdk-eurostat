@@ -19,13 +19,33 @@ No API key is needed.
 ## 30-second example
 
 ```python
-from xippios.eurostat import tasks
+from xippios.eurostat import get_data
 
-# result = tasks.<task>(...)
-# result.data, result.meta.retrieved_at, result.meta.request
+milk = get_data("apro_mk_cola", {"geo": "AT", "time": ["2022", "2023"]})
+cube = milk.data  # the JSON-stat 2.0 dataset, member by member
+cube.id  # ["freq", "milkitem", "dairyprod", "unit", "geo", "time"]
+cube.size  # [1, 3, 10, 2, 1, 2]: codes per dimension
+cube.value["40"]  # 3247.05: cell 40, row-major over size, the last dimension fastest
+cube.status["64"]  # "|C": confidential, as cube.extension["status"]["label"] names it
+first = next(cube.observations())  # one cell with its codes and labels
+first.codes  # {"freq": "A", "milkitem": "PRD", "dairyprod": "D1110D", "unit": "THS_T", ...}
+first.labels["dairyprod"], first.value  # "Raw cows' milk delivered to dairies", 3247.05
+milk.meta.published_at  # 2026-10-05 23:00+02:00: the dataset's last update, `updated`
+milk.meta.vintage  # "2026-10-05T23:00:00+0200": the same, as Eurostat prints it
+milk.meta.request  # {"dataset": "apro_mk_cola", "filters": {...}, "lang": "EN"}
 ```
 
-Task functions are listed in the status table below as they are added.
+`get_data(dataset, filters=None, *, lang="EN", since_time_period=None,
+until_time_period=None, last_time_period=None, geo_level=None)` sends one request to the
+Statistics API (`statistics/1.0/data/{datasetCode}`). `filters` maps any dimension of the
+dataset to one code or a list of codes (`{"geo": "AT", "milkitem": "PRD"}`); `time`
+filters periods, and the three time parameters select ranges (only
+`since_time_period` and `until_time_period` combine). A code that matches nothing gives
+an empty cube, size 0 on that dimension. An unknown dataset raises `NotFoundError`; a
+query Eurostat refuses, or would answer asynchronously because it is too large, raises
+`InvalidRequestError` with Eurostat's message and how to narrow it: this package does
+not poll asynchronous answers. Ask for small slices: the cube comes back whole, and over
+MCP a result above 64 KB is replaced by a preview and a note.
 
 ## MCP
 
@@ -53,7 +73,7 @@ exactly tasks.__all__ and tasks_write.__all__. -->
 
 | Upstream operation | Task function | MCP tool | Status |
 | --- | --- | --- | --- |
-| (none yet) | | | |
+| `getData` (`statistics/1.0/data/{datasetCode}`) | `get_data(dataset, filters)`, a JSON-stat cube | `eurostat_get_data` | alpha |
 
 ## Upstream terms and attribution
 
