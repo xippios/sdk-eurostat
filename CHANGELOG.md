@@ -18,4 +18,5 @@ All notable changes to this project are documented here. The format follows
   document verbatim, and one JSON-stat and one SDMX-CSV answer as structural samples;
   written by `scripts/refresh_upstream.py` (standard library only, no key), whose
   `FETCHED.md` records each file's URL, fetch time, size and sha256, the pages not
-  fetched and why, and Eurostat's licence, reuse and citation lines.
+  fetched and why, and Eurostat's licence and reuse lines, its exceptions to commercial
+  reuse and its citation form.

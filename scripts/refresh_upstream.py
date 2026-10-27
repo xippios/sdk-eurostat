@@ -29,8 +29,9 @@ served beside them. This script writes:
 
 Two Confluence pages (``WIKI_PAGES``) are requested once each without credentials; they
 redirect an anonymous client to EU Login, and the script records that and stops
-following there. The copyright notice is fetched for its reuse and licence lines and the
-citation wording, which ``FETCHED.md`` quotes; the page itself is not kept.
+following there. The copyright notice is fetched for its licence and reuse lines, its exceptions to
+commercial reuse and its citation wording, which ``FETCHED.md`` quotes; the page itself is
+not kept.
 
 Everything is fetched before anything is written, one request at a time after a pause
 of ``PAUSE`` seconds, each URL retried at most once: after a network error or a 5xx, and
@@ -170,6 +171,16 @@ NOT_REQUESTED = (
 COPYRIGHT_URL = "https://ec.europa.eu/eurostat/web/main/help/copyright-notice"
 LICENCE_START = "The copyright for the editorial content of this website"
 REUSE_START = "Reuse of statistical data"
+EXCEPTIONS_START = (
+    "The following Eurostat data and documents may not be reused for commercial purposes"
+)
+EXCEPTIONS_ITEMS = (
+    "Data identified as belonging to sources other than Eurostat",
+    "Data for countries other than",
+    "Trade data originating from Liechtenstein and Switzerland",
+    "Trade data originating from Austria",
+)
+"""The notice's exceptions to commercial reuse that must be quoted; their absence stops the run."""
 CITE_HEADING = "How to cite Eurostat products"
 CITE_SUBHEADING = "Datasets"
 
@@ -995,6 +1006,7 @@ class Attribution:
 
     licence: str
     reuse: str
+    exceptions: str
     citation: list[str]
 
 
@@ -1140,9 +1152,34 @@ def _changed(what: str) -> SystemExit:
     )
 
 
+def _exceptions(page: Page) -> str:
+    """The notice's list item on data excluded from commercial reuse, its sub-list included.
+
+    The item and its nested lines are kept as converted, list markers and all, one level
+    of indentation removed.
+    """
+    for block in page.blocks:
+        lines = block.split("\n")
+        starts = [i for i, line in enumerate(lines) if line.startswith(f"- {EXCEPTIONS_START}")]
+        if not starts:
+            continue
+        start = starts[0]
+        end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("- ")), None)
+        nested = [line.removeprefix("  ") for line in lines[start + 1 : end]]
+        present = {re.sub(r"^\s*- ", "", line) for line in nested}
+        missing = [
+            item for item in EXCEPTIONS_ITEMS if not any(p.startswith(item) for p in present)
+        ]
+        if missing:
+            raise _changed(f"the exceptions to commercial reuse no longer name {missing}")
+        return "\n".join([lines[start].removeprefix("- "), *nested]).strip("\n")
+    raise _changed(f"no list item starting {EXCEPTIONS_START!r}")
+
+
 def attribution() -> Attribution:
     """Fetch Eurostat's copyright notice and take the lines ``FETCHED.md`` quotes."""
-    lines = _lines(convert(_text(fetch(COPYRIGHT_URL)), COPYRIGHT_URL))
+    page = convert(_text(fetch(COPYRIGHT_URL)), COPYRIGHT_URL)
+    lines = _lines(page)
 
     def sentence(prefix: str) -> str:
         found = [line for line in lines if line.startswith(prefix)]
@@ -1163,7 +1200,7 @@ def attribution() -> Attribution:
     citation = [*lines[cite + 1 : datasets], f"{CITE_SUBHEADING}:", *lines[datasets + 1 : end]]
     if not any(line.startswith("Source:") for line in lines[datasets + 1 : end]):
         raise _changed(f"no 'Source:' line under {CITE_SUBHEADING!r}")
-    return Attribution(sentence(LICENCE_START), sentence(REUSE_START), citation)
+    return Attribution(sentence(LICENCE_START), sentence(REUSE_START), _exceptions(page), citation)
 
 
 # --- FETCHED.md ---------------------------------------------------------------------------
@@ -1207,6 +1244,8 @@ def render_fetched(
         "",
         *_paragraph(f"Eurostat's copyright notice, {COPYRIGHT_URL}, as fetched in this run:"),
         *_quote([quoted.licence, quoted.reuse]),
+        *_paragraph('The same notice, under "Exceptions", on commercial reuse:'),
+        *_quote([quoted.exceptions]),
         *_paragraph(
             "The user-guide pages are the website's editorial content, reproduced here as",
             "this package's reference (ADR-0003) with the source acknowledged in each row",
