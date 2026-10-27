@@ -19,8 +19,10 @@ served beside them. This script writes:
   cells or a nested table stays HTML (conventions §3); links and images are absolute.
 - ``api/<file>``: the WADL files and the OpenAPI document in ``DOCUMENTS``, verbatim. The
   service generates its WADL files per request, with sibling elements in an order that
-  changes between requests; an answer with exactly the lines of the file already here, in
-  another order, leaves the file as it is.
+  changes between requests; a WADL answer whose lines, each with the lines enclosing it by
+  indentation, are those of the file already here leaves the file as it is (the namespace
+  prefixes a line declares for itself, which the service numbers in document order, are
+  masked for the comparison).
 - ``samples/<file>``: two small answers, verbatim: the Statistics API's JSON-stat answer
   ``JSON_STAT_URL`` and the SDMX 2.1 API's SDMX-CSV answer ``SDMX_CSV_URL``, structural
   samples of the formats (test fixtures are recorded separately, never here).
@@ -29,9 +31,10 @@ served beside them. This script writes:
 
 Two Confluence pages (``WIKI_PAGES``) are requested once each without credentials; they
 redirect an anonymous client to EU Login, and the script records that and stops
-following there. The copyright notice is fetched for its licence and reuse lines, its exceptions to
-commercial reuse and its citation wording, which ``FETCHED.md`` quotes; the page itself is
-not kept.
+following there. The copyright notice is fetched for its licence and reuse lines, its
+exceptions to commercial reuse, its clause on modified reuse and its citation wording,
+which ``FETCHED.md`` quotes beside the snapshot's own disclaimer; the page itself is not
+kept.
 
 Everything is fetched before anything is written, one request at a time after a pause
 of ``PAUSE`` seconds, each URL retried at most once: after a network error or a 5xx, and
@@ -58,6 +61,7 @@ import json
 import re
 import textwrap
 import time
+import tomllib
 import urllib.error
 import urllib.request
 from collections import Counter
@@ -72,7 +76,9 @@ from urllib.parse import urljoin, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = ROOT / "docs/upstream"
 COMMAND = "uv run scripts/refresh_upstream.py"
-USER_AGENT = "xippios-eurostat/0.1.0 (+https://github.com/xippios)"
+VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+USER_AGENT = f"xippios-eurostat/{VERSION} (+https://github.com/xippios)"
+"""The package's own version, read from ``pyproject.toml``, so the name never goes stale."""
 
 GUIDE_BASE = "https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/"
 GUIDE_PAGES = (
@@ -181,6 +187,10 @@ EXCEPTIONS_ITEMS = (
     "Trade data originating from Austria",
 )
 """The notice's exceptions to commercial reuse that must be quoted; their absence stops the run."""
+MODIFICATION_START = (
+    "When reuse involves translations of publications or modifications to the data or text"
+)
+"""The notice's clause on modified reuse, which the Markdown conversion is."""
 CITE_HEADING = "How to cite Eurostat products"
 CITE_SUBHEADING = "Datasets"
 
@@ -300,6 +310,7 @@ _CODE_OPEN, _CODE_CLOSE = "\x01", "\x02"
 """Code spans are marked while a line is built, so that adjacent ones merge into one."""
 _CODE_SPAN = re.compile(f"{_CODE_OPEN}(.*?){_CODE_CLOSE}", re.DOTALL)
 _BREAK = "\x00"
+_LOCAL_PREFIX = re.compile(rb"xmlns:([A-Za-z_][\w.-]*)=")
 
 
 def _log(message: str) -> None:
@@ -1007,6 +1018,7 @@ class Attribution:
     licence: str
     reuse: str
     exceptions: str
+    modification: str
     citation: list[str]
 
 
@@ -1034,23 +1046,55 @@ def guide_page(path: str) -> tuple[Row, Page]:
     return Row(f"user-guide/{path}.md", url, content, note), page
 
 
+def _masked(line: bytes) -> bytes:
+    """The line with the namespace prefixes it declares for itself masked.
+
+    The service names such a prefix ``ns3``, ``ns4`` and on in document order, so a
+    reordering renumbers it without changing what the line says.
+    """
+    for prefix in set(_LOCAL_PREFIX.findall(line)):
+        line = re.sub(rb"\b" + re.escape(prefix) + rb"\b", b"ns*", line)
+    return line
+
+
+def _placed_lines(text: bytes) -> Counter[tuple[tuple[bytes, ...], bytes]]:
+    """Each line of an indented document with the lines enclosing it, by indentation.
+
+    Two answers that differ only in the order of sibling elements give the same counter;
+    a line moved under another parent does not. Lines are compared with the namespace
+    prefixes they declare for themselves masked (``_masked``).
+    """
+    placed: Counter[tuple[tuple[bytes, ...], bytes]] = Counter()
+    enclosing: list[tuple[int, bytes]] = []
+    for line in map(_masked, text.split(b"\n")):
+        if not line.strip():
+            placed[((), line)] += 1
+            continue
+        indent = len(line) - len(line.lstrip(b" "))
+        while enclosing and enclosing[-1][0] >= indent:
+            enclosing.pop()
+        placed[(tuple(parent for _, parent in enclosing), line)] += 1
+        enclosing.append((indent, line))
+    return placed
+
+
 def document(out: Path, path: str, relative: str, note: str) -> Row:
     """Fetch one upstream document, kept verbatim.
 
     The service generates its WADL files per request and orders sibling elements
-    differently from one request to the next. An answer that holds exactly the lines of
-    the file already in the snapshot, in another order, leaves that file as it is, so a
-    refresh shows real changes only.
+    differently from one request to the next. A WADL answer whose lines, each with the
+    lines enclosing it, are those of the file already in the snapshot leaves that file as
+    it is, so a refresh shows real changes only. Other documents compare byte for byte.
     """
     url = API_BASE + relative
     body = fetch(url).body
     if not body.strip():
         raise _unexpected(url, "a document", "an empty body")
     existing = out / path
-    if existing.is_file():
+    if path.endswith(".wadl") and existing.is_file():
         kept = existing.read_bytes()
-        if kept != body and Counter(kept.split(b"\n")) == Counter(body.split(b"\n")):
-            _log(f"  {path}: the same lines in another order; the file is kept as it is")
+        if kept != body and _placed_lines(kept) == _placed_lines(body):
+            _log(f"  {path}: the same elements in another order; the file is kept as it is")
             body = kept
     return Row(path, url, body, f"verbatim; {note}")
 
@@ -1063,7 +1107,7 @@ def _no_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 
 def samples(key_order: str) -> list[Row]:
-    """Fetch the JSON-stat and SDMX-CSV samples and check that they describe one slice."""
+    """Fetch the two samples; check the dimension order and that the CSV rows lie in the key."""
     stat = fetch(JSON_STAT_URL)
     try:
         cube = json.loads(stat.body, object_pairs_hook=_no_duplicates)
@@ -1188,6 +1232,12 @@ def attribution() -> Attribution:
             raise _changed(f"expected one sentence starting {prefix!r}, found {len(found)} lines")
         return match.group(1)
 
+    def line(prefix: str) -> str:
+        found = [line for line in lines if line.startswith(prefix)]
+        if len(found) != 1:
+            raise _changed(f"expected one line starting {prefix!r}, found {len(found)}")
+        return found[0]
+
     def heading(text: str, after: int) -> int:
         for index in range(after + 1, len(lines)):
             if lines[index].startswith("#") and lines[index].lstrip("# ") == text:
@@ -1197,10 +1247,16 @@ def attribution() -> Attribution:
     cite = heading(CITE_HEADING, -1)
     datasets = heading(CITE_SUBHEADING, cite)
     end = next((i for i in range(datasets + 1, len(lines)) if lines[i].startswith("#")), len(lines))
-    citation = [*lines[cite + 1 : datasets], f"{CITE_SUBHEADING}:", *lines[datasets + 1 : end]]
+    citation = [*lines[cite + 1 : datasets], CITE_SUBHEADING, *lines[datasets + 1 : end]]
     if not any(line.startswith("Source:") for line in lines[datasets + 1 : end]):
         raise _changed(f"no 'Source:' line under {CITE_SUBHEADING!r}")
-    return Attribution(sentence(LICENCE_START), sentence(REUSE_START), _exceptions(page), citation)
+    return Attribution(
+        sentence(LICENCE_START),
+        sentence(REUSE_START),
+        _exceptions(page),
+        line(MODIFICATION_START),
+        citation,
+    )
 
 
 # --- FETCHED.md ---------------------------------------------------------------------------
@@ -1257,6 +1313,14 @@ def render_fetched(
             "by replacing the text with a summary that keeps the names and semantics the",
             "wrappers rely on.",
         ),
+        *_paragraph('The same notice, under "Exceptions", on modified reuse:'),
+        *_quote([quoted.modification]),
+        *_paragraph(
+            "The Markdown pages under `user-guide/` are this package's conversion of",
+            "Eurostat's pages, with the changes made stated in the paragraph above; Eurostat",
+            "is not responsible for this reproduction or for any difference from the pages",
+            "it serves.",
+        ),
         *_paragraph(f'The same notice, under "{CITE_HEADING}":'),
         *_quote(quoted.citation),
         "## How this is captured",
@@ -1274,12 +1338,18 @@ def render_fetched(
         *_paragraph(
             f"The WADL files and the OpenAPI document come from {API_BASE}. The service",
             "generates its WADL files per request and orders sibling elements (`resource`,",
-            "`method`) differently from one request to the next; an answer that holds",
-            "exactly the lines of the file already here, in another order, leaves the file",
-            "as it is, so a diff shows changes only. The two samples",
+            "`method`) differently from one request to the next. A WADL answer whose lines,",
+            "each taken with the lines that enclose it by indentation, are exactly those of",
+            "the file already here leaves the file as it is, so a diff shows changes only,",
+            "a line moved under another parent included; the namespace prefixes a line",
+            "declares for itself (`ns3`, `ns4`, numbered by the service in document order)",
+            "are masked for that comparison. The OpenAPI document is compared byte for",
+            "byte. The two samples",
             f"are answers for one dataset (`{SAMPLE_DATASET}`), one country and two periods,",
             "the Statistics API's JSON-stat and the SDMX 2.1 API's SDMX-CSV; the script",
-            "checks that they describe the same slice. JSON-stat 2.0 is a third-party",
+            "checks that the SDMX-CSV's dimension columns follow the order of the JSON-stat",
+            "`id`, that the key has one position per dimension, and that every SDMX-CSV row",
+            "lies inside the key. JSON-stat 2.0 is a third-party",
             f"specification ({JSON_STAT_SPEC}): cited, not snapshotted.",
         ),
         *_paragraph(
