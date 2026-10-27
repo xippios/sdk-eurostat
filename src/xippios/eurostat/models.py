@@ -21,6 +21,15 @@ order (``dimension``), and one cell for every combination of codes; ``value`` an
 ``status`` hold the cells that have one, keyed by the cell's index. ``Observation`` is one
 cell read out of a cube with its codes and labels (``Cube.observations``); nothing in it
 is computed beyond that reading. No dataframe type (ADR-0002, ADR-0003).
+
+The packaged lists have models of their own. ``Dataset`` is one leaf of the Catalogue
+API's table of contents (``catalogue/toc/xml``,
+``docs/upstream/user-guide/api-detailed-guidelines/catalogue-api/toc.md``), ``Code`` one
+code of an SDMX codelist; both are what ``scripts/refresh_reference.py`` packages and the
+list tasks return. ``Codelist`` mirrors the SDMX 2.1 API's codelist answer in JSON-stat
+(``sdmx/2.1/codelist/{agencyID}/{resourceID}?format=JSON``,
+``docs/upstream/user-guide/api-detailed-guidelines/sdmx2-1/structure-queries.md``), which
+only the refresh script reads; the TOC's XML is parsed in that script alone (D44).
 """
 
 import math
@@ -32,7 +41,21 @@ from typing import Any, Self
 from pydantic import Field, model_validator
 from xippios.core import UpstreamModel
 
-__all__ = ["Category", "Cube", "Dimension", "GeoLevel", "Lang", "Observation"]
+__all__ = [
+    "Annotation",
+    "Category",
+    "Code",
+    "Codelist",
+    "CodelistCategory",
+    "CodelistExtension",
+    "Cube",
+    "Dataset",
+    "Dimension",
+    "GeoLevel",
+    "Lang",
+    "LeafType",
+    "Observation",
+]
 
 
 # Lang and GeoLevel are written by hand from
@@ -246,3 +269,148 @@ class Cube(UpstreamModel):
                 value=valued.get(cell),
                 status=flagged.get(cell),
             )
+
+
+class LeafType(StrEnum):
+    """What a leaf of the table of contents is: "dataset" or "table".
+
+    The TOC's "type (dataset, table, folder)": "Dataset: i.e. an "open dataset"",
+    "Table: i.e. a "pre-defined table"", "Folder: i.e. a "section" or "chapter"". A folder
+    is a ``branch`` of the tree, never a ``leaf``, and is not packaged.
+    """
+
+    DATASET = "dataset"
+    """An open dataset."""
+    TABLE = "table"
+    """A pre-defined table."""
+
+
+class Dataset(UpstreamModel):
+    """One leaf of Eurostat's table of contents: a dataset or a pre-defined table.
+
+    The leaf's elements as the TOC's XML prints them, the English title only, plus the
+    folders it sits in. A code classified at several places of the navigation tree is
+    one leaf per place, each with its own ``path``.
+
+    Attributes:
+        code: The leaf's code, e.g. ``"apro_mk_cola"``.
+        type: ``"dataset"`` or ``"table"``; upstream's ``type`` attribute of the leaf.
+        title: The English title, e.g. ``"Production of main cows' milk products - annual
+            data"``.
+        path: The English titles of the folders above the leaf, from the top of the
+            tree, joined with ``" > "``, e.g. ``"Database by themes > Agriculture,
+            forestry and fisheries > Agriculture > Animal production > Milk and milk
+            products"``; a table listed under a dataset ends with that dataset's title.
+            The package's reading of the tree's nesting, nothing else.
+        last_update: The last update of the data as printed, day first, e.g.
+            ``"02.10.2026"``; upstream's ``lastUpdate``.
+        last_modified: The last change of the structure as printed, e.g.
+            ``"02.10.2026"``; upstream's ``lastModified``.
+        data_start: The oldest period as printed, e.g. ``"1991-Q1"`` or ``"2000"``;
+            ``None`` where the TOC prints none. Upstream's ``dataStart``.
+        data_end: The most recent period as printed, e.g. ``"2026-Q2"``; ``None`` where
+            the TOC prints none. Upstream's ``dataEnd``.
+        values: The number of values the dataset holds, e.g. ``314789``.
+    """
+
+    code: str
+    type: LeafType
+    title: str
+    path: str
+    last_update: str = Field(validation_alias="lastUpdate")
+    last_modified: str = Field(validation_alias="lastModified")
+    data_start: str | None = Field(default=None, validation_alias="dataStart")
+    data_end: str | None = Field(default=None, validation_alias="dataEnd")
+    values: int
+
+
+class Code(UpstreamModel):
+    """One code of a codelist with its English label.
+
+    Attributes:
+        code: The code, as a dimension filter takes it, e.g. ``"AT"``.
+        label: Its English label, e.g. ``"Austria"``; ``None`` when upstream gives none.
+    """
+
+    code: str
+    label: str | None = None
+
+
+class Annotation(UpstreamModel):
+    """One annotation of a codelist answer's ``extension.annotation``.
+
+    Attributes:
+        type: What it says, e.g. ``"LAST_UPDATED"`` or ``"IS_STANDARD_CODE_LIST"``.
+        title: Its value, e.g. ``"2026-03-25T23:00:00+0100"``; ``None`` when absent.
+        text: Its text, e.g. ``"Standard code list"``; ``None`` when absent.
+    """
+
+    type: str
+    title: str | None = None
+    text: str | None = None
+
+
+class CodelistExtension(UpstreamModel):
+    """Eurostat's ``extension`` of a codelist answer, the members the package reads.
+
+    ``code-annotation``, the notes on single codes, is not read.
+
+    Attributes:
+        lang: The labels' language, e.g. ``"EN"``.
+        id: The codelist's id, e.g. ``"GEO"``.
+        version: The codelist's version, e.g. ``"28.0"``.
+        annotation: The codelist's annotations, ``LAST_UPDATED`` among them.
+    """
+
+    lang: str | None = None
+    id: str
+    version: str
+    annotation: list[Annotation] = Field(default_factory=list)
+
+
+class CodelistCategory(UpstreamModel):
+    """``category`` of a codelist answer: its codes in order and their labels.
+
+    Attributes:
+        index: The codes in order, e.g. ``["EUR", "EU", ...]``; JSON-stat's other form, a
+            code to its position (``{"EUR": 0, ...}``), is read too.
+        label: Each code's label, e.g. ``{"AT": "Austria"}``; ``None`` when upstream
+            sends none.
+    """
+
+    index: list[str] | dict[str, int]
+    label: dict[str, str] | None = None
+
+
+class Codelist(UpstreamModel):
+    """A codelist as the SDMX 2.1 API serves it in JSON-stat: one JSON-stat dimension.
+
+    Attributes:
+        version: The JSON-stat version, ``"2.0"``.
+        class_: The JSON-stat class, ``"dimension"``; upstream's ``class``.
+        source: The maintainer, ``"ESTAT"``.
+        label: The codelist's name, e.g. ``"Geopolitical entity (reporting)"``.
+        category: Its codes and their labels.
+        extension: Eurostat's id, version and annotations of the codelist.
+    """
+
+    version: str
+    class_: str = Field(validation_alias="class")
+    source: str | None = None
+    label: str | None = None
+    category: CodelistCategory
+    extension: CodelistExtension
+
+    def codes(self) -> list[Code]:
+        """The codes in the codelist's order, each with its label."""
+        index = self.category.index
+        ordered = index if isinstance(index, list) else sorted(index, key=index.__getitem__)
+        labels = self.category.label or {}
+        return [Code(code=code, label=labels.get(code)) for code in ordered]
+
+    def annotation(self, type_: str) -> str | None:
+        """The ``title`` of the first annotation of ``type_``, e.g. ``"LAST_UPDATED"``.
+
+        ``None`` when the codelist carries no such annotation.
+        """
+        return next((item.title for item in self.extension.annotation if item.type == type_), None)
