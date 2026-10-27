@@ -331,7 +331,8 @@ async def test_get_data_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
 async def test_get_data_tool_schema_lists_the_enumerations() -> None:
     """The MCP schema carries ``Lang`` and ``GeoLevel`` as enumerations of strings, so an
     agent sees the valid values; the tool validates a string against them."""
-    schema = (await server.list_tools())[0].input_schema
+    tools = {tool.name: tool for tool in await server.list_tools()}
+    schema = tools["eurostat_get_data"].input_schema
     assert schema["properties"]["lang"] == {"$ref": "#/$defs/Lang", "default": "EN"}
     assert schema["$defs"]["Lang"]["enum"] == ["EN", "FR", "DE"]
     assert schema["$defs"]["GeoLevel"]["enum"] == [

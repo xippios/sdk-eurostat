@@ -82,6 +82,9 @@ exactly tasks.__all__ and tasks_write.__all__. -->
 | Upstream operation | Task function | MCP tool | Status |
 | --- | --- | --- | --- |
 | `getData` (`statistics/1.0/data/{datasetCode}`) | `get_data(dataset, filters)`, a JSON-stat cube | `eurostat_get_data` | alpha |
+| `getData` with `sinceTimePeriod` and `untilTimePeriod` | `get_series(dataset, filters, since, until)`, one series as observations ordered by period | `eurostat_get_series` | alpha |
+| `getData` with `lastTimePeriod=1` | `get_latest_period(dataset, filters)`, the observations of the most recent period | `eurostat_get_latest_period` | alpha |
+| `getData` with `time` | `get_cross_section(dataset, period, filters)`, the observations of one period | `eurostat_get_cross_section` | alpha |
 
 ## Upstream terms and attribution
 
