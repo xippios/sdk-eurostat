@@ -455,12 +455,12 @@ async def get_cross_section_async(
     One request to the Statistics API with ``time=<period>``. Any number of series, in
     cube order (the dimensions in the dataset's order, the last varying fastest), each
     observation with its code and label on every dimension, its value and its status:
-    leave ``geo`` out of ``filters`` for every country and region the dataset holds.
-    Keep the slice small with ``filters`` (one product, one unit): it comes back whole.
-    A code or a period that matches nothing gives an empty list. A ``time`` filter is
-    refused before any request: ``period`` is the one period. An unknown dataset raises
-    ``NotFoundError``; a query Eurostat refuses or judges too large,
-    ``InvalidRequestError`` with its message.
+    leave ``geo`` out of ``filters`` for every geo code the dataset holds, European
+    aggregates (``"EU27_2020"``) and countries alike. Keep the slice small with
+    ``filters`` (one product, one unit): it comes back whole. A code that matches nothing
+    gives an empty list. A ``time`` filter is refused before any request: ``period`` is
+    the one period. An unknown dataset raises ``NotFoundError``; a query Eurostat refuses
+    or judges too large, ``InvalidRequestError`` with its message.
 
     Args:
         dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
