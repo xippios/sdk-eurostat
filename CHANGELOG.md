@@ -28,11 +28,12 @@ All notable changes to this project are documented here. The format follows
   cells that have a value or a status, each an `Observation` with its codes and labels;
   `meta.published_at` is the cube's `updated`, `meta.vintage` its text as printed. The
   MCP tool `eurostat_get_data` and the route `POST /eurostat/get_data`.
-- `classify` for the Statistics API's refusals (`errors.py`): an unknown dataset is
-  `NotFoundError`; an HTTP 400 `error`, as an array or as one object, is
-  `InvalidRequestError` with Eurostat's label; the asynchronous answer and an HTTP 413 are
-  `InvalidRequestError` naming how to narrow the query. An unknown code is an empty cube,
-  not an error.
+- `classify` for the Statistics API's refusals (`errors.py`): an unknown dataset, and an
+  HTTP 400 whose faults are all 100 ("No results found"), are `NotFoundError`; any other
+  HTTP 400 `error`, as an array or as one object, is `InvalidRequestError` with
+  Eurostat's label; the asynchronous answer is `InvalidRequestError` saying to send the
+  request again later or to narrow it, and an HTTP 413 `InvalidRequestError` naming how to
+  narrow it. An unknown code is an empty cube, not an error.
 
 ### Changed
 
