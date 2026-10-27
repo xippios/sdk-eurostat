@@ -17,7 +17,11 @@ answers too: ``*_series_*``, ``*_latest_*`` and ``*_cross_section_*``, plus two 
 ``get_data``'s whose URL a slice sends as well (``apro_cpnh1_AT_2022_2023``, a series
 refused, and ``unknown_code``, an empty cross-section). The list tasks
 (``list_datasets``, ``list_codes``) send nothing: their tests read the packaged files
-under ``src/xippios/eurostat/reference/`` and take the expected values from them.
+under ``src/xippios/eurostat/reference/`` and take the expected values from them. The
+bulk task ``download_dataset`` replays ``tests/fixtures/dataQuery/<case>.json``, the
+SDMX 2.1 data query recorded on 2026-10-27 with ``compressed=true`` (a gzip file) and
+without it, through core's ``download``; its refusals of an asynchronous answer and of
+an extraction too big serve the user guide's documented bodies, as ``get_data``'s does.
 """
 
 import json
@@ -31,11 +35,14 @@ import httpx
 import pytest
 import respx
 from fastapi import FastAPI
+from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
-from xippios.core import InvalidRequestError, NotFoundError, UnknownCode
+from xippios.core import Downloaded, InvalidRequestError, NotFoundError, UnknownCode
 from xippios.core.client import cache_key
 from xippios.core.testing import (
     CLOCK_SLACK,
+    REDACTED,
+    Fixture,
     ReplayFixture,
     assert_time_between,
     load_fixture,
@@ -45,6 +52,8 @@ from xippios.core.testing import (
 )
 
 from xippios.eurostat import (
+    api,
+    download_dataset,
     get_cross_section,
     get_data,
     get_latest_period,
@@ -58,6 +67,7 @@ from xippios.eurostat._client import config
 from xippios.eurostat.http import router
 from xippios.eurostat.mcp import server
 from xippios.eurostat.models import Code, Cube, Dataset, GeoLevel, Lang, LeafType, Observation
+from xippios.eurostat.parse import parse_sdmx_csv
 
 FIXTURES = Path(__file__).parent / "fixtures"
 GUIDE = Path(__file__).parents[1] / "docs" / "upstream" / "user-guide" / "api-detailed-guidelines"
@@ -1066,3 +1076,241 @@ def test_list_codes_route_end_to_end() -> None:
     assert {"code": "AT", "label": "Austria"} in answer.json()["data"]
     assert answer.json()["meta"]["vintage"] == index_record("geo")["version"]
     assert refused.status_code == 422
+
+
+DATA_QUERY = "dataQuery"
+MILK_SLICE = "apro_mk_cola_AT_THS_T_2022_2023"
+MILK_SLICE_GZ = "apro_mk_cola_AT_THS_T_2022_2023_compressed"
+MILK_KEY = "A...THS_T.AT"
+DATA_URL = "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data"
+
+
+def recorded_data(case: str) -> Fixture:
+    return load_fixture(FIXTURES / DATA_QUERY / f"{case}.json")
+
+
+def leftovers(directory: Path) -> list[str]:
+    """What a download left in ``directory``: nothing, after a refusal."""
+    return sorted(path.name for path in directory.iterdir())
+
+
+def test_download_dataset_apro_mk_cola(replay_fixture: ReplayFixture, tmp_path: Path) -> None:
+    route = replay_fixture(DATA_QUERY, MILK_SLICE_GZ)
+    recorded = recorded_data(MILK_SLICE_GZ)
+    dest = tmp_path / "milk.csv.gz"
+    before = datetime.now(UTC)
+    result = download_dataset("apro_mk_cola", MILK_KEY, since="2022", until="2023", dest=dest)
+    after = datetime.now(UTC)
+    assert sent_urls(route) == [recorded.request.url], "one exchange on the wire"
+    assert recorded.request.url.endswith(
+        f"/apro_mk_cola/{MILK_KEY}?format=SDMX-CSV&startPeriod=2022&endPeriod=2023&compressed=true"
+    )
+    downloaded = result.data
+    assert isinstance(downloaded, Downloaded)
+    assert downloaded.path == dest
+    assert dest.read_bytes() == recorded.response.content, "the gzip file as Eurostat sent it"
+    assert downloaded.bytes == len(recorded.response.content)
+    assert downloaded.content_type == "application/vnd.sdmx.data+csv;version=1.0.0"
+    assert downloaded.filename == "estat_apro_mk_cola_filtered_en.csv.gz"
+    assert downloaded.etag is None
+    assert downloaded.last_modified is None
+    assert_time_between(downloaded.retrieved_at, before, after)
+    assert leftovers(tmp_path) == ["milk.csv.gz"], "no temporary file left"
+    meta = result.meta
+    assert meta.source == "eurostat"
+    assert meta.endpoint == "dataQuery"
+    assert meta.retrieved_at == downloaded.retrieved_at
+    assert meta.vintage == "05/10/26 23:00:00" == next(parse_sdmx_csv(dest)).last_update
+    assert meta.published_at == datetime(2026, 10, 5, 23, 0)
+    assert meta.published_at.tzinfo is None
+    assert meta.published_at_naive is True
+    assert meta.request == {
+        "dataset": "apro_mk_cola",
+        "key": MILK_KEY,
+        "start_period": "2022",
+        "end_period": "2023",
+        "format": "SDMX-CSV",
+        "compressed": True,
+    }
+    assert meta.request["key"] != REDACTED, "the SDMX series key is data (ADR-0019 decision 6)"
+    assert meta.total is None
+
+
+def test_download_dataset_reads_last_update_day_first() -> None:
+    """The snapshot pair fixes the order: the JSON-stat answer's ``updated`` and the
+    SDMX-CSV answer's ``LAST UPDATE`` of apro_mk_cola, recorded the same day, are one
+    time, the CSV's printed day first and without the zone."""
+    updated = datetime.fromisoformat(recorded_updated("apro_mk_cola_AT_2022_2023"))
+    printed = next(parse_sdmx_csv(FIXTURES / "files" / "sdmx-csv" / f"{MILK_SLICE}.csv"))
+    assert datetime.strptime(printed.last_update, tasks.LAST_UPDATE) == updated.replace(tzinfo=None)
+
+
+def test_download_dataset_without_a_key_downloads_the_whole_dataset(
+    replay_fixture: ReplayFixture, tmp_path: Path
+) -> None:
+    """The recorded answer served at the URL without a key segment (``data/{flowRef}``):
+    moved, not written by hand. ``key`` is recorded as the empty string sent."""
+    url = f"{DATA_URL}/apro_mk_cola?format=SDMX-CSV&compressed=true"
+    route = replay_fixture(DATA_QUERY, MILK_SLICE_GZ, url=url)
+    result = download_dataset("apro_mk_cola", dest=tmp_path / "all.csv.gz")
+    assert sent_urls(route) == [url]
+    assert result.meta.request == {
+        "dataset": "apro_mk_cola",
+        "key": "",
+        "format": "SDMX-CSV",
+        "compressed": True,
+    }
+
+
+def test_download_dataset_sends_last_n_observations_and_quotes_the_key(
+    replay_fixture: ReplayFixture, tmp_path: Path
+) -> None:
+    """The recorded answer moved to the URL of another request: ``+`` and the dots stay in
+    the key, ``lastNObservations`` follows ``format``."""
+    key = "A.PRD.D1110D.THS_T.AT+DE"
+    url = f"{DATA_URL}/apro_mk_cola/{key}?format=SDMX-CSV&lastNObservations=2&compressed=true"
+    route = replay_fixture(DATA_QUERY, MILK_SLICE_GZ, url=url)
+    result = download_dataset("apro_mk_cola", key, last_n_observations=2, dest=tmp_path / "f")
+    assert sent_urls(route) == [url]
+    assert result.meta.request["last_n_observations"] == 2
+
+
+def test_download_dataset_answers_an_empty_file_without_a_release(
+    respx_mock: respx.MockRouter, tmp_path: Path
+) -> None:
+    """NOT RECORDED: the recorded plain answer cut to its header line in memory, served
+    with its recorded headers: a file without a row has no ``LAST UPDATE`` to read."""
+    recorded = recorded_data(MILK_SLICE)
+    header = recorded.response.content.split(b"\r\n", 1)[0] + b"\r\n"
+    respx_mock.route(method="GET", host="ec.europa.eu").mock(
+        return_value=httpx.Response(200, headers=recorded.response.headers, content=header)
+    )
+    result = download_dataset("apro_mk_cola", "A..XX", dest=tmp_path / "empty.csv")
+    assert result.data.bytes == len(header)
+    assert result.meta.vintage is None
+    assert result.meta.published_at is None
+    assert result.meta.published_at_naive is False
+
+
+@pytest.mark.parametrize("key", [".", ".."])
+def test_download_dataset_refuses_a_dot_segment_key(
+    respx_mock: respx.MockRouter, tmp_path: Path, key: str
+) -> None:
+    with pytest.raises(InvalidRequestError, match='pass key="" for every code'):
+        download_dataset("apro_mk_cola", key, dest=tmp_path / "f.csv.gz")
+    assert not respx_mock.calls, "refused before any request"
+
+
+def test_download_dataset_refuses_a_directory_or_a_missing_one(
+    respx_mock: respx.MockRouter, tmp_path: Path
+) -> None:
+    """Core's own text (``AsyncClient.download``), as the taxonomy's refusal."""
+    with pytest.raises(InvalidRequestError) as directory:
+        download_dataset("apro_mk_cola", MILK_KEY, dest=tmp_path)
+    assert str(directory.value) == "dest is a directory; name the file to write"
+    with pytest.raises(InvalidRequestError) as missing:
+        download_dataset("apro_mk_cola", MILK_KEY, dest=tmp_path / "no" / "f.csv.gz")
+    assert str(missing.value) == "dest's directory does not exist; create it first"
+    assert not respx_mock.calls, "refused before any request"
+
+
+def documented_xml(contains: str) -> str:
+    """The ```xml block of the snapshot's asynchronous-api.md that contains ``contains``."""
+    text = (GUIDE / "asynchronous-api.md").read_text(encoding="utf-8")
+    return next(
+        str(block)
+        for block in re.findall(r"```xml\n(.*?)```", text, flags=re.DOTALL)
+        if contains in block
+    )
+
+
+def test_documented_shape_download_dataset_refuses_an_asynchronous_answer(
+    respx_mock: respx.MockRouter, tmp_path: Path
+) -> None:
+    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
+    hand-written: the envelope that queues an SDMX request (``asynchronous-api.md``, "Step
+    1: Initial request"), at HTTP 200 with an XML content type, which the guide does not
+    name. ``classify`` refuses it from the headers alone, before the body reaches a file;
+    the first asynchronous answer seen is recorded and replaces this test (gap row 83)."""
+    envelope = documented_xml("<status>SUBMITTED</status>")
+    route = respx_mock.route(method="GET", host="ec.europa.eu").mock(
+        return_value=httpx.Response(
+            200, headers={"Content-Type": "text/xml"}, content=envelope.encode("utf-8")
+        )
+    )
+    with pytest.raises(InvalidRequestError) as refused:
+        download_dataset("ef_m_farmleg", dest=tmp_path / "farms.csv.gz")
+    assert len(route.calls) == 1
+    assert str(refused.value) == (
+        "Eurostat answered GET /eurostat/api/dissemination/sdmx/2.1/data/ef_m_farmleg with "
+        "text/xml, not SDMX-CSV: a data query the SDMX API will treat asynchronously is "
+        "answered with an XML envelope that queues it, and this package does not poll "
+        "asynchronous answers: narrow the query with fewer codes per dimension or a shorter "
+        "period."
+    )
+    assert leftovers(tmp_path) == [], "dest untouched, no temporary file left"
+
+
+def test_documented_shape_download_dataset_refuses_an_extraction_too_big(
+    respx_mock: respx.MockRouter, tmp_path: Path
+) -> None:
+    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
+    hand-written: the SOAP fault ``EXTRACTION_TOO_BIG`` at HTTP 413, whose body a
+    download reads for the error's text."""
+    fault = documented_xml("EXTRACTION_TOO_BIG")
+    respx_mock.route(method="GET", host="ec.europa.eu").mock(
+        return_value=httpx.Response(
+            413, headers={"Content-Type": "text/xml"}, content=fault.encode("utf-8")
+        )
+    )
+    with pytest.raises(InvalidRequestError) as refused:
+        download_dataset("ef_m_farmleg", dest=tmp_path / "farms.csv.gz")
+    text = str(refused.value)
+    assert text.startswith(
+        "Eurostat refused GET /eurostat/api/dissemination/sdmx/2.1/data/ef_m_farmleg as too "
+        "large (HTTP 413: EXTRACTION_TOO_BIG: The requested extraction is too big"
+    )
+    assert text.endswith("narrow the query with fewer codes per dimension or a shorter period.")
+    assert leftovers(tmp_path) == []
+
+
+@pytest.mark.anyio
+async def test_data_query_downloads_the_plain_answer(
+    replay_fixture: ReplayFixture, tmp_path: Path
+) -> None:
+    """The wrapper without ``compressed``: the plain recording, CSV as Eurostat sends it."""
+    route = replay_fixture(DATA_QUERY, MILK_SLICE)
+    recorded = recorded_data(MILK_SLICE)
+    dest = tmp_path / "milk.csv"
+    downloaded = await api.sdmx.dataQuery(
+        "apro_mk_cola", dest, key=MILK_KEY, start_period="2022", end_period="2023"
+    )
+    assert sent_urls(route) == [recorded.request.url]
+    assert dest.read_bytes() == recorded.response.content
+    assert downloaded.filename == "estat_apro_mk_cola_filtered_en.csv"
+    assert [row.time_period for row in parse_sdmx_csv(dest)][:2] == ["2022", "2023"]
+
+
+def test_download_dataset_is_no_tool_and_no_route() -> None:
+    """A bulk task: ``BULK_TASKS`` names it, so core's adapters skip it (ADR-0019 decision
+    4); the family check (``tests/test_family.py``) serves ``tasks.__all__`` minus it."""
+    assert "download_dataset" in tasks.__all__
+    assert {"download_dataset"} == set(tasks.BULK_TASKS)
+    paths = {route.path for route in router.routes if isinstance(route, APIRoute)}
+    assert "/eurostat/download_dataset" not in paths
+    assert "/eurostat/get_data" in paths
+    app = FastAPI()
+    app.include_router(router)
+    with TestClient(app) as http:
+        assert http.post("/eurostat/download_dataset", json={}).status_code == 404
+        assert http.get("/eurostat/download_dataset").status_code == 404
+
+
+@pytest.mark.anyio
+async def test_download_dataset_is_no_mcp_tool(respx_mock: respx.MockRouter) -> None:
+    names = {tool.name for tool in await server.list_tools()}
+    assert "eurostat_download_dataset" not in names
+    assert "eurostat_get_data" in names
+    with pytest.raises(AssertionError, match="Unknown tool: eurostat_download_dataset"):
+        await mcp_call(server, "eurostat_download_dataset", {"dataset": "apro_mk_cola"})
+    assert not respx_mock.calls

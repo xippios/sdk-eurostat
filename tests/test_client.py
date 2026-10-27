@@ -1,18 +1,20 @@
 """``classify`` against the recorded refusals and the documented ones.
 
-Recorded on 2026-10-27 (``tests/fixtures/getData/``): an unknown dataset, an unknown
+Recorded on 2026-10-27: under ``tests/fixtures/getData/`` an unknown dataset, an unknown
 dimension and ``geo`` with ``geoLevel``, all with ``error`` as an array, and the empty
-cube of an unknown code. Not recorded, two kinds of tests serve answers the service was
+cube of an unknown code; under ``tests/fixtures/dataQuery/`` two SDMX-CSV answers, plain
+and ``compressed=true``. Not recorded, two kinds of tests serve answers the service was
 not seen to send:
 
 - ``test_documented_shape_*`` read a documented body verbatim from the snapshot's user
   guide at test time, so it is neither recorded nor hand-written: the asynchronous
   ``warning`` and the single-object ``error`` the guide shows for ``geo`` with
-  ``geoLevel`` (``api-statistics.md``), and the SOAP fault ``EXTRACTION_TOO_BIG``
-  (``asynchronous-api.md``). Four unfiltered requests to datasets of 624,554 to 853,146
-  values answered synchronously on 2026-10-27 and probing stopped there; the first
-  asynchronous answer ever seen is recorded and replaces its test (Johannes,
-  2026-10-27; gap row 83).
+  ``geoLevel`` (``api-statistics.md``), the SOAP fault ``EXTRACTION_TOO_BIG`` and the
+  envelope that queues an asynchronous SDMX answer (``asynchronous-api.md``). Four
+  unfiltered requests to datasets of 624,554 to 853,146 values answered synchronously on
+  2026-10-27, and so did two whole-dataset SDMX-CSV requests of 6.2 and 1.5 million
+  values; probing stopped there, and the first asynchronous answer ever seen is recorded
+  and replaces its test (Johannes, 2026-10-27; gap row 83).
 - ``test_fault_table_*`` compose a body from a row of the fault table
   (``api-statistics.md``), read at test time, in the recorded ``error`` array form: the
   guide documents the fault codes, not their bodies (faults 100, 140 and 150 at HTTP 400).
@@ -31,9 +33,12 @@ from xippios.core.testing import load_fixture, response_from_fixture
 from xippios.eurostat._client import BASE_URL, RATE_LIMIT, classify, config
 
 FIXTURES = Path(__file__).parent / "fixtures" / "getData"
+SDMX_FIXTURES = Path(__file__).parent / "fixtures" / "dataQuery"
 GUIDE = Path(__file__).parents[1] / "docs" / "upstream" / "user-guide" / "api-detailed-guidelines"
 DATA_URL = f"{BASE_URL}/statistics/1.0/data/apro_mk_cola?format=JSON&lang=EN"
 WHERE = "GET /eurostat/api/dissemination/statistics/1.0/data/apro_mk_cola"
+SDMX_URL = f"{BASE_URL}/sdmx/2.1/data/ef_m_farmleg?format=SDMX-CSV&compressed=true"
+SDMX_WHERE = "GET /eurostat/api/dissemination/sdmx/2.1/data/ef_m_farmleg"
 
 
 def recorded(case: str) -> httpx.Response:
@@ -76,15 +81,29 @@ def documented_xml(page: str, contains: str) -> str:
 ASYNCHRONOUS = documented_line("api-statistics.md", '{"warning"')
 GEO_AND_GEO_LEVEL = documented_line("api-statistics.md", '{"error"')
 EXTRACTION_TOO_BIG = documented_xml("asynchronous-api.md", "EXTRACTION_TOO_BIG")
+SDMX_QUEUED = documented_xml("asynchronous-api.md", "<status>SUBMITTED</status>")
 
 
-def answer(status: int, body: str, content_type: str = "application/json") -> httpx.Response:
+def answer(
+    status: int, body: str, content_type: str = "application/json", url: str = DATA_URL
+) -> httpx.Response:
     """NOT RECORDED: an answer with a body the snapshot documents, at ``status``."""
     return httpx.Response(
         status,
         content=body.encode("utf-8"),
         headers={"content-type": content_type},
-        request=httpx.Request("GET", DATA_URL),
+        request=httpx.Request("GET", url),
+    )
+
+
+def unread(status: int, body: str, content_type: str, url: str = SDMX_URL) -> httpx.Response:
+    """NOT RECORDED: an answer whose body is not read, as a download hands it to
+    ``classify``: its status and headers only (ADR-0019, amendment 2026-10-27)."""
+    return httpx.Response(
+        status,
+        headers={"content-type": content_type},
+        stream=httpx.ByteStream(body.encode("utf-8")),
+        request=httpx.Request("GET", url),
     )
 
 
@@ -223,3 +242,47 @@ def test_a_cube_and_the_empty_cube_are_no_error() -> None:
 def test_other_answers_fall_through_to_core(status: int, body: str) -> None:
     """NOT RECORDED: a 5xx stays core's, so it is retried; a body of no known shape too."""
     assert classify(answer(status, body)) is None
+
+
+@pytest.mark.parametrize("content_type", ["text/xml", "application/xml;charset=UTF-8", ""])
+def test_documented_shape_sdmx_asynchronous_envelope_is_refused(content_type: str) -> None:
+    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
+    hand-written: the envelope that queues an SDMX data request, status ``SUBMITTED``
+    (``asynchronous-api.md``, "Step 1: Initial request"), at HTTP 200, whose content type
+    the guide does not name. Refused from the headers alone: the body is never read."""
+    assert "<status>SUBMITTED</status>" in SDMX_QUEUED
+    response = unread(200, SDMX_QUEUED, content_type)
+    error = classify(response)
+    assert isinstance(error, InvalidRequestError)
+    media = content_type.split(";", 1)[0] or "no content type"
+    assert str(error) == (
+        f"Eurostat answered {SDMX_WHERE} with {media}, not SDMX-CSV: a data query the SDMX "
+        "API will treat asynchronously is answered with an XML envelope that queues it, and "
+        "this package does not poll asynchronous answers: narrow the query with fewer codes "
+        "per dimension or a shorter period."
+    )
+    assert error.source == "eurostat"
+    assert "format=SDMX-CSV" not in str(error), "no query in the message"
+    with pytest.raises(httpx.ResponseNotRead):
+        _ = response.content
+
+
+@pytest.mark.parametrize(
+    "case", ["apro_mk_cola_AT_THS_T_2022_2023", "apro_mk_cola_AT_THS_T_2022_2023_compressed"]
+)
+def test_an_sdmx_csv_answer_is_no_error(case: str) -> None:
+    """The recorded SDMX-CSV answers, plain and ``compressed=true``, pass, read or not."""
+    recorded = response_from_fixture(load_fixture(SDMX_FIXTURES / f"{case}.json"))
+    assert classify(recorded) is None
+    content_type = recorded.headers["content-type"]
+    assert content_type == "application/vnd.sdmx.data+csv;version=1.0.0"
+    assert classify(unread(200, "", content_type, str(recorded.request.url))) is None
+
+
+def test_the_content_type_rule_reads_sdmx_data_queries_only() -> None:
+    """NOT RECORDED: XML at HTTP 200 from the Statistics API, and JSON from the SDMX
+    codelist query, are not data queries; neither is a 4xx's body type a matter here."""
+    assert classify(answer(200, SDMX_QUEUED, "text/xml")) is None
+    codelist = f"{BASE_URL}/sdmx/2.1/codelist/ESTAT/GEO?format=JSON&lang=en"
+    assert classify(answer(200, "{}", "application/json", codelist)) is None
+    assert classify(unread(404, "", "text/xml")) is None
