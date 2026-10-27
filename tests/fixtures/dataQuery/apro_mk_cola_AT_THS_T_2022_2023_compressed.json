@@ -1,0 +1,45 @@
+{
+  "recorded_at": "2026-10-27T21:44:07.005038Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/apro_mk_cola/A...THS_T.AT?format=SDMX-CSV&startPeriod=2022&endPeriod=2023&compressed=true"
+  },
+  "response": {
+    "body": "H4sIAAAAAAAAAK3UwU4CMRAG4LuJ78BRk0mZzrS7yK3SRYmLu2ELemtMQLNRRAkefHsLN3Y9NU16mEu//J1Oa40z07J6gtI0brCsrXEFvO4337BtP97bw2YL65d2//u1363h57M9wNtmB242L3xdLGaVheq28StTLotTNS3NHUyqx6lvnHHL5vKiOBZjUy8qP3/wk6o0V1LgNaAeShxSNiAeI4YFBuqFBSulRAvuvvEOjANCImBSuUANkMTjo0diFOkRop0XnYSYzOJIi2Soz0PlOmxRaTSGHEdCR2rhnKtuOCkUJ9JCOBKUR2kcTuqfPUvJnYRS3FBSkoEExpK9eFqouAn+J5cWFHezTL2pA5ikgDgSUv13QGHWdNys9bRwh5kSnEVpGfayccBGabDwr7FQcclySbLbNUKRx3Wtp4WuUSayk/YHCd+7GnQGAAA=",
+    "body_base64": true,
+    "headers": [
+      [
+        "date",
+        "Tue, 27 Oct 2026 21:44:06 GMT"
+      ],
+      [
+        "content-type",
+        "application/vnd.sdmx.data+csv;version=1.0.0"
+      ],
+      [
+        "content-disposition",
+        "attachment; filename=\"estat_apro_mk_cola_filtered_en.csv.gz\""
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ],
+      [
+        "set-cookie",
+        "REDACTED"
+      ]
+    ],
+    "status": 200
+  }
+}

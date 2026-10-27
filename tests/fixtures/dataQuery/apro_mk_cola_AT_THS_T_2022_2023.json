@@ -1,0 +1,53 @@
+{
+  "recorded_at": "2026-10-27T21:44:01.129055Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/apro_mk_cola/A...THS_T.AT?format=SDMX-CSV&startPeriod=2022&endPeriod=2023"
+  },
+  "response": {
+    "body": "DATAFLOW,LAST UPDATE,freq,milkitem,dairyprod,unit,geo,TIME_PERIOD,OBS_VALUE,OBS_FLAG,CONF_STATUS\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D1110D,THS_T,AT,2022,3247.05,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D1110D,THS_T,AT,2023,3242.85,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D1200DME,THS_T,AT,2022,0,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D1200DME,THS_T,AT,2023,0,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D2100,THS_T,AT,2022,751.04,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D2100,THS_T,AT,2023,708.54,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D2200V,THS_T,AT,2022,71.43,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D2200V,THS_T,AT,2023,72.27,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D3100_X_3113,THS_T,AT,2022,1.92,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D3100_X_3113,THS_T,AT,2023,2.02,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D3113,THS_T,AT,2022,5.45,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D3113,THS_T,AT,2023,5.24,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D3200,THS_T,AT,2022,,,C\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D3200,THS_T,AT,2023,,,C\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D4100,THS_T,AT,2022,271.53,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D4100,THS_T,AT,2023,264.36,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D6000,THS_T,AT,2022,34.38,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D6000,THS_T,AT,2023,33.46,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D7121,THS_T,AT,2022,220.73,,\r\nESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D7121,THS_T,AT,2023,226.63,,\r\n",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Tue, 27 Oct 2026 21:44:00 GMT"
+      ],
+      [
+        "content-type",
+        "application/vnd.sdmx.data+csv;version=1.0.0"
+      ],
+      [
+        "content-disposition",
+        "attachment; filename=\"estat_apro_mk_cola_filtered_en.csv\""
+      ],
+      [
+        "x-oracle-dms-ecid",
+        "0f165e0a-dca2-45db-b73f-4632d94434bb-0030c926"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "x-oracle-dms-rid",
+        "0"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ],
+      [
+        "set-cookie",
+        "REDACTED"
+      ]
+    ],
+    "status": 200
+  }
+}
