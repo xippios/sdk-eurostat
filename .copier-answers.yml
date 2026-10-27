@@ -4,7 +4,7 @@ _src_path: https://github.com/xippios/sdk-template.git
 api_base_url: https://ec.europa.eu/eurostat/api/dissemination
 api_key_env: ''
 core_git_ref: ''
-core_version: 0.2.1
+core_version: 0.3.0
 domain_topic: statistics
 import_path: eurostat
 needs_write_tools: false
