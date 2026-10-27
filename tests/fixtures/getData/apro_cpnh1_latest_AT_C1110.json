@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-10-27T14:01:06.341196Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/apro_cpnh1?format=JSON&lang=EN&crops=C1110&geo=AT&lastTimePeriod=1"
+  },
+  "response": {
+    "body": "{\"version\":\"2.0\",\"class\":\"dataset\",\"label\":\"Crop production in national humidity\",\"source\":\"ESTAT\",\"updated\":\"2026-09-28T23:00:00+0200\",\"value\":{\"0\":253.31,\"1\":1255.30,\"3\":14.00,\"4\":4.96},\"status\":{\"3\":\"i\"},\"id\":[\"freq\",\"crops\",\"strucpro\",\"geo\",\"time\"],\"size\":[1,1,5,1,1],\"dimension\":{\"freq\":{\"label\":\"Time frequency\",\"category\":{\"index\":{\"A\":0},\"label\":{\"A\":\"Annual\"}}},\"crops\":{\"label\":\"Crops\",\"category\":{\"index\":{\"C1110\":0},\"label\":{\"C1110\":\"Common wheat and spelt\"}}},\"strucpro\":{\"label\":\"Structure of production\",\"category\":{\"index\":{\"AR_THS_HA\":0,\"HPRD_THS_T\":1,\"MAR_THS_HA\":2,\"HUMD_PC\":3,\"YLD_T_HA\":4},\"label\":{\"AR_THS_HA\":\"Area (sown/harvested/production) - thousand hectares\",\"HPRD_THS_T\":\"Harvested production - thousand tonnes\",\"MAR_THS_HA\":\"Main area - thousand hectares\",\"HUMD_PC\":\"Humidity - percentage\",\"YLD_T_HA\":\"Yield - tonnes per hectare\"}}},\"geo\":{\"label\":\"Geopolitical entity (reporting)\",\"category\":{\"index\":{\"AT\":0},\"label\":{\"AT\":\"Austria\"}}},\"time\":{\"label\":\"Time\",\"category\":{\"index\":{\"2026\":0},\"label\":{\"2026\":\"2026\"}}}},\"extension\":{\"lang\":\"EN\",\"id\":\"APRO_CPNH1\",\"agencyId\":\"ESTAT\",\"version\":\"1.0\",\"datastructure\":{\"id\":\"APRO_CPNH1\",\"agencyId\":\"ESTAT\",\"version\":\"54.0\"},\"annotation\":[{\"type\":\"CREATED\",\"date\":\"2018-02-21T16:56:21+0100\"},{\"type\":\"DISSEMINATION_DOI_XML\",\"title\":\"<adms:identifier xmlns:adms=\\\"http://www.w3.org/ns/adms#\\\" xmlns:skos=\\\"http://www.w3.org/2004/02/skos/core.html\\\" xmlns:dct=\\\"http://purl.org/dc/terms/\\\" xmlns:rdf=\\\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\\\"><adms:Identifier rdf:about=\\\"https://doi.org/10.2908/APRO_CPNH1\\\"><skos:notation rdf:datatype=\\\"http://purl.org/spar/datacite/doi\\\">10.2908/APRO_CPNH1</skos:notation><dct:creator rdf:resource=\\\"http://publications.europa.eu/resource/authority/corporate-body/ESTAT\\\"/><dct:issued rdf:datatype=\\\"http://www.w3.org/2001/XMLSchema#date\\\">2023-01-23</dct:issued></adms:Identifier></adms:identifier>\"},{\"type\":\"DISSEMINATION_EXPLANATORY_LINK\",\"title\":\"text-category\",\"href\":\"https://ec.europa.eu/eurostat/databrowser-backend/api/public/explanatory-notes/get/Info_note_APRO_CROPS_20260331.pdf\"},{\"type\":\"DISSEMINATION_EXPLANATORY_LINK\",\"title\":\"text-category\",\"href\":\"https://ec.europa.eu/eurostat/databrowser-backend/api/public/explanatory-notes/get/Info_note_APRO_CROPS_20260331.pdf\"},{\"type\":\"DISSEMINATION_EXPLANATORY_LINK\",\"title\":\"text-category\",\"href\":\"https://ec.europa.eu/eurostat/databrowser-backend/api/public/explanatory-notes/get/Info_note_APRO_CROPS_20260331.pdf\",\"text\":\"Information note\"},{\"type\":\"DISSEMINATION_OBJECT_TYPE\",\"title\":\"DATASET\"},{\"type\":\"DISSEMINATION_TIMESTAMP_DATA\",\"date\":\"2026-09-28T23:00:00+0200\"},{\"type\":\"DISSEMINATION_TIMESTAMP_GLOBAL\",\"date\":\"2026-10-26T23:00:00+0100\"},{\"type\":\"DISSEMINATION_TIMESTAMP_PLANNED\",\"date\":\"2026-10-26T23:00:00+0100\"},{\"type\":\"ESMS_HTML\",\"title\":\"Explanatory texts (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/cache/metadata/en/apro_cp_esms.htm\"},{\"type\":\"ESMS_SDMX\",\"title\":\"Explanatory texts (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/api/dissemination/files?file=metadata/apro_cp_esms.sdmx.zip\"},{\"type\":\"FOOTNOTE\",\"title\":\"Footnote (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/cache/metadata/Annexes/apro_cp_esms_an_Footnotes_on_crop_production_i.xlsx\"},{\"type\":\"OBS_COUNT\",\"title\":\"369972\"},{\"type\":\"OBS_PERIOD_OVERALL_LATEST\",\"title\":\"2026\"},{\"type\":\"OBS_PERIOD_OVERALL_OLDEST\",\"title\":\"2000\"},{\"type\":\"SOURCE_INSTITUTIONS\",\"text\":\"Eurostat\"},{\"type\":\"UPDATE_DATA\",\"date\":\"2026-09-28T23:00:00+0200\"},{\"type\":\"UPDATE_FOOTNOTES\",\"date\":\"2026-10-26T14:00:09Z\"},{\"type\":\"UPDATE_STRUCTURE\",\"date\":\"2026-05-19T23:00:00+0200\"}],\"status\":{\"label\":{\"i\":\"value imputed by Eurostat or other receiving agencies\"}},\"positions-with-no-data\":{\"freq\":[],\"crops\":[],\"strucpro\":[2],\"geo\":[],\"time\":[]}}}",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Tue, 27 Oct 2026 14:01:02 GMT"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ],
+      [
+        "set-cookie",
+        "REDACTED"
+      ]
+    ],
+    "status": 200
+  }
+}
