@@ -46,6 +46,11 @@ RESERVED_PARAMETERS = frozenset(
 """The Statistics API's own parameters, lower-cased: not dimension filters. ``format`` is
 fixed to ``JSON``; the others are ``get_data``'s own arguments."""
 
+TIME_FILTERS = frozenset({"time", "time_period"})
+"""The filters that address the TIME_PERIOD dimension, lower-cased: "Both "time" and
+"time_period" parameters are accepted in the URL to address the TIME_PERIOD dimension"
+(api-statistics.md, "The Time parameter")."""
+
 # MCP_CAPS, only where a tool needs a result cap of its own: a list an agent needs whole
 # (conventions §8, ADR-0016), keyed by task function name; mcp.py reads it with getattr,
 # so a source without one adds nothing. ResultCap needs the mcp extra, which a base
@@ -88,6 +93,43 @@ def _filters(filters: Mapping[str, str | Sequence[str]] | None) -> dict[str, str
     return sent
 
 
+def _check_time_parameters(
+    sent: Mapping[str, str | list[str]],
+    since_time_period: str | None,
+    until_time_period: str | None,
+    last_time_period: int | None,
+) -> None:
+    """Refuse a combination of time parameters the Statistics API does not accept.
+
+    "Using more than one Time parameter in the same query is not accepted. The only
+    exception is using both sinceTimePeriod and untilTimePeriod." (api-statistics.md,
+    "The Time parameter"). The Time parameters are a ``time`` or ``time_period`` filter,
+    ``sinceTimePeriod``, ``untilTimePeriod`` and ``lastTimePeriod``; one alone, or exactly
+    since with until, passes. Refused before any request (ADR-0007).
+
+    Raises:
+        InvalidRequestError: Two or more of them, other than since with until; the
+            message names the parameters given and the one exception.
+    """
+    given = [f"filters[{code!r}]" for code in sent if code.lower() in TIME_FILTERS]
+    given += [
+        name
+        for name, value in (
+            ("since_time_period", since_time_period),
+            ("until_time_period", until_time_period),
+            ("last_time_period", last_time_period),
+        )
+        if value is not None
+    ]
+    if len(given) > 1 and given != ["since_time_period", "until_time_period"]:
+        raise InvalidRequestError(
+            f"{', '.join(given)}: the Statistics API does not accept more than one time "
+            "parameter in a query; the one exception is since_time_period with "
+            "until_time_period",
+            source=SOURCE,
+        )
+
+
 async def get_data_async(
     dataset: str,
     filters: Mapping[str, str | Sequence[str]] | None = None,
@@ -109,12 +151,13 @@ async def get_data_async(
     cells out one by one with their codes and labels. Keep slices small (a country or
     two, a few periods): the whole slice comes back at once. A filter code that matches
     nothing gives an empty cube (size 0 on that dimension, no values), not an error. An
-    unknown dataset, or Eurostat's "No results found", raises ``NotFoundError``. A query
-    Eurostat refuses (an unknown dimension, ``geo`` with ``geo_level``; by the user guide
-    also two time parameters other than since and until) raises ``InvalidRequestError``
-    with Eurostat's message, and so does one it judges too large, naming how to narrow
-    it, or one it would answer asynchronously: send the same request again later, or
-    narrow it.
+    unknown dataset, or Eurostat's "No results found", raises ``NotFoundError``. More
+    than one time parameter (a ``time`` filter, since, until, last), other than
+    ``since_time_period`` with ``until_time_period``, is refused before any request with
+    ``InvalidRequestError``. A query Eurostat refuses (an unknown dimension, ``geo``
+    with ``geo_level``) raises ``InvalidRequestError`` with Eurostat's message, and so
+    does one it judges too large, naming how to narrow it, or one it would answer
+    asynchronously: send the same request again later, or narrow it.
 
     Args:
         dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
@@ -124,12 +167,13 @@ async def get_data_async(
             ``DIMENSION_CODE=VALUE``; any dimension of the dataset, codes as in the
             cube's ``dimension``, case-insensitive, e.g. ``{"geo": "AT", "time":
             ["2022", "2023"]}`` or ``{"geo": "AT", "milkitem": "PRD"}``; ``time`` (or
-            ``time_period``) filters periods. ``None`` asks for every code of every
-            dimension.
+            ``time_period``) filters periods and is a time parameter. ``None`` asks for
+            every code of every dimension.
         lang: Language of the labels: ``"EN"`` (the default), ``"FR"`` or ``"DE"``.
         since_time_period: The first time period, included, e.g. ``"2022"``; combines
             with ``until_time_period`` and with no other time parameter.
-        until_time_period: The last time period, included, e.g. ``"2023"``.
+        until_time_period: The last time period, included, e.g. ``"2023"``; combines
+            with ``since_time_period`` and with no other time parameter.
         last_time_period: The number of most recent time periods, e.g. ``2``; alone,
             without another time parameter.
         geo_level: Selects geo codes by level instead of a ``geo`` filter:
@@ -137,6 +181,7 @@ async def get_data_async(
             ``"city"``; never together with ``filters["geo"]``.
     """
     sent = _filters(filters)
+    _check_time_parameters(sent, since_time_period, until_time_period, last_time_period)
     answer = await api.statistics.getData(
         dataset,
         lang=lang,

@@ -150,6 +150,45 @@ def test_get_data_geo_with_geo_level(replay_fixture: ReplayFixture) -> None:
     assert sent_urls(route) == [recorded_url("geo_with_geo_level")]
 
 
+@pytest.mark.parametrize(
+    ("filters", "times", "named"),
+    [
+        ({"time": "2023"}, {"last_time_period": 2}, "filters['time'], last_time_period"),
+        ({"time": "2023"}, {"since_time_period": "2020"}, "filters['time'], since_time_period"),
+        ({"TIME": "2023"}, {"until_time_period": "2023"}, "filters['TIME'], until_time_period"),
+        ({"time": "2023", "time_period": "2022"}, {}, "filters['time'], filters['time_period']"),
+        (
+            {},
+            {"since_time_period": "2020", "last_time_period": 2},
+            "since_time_period, last_time_period",
+        ),
+        (
+            {},
+            {"until_time_period": "2023", "last_time_period": 2},
+            "until_time_period, last_time_period",
+        ),
+        (
+            {},
+            {"since_time_period": "2020", "until_time_period": "2023", "last_time_period": 2},
+            "since_time_period, until_time_period, last_time_period",
+        ),
+    ],
+)
+def test_get_data_refuses_more_than_one_time_parameter(
+    respx_mock: respx.MockRouter, filters: dict[str, str], times: dict[str, Any], named: str
+) -> None:
+    """api-statistics.md, "The Time parameter": "Using more than one Time parameter in the
+    same query is not accepted. The only exception is using both sinceTimePeriod and
+    untilTimePeriod." Refused before any request (ADR-0007), so nothing is replayed."""
+    with pytest.raises(InvalidRequestError) as refused:
+        tasks.get_data("apro_mk_cola", {"geo": "AT", **filters}, **times)
+    assert str(refused.value) == (
+        f"{named}: the Statistics API does not accept more than one time parameter in a "
+        "query; the one exception is since_time_period with until_time_period"
+    )
+    assert not respx_mock.calls, "refused before any request"
+
+
 def test_documented_shape_get_data_refuses_an_asynchronous_answer(
     respx_mock: respx.MockRouter,
 ) -> None:
