@@ -5,22 +5,29 @@ from the answers it packaged (``tests/fixtures/files/README.md`` names each one'
 release, URL, sha256 and fetch time): a folder of the table of contents with two of its
 leaves, one of them a dataset with a pre-defined table under it, and the STATINFO
 codelist whole. The tests assert the readers' shape, never values or sizes (conventions
-§10). Nothing here sends a request; the live smoke tests in ``tests/test_live.py`` read
-upstream's current answers with the same functions.
+§10). Nothing here sends a request: the refresh's two operations, ``getTocXml`` and
+``codeListQuery``, are replayed with ``respx`` serving those samples as the answers, and
+the live smoke tests in ``tests/test_live.py`` read upstream's current answers with the
+same functions.
 """
 
 import importlib.util
 import json
 import re
+import shutil
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+import httpx
 import pytest
+import respx
 from xippios.core import PackagedList, parse
+from xippios.core.testing import sent_urls
 
 from xippios.eurostat import params
+from xippios.eurostat._client import BASE_URL
 from xippios.eurostat.models import Code, Codelist, Dataset, LeafType
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -199,3 +206,57 @@ def test_render_only_reproduces_the_committed_enums(
     assert target.read_text(encoding="utf-8") == committed
     assert script.LISTS == {}
     assert script.ID_LISTS == {}
+
+
+def test_refresh_writes_every_file_from_replayed_answers(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, respx_mock: respx.MockRouter
+) -> None:
+    """The whole refresh, offline: ``getTocXml`` downloads the TOC sample and
+    ``codeListQuery`` answers the STATINFO sample, served by ``respx`` (no request), into
+    a reference directory of the test's own, the codelists cut to STATINFO."""
+    toc_route = respx_mock.get(f"{BASE_URL}/catalogue/toc/xml").mock(
+        return_value=httpx.Response(
+            200,
+            content=TOC_SAMPLE.read_bytes(),
+            headers={"Content-Type": "application/xml;charset=UTF-8"},
+        )
+    )
+    codelist_route = respx_mock.get(f"{BASE_URL}/sdmx/2.1/codelist/ESTAT/STATINFO").mock(
+        return_value=httpx.Response(
+            200, content=CODELIST_SAMPLE.read_bytes(), headers={"Content-Type": "application/json"}
+        )
+    )
+    reference = tmp_path / "reference"
+    reference.mkdir()
+    shutil.copy(REFERENCE / "README.md", reference / "README.md")
+    monkeypatch.setattr(script, "REFERENCE", reference)
+    monkeypatch.setattr(script, "ENUMS", tmp_path / "enums.py")
+    monkeypatch.setattr(params, "CODELISTS", ("STATINFO",))
+    script.main([])
+
+    assert sent_urls(toc_route) == [f"{BASE_URL}/catalogue/toc/xml"]
+    assert sent_urls(codelist_route) == [
+        f"{BASE_URL}/sdmx/2.1/codelist/ESTAT/STATINFO?format=JSON&lang=en"
+    ]
+    expected = script.read_toc(TOC_SAMPLE)
+    toc = PackagedList.model_validate_json((reference / "toc.json").read_text(encoding="utf-8"))
+    assert toc.param == "datasetCode"
+    assert toc.endpoint == "catalogue/toc/xml"
+    assert toc.parse(Dataset, source="eurostat") == expected.leaves
+    payload, codelist = statinfo()
+    codes = PackagedList.model_validate_json(
+        (reference / "statinfo.json").read_text(encoding="utf-8")
+    )
+    assert codes.endpoint == "sdmx/2.1/codelist/ESTAT/STATINFO"
+    assert codes.parse(Code, source="eurostat") == codelist.codes()
+    index = json.loads((reference / "lists.json").read_text(encoding="utf-8"))
+    assert list(index) == ["fetched", "lists"]
+    assert [entry["name"] for entry in index["lists"]] == ["toc", "statinfo"]
+    assert index["lists"][0]["creationDate"] == expected.creation_date
+    assert index["lists"][1]["version"] == payload["extension"]["version"]
+    assert datetime.fromisoformat(index["fetched"]) >= codes.fetched
+    readme = (reference / "README.md").read_text(encoding="utf-8")
+    assert "| `toc.json` | `catalogue/toc/xml` |" in readme
+    assert "| `statinfo.json` | `sdmx/2.1/codelist/ESTAT/STATINFO` |" in readme
+    assert "| `lists.json` |" not in readme
+    assert (tmp_path / "enums.py").read_text(encoding="utf-8").startswith('"""Enums of the')
