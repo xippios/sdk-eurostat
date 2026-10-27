@@ -10,7 +10,10 @@ The list tasks answer from the packaged lists, so theirs check upstream's side: 
 answers ``scripts/refresh_reference.py`` packages still read as it reads them, through
 the script's own functions; ``list_datasets``'s reads the start of the table of contents
 only (its test says why), ``list_codes``'s fetches the STATINFO codelist.
-A run sends nine keyless requests, the reachability check included. The tests assert
+``download_dataset``'s downloads the slice its fixture holds, apro_mk_cola for Austria in
+thousand tonnes, 2022 and 2023, to a temporary file and reads it with ``parse_sdmx_csv``,
+the live parser test of the file kind ``sdmx-csv`` (ADR-0020 decision 6).
+A run sends ten keyless requests, the reachability check included. The tests assert
 shape and release metadata, never values, which Eurostat revises twice a day, nor which
 period is the latest.
 """
@@ -28,12 +31,16 @@ from xippios.core import Result
 from xippios.eurostat import tasks
 from xippios.eurostat._client import BASE_URL, config
 from xippios.eurostat.api import catalogue
-from xippios.eurostat.models import Code, Cube, Dataset, Observation
+from xippios.eurostat.models import Code, Cube, Dataset, Observation, SdmxCsvRow
+from xippios.eurostat.parse import parse_sdmx_csv
 
 pytestmark = [pytest.mark.live, pytest.mark.anyio]
 
 UPDATED = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{4}$")
 """``updated`` as Eurostat prints it, e.g. ``2026-10-05T23:00:00+0200``."""
+
+LAST_UPDATE = re.compile(r"^\d{2}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}$")
+"""SDMX-CSV's ``LAST UPDATE`` as Eurostat prints it, e.g. ``05/10/26 23:00:00``."""
 
 
 async def test_upstream_answers() -> None:
@@ -120,6 +127,33 @@ async def test_get_cross_section_apro_mk_cola() -> None:
     _check_slice(result)
     assert {observation.codes["time"] for observation in result.data} == {"2023"}
     assert len({observation.codes["geo"] for observation in result.data}) > 1, "every geo code"
+
+
+async def test_download_dataset_apro_mk_cola(tmp_path: Path) -> None:
+    dest = tmp_path / "milk.csv.gz"
+    result = await tasks.download_dataset_async(
+        "apro_mk_cola", "A...THS_T.AT", since="2022", until="2023", dest=dest
+    )
+    assert result.data.path == dest
+    assert result.data.bytes == dest.stat().st_size
+    assert dest.read_bytes()[:2] == b"\x1f\x8b", "gzip, as compressed=true answers"
+    assert result.data.content_type is not None
+    assert result.data.content_type.startswith("application/vnd.sdmx.data+csv")
+    rows = list(parse_sdmx_csv(dest))
+    assert rows, "the slice has rows"
+    assert all(isinstance(row, SdmxCsvRow) for row in rows)
+    assert {tuple(row.dimensions) for row in rows} == {
+        ("freq", "milkitem", "dairyprod", "unit", "geo")
+    }
+    assert {row.dimensions["geo"] for row in rows} == {"AT"}
+    assert {row.time_period for row in rows} <= {"2022", "2023"}
+    assert result.meta.endpoint == "dataQuery"
+    assert result.meta.vintage == rows[0].last_update
+    assert LAST_UPDATE.fullmatch(result.meta.vintage)
+    assert result.meta.published_at is not None
+    assert result.meta.published_at.tzinfo is None
+    assert result.meta.published_at_naive is True
+    assert result.meta.request["key"] == "A...THS_T.AT"
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "refresh_reference.py"
