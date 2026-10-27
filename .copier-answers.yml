@@ -1,0 +1,17 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v0.2.2
+_src_path: https://github.com/xippios/sdk-template.git
+api_base_url: https://ec.europa.eu/eurostat/api/dissemination
+api_key_env: ''
+core_git_ref: ''
+core_version: 0.2.1
+domain_topic: statistics
+import_path: eurostat
+needs_write_tools: false
+rate_limit_burst: 1
+rate_limit_per_minute: 30
+rate_limit_provenance: self-imposed
+source_name: Eurostat dissemination API
+source_slug: eurostat
+upstream_docs_url: https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-introduction
+upstream_url: https://ec.europa.eu/eurostat/web/main/data/database
