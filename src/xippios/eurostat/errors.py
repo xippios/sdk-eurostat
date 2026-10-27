@@ -18,14 +18,16 @@ from the answers recorded under ``tests/fixtures/getData/`` on 2026-10-27:
 - ``{"warning": {"status": 413, "label": "ASYNCHRONOUS_RESPONSE. ..."}}``: the documented
   answer to a request the service will treat asynchronously, at an HTTP status the guide
   does not name. Not recorded: four unfiltered requests on 2026-10-27 to datasets of
-  624,554 to 853,146 values all answered synchronously.
+  624,554 to 853,146 values all answered synchronously, and probing stopped there
+  (Johannes, 2026-10-27); the first asynchronous answer seen is recorded.
 - ``<S:Fault>`` with ``<faultcode>413</faultcode>`` and a ``<faultstring>`` such as
   ``EXTRACTION_TOO_BIG: The requested extraction is too big, ...``: the SOAP fault the
   guide documents for an SDMX request over the maximum extraction; read in case the
   Statistics API sends it too. Only the ``faultstring`` text is taken, with a regular
   expression on the body text: the package parses no XML at run time (D44).
 
-The fault table's codes (``id``): 100 no results found (HTTP 400 or 404), 140 syntax
+The fault table's codes (``id``): 100 no results found (HTTP 400, "The result from the
+query is empty", or HTTP 404, "The requested resource is not available"), 140 syntax
 error and 150 semantic error (HTTP 400), 500 internal server error (HTTP 500).
 """
 
@@ -38,8 +40,10 @@ from pydantic import ValidationError as PydanticValidationError
 from xippios.core import UpstreamModel
 
 __all__ = [
+    "AGAIN_LATER",
     "ASYNCHRONOUS_LABEL",
     "NARROW_HINT",
+    "NO_RESULTS",
     "Fault",
     "error_faults",
     "fault_payload",
@@ -50,17 +54,27 @@ __all__ = [
 ASYNCHRONOUS_LABEL = "ASYNCHRONOUS_RESPONSE"
 """How the label of the asynchronous answer begins (api-statistics.md)."""
 
+NO_RESULTS = 100
+"""The fault code of "No results found" (the fault table)."""
+
 NARROW_HINT = (
-    "narrow the query: fewer codes per dimension, or a shorter time window "
-    "(sinceTimePeriod and untilTimePeriod, or lastTimePeriod); a whole dataset is "
+    "narrow the query: fewer codes per dimension in filters, or a shorter time window "
+    "(since_time_period and until_time_period, or last_time_period); a whole dataset is "
     "Eurostat's bulk download"
 )
-"""What a refusal of a too-large request tells the caller to do.
+"""What a refusal of a too-large request tells the caller to do, in ``get_data``'s terms.
 
 The user guide recommends the bulk download for large extractions
 (``asynchronous-api.md``, "Fair use of the service"); this package has no bulk task yet,
 so the hint names Eurostat's own.
 """
+
+AGAIN_LATER = (
+    "the Statistics API prepares the answer meanwhile and does not say when it is ready: "
+    "send the same request again later"
+)
+"""The Statistics API's own route for an asynchronous answer (``api-statistics.md``, its
+last line: "the request must be made again to check its status")."""
 
 _JSON_FAULT = re.compile(rb'\A\s*\{\s*"(?:error|warning)"')
 """A body that opens with an ``error`` or ``warning`` member; a JSON-stat answer opens

@@ -2,15 +2,18 @@
 
 Recorded on 2026-10-27 (``tests/fixtures/getData/``): an unknown dataset, an unknown
 dimension and ``geo`` with ``geoLevel``, all with ``error`` as an array, and the empty
-cube of an unknown code. Not recorded, taken verbatim from the snapshot's user guide:
-the single-object ``error`` the guide shows for ``geo`` with ``geoLevel``, the
-asynchronous answer (``api-statistics.md``) and the SOAP fault ``EXTRACTION_TOO_BIG``
-(``asynchronous-api.md``). Four unfiltered requests to datasets of 624,554 to 853,146
-values answered synchronously on 2026-10-27, so the asynchronous answer is the documented
-shape, not recorded; the recorded fixture follows when the service answers
-asynchronously. Each such test reads the body from the snapshot and says so.
+cube of an unknown code. The tests named ``test_documented_shape_*`` serve shapes the
+service was not seen to send: each reads its body verbatim from the snapshot's user guide
+at test time, so it is neither recorded nor hand-written. They are the single-object
+``error`` the guide shows for ``geo`` with ``geoLevel``, the fault table's "No results
+found" at HTTP 400 and the asynchronous answer (``api-statistics.md``), and the SOAP fault
+``EXTRACTION_TOO_BIG`` (``asynchronous-api.md``). Four unfiltered requests to datasets of
+624,554 to 853,146 values answered synchronously on 2026-10-27 and probing stopped there;
+the first asynchronous answer ever seen is recorded and replaces its test (Johannes,
+2026-10-27; gap row 83).
 """
 
+import json
 import re
 from pathlib import Path
 
@@ -38,6 +41,21 @@ def documented_line(page: str, start: str) -> str:
         if text.startswith(start):
             return text
     raise AssertionError(f"{page} has no line starting {start!r}")
+
+
+def documented_fault_row(code: int, status: int) -> tuple[str, str]:
+    """The fault table row of ``api-statistics.md`` for ``code`` at ``status``: its name and
+    description, e.g. ``("No results found", "The result from the query is empty.")``."""
+    text = (GUIDE / "api-statistics.md").read_text(encoding="utf-8")
+    for line in text.splitlines():
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if (
+            len(cells) == 3
+            and cells[0].startswith(f"{code} ")
+            and cells[1].startswith(f"{status} ")
+        ):
+            return cells[0].removeprefix(f"{code} "), cells[2]
+    raise AssertionError(f"api-statistics.md has no fault table row {code} at HTTP {status}")
 
 
 def documented_xml(page: str, contains: str) -> str:
@@ -105,8 +123,9 @@ def test_geo_with_geo_level_is_refused_as_recorded() -> None:
     assert "fault 400: 'geo' parameter and 'geoLevel' parameter cannot be set" in str(error)
 
 
-def test_geo_with_geo_level_is_refused_as_documented() -> None:
-    """Documented shape, not recorded: one ``error`` object, its status as text, no id."""
+def test_documented_shape_geo_with_geo_level_object_is_refused() -> None:
+    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
+    hand-written: one ``error`` object, its status as text, no id."""
     assert GEO_AND_GEO_LEVEL.startswith('{"error":{"status":"400","label":')
     error = classify(answer(400, GEO_AND_GEO_LEVEL))
     assert isinstance(error, InvalidRequestError)
@@ -117,24 +136,55 @@ def test_geo_with_geo_level_is_refused_as_documented() -> None:
     )
 
 
+def test_documented_shape_no_results_at_400_is_not_found() -> None:
+    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
+    hand-written: the fault table's row "100 No results found | 400 Bad request | The
+    result from the query is empty.", in the recorded ``error`` array form, its name and
+    description as the label. Upstream signals absence: ``NotFoundError``."""
+    name, description = documented_fault_row(100, 400)
+    assert (name, description) == ("No results found", "The result from the query is empty.")
+    body = json.dumps({"error": [{"status": 400, "id": 100, "label": f"{name}: {description}"}]})
+    error = classify(answer(400, body))
+    assert isinstance(error, NotFoundError)
+    assert str(error) == (
+        f"Eurostat answered {WHERE} with HTTP 400 (fault 100: No results found: The result "
+        "from the query is empty.)."
+    )
+
+
+@pytest.mark.parametrize(("code", "status"), [(140, 400), (150, 400)])
+def test_documented_shape_syntax_and_semantic_errors_are_refused(code: int, status: int) -> None:
+    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
+    hand-written: the fault table's 140 and 150 rows at HTTP 400 stay refusals."""
+    name, description = documented_fault_row(code, status)
+    body = json.dumps(
+        {"error": [{"status": status, "id": code, "label": f"{name}: {description}"}]}
+    )
+    assert isinstance(classify(answer(status, body)), InvalidRequestError)
+
+
 @pytest.mark.parametrize("status", [200, 413])
-def test_asynchronous_answer_is_refused_with_the_hint(status: int) -> None:
-    """Documented shape, not recorded; the recorded fixture follows when the service
-    answers asynchronously. The guide names no HTTP status for it: both are read."""
+def test_documented_shape_asynchronous_answer_is_refused(status: int) -> None:
+    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
+    hand-written; the first asynchronous answer seen is recorded and replaces this test.
+    The guide names no HTTP status for it: both are read."""
     assert ASYNCHRONOUS.startswith('{"warning":{"status":413, "label":"ASYNCHRONOUS_RESPONSE.')
     error = classify(answer(status, ASYNCHRONOUS))
     assert isinstance(error, InvalidRequestError)
     text = str(error)
     assert text.startswith(f"Eurostat will answer {WHERE} asynchronously (ASYNCHRONOUS_RESPONSE.")
     assert "this package does not poll asynchronous answers" in text
-    assert "fewer codes per dimension" in text
+    assert "send the same request again later" in text
+    assert "fewer codes per dimension in filters" in text
+    assert "(since_time_period and until_time_period, or last_time_period)" in text
     assert "bulk download" in text
     assert_host_and_query_free(error)
 
 
-def test_extraction_too_big_is_refused_with_the_hint() -> None:
-    """Documented shape, not recorded: the SDMX APIs' SOAP fault, read in case the
-    Statistics API sends it too."""
+def test_documented_shape_extraction_too_big_is_refused() -> None:
+    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
+    hand-written: the SDMX APIs' SOAP fault, read in case the Statistics API sends it
+    too."""
     error = classify(answer(413, EXTRACTION_TOO_BIG, "text/xml"))
     assert isinstance(error, InvalidRequestError)
     text = str(error)
@@ -143,6 +193,7 @@ def test_extraction_too_big_is_refused_with_the_hint() -> None:
         "extraction is too big, estimated 420709314 rows, max authorised is 5000000"
     )
     assert "fewer codes per dimension" in text
+    assert "again later" not in text, "too large is not a matter of waiting"
 
 
 def test_a_cube_and_the_empty_cube_are_no_error() -> None:

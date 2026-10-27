@@ -1,11 +1,10 @@
 """The configured ``xippios.core`` client for Eurostat dissemination API.
 
-One ``AsyncClient`` for the whole package: task functions share its rate limiter and
-cache, and the same instance serves the sync facades and the MCP server. ``classify``
-maps the Statistics API's documented refusals onto the family's taxonomy once
-(ADR-0008); ``errors`` reads them. The client keeps no response cache: core 0.2.1 bounds
-no cached body's size, and a cube can run to hundreds of megabytes (ADR-0019 decision 3
-brings the bound with core 0.3.0).
+One ``AsyncClient`` for the whole package: task functions share its rate limiter, and
+the same instance serves the sync facades and the MCP server. ``classify`` maps the
+Statistics API's documented refusals onto the family's taxonomy once (ADR-0008);
+``errors`` reads them. The response cache is off until core bounds the size of a cached
+body (``cache_max_bytes``, ADR-0019 decision 3): a cube can run to hundreds of megabytes.
 """
 
 from datetime import UTC, datetime
@@ -22,8 +21,10 @@ from xippios.core import (
 
 from xippios.eurostat._version import __version__
 from xippios.eurostat.errors import (
+    AGAIN_LATER,
     ASYNCHRONOUS_LABEL,
     NARROW_HINT,
+    NO_RESULTS,
     error_faults,
     fault_payload,
     soap_faultstring,
@@ -34,7 +35,7 @@ SOURCE = "eurostat"
 BASE_URL = "https://ec.europa.eu/eurostat/api/dissemination"
 API_KEY_ENV: str | None = None
 # A self-imposed pace: upstream documents no rate in numbers, only a fair-use rule
-# without one (ADR-0010 decision 1).
+# without one (ADR-0010 decision 1; asynchronous-api.md, "Fair use of the service").
 RATE_LIMIT = RateLimit(per_minute=30, burst=1)
 
 
@@ -48,13 +49,16 @@ def classify(response: httpx.Response) -> XippiosError | None:
 
     - A ``warning`` whose status is 413 or whose label starts ``ASYNCHRONOUS_RESPONSE``,
       at any HTTP status: the service will treat the request asynchronously, which this
-      package does not poll (design round Q4, 2026-10-27): ``InvalidRequestError`` naming
-      how to narrow the query.
+      package does not poll (design round Q4, 2026-10-27): ``InvalidRequestError`` saying
+      to send the request again later, the Statistics API's own route, or to narrow it.
     - HTTP 404 with an ``error`` member: ``NotFoundError`` with upstream's label
       (recorded for an unknown dataset, fault 100).
-    - HTTP 400 with an ``error`` member, an array or one object: ``InvalidRequestError``
-      with upstream's label (recorded for an unknown dimension, fault 150, and for
-      ``geo`` with ``geoLevel``).
+    - HTTP 400 with an ``error`` member whose faults are all 100, "No results found: The
+      result from the query is empty" (the fault table): ``NotFoundError``, upstream
+      signalling absence (conventions §5). Documented, not recorded.
+    - HTTP 400 with any other ``error`` member, an array or one object:
+      ``InvalidRequestError`` with upstream's label (recorded for an unknown dimension,
+      fault 150, and for ``geo`` with ``geoLevel``; the fault table's 140 alike).
     - HTTP 413 otherwise, the SOAP fault ``EXTRACTION_TOO_BIG`` the user guide documents
       for the SDMX APIs among them: ``InvalidRequestError`` naming how to narrow it.
 
@@ -72,15 +76,15 @@ def classify(response: httpx.Response) -> XippiosError | None:
             return InvalidRequestError(
                 f"Eurostat will answer {_where(response)} asynchronously "
                 f"({warning.label}), and this package does not poll asynchronous answers: "
-                f"{NARROW_HINT}.",
+                f"{AGAIN_LATER}, or {NARROW_HINT}.",
                 source=SOURCE,
             )
         faults = error_faults(payload)
         if faults and status in (400, 404):
             described = "; ".join(fault.describe() for fault in faults)
-            if status == 404:
+            if status == 404 or all(fault.id == NO_RESULTS for fault in faults):
                 return NotFoundError(
-                    f"Eurostat answered {_where(response)} with HTTP 404 ({described}).",
+                    f"Eurostat answered {_where(response)} with HTTP {status} ({described}).",
                     source=SOURCE,
                 )
             return InvalidRequestError(
