@@ -109,10 +109,12 @@ async def get_data_async(
     cells out one by one with their codes and labels. Keep slices small (a country or
     two, a few periods): the whole slice comes back at once. A filter code that matches
     nothing gives an empty cube (size 0 on that dimension, no values), not an error. An
-    unknown dataset raises ``NotFoundError``; a query Eurostat refuses (an unknown
-    dimension, ``geo`` with ``geo_level``, two time parameters other than since and
-    until) raises ``InvalidRequestError`` with Eurostat's message, and so does a request
-    Eurostat would answer asynchronously or judges too large, naming how to narrow it.
+    unknown dataset, or Eurostat's "No results found", raises ``NotFoundError``. A query
+    Eurostat refuses (an unknown dimension, ``geo`` with ``geo_level``; by the user guide
+    also two time parameters other than since and until) raises ``InvalidRequestError``
+    with Eurostat's message, and so does one it judges too large, naming how to narrow
+    it, or one it would answer asynchronously: send the same request again later, or
+    narrow it.
 
     Args:
         dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk

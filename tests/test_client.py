@@ -90,7 +90,7 @@ def assert_host_and_query_free(error: Exception) -> None:
 
 def test_config() -> None:
     assert config.classify is classify
-    assert config.cache is None, "no cache on core 0.2.1, which bounds no cached body"
+    assert config.cache is None, "the cache is off until core bounds a cached body"
     assert RATE_LIMIT.per_minute == 30
     assert RATE_LIMIT.capacity == 1
 
