@@ -1,0 +1,1442 @@
+
+
+<ns0:application xsi:schemaLocation="http://wadl.dev.java.net/2009/02 wadl.xsd" xmlns:ns0="http://wadl.dev.java.net/2009/02" xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message" xmlns:types="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/types" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:common="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common">
+   <ns0:doc xmlns:ns1="http://jersey.java.net/" ns1:generatedBy="Jersey: 2.22.4-b241119.1111 2024-11-19 11:14:18"/>
+   <ns0:doc xmlns:ns2="http://jersey.java.net/" ns2:hint="This is full WADL including extended resources. To get simplified WADL with users resources only do not use the query parameter detail. Link: https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/sdmx-rest.wadl"/>
+   <ns0:grammars>
+      <ns0:doc title="grammarDoc" xml:lang="en">The SDMXMessage.xsd is used to import all SDMXML types so as to be referenced in the WADL.The SDMXRestTypes.xsd defines various types used by the WADL's parameters e.g. key pattern, latest and all values.</ns0:doc>
+      <ns0:include href="/sdmx/2.1/xsd/SDMXMessage.xsd"/>
+      <ns0:include href="/sdmx/2.1/xsd/SDMXRestTypes.xsd"/>
+   </ns0:grammars>
+   <ns0:resources base="https://ec.europa.eu/eurostat/api/">
+      <ns0:resource path="dissemination/sdmx/2.1/">
+         <ns0:resource path="dataflow/{agencyID}/{resourceID}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="dataflowQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="format" style="query" type="string"/>
+                  <ns0:param name="lang" style="query" type="common:langType"/>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="completestub" style="query" type="xsd:string"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="dataflowQueryOptions" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns3:extended xmlns:ns3="http://jersey.java.net/">true</ns3:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns4:extended xmlns:ns4="http://jersey.java.net/">true</ns4:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns5:extended xmlns:ns5="http://jersey.java.net/">true</ns5:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="dataflow/{agencyID}">
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="dataflowQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="format" style="query" type="string"/>
+                  <ns0:param name="lang" style="query" type="common:langType"/>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="completestub" style="query" type="xsd:string"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns6:extended xmlns:ns6="http://jersey.java.net/">true</ns6:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns7:extended xmlns:ns7="http://jersey.java.net/">true</ns7:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns8:extended xmlns:ns8="http://jersey.java.net/">true</ns8:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="dataflow/{agencyID}/{resourceID}/{version}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:param name="version" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="dataflowQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="format" style="query" type="string"/>
+                  <ns0:param name="lang" style="query" type="common:langType"/>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="completestub" style="query" type="xsd:string"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="dataflowQueryOptions2" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns9:extended xmlns:ns9="http://jersey.java.net/">true</ns9:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns10:extended xmlns:ns10="http://jersey.java.net/">true</ns10:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns11:extended xmlns:ns11="http://jersey.java.net/">true</ns11:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="dataflow">
+            <ns0:method id="dataflowQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="format" style="query" type="string"/>
+                  <ns0:param name="lang" style="query" type="common:langType"/>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="completestub" style="query" type="xsd:string"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns12:extended xmlns:ns12="http://jersey.java.net/">true</ns12:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns13:extended xmlns:ns13="http://jersey.java.net/">true</ns13:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns14:extended xmlns:ns14="http://jersey.java.net/">true</ns14:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="{path : .+}">
+            <ns0:param name="path" style="template" type="xsd:string"/>
+            <ns0:method id="invalidQuery" name="OPTIONS">
+               <ns0:request>
+                  <ns0:param name="format" style="query" type="string"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns15:extended xmlns:ns15="http://jersey.java.net/">true</ns15:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns16:extended xmlns:ns16="http://jersey.java.net/">true</ns16:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns17:extended xmlns:ns17="http://jersey.java.net/">true</ns17:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="contentconstraint/{agencyID}/{resourceID}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="contentConstraintQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="contentConstraintQueryOptions" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns18:extended xmlns:ns18="http://jersey.java.net/">true</ns18:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns19:extended xmlns:ns19="http://jersey.java.net/">true</ns19:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns20:extended xmlns:ns20="http://jersey.java.net/">true</ns20:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="contentconstraint/{agencyID}/{resourceID}/{version}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:param name="version" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="contentConstraintQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="contentConstraintQueryOptions2" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns21:extended xmlns:ns21="http://jersey.java.net/">true</ns21:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns22:extended xmlns:ns22="http://jersey.java.net/">true</ns22:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns23:extended xmlns:ns23="http://jersey.java.net/">true</ns23:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="codelist/{agencyID}/{resourceID}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="codeListQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="format" style="query" type="string"/>
+                  <ns0:param name="lang" style="query" type="common:langType"/>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="completestub" style="query" type="xsd:string"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="text/tab-separated-values"/>
+                  <ns0:representation mediaType="text/comma-separated-values"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="codeListQueryOptions" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="text/tab-separated-values"/>
+                  <ns0:representation mediaType="text/comma-separated-values"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns24:extended xmlns:ns24="http://jersey.java.net/">true</ns24:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns25:extended xmlns:ns25="http://jersey.java.net/">true</ns25:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns26:extended xmlns:ns26="http://jersey.java.net/">true</ns26:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="codelist/{agencyID}/{resourceID}/{version}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:param name="version" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="codeListQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="format" style="query" type="string"/>
+                  <ns0:param name="lang" style="query" type="common:langType"/>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="completestub" style="query" type="xsd:string"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="text/tab-separated-values"/>
+                  <ns0:representation mediaType="text/comma-separated-values"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="codeListQueryOptions2" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="text/tab-separated-values"/>
+                  <ns0:representation mediaType="text/comma-separated-values"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns27:extended xmlns:ns27="http://jersey.java.net/">true</ns27:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns28:extended xmlns:ns28="http://jersey.java.net/">true</ns28:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns29:extended xmlns:ns29="http://jersey.java.net/">true</ns29:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="codelist">
+            <ns0:method id="codeListQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="format" style="query" type="string"/>
+                  <ns0:param name="lang" style="query" type="common:langType"/>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="completestub" style="query" type="xsd:string"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="text/tab-separated-values"/>
+                  <ns0:representation mediaType="text/comma-separated-values"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns30:extended xmlns:ns30="http://jersey.java.net/">true</ns30:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns31:extended xmlns:ns31="http://jersey.java.net/">true</ns31:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns32:extended xmlns:ns32="http://jersey.java.net/">true</ns32:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="codelist/{agencyID}">
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="codeListQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="format" style="query" type="string"/>
+                  <ns0:param name="lang" style="query" type="common:langType"/>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="completestub" style="query" type="xsd:string"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="text/tab-separated-values"/>
+                  <ns0:representation mediaType="text/comma-separated-values"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns33:extended xmlns:ns33="http://jersey.java.net/">true</ns33:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns34:extended xmlns:ns34="http://jersey.java.net/">true</ns34:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns35:extended xmlns:ns35="http://jersey.java.net/">true</ns35:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="conceptscheme">
+            <ns0:method id="conceptSchemeQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns36:extended xmlns:ns36="http://jersey.java.net/">true</ns36:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns37:extended xmlns:ns37="http://jersey.java.net/">true</ns37:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns38:extended xmlns:ns38="http://jersey.java.net/">true</ns38:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="conceptscheme/{agencyID}/{resourceID}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="conceptSchemeQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="conceptSchemeQueryOptions" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns39:extended xmlns:ns39="http://jersey.java.net/">true</ns39:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns40:extended xmlns:ns40="http://jersey.java.net/">true</ns40:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns41:extended xmlns:ns41="http://jersey.java.net/">true</ns41:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="conceptscheme/{agencyID}">
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="conceptSchemeQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns42:extended xmlns:ns42="http://jersey.java.net/">true</ns42:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns43:extended xmlns:ns43="http://jersey.java.net/">true</ns43:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns44:extended xmlns:ns44="http://jersey.java.net/">true</ns44:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="conceptscheme/{agencyID}/{resourceID}/{version}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:param name="version" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="conceptSchemeQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="conceptSchemeQueryOptions2" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns45:extended xmlns:ns45="http://jersey.java.net/">true</ns45:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns46:extended xmlns:ns46="http://jersey.java.net/">true</ns46:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns47:extended xmlns:ns47="http://jersey.java.net/">true</ns47:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="data/{flowRef}">
+            <ns0:param name="flowRef" style="template" type="types:FlowRefType"/>
+            <ns0:method id="dataQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="firstNObservations" style="query" type="common:DataStructureRequestType"/>
+                  <ns0:param name="lastNObservations" style="query" type="common:DataStructureRequestType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="format" style="query" type="string"/>
+                  <ns0:param name="lang" style="query" type="common:langType"/>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="label" style="query" type="common:labelType"/>
+                  <ns0:param name="returnData" style="query" type="xsd:string"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.genericdata+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/vnd.sdmx.structurespecificdata+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="text/tab-separated-values"/>
+                  <ns0:representation mediaType="text/comma-separated-values"/>
+                  <ns0:representation mediaType="application/rdf+xml"/>
+                  <ns0:representation mediaType="application/vnd.sdmx.data+csv;version=1.0.0"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="dataQueryOptions" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.genericdata+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/vnd.sdmx.structurespecificdata+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="text/tab-separated-values"/>
+                  <ns0:representation mediaType="text/comma-separated-values"/>
+                  <ns0:representation mediaType="application/rdf+xml"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns48:extended xmlns:ns48="http://jersey.java.net/">true</ns48:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns49:extended xmlns:ns49="http://jersey.java.net/">true</ns49:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns50:extended xmlns:ns50="http://jersey.java.net/">true</ns50:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="data/{flowRef}/{key}/{providerRef}">
+            <ns0:param name="providerRef" style="template" type="types:ProviderRefType"/>
+            <ns0:param name="key" style="template" type="types:KeyType"/>
+            <ns0:param name="flowRef" style="template" type="types:FlowRefType"/>
+            <ns0:method id="dataQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="firstNObservations" style="query" type="common:DataStructureRequestType"/>
+                  <ns0:param name="lastNObservations" style="query" type="common:DataStructureRequestType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="format" style="query" type="string"/>
+                  <ns0:param name="lang" style="query" type="common:langType"/>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="label" style="query" type="common:labelType"/>
+                  <ns0:param name="returnData" style="query" type="xsd:string"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.genericdata+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/vnd.sdmx.structurespecificdata+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="text/tab-separated-values"/>
+                  <ns0:representation mediaType="text/comma-separated-values"/>
+                  <ns0:representation mediaType="application/rdf+xml"/>
+                  <ns0:representation mediaType="application/vnd.sdmx.data+csv;version=1.0.0"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="dataQueryOptions3" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.genericdata+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/vnd.sdmx.structurespecificdata+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="text/tab-separated-values"/>
+                  <ns0:representation mediaType="text/comma-separated-values"/>
+                  <ns0:representation mediaType="application/rdf+xml"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns51:extended xmlns:ns51="http://jersey.java.net/">true</ns51:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns52:extended xmlns:ns52="http://jersey.java.net/">true</ns52:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns53:extended xmlns:ns53="http://jersey.java.net/">true</ns53:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="data/{flowRef}/{key}">
+            <ns0:param name="key" style="template" type="types:KeyType"/>
+            <ns0:param name="flowRef" style="template" type="types:FlowRefType"/>
+            <ns0:method id="dataQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="firstNObservations" style="query" type="common:DataStructureRequestType"/>
+                  <ns0:param name="lastNObservations" style="query" type="common:DataStructureRequestType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="format" style="query" type="string"/>
+                  <ns0:param name="lang" style="query" type="common:langType"/>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="label" style="query" type="common:labelType"/>
+                  <ns0:param name="returnData" style="query" type="xsd:string"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.genericdata+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/vnd.sdmx.structurespecificdata+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="text/tab-separated-values"/>
+                  <ns0:representation mediaType="text/comma-separated-values"/>
+                  <ns0:representation mediaType="application/rdf+xml"/>
+                  <ns0:representation mediaType="application/vnd.sdmx.data+csv;version=1.0.0"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="dataQueryOptions2" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.genericdata+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/vnd.sdmx.structurespecificdata+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/json"/>
+                  <ns0:representation mediaType="text/tab-separated-values"/>
+                  <ns0:representation mediaType="text/comma-separated-values"/>
+                  <ns0:representation mediaType="application/rdf+xml"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns54:extended xmlns:ns54="http://jersey.java.net/">true</ns54:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns55:extended xmlns:ns55="http://jersey.java.net/">true</ns55:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns56:extended xmlns:ns56="http://jersey.java.net/">true</ns56:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="categorisation">
+            <ns0:method id="categorisationQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns57:extended xmlns:ns57="http://jersey.java.net/">true</ns57:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns58:extended xmlns:ns58="http://jersey.java.net/">true</ns58:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns59:extended xmlns:ns59="http://jersey.java.net/">true</ns59:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="categorisation/{agencyID}">
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="categorisationQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns60:extended xmlns:ns60="http://jersey.java.net/">true</ns60:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns61:extended xmlns:ns61="http://jersey.java.net/">true</ns61:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns62:extended xmlns:ns62="http://jersey.java.net/">true</ns62:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="categorisation/{agencyID}/{resourceID}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="categorisationQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="categorisationQueryOptions" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns63:extended xmlns:ns63="http://jersey.java.net/">true</ns63:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns64:extended xmlns:ns64="http://jersey.java.net/">true</ns64:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns65:extended xmlns:ns65="http://jersey.java.net/">true</ns65:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="categorisation/{agencyID}/{resourceID}/{version}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:param name="version" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="categorisationQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="categorisationQueryOptions2" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns66:extended xmlns:ns66="http://jersey.java.net/">true</ns66:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns67:extended xmlns:ns67="http://jersey.java.net/">true</ns67:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns68:extended xmlns:ns68="http://jersey.java.net/">true</ns68:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="categoryscheme/{agencyID}/{resourceID}/{version}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:param name="version" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="categorySchemeQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="categorySchemeQueryOptions2" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns69:extended xmlns:ns69="http://jersey.java.net/">true</ns69:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns70:extended xmlns:ns70="http://jersey.java.net/">true</ns70:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns71:extended xmlns:ns71="http://jersey.java.net/">true</ns71:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="categoryscheme">
+            <ns0:method id="categorySchemeQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns72:extended xmlns:ns72="http://jersey.java.net/">true</ns72:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns73:extended xmlns:ns73="http://jersey.java.net/">true</ns73:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns74:extended xmlns:ns74="http://jersey.java.net/">true</ns74:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="categoryscheme/{agencyID}">
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="categorySchemeQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns75:extended xmlns:ns75="http://jersey.java.net/">true</ns75:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns76:extended xmlns:ns76="http://jersey.java.net/">true</ns76:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns77:extended xmlns:ns77="http://jersey.java.net/">true</ns77:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="categoryscheme/{agencyID}/{resourceID}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="categorySchemeQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="categorySchemeQueryOptions" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns78:extended xmlns:ns78="http://jersey.java.net/">true</ns78:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns79:extended xmlns:ns79="http://jersey.java.net/">true</ns79:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns80:extended xmlns:ns80="http://jersey.java.net/">true</ns80:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="datastructure">
+            <ns0:method id="dataStructureQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="completestub" style="query" type="xsd:string"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns81:extended xmlns:ns81="http://jersey.java.net/">true</ns81:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns82:extended xmlns:ns82="http://jersey.java.net/">true</ns82:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns83:extended xmlns:ns83="http://jersey.java.net/">true</ns83:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="datastructure/{agencyID}">
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="dataStructureQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="completestub" style="query" type="xsd:string"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns84:extended xmlns:ns84="http://jersey.java.net/">true</ns84:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns85:extended xmlns:ns85="http://jersey.java.net/">true</ns85:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns86:extended xmlns:ns86="http://jersey.java.net/">true</ns86:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="datastructure/{agencyID}/{resourceID}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="dataStructureQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="completestub" style="query" type="xsd:string"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="dataStructureQueryOptions" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns87:extended xmlns:ns87="http://jersey.java.net/">true</ns87:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns88:extended xmlns:ns88="http://jersey.java.net/">true</ns88:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns89:extended xmlns:ns89="http://jersey.java.net/">true</ns89:extended>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="datastructure/{agencyID}/{resourceID}/{version}">
+            <ns0:param name="resourceID" style="template" type="types:IDType"/>
+            <ns0:param name="agencyID" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:param name="version" style="template" type="common:NestedNCNameIDType"/>
+            <ns0:method id="dataStructureQuery" name="GET">
+               <ns0:request>
+                  <ns0:param name="compressed" style="query" type="common:NCNameIDType"/>
+                  <ns0:param name="detail" style="query" type="types:DataDetailType"/>
+                  <ns0:param name="completestub" style="query" type="xsd:string"/>
+                  <ns0:param name="references" style="query" type="types:ReferencesType"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="dataStructureQueryOptions2" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sdmx.structure+xml;version=2.1"/>
+                  <ns0:representation mediaType="application/xml"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="application/vnd.sun.wadl+xml"/>
+               </ns0:response>
+               <ns90:extended xmlns:ns90="http://jersey.java.net/">true</ns90:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="text/plain"/>
+               </ns0:response>
+               <ns91:extended xmlns:ns91="http://jersey.java.net/">true</ns91:extended>
+            </ns0:method>
+            <ns0:method id="apply" name="OPTIONS">
+               <ns0:request>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:request>
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+               <ns92:extended xmlns:ns92="http://jersey.java.net/">true</ns92:extended>
+            </ns0:method>
+         </ns0:resource>
+      </ns0:resource>
+   </ns0:resources>
+</ns0:application>
