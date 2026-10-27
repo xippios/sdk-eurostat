@@ -57,17 +57,11 @@ ASYNCHRONOUS_LABEL = "ASYNCHRONOUS_RESPONSE"
 NO_RESULTS = 100
 """The fault code of "No results found" (the fault table)."""
 
-NARROW_HINT = (
-    "narrow the query: fewer codes per dimension in filters, or a shorter time window "
-    "(since_time_period and until_time_period, or last_time_period); a whole dataset is "
-    "Eurostat's bulk download"
-)
-"""What a refusal of a too-large request tells the caller to do, in ``get_data``'s terms.
-
-The user guide recommends the bulk download for large extractions
-(``asynchronous-api.md``, "Fair use of the service"); this package has no bulk task yet,
-so the hint names Eurostat's own.
-"""
+NARROW_HINT = "narrow the query with fewer codes per dimension or a shorter period"
+"""What a refusal of a too-large request tells the caller to do, in no task's terms:
+``classify`` serves every task, whose parameters differ. The bulk task, which the user
+guide's advice for large extractions points to (``asynchronous-api.md``, "Fair use of the
+service"), joins the hint when the package has one."""
 
 AGAIN_LATER = (
     "the Statistics API prepares the answer meanwhile and does not say when it is ready: "

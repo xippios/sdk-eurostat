@@ -178,10 +178,12 @@ def test_documented_shape_asynchronous_answer_is_refused(status: int) -> None:
     text = str(error)
     assert text.startswith(f"Eurostat will answer {WHERE} asynchronously (ASYNCHRONOUS_RESPONSE.")
     assert "this package does not poll asynchronous answers" in text
-    assert "send the same request again later" in text
-    assert "fewer codes per dimension in filters" in text
-    assert "(since_time_period and until_time_period, or last_time_period)" in text
-    assert "bulk download" in text
+    assert text.endswith(
+        "this package does not poll asynchronous answers: the Statistics API prepares the "
+        "answer meanwhile and does not say when it is ready: send the same request again "
+        "later, or narrow the query with fewer codes per dimension or a shorter period."
+    )
+    assert "since_time_period" not in text, "classify serves every task: no task's names"
     assert_host_and_query_free(error)
 
 
@@ -196,7 +198,10 @@ def test_documented_shape_extraction_too_big_is_refused() -> None:
         f"Eurostat refused {WHERE} as too large (HTTP 413: EXTRACTION_TOO_BIG: The requested "
         "extraction is too big, estimated 420709314 rows, max authorised is 5000000"
     )
-    assert "fewer codes per dimension" in text
+    assert text.endswith(
+        "please change your filters to reduce the extraction size): narrow the query with "
+        "fewer codes per dimension or a shorter period."
+    )
     assert "again later" not in text, "too large is not a matter of waiting"
 
 
