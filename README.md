@@ -127,8 +127,8 @@ in `QNTUNIT` for DS-059359), `None` for every one. A value is a number, or the t
 Eurostat prints for a unit or a flag (`"KG"`, `":E"`). The product is checked against the
 dataset's product list packaged with this version, each reporter against CXT_FREE_ISO,
 Comext's list of reporters and partners, and each indicator against CXT_INDICATORS,
-before sending: a code they lack raises `UnknownCode` naming the closest, and a code they
-hold that the dataset lacks gives an empty list.
+before sending: a code they lack raises `UnknownCode` naming the closest, and a reporter
+the list holds and the dataset lacks gives an empty list.
 `list_products(search=None)` lists DS-059358's products (CXT_PRODCOM2_SOLD), eight-digit
 codes that start with their NACE class (`1041` oils and fats, `2015` fertilisers);
 DS-059359 covers a few hundred of them, chiefly chemicals, fertilisers and metals, which
@@ -158,28 +158,32 @@ heading = get_trade_hs("1507", reporters=["AT"], partners=["DE"], since="2023-12
 Eurostat's Comext trade statistics, the EU side of the trade picture, are served on the
 Comext base. `get_trade(product, reporters=None, partners=None, flow=None, since=None,
 until=None, freq="M", indicators=None)` reads DS-045409, EU trade since 1988 by HS2-4-6
-and CN8, and `get_trade_hs(...)`, with the same parameters, DS-059341, international
-trade of EU and non-EU countries since 2002 by HS2-4-6, one product at a time: each sends
-one `get_data` request and returns the cube's observations in cube order (reporter,
-partner, flow, indicator, oldest period first) with `get_data`'s `meta`. `product` is an
+and CN8, and `get_trade_hs(...)`, with the same parameters, DS-059341, international trade
+of EU and non-EU countries since 2002 by HS2-4-6, one product at a time: each sends one
+`get_data` request and returns the cube's observations in cube order (reporter, partner,
+flow, indicator, oldest period first) with `get_data`'s `meta`. `product` is an
 eight-digit CN code (`"15071090"`, crude soya-bean oil) or an HS chapter, heading or
-subheading (`"15"`, `"1507"`, `"150710"`); `reporters` and `partners` are country codes
-of CXT_FREE_ISO (`["AT"]`, `["DE", "US"]`), which holds aggregates too
-(`"EU27_2020_EXTRA"`, `"WORLD"`); `flow` is
-`"1"` for imports and `"2"` for exports, `None` for both; `freq` `"M"` for monthly periods
-(`since="2023-01"`) or `"A"` for annual ones (`since="2023"`); `indicators` the measures,
+subheading (`"15"`, `"1507"`, `"150710"`); `reporters` and `partners` are country codes of
+CXT_FREE_ISO (`["AT"]`, `["DE", "US"]`), which holds aggregates too (`"EU27_2020_EXTRA"`,
+`"WORLD"`); `flow` is `"1"` for imports and `"2"` for exports, `None` for both; `freq`
+`"M"` for monthly periods (`since="2023-01"`) or `"A"` for annual ones (`since="2023"`),
+`Freq.M` and `Freq.A` in `xippios.eurostat.models`; `indicators` the measures,
 `VALUE_IN_EUROS`, `QUANTITY_IN_100KG` and `SUPPLEMENTARY_QUANTITY` in DS-045409,
-`VALUE_EUR`, `VALUE_NAC` and `QUANTITY_KG` in DS-059341, `None` for every one. Every
-code is checked against the lists packaged with this version before sending, the product
+`VALUE_EUR`, `VALUE_NAC` and `QUANTITY_KG` in DS-059341, `None` for every one. Every code
+is checked against the lists packaged with this version before sending, the product
 against CXT_NC, the reporters and partners against CXT_FREE_ISO, the flow against
 CXT_EU_FLUX and the indicators against CXT_INDICATORS: a code they lack raises
-`UnknownCode` naming the closest. `list_cn8(search=None)` and `list_hs(search=None)` list
-CXT_NC's eight-digit codes and its two-, four- and six-digit ones, without a request;
-a code with letters in it (`"1507XXXX"`, `"15SSS421"`) is Eurostat's position for trade no
-regular code holds (not elsewhere specified, confidential), as its label says. Over MCP
-the trade tasks keep the family's cap, 200 rows or 64 KB, with a note naming `partners`,
-`indicators`, `since` and `freq`, and `eurostat_list_cn8` and `eurostat_list_hs` take up
-to 1,000 rows within 64 KB, with a note naming `search`.
+`UnknownCode` naming the closest. DS-059341's product list is CXT_NC too, so a CN8 code
+passes the check for `get_trade_hs`, and DS-059341 answered one with HTTP 413
+`ASYNCHRONOUS_RESPONSE`, raised as `InvalidRequestError`: give it an HS code.
+`list_cn8(search=None)` and `list_hs(search=None)` list CXT_NC's codes by length, the
+eight-character ones and the two-, four- and six-character ones, without a request
+(`list_codes("cxt_nc")` lists them all, `TOTAL` with them); a code with letters in it
+(`"1507XXXX"`, `"15SSS421"`) is Eurostat's position for trade no regular code holds (not
+elsewhere specified, confidential), as its label says. Over MCP the trade tasks keep the
+family's cap, 200 rows or 64 KB, with a note naming `partners`, `indicators`, `since` and
+`freq`, and `eurostat_list_cn8` and `eurostat_list_hs` take up to 1,000 rows within 64 KB,
+with a note naming `search`.
 
 ### Datasets and codes
 

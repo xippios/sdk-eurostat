@@ -112,18 +112,24 @@ keeps every other list's file, `lists.json` record and provenance row; the index
 dataset's own product list before sending: DS-059358's is CXT_PRODCOM2_SOLD, DS-059359's
 CXT_PRODCOM2_TOTAL, 822 of the first list's 4,788 codes (chiefly chemicals, fertilisers
 and metals) on 2026-10-28; each indicator is checked against CXT_INDICATORS, which
-Comext's trade datasets share, and each reporter against CXT_FREE_ISO; a code a list
-holds and the dataset lacks still gives an empty cube.
+Comext's trade datasets share, and each reporter against CXT_FREE_ISO; a reporter the
+list holds and the dataset lacks still gives an empty cube.
 
 The trade tasks read DS-045409 (EU trade since 1988 by HS2-4-6 and CN8, data structure
 6.6) and DS-059341 (international trade of EU and non-EU countries since 2002 by
 HS2-4-6, 3.7), whose data structures name the same codelists, read on 2026-10-28:
-CXT_FREQ (`M`, `A`; not packaged, `tasks.TRADE_FREQ`), CXT_FREE_ISO for `reporter` and
+CXT_FREQ (`A`, `M`; not packaged: `models.Freq`, written by hand as `Lang` and
+`GeoLevel` are, and unexported from `__init__`), CXT_FREE_ISO for `reporter` and
 `partner`, CXT_NC for `product`, CXT_EU_FLUX for `flow` and CXT_INDICATORS, in the
 positional order freq.reporter.partner.product.flow.indicators
 (`tasks.TRADE_DIMENSIONS`), the order of their filters and of `download_trade`'s key.
 DS-045409 serves VALUE_IN_EUROS, QUANTITY_IN_100KG and SUPPLEMENTARY_QUANTITY,
-DS-059341 VALUE_EUR, VALUE_NAC and QUANTITY_KG (the recorded cubes). `list_cn8` and
+DS-059341 VALUE_EUR, VALUE_NAC and QUANTITY_KG (the recorded cubes). A CN8 code passes
+the product check for DS-059341, whose product list is CXT_NC, and DS-059341 answered one
+(`15071090`) with HTTP 413 and an `error` array labelled `ASYNCHRONOUS_RESPONSE`
+(`tests/fixtures/get_data/DS-059341_AT_DE_15071090_cn8_on_hs_flow.json`), the Statistics
+API's first asynchronous answer recorded; `classify` maps it through its HTTP 413 branch
+to `InvalidRequestError`. `list_cn8` and
 `list_hs` split CXT_NC by code length: eight characters, and two, four or six; its
 lettered codes (`1507XXXX`, `15SSS421`) are Eurostat's positions for trade no regular code
 holds and are served as listed, and its one code of five characters, `TOTAL`, is in

@@ -45,9 +45,10 @@ All notable changes to this project are documented here. The format follows
   `until` as `sinceTimePeriod` and `untilTimePeriod`, `indicators` as `indicators`. The
   product is checked against the dataset's packaged product list and each indicator
   against `CXT_INDICATORS` before sending, so a code they lack raises `UnknownCode`
-  naming the closest codes; a reporter is sent as given, and one the dataset lacks gives
-  an empty list. Over MCP each keeps 200 rows, with a note naming `reporters`,
-  `indicators` and `since`.
+  naming the closest codes; each reporter is checked against the packaged
+  `CXT_FREE_ISO`, as the product and the indicators are; a reporter the list holds and
+  the dataset lacks gives an empty list. Over MCP each keeps 200 rows, with a note naming
+  `reporters`, `indicators` and `since`.
 - `list_products(search=None)`: the PRODCOM products of `DS-059358` from the packaged
   `CXT_PRODCOM2_SOLD`, without a request, `meta.vintage` the codelist's version and
   `meta.published_at` its last update, with Eurostat's zone. Its description names the
@@ -71,16 +72,20 @@ All notable changes to this project are documented here. The format follows
   and `get_trade_hs(...)`, with the same parameters, `DS-059341`, international trade of
   EU and non-EU countries since 2002 by HS2-4-6, one product at a time. Each sends one
   getData request and returns the cube's observations in cube order with `get_data`'s
-  `meta`: `freq` (`M`, monthly, by default, or `A`) and the filters given, `reporters` as
+  `meta`: `freq` (`models.Freq`, `M`, monthly, by default, or `A`, a hand-written
+  enumeration of the codelist `CXT_FREQ`) and the filters given, `reporters` as
   `reporter`, `partners` as `partner`, `flow` and `indicators`, in the data structure's
   order, and `since` and `until` as `sinceTimePeriod` and `untilTimePeriod`. Every code
   is checked before sending, the product against `CXT_NC`, reporters and partners
   against `CXT_FREE_ISO`, the flow against `CXT_EU_FLUX` and indicators against
   `CXT_INDICATORS`, so a code they lack raises `UnknownCode` naming the closest codes,
-  and a `freq` other than `M` or `A` raises `InvalidRequestError`. Over MCP each keeps
-  200 rows, with a note naming `partners`, `indicators`, `since` and `freq`. Fixtures
-  recorded on the Comext base for Austria's trade with Germany over 2023, monthly, in
-  crude soya-bean oil (CN8 `15071090`) and soya-bean oil (HS `1507`).
+  and a `freq` other than `A` or `M` raises `InvalidRequestError`. `DS-059341` takes
+  `CXT_NC` as its product list too, so a CN8 code passes the check there; it answered one
+  with HTTP 413 `ASYNCHRONOUS_RESPONSE` when recorded, which raises
+  `InvalidRequestError`. Over MCP each keeps 200 rows, with a note naming `partners`,
+  `indicators`, `since` and `freq`. Fixtures recorded on the Comext base for Austria's
+  trade with Germany over 2023, monthly, in crude soya-bean oil (CN8 `15071090`) and
+  soya-bean oil (HS `1507`), and that CN8 code on `DS-059341`.
 - `list_cn8(search=None)` and `list_hs(search=None)`: the eight-digit CN codes, and the
   HS chapters, headings and subheadings, of the packaged `CXT_NC`, without a request,
   `meta.vintage` the codelist's version and `meta.published_at` its last update, with
@@ -107,11 +112,6 @@ All notable changes to this project are documented here. The format follows
   `meta.published_at` is `None`. `cxt_nc.json` is about 7 MB, the largest packaged file.
 
 ### Changed
-
-- The production tasks check each reporter against the packaged `CXT_FREE_ISO` before
-  sending, as they check the product and the indicators: a reporter the list lacks raises
-  `UnknownCode` naming the closest codes, where it was sent as given and answered with an
-  empty list. A reporter the list holds and the dataset lacks still gives an empty list.
 
 - The four endpoint wrappers are named after their upstream operations in snake case,
   by the family's naming rule (conventions 1.22 §2 and §10): `api.statistics.getData`
