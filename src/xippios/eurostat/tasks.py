@@ -33,8 +33,8 @@ observations in cube order with ``get_data``'s ``meta``. The product is checked 
 the dataset's packaged product list first (CXT_PRODCOM2_SOLD, CXT_PRODCOM2_TOTAL), each
 reporter against CXT_FREE_ISO and each indicator against CXT_INDICATORS, so a code a list
 lacks raises ``UnknownCode`` without a request (conventions §5); a reporter the list holds
-and the dataset lacks gives an empty list, as an unknown code gives ``get_data`` an empty
-cube.
+and the dataset lacks is Eurostat's to answer, as an indicator the dataset lacks was (an
+empty cube, recorded for PRODVAL on DS-059359); no such answer is recorded.
 
 The trade tasks, ``get_trade`` and ``get_trade_hs``, read Comext's trade datasets on the
 Comext base as the production tasks read Prodcom's, DS-045409 (EU trade since 1988 by

@@ -51,8 +51,9 @@ All notable changes to this project are documented here. The format follows
   against `CXT_INDICATORS` before sending, so a code they lack raises `UnknownCode`
   naming the closest codes; each reporter is checked against the packaged
   `CXT_FREE_ISO`, as the product and the indicators are; a reporter the list holds and
-  the dataset lacks gives an empty list. Over MCP each keeps 200 rows, with a note naming
-  `reporters`, `indicators` and `since`.
+  the dataset lacks is Eurostat's to answer, as an indicator the dataset lacks was (an
+  empty cube, recorded for `PRODVAL` on `DS-059359`); no such answer is recorded. Over
+  MCP each keeps 200 rows, with a note naming `reporters`, `indicators` and `since`.
 - `list_products(search=None)`: the PRODCOM products of `DS-059358` from the packaged
   `CXT_PRODCOM2_SOLD`, without a request, `meta.vintage` the codelist's version and
   `meta.published_at` its last update, with Eurostat's zone. Its description names the
