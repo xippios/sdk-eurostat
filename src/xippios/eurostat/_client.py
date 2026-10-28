@@ -12,11 +12,13 @@ are those of a client with one base.
 
 ``classify`` maps the Statistics API's documented refusals, and the SDMX 2.1 data API's
 answers that are no SDMX-CSV, onto the family's taxonomy once (ADR-0008); ``errors``
-reads them. Both bases answer in the same shapes, recorded on each. Answers of HTTP 200
-are cached in core's ``MemoryCache`` with its default lifetime of five minutes, up to
-core's ``cache_max_bytes`` of 8 MiB a body (ADR-0019 decision 3), so a larger cube is
-returned and fetched again the next time; a file streamed to disk with ``download``
-never touches the cache.
+reads them. Both bases answer in the same shapes, recorded on each, though not always to
+the same request: a filter on a dimension the dataset lacks is fault 150 at HTTP 400 on
+the main base, and on the Comext base, which counts the query unfiltered, HTTP 413 as
+too large. Answers of HTTP 200 are cached in core's ``MemoryCache`` with its default
+lifetime of five minutes, up to core's ``cache_max_bytes`` of 8 MiB a body (ADR-0019
+decision 3), so a larger cube is returned and fetched again the next time; a file
+streamed to disk with ``download`` never touches the cache.
 """
 
 import httpx

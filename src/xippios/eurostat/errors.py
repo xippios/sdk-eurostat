@@ -23,7 +23,8 @@ from the answers recorded under ``tests/fixtures/get_data/``, on the main base o
   answer to a request the service will treat asynchronously, at an HTTP status the guide
   does not name. Not recorded: four unfiltered requests on 2026-10-27 to datasets of
   624,554 to 853,146 values all answered synchronously, and probing stopped there
-  (Johannes, 2026-10-27); the first asynchronous answer seen is recorded.
+  (Johannes, 2026-10-27); the Statistics API's first asynchronous answer seen is
+  recorded. The SDMX API's, an XML envelope, is recorded (``_client.classify``).
 - ``<S:Fault>`` with ``<faultcode>413</faultcode>`` and a ``<faultstring>`` such as
   ``EXTRACTION_TOO_BIG: The requested extraction is too big, ...``: the SOAP fault the
   guide documents for an SDMX request over the maximum extraction, recorded on the

@@ -245,8 +245,8 @@ def test_fault_table_syntax_and_semantic_errors_are_refused(code: int, status: i
 @pytest.mark.parametrize("status", [200, 413])
 def test_documented_shape_asynchronous_answer_is_refused(status: int) -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written; the first asynchronous answer seen is recorded and replaces this test.
-    The guide names no HTTP status for it: both are read."""
+    hand-written; the Statistics API's first asynchronous answer seen is recorded and
+    replaces this test. The guide names no HTTP status for it: both are read."""
     assert ASYNCHRONOUS.startswith('{"warning":{"status":413, "label":"ASYNCHRONOUS_RESPONSE.')
     error = classify(answer(status, ASYNCHRONOUS))
     assert isinstance(error, InvalidRequestError)

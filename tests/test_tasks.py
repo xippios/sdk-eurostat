@@ -279,8 +279,8 @@ def test_documented_shape_get_data_refuses_an_asynchronous_answer(
     respx_mock: respx.MockRouter,
 ) -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written: the asynchronous answer of api-statistics.md. The first asynchronous
-    answer seen is recorded and replaces this test (Johannes, 2026-10-27)."""
+    hand-written: the asynchronous answer of api-statistics.md. The Statistics API's first
+    asynchronous answer seen is recorded and replaces this test (Johannes, 2026-10-27)."""
     documented = next(
         line.strip()
         for line in (GUIDE / "api-statistics.md").read_text(encoding="utf-8").splitlines()
