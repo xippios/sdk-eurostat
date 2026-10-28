@@ -7,8 +7,9 @@ SDMX-CSV answers, plain and ``compressed=true``. Recorded on the Comext base on
 2026-10-28, mirroring them: under ``get_data/`` the Prodcom cube ``DS-059358``, an
 unknown ``DS-`` dataset (HTTP 404, the same ``error`` array), a filter on a dimension
 ``DS-059358`` lacks, which the Comext base does not refuse as the main base does but
-counts unfiltered and refuses as too large (HTTP 413, an ``error`` array with id 413,
-``EXTRACTION_TOO_BIG``), and the empty cube of an unknown reporter; under
+refuses as too large (HTTP 413, an ``error`` array with id 413, ``EXTRACTION_TOO_BIG``;
+the estimate, 151,971,120 rows, is that of an unfiltered query, so the unknown filter
+seems to be ignored), and the empty cube of an unknown reporter; under
 ``data_query/`` two SDMX-CSV answers of ``DS-059358``, the envelope that queues an
 asynchronous answer (``DS-045409``, the whole monthly flow: HTTP 200,
 ``application/xml``, status ``SUBMITTED``) and the SOAP fault ``EXTRACTION_TOO_BIG`` at
@@ -21,8 +22,8 @@ answers replace the tests that served the user guide's documented bodies (rows 5
   asynchronous ``warning`` and the single-object ``error`` the guide shows for ``geo``
   with ``geoLevel`` (``api-statistics.md``). Four unfiltered requests to datasets of
   624,554 to 853,146 values answered synchronously on 2026-10-27; probing stopped
-  there, and the first such answer seen is recorded and replaces its test (Johannes,
-  2026-10-27; gap row 83).
+  there, and such an answer will be recorded when first seen and replace its test
+  (Johannes, 2026-10-27; gap row 83).
 - ``test_fault_table_*`` compose a body from a row of the fault table
   (``api-statistics.md``), read at test time, in the recorded ``error`` array form: the
   guide documents the fault codes, not their bodies (faults 100, 140 and 150 at HTTP 400).
@@ -245,8 +246,8 @@ def test_fault_table_syntax_and_semantic_errors_are_refused(code: int, status: i
 @pytest.mark.parametrize("status", [200, 413])
 def test_documented_shape_asynchronous_answer_is_refused(status: int) -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written; the Statistics API's first asynchronous answer seen is recorded and
-    replaces this test. The guide names no HTTP status for it: both are read."""
+    hand-written; the Statistics API's asynchronous answer will be recorded when first
+    seen and replace this test. The guide names no HTTP status for it: both are read."""
     assert ASYNCHRONOUS.startswith('{"warning":{"status":413, "label":"ASYNCHRONOUS_RESPONSE.')
     error = classify(answer(status, ASYNCHRONOUS))
     assert isinstance(error, InvalidRequestError)
@@ -284,9 +285,11 @@ def test_extraction_too_big_is_refused() -> None:
 
 def test_statistics_api_too_big_is_refused_on_the_comext_base() -> None:
     """Recorded on the Comext base: a filter on a dimension ``DS-059358`` lacks (``geo``)
-    is counted unfiltered and answered with HTTP 413 and an ``error`` array whose id is
-    413 (``EXTRACTION_TOO_BIG``), not with the main base's fault 150 at HTTP 400. It is
-    refused as too large, the array's fault described as at HTTP 400."""
+    is answered with HTTP 413 and an ``error`` array whose id is 413
+    (``EXTRACTION_TOO_BIG``), not with the main base's fault 150 at HTTP 400; the
+    estimate, 151,971,120 rows, is that of an unfiltered query, so the unknown filter
+    seems to be ignored. It is refused as too large, the array's fault described as at
+    HTTP 400."""
     response = recorded("DS-059358_unknown_dimension_too_big")
     assert response.status_code == 413
     assert '"label": "EXTRACTION_TOO_BIG' in response.text
@@ -304,7 +307,7 @@ def test_statistics_api_too_big_is_refused_on_the_comext_base() -> None:
 
 def test_unknown_ds_dataset_is_not_found() -> None:
     """Recorded on the Comext base: the main base's shape, an ``error`` array at HTTP 404."""
-    error = classify(recorded("DS_unknown_dataset"))
+    error = classify(recorded("DS-000000_unknown_dataset"))
     assert isinstance(error, NotFoundError)
     assert str(error) == (
         f"Eurostat answered {COMEXT_WHERE}/statistics/1.0/data/DS-000000 with HTTP 404 "

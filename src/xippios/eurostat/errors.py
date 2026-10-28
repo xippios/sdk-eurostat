@@ -10,14 +10,15 @@ from the answers recorded under ``tests/fixtures/get_data/``, on the main base o
 
 - ``{"error": [{"status": 404, "id": 100, "label": "ERR_NOT_FOUND_4: ..."}]}``, an array
   of faults: recorded for an unknown dataset (HTTP 404, ``unknown_dataset.json``, and
-  ``DS_unknown_dataset.json`` on the Comext base), an unknown dimension (HTTP 400, id
+  ``DS-000000_unknown_dataset.json`` on the Comext base), an unknown dimension (HTTP 400, id
   150, ``unknown_dimension.json``) and ``geo`` together with ``geoLevel`` (HTTP 400, id
   400, ``geo_with_geo_level.json``).
 - ``{"error": [{"status": 413, "id": 413, "label": "EXTRACTION_TOO_BIG: ..."}]}``, the
   same array at HTTP 413: recorded on the Comext base for a filter on a dimension the
-  dataset lacks, which it counts unfiltered and judges too large, "estimated 151971120
-  rows, max authorised is 5000000" (``DS-059358_unknown_dimension_too_big.json``), where
-  the main base answers fault 150 at HTTP 400.
+  dataset lacks, judged too large, "estimated 151971120 rows, max authorised is 5000000"
+  (``DS-059358_unknown_dimension_too_big.json``), where the main base answers fault 150
+  at HTTP 400. The estimate is that of an unfiltered query, so the unknown filter seems
+  to be ignored.
 - ``{"error": {"status": "400", "label": "'geo' parameter and 'geoLevel' parameter ..."}}``,
   one fault as an object, its status as text and without an id: how the user guide
   documents the answer to ``geo`` with ``geoLevel``; the service answered that request
@@ -26,8 +27,8 @@ from the answers recorded under ``tests/fixtures/get_data/``, on the main base o
   answer to a request the service will treat asynchronously, at an HTTP status the guide
   does not name. Not recorded: four unfiltered requests on 2026-10-27 to datasets of
   624,554 to 853,146 values all answered synchronously, and probing stopped there
-  (Johannes, 2026-10-27); the Statistics API's first asynchronous answer seen is
-  recorded. The SDMX API's, an XML envelope, is recorded (``_client.classify``).
+  (Johannes, 2026-10-27); the Statistics API's asynchronous answer will be recorded when
+  first seen. The SDMX API's, an XML envelope, is recorded (``_client.classify``).
 - ``<S:Fault>`` with ``<faultcode>413</faultcode>`` and a ``<faultstring>`` such as
   ``EXTRACTION_TOO_BIG: The requested extraction is too big, ...``: the SOAP fault the
   guide documents for an SDMX request over the maximum extraction, recorded on the

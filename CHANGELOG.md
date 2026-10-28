@@ -28,13 +28,15 @@ All notable changes to this project are documented here. The format follows
   recorded on the Comext base mirror the main base's: Prodcom's `DS-059358` as a cube
   and as SDMX-CSV, plain and compressed, with their samples; an unknown `DS-` dataset;
   an unknown reporter, an empty cube; and a filter on a dimension `DS-059358` lacks,
-  which the Comext base does not refuse but counts unfiltered and answers with HTTP 413
-  as too large, with an `error` array whose label, upstream's `EXTRACTION_TOO_BIG` text,
-  now reaches the caller: the error mapping reads the faults of an `error` array at HTTP
-  413 as it does at 400 and 404. For `DS-045409`, EU trade since 1988 by HS2-4-6 and
-  CN8, the first asynchronous answer and the first `EXTRACTION_TOO_BIG` fault recorded
-  replace the tests on the user guide's documented bodies. One more live test, on
-  `DS-059358`, checks nightly that the Comext base answers.
+  which the Comext base does not refuse as the main base does but answers with HTTP 413
+  as too large (the estimate, 151,971,120 rows, is that of an unfiltered query, so the
+  unknown filter seems to be ignored), with an `error` array whose label, upstream's
+  `EXTRACTION_TOO_BIG` text, now reaches the caller: the error mapping reads the faults
+  of an `error` array at HTTP 413 as it does at 400 and 404. For `DS-045409`, EU trade
+  since 1988 by HS2-4-6 and CN8, the first asynchronous answer and the first
+  `EXTRACTION_TOO_BIG` fault recorded replace the tests on the user guide's documented
+  bodies. One more live test, on `DS-059358`, checks nightly that the Comext base
+  answers.
 
 ### Changed
 

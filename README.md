@@ -216,13 +216,16 @@ exactly tasks.__all__. -->
 | `codeListQuery` (`sdmx/2.1/codelist/ESTAT/{resourceID}`), packaged | `list_codes(codelist, search)`, the codes of one of twelve codelists | `eurostat_list_codes` | alpha |
 | `dataQuery` (`sdmx/2.1/data/{flowRef}/{key}`), SDMX-CSV | `download_dataset(dataset, key, dest)`, a gzip-compressed SDMX-CSV file on disk | none: a bulk task, Python only, which the adapters skip | alpha |
 
-These seven tasks cover Eurostat's dissemination API on its two base URLs: the main one,
-`https://ec.europa.eu/eurostat/api/dissemination`, and
-`https://ec.europa.eu/eurostat/api/comext/dissemination`, where Eurostat serves the
-Comext and Prodcom datasets, whose codes start with `DS-`; the dataset's code chooses the
-base. Not covered: polling an asynchronous answer, which is refused with how to narrow
-the query; SDMX-ML and TSV; codelists other than the twelve packaged ones, which
-`list_codes` refuses naming the closest.
+Five of these tasks choose the base URL by the dataset's code: `get_data`, the three
+slices and `download_dataset` request a dataset whose code starts with `DS-`, Eurostat's
+Comext and Prodcom datasets, on `https://ec.europa.eu/eurostat/api/comext/dissemination`,
+and every other on the main base URL, `https://ec.europa.eu/eurostat/api/dissemination`.
+`list_datasets` and `list_codes` list the main base's table of contents and twelve
+codelists, and do not yet list the Comext or Prodcom datasets or their codes: the Comext
+base has no `catalogue/toc/xml`, and its codelists are not packaged yet. Not covered:
+polling an asynchronous answer, which is refused with how to narrow the query; SDMX-ML
+and TSV; codelists other than the twelve packaged ones, which `list_codes` refuses
+naming the closest.
 
 ## Upstream terms and attribution
 
