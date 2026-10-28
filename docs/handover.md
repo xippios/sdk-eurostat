@@ -25,12 +25,11 @@ package number; the GitHub number follows where there is one.
 - Merged before the release, in order: #10 the wrapper rename (`chore/wrapper-names`,
   PR 1), #11 the upstream snapshot of 2026-10-28 with the Comext base
   (`docs/upstream-2026-10-28`, PR 2), #12 the Comext client (`feature/comext-client`,
-  PR 3), then PR 4, Prodcom production (`feature/prodcom`, opened as #<n>), PR 5,
-  Comext trade (`feature/comext-trade`, opened as #<n>), and PR 6, the routine
-  reference refresh (`chore/reference-refresh`, opened as #<n>); this release PR
-  (`chore/release-0.2.0`, PR 7) last. #10 and #11 were cut from 0.1.0's `main`, each
-  later branch from the one before it; a branch behind `main` merged it forward, never
-  rebased.
+  PR 3), #13 Prodcom production (`feature/prodcom`, PR 4), #14 Comext trade
+  (`feature/comext-trade`, PR 5) and #15 the routine reference refresh
+  (`chore/reference-refresh`, PR 6); this release PR (`chore/release-0.2.0`, PR 7)
+  last. #10 and #11 were cut from 0.1.0's `main`, each later branch from the one before
+  it; a branch behind `main` merged it forward, never rebased.
 
 ## What 0.2.0 covers
 
@@ -160,8 +159,8 @@ note naming `search`; `get_data` the default cap.
   release PR runs the whole live suite once, eighteen requests, by the release-prep
   command's step 8.
 - This version's PRs, all keyless: #10 none; #11 74 requests (three probes and two
-  snapshot runs); #12 19 (the ten probes of 13:37, eight recordings, one live run); PR 4
-  9; PR 5 13; PR 6 19 (one whole refresh with `--samples`); this release PR 18 (the live
+  snapshot runs); #12 19 (the ten probes of 13:37, eight recordings, one live run); #13
+  9; #14 13; #15 19 (one whole refresh with `--samples`); this release PR 18 (the live
   suite, once).
 
 ## Decisions, by date
@@ -204,24 +203,24 @@ note naming `search`; `get_data` the default cap.
   `Cube.value` take a `str`, `SdmxCsvRow.obs_value` is `Decimal | str | None`
   (conventions §3, units and footnote markers kept as text; a type widened in a minor,
   §12).
-- 15:16, the PR 4 interview (Prodcom), Johannes: (1) a packaged list of the Comext base
-  names the codelist's full URL as its `endpoint`, the main base's twelve keep their
-  path; (2) two tasks, `get_sold_production` on DS-059358 and `get_total_production` on
-  DS-059359, one request each through `get_data`, observations under a 200-row cap;
-  (3) `indicators=None` sends no filter, every indicator, and the cap's note names
-  `indicators`; (4) the Comext lists join `list_codes` and `lists.json`, with
-  `list_products(search)` over CXT_PRODCOM2_SOLD; (5) the selector: the refresh script
-  gains `--only <name> ...`, so a feature PR fetches only the lists it adds and the
-  routine refresh stays a PR of its own (row 179).
-- 16:09, the PR 5 interview (Comext trade), Johannes: (1) two trade tasks as for
+- 15:16, the PR 4 interview (#13, Prodcom), Johannes: (1) a packaged list of the Comext
+  base names the codelist's full URL as its `endpoint`, the main base's twelve keep
+  their path; (2) two tasks, `get_sold_production` on DS-059358 and
+  `get_total_production` on DS-059359, one request each through `get_data`, observations
+  under a 200-row cap; (3) `indicators=None` sends no filter, every indicator, and the
+  cap's note names `indicators`; (4) the Comext lists join `list_codes` and
+  `lists.json`, with `list_products(search)` over CXT_PRODCOM2_SOLD; (5) the selector:
+  the refresh script gains `--only <name> ...`, so a feature PR fetches only the lists
+  it adds and the routine refresh stays a PR of its own (row 179).
+- 16:09, the PR 5 interview (#14, Comext trade), Johannes: (1) two trade tasks as for
   Prodcom, `get_trade` on DS-045409 and `get_trade_hs` on DS-059341; (2)
   `download_trade`, task-shaped on DS-045409, its positional key built from the
   structure, `product` or `reporters` required, compressed SDMX-CSV to disk; (3)
   CXT_NC, CXT_FREE_ISO and CXT_EU_FLUX packaged, and DS-059341's product list if it
   differs (it does not: its structure names CXT_NC); reporters, partners and the flow
   checked before sending, the Prodcom tasks' reporters too; (4) `freq` defaults to `M`.
-- 16:49, the session's answers to the PR 5 worker's questions: one more recording, of
-  what DS-059341 answers to a CN8 code, and no narrowing by code length, since the
+- 16:49, the session's answers to the PR 5 worker's questions (#14): one more recording,
+  of what DS-059341 answers to a CN8 code, and no narrowing by code length, since the
   structure names CXT_NC; `freq` a hand-written StrEnum `models.Freq` (`A`, `M`) in
   `models.py`, as `Lang` is (row 85), so the MCP schema lists the values; the CHANGELOG
   records 0.2.0's final behaviour only; `TO` in `list_hs`, `ZZZZZZZZ` in `list_cn8`,
@@ -230,7 +229,7 @@ note naming `search`; `get_data` the default cap.
   recorded in #12 (log 15:16), HTTP 200, `application/xml`, a SOAP envelope with status
   `SUBMITTED`, DS-045409's answer to its whole monthly flow
   (`tests/fixtures/data_query/DS-045409_asynchronous.json`); and the Statistics API's,
-  recorded in PR 5 (log 17:05), HTTP 413 with an `error` array labelled
+  recorded in #14 (log 17:05), HTTP 413 with an `error` array labelled
   `ASYNCHRONOUS_RESPONSE`, DS-059341's answer to a CN8 code
   (`tests/fixtures/get_data/DS-059341_AT_DE_15071090_cn8_on_hs_flow.json`), not the
   user guide's `warning`, which was never seen and keeps its documented-body test.
@@ -239,7 +238,7 @@ note naming `search`; `get_data` the default cap.
   which shares its status and id.
 - 17:05 and 17:21, the session: the routine refresh becomes a PR only if it changes
   more than fetch times; the table of contents gained four leaves (10,375 to 10,379),
-  so it is PR 6.
+  so it is PR 6, #15.
 
 ## Next
 
