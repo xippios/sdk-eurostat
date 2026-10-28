@@ -6,6 +6,23 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-28
+
+First release, on xippios-core 0.3.0 from PyPI (`~=0.3.0`), sdk-template v0.3.0 and
+conventions 1.21, its floor. It wraps Eurostat's dissemination API, which needs no key:
+the Statistics API's JSON-stat cubes through `get_data` and the three slices
+`get_series`, `get_latest_period` and `get_cross_section`; Eurostat's table of contents
+and twelve SDMX codelists, packaged with this version as fetched on 2026-10-27 and read
+without a request through `list_datasets` and `list_codes`; and the bulk task
+`download_dataset`, in Python only, with no MCP tool and no route, which streams an
+SDMX-CSV file to disk for `parse.parse_sdmx_csv` to read. The other six tasks are MCP
+tools and HTTP routes. The client keeps a self-imposed pace of 30 requests per minute,
+since Eurostat documents no rate in numbers, and caches its answers of HTTP 200 for five
+minutes. Comext and Prodcom datasets, polling an asynchronous answer, which is refused
+with how to narrow the query, and codelists beyond the twelve are not part of it.
+Nothing was published before, so the entries under Changed record steps on the way to
+this release.
+
 ### Added
 
 - Scaffold from [sdk-template](https://github.com/xippios/sdk-template): configured
@@ -98,9 +115,9 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 
 - `xippios-core` 0.3.0 from PyPI (`core_version` 0.3.0: `~=0.3.0` and its `mcp`, `http`
-  and `testing` extras likewise), with no git pin; the template stays v0.2.2, and the
-  adoption of template v0.3.0 follows as a PR of its own. Core 0.3.0 keeps the SDMX
-  series `key` of this keyless source as data, not as a credential (ADR-0019,
+  and `testing` extras likewise), with no git pin, while the template was still v0.2.2;
+  template v0.3.0 came in an adoption of its own, the last entry below. Core 0.3.0 keeps
+  the SDMX series `key` of this keyless source as data, not as a credential (ADR-0019,
   decision 6), and brings `AsyncClient.download`, `decode_text` and `decode_csv` for
   bulk files (ADR-0019, decisions 1 and 2); `pydantic-settings`, which core no longer
   depends on, and `python-dotenv` with it leave `uv.lock`.
