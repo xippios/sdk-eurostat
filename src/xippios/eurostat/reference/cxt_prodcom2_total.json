@@ -1,7 +1,7 @@
 {
   "param": "product",
   "endpoint": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_TOTAL",
-  "fetched": "2026-10-28T14:25:02Z",
+  "fetched": "2026-10-28T16:08:28Z",
   "records": [
     {
       "code": "08111133",

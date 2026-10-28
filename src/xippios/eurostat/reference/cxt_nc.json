@@ -1,7 +1,7 @@
 {
   "param": "product",
   "endpoint": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_NC",
-  "fetched": "2026-10-28T15:13:49Z",
+  "fetched": "2026-10-28T16:08:34Z",
   "records": [
     {
       "code": "00",

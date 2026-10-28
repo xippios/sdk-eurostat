@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Cut by scripts/refresh_reference.py with its samples option from https://ec.europa.eu/eurostat/api/dissemination/catalogue/toc/xml, creationDate 20261027T1000, 23310491 bytes, sha256 40043970a6ecd003df517d839d0322d2d7a108b04a962bde58bd944b2b491768, fetched 2026-10-27T19:55:14Z: the folder apro_mk with its leaves apro_mk_cola, apro_mk_farm and the folders above it, every other branch and leaf left out. -->
-<nt:tree xmlns:nt="urn:eu.europa.ec.eurostat.navtree" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:eu.europa.ec.eurostat.navtree https://ec.europa.eu/eurostat/api/dissemination/catalogue/toc/TableOfContent.xsd" creationDate="20261027T1000">
+<!-- Cut by scripts/refresh_reference.py with its samples option from https://ec.europa.eu/eurostat/api/dissemination/catalogue/toc/xml, creationDate 20261028T1000, 23350287 bytes, sha256 7a804e3c1ff7299606dbd0148484e3ac9cf88be76b28f8cbaf75a0043d5a3dc2, fetched 2026-10-28T16:08:00Z: the folder apro_mk with its leaves apro_mk_cola, apro_mk_farm and the folders above it, every other branch and leaf left out. -->
+<nt:tree xmlns:nt="urn:eu.europa.ec.eurostat.navtree" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:eu.europa.ec.eurostat.navtree https://ec.europa.eu/eurostat/api/dissemination/catalogue/toc/TableOfContent.xsd" creationDate="20261028T1000">
   <nt:branch>
     <nt:title language="en">Database by themes</nt:title>
     <nt:title language="fr">Base de données par thèmes</nt:title>
