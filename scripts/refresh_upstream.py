@@ -17,15 +17,17 @@ served beside them. This script writes:
   the page's main region, headings, paragraphs, lists, tables, code and links, without
   the site's header, footer, in-page navigation, scripts and styles. A table with merged
   cells or a nested table stays HTML (conventions §3); links and images are absolute.
-- ``api/<file>``: the WADL files and the OpenAPI document in ``DOCUMENTS``, verbatim. The
-  service generates its WADL files per request, with sibling elements in an order that
-  changes between requests; a WADL answer whose lines, each with the lines enclosing it by
-  indentation, are those of the file already here leaves the file as it is (the namespace
-  prefixes a line declares for itself, which the service numbers in document order, are
-  masked for the comparison).
-- ``samples/<file>``: two small answers, verbatim: the Statistics API's JSON-stat answer
-  ``JSON_STAT_URL`` and the SDMX 2.1 API's SDMX-CSV answer ``SDMX_CSV_URL``, structural
-  samples of the formats (test fixtures are recorded separately, never here).
+- ``api/<file>``: the WADL files and the OpenAPI document in ``DOCUMENTS``, verbatim; those
+  of the second base, ``COMEXT_BASE``, which serves the ``DS-`` datasets of Comext and
+  Prodcom, under ``api/comext/``. The service generates its WADL files per request, with
+  sibling elements in an order that changes between requests; a WADL answer whose lines,
+  each with the lines enclosing it by indentation, are those of the file already here
+  leaves the file as it is (the namespace prefixes a line declares for itself, which the
+  service numbers in document order, are masked for the comparison).
+- ``samples/<file>``: small answers, verbatim, two for each dataset in ``SAMPLES``, one
+  dataset of each base: the Statistics API's JSON-stat answer and the SDMX 2.1 API's
+  SDMX-CSV answer, structural samples of the formats (test fixtures are recorded
+  separately, never here).
 - ``FETCHED.md``: regenerated entirely: what was fetched, when, its size and sha256, the
   pages not fetched and why, and the attribution quoted from Eurostat's copyright notice.
 
@@ -87,6 +89,7 @@ GUIDE_PAGES = (
     "api-getting-started/api",
     "api-getting-started/sdmx2.1",
     "api-getting-started/catalogue-api",
+    "api-getting-started/comext-database",
     "api-detailed-guidelines",
     "api-detailed-guidelines/api-statistics",
     "api-detailed-guidelines/asynchronous-api",
@@ -103,37 +106,68 @@ GUIDE_PAGES = (
 """User-guide pages, relative to ``GUIDE_BASE``; each is written to ``user-guide/<path>.md``."""
 
 API_BASE = "https://ec.europa.eu/eurostat/api/dissemination/"
+COMEXT_BASE = "https://ec.europa.eu/eurostat/api/comext/dissemination/"
+"""The second base, for the ``DS-`` datasets of Comext and Prodcom (``prefixed-datasets``)."""
 DOCUMENTS = (
     (
         "api/statistics-rest.wadl",
-        "statistics/1.0/statistics-rest.wadl",
+        f"{API_BASE}statistics/1.0/statistics-rest.wadl",
         "WADL of the Statistics API",
     ),
-    ("api/sdmx-rest.wadl", "sdmx/2.1/sdmx-rest.wadl", "WADL of the SDMX 2.1 API"),
-    ("api/catalogue.wadl", "catalogue/catalogue.wadl", "WADL of the Catalogue API"),
-    ("api/async.wadl", "1.0/async/async.wadl", "WADL of the asynchronous API"),
+    ("api/sdmx-rest.wadl", f"{API_BASE}sdmx/2.1/sdmx-rest.wadl", "WADL of the SDMX 2.1 API"),
+    ("api/catalogue.wadl", f"{API_BASE}catalogue/catalogue.wadl", "WADL of the Catalogue API"),
+    ("api/async.wadl", f"{API_BASE}1.0/async/async.wadl", "WADL of the asynchronous API"),
     (
         "api/sdmx-rest.yaml",
-        "swagger-ui/sdmx-rest.yaml",
+        f"{API_BASE}swagger-ui/sdmx-rest.yaml",
         'OpenAPI 3.0 document "Eurostat SDMX RESTful API", the user guide\'s consolidated '
         "Open API specification: SDMX 2.1 and 3.0, asynchronous and catalogue paths; served "
         "under `swagger-ui/`, stored without `swagger` in its path, which detect-secrets' "
         "`is_swagger_file` filter would skip",
     ),
+    (
+        "api/comext/statistics-rest.wadl",
+        f"{COMEXT_BASE}statistics/1.0/statistics-rest.wadl",
+        "WADL of the Statistics API on the Comext base",
+    ),
+    (
+        "api/comext/sdmx-rest.wadl",
+        f"{COMEXT_BASE}sdmx/2.1/sdmx-rest.wadl",
+        "WADL of the SDMX 2.1 API on the Comext base",
+    ),
+    (
+        "api/comext/sdmx-rest-3.0.wadl",
+        f"{COMEXT_BASE}sdmx/3.0/sdmx-rest.wadl",
+        "WADL of the SDMX 3.0 API on the Comext base, kept as one of the base's five; SDMX "
+        "3.0 itself is not wrapped",
+    ),
+    (
+        "api/comext/catalogue.wadl",
+        f"{COMEXT_BASE}catalogue/catalogue.wadl",
+        "WADL of the Catalogue API on the Comext base",
+    ),
+    (
+        "api/comext/async.wadl",
+        f"{COMEXT_BASE}1.0/async/async.wadl",
+        "WADL of the asynchronous API on the Comext base",
+    ),
 )
-"""Upstream documents kept verbatim: snapshot path, URL relative to ``API_BASE``, note."""
+"""Upstream documents kept verbatim: snapshot path, URL, note."""
 
-SAMPLE_DATASET = "apro_mk_cola"
-JSON_STAT_FILE = "samples/apro_mk_cola-json-stat.json"
-JSON_STAT_URL = (
-    f"{API_BASE}statistics/1.0/data/{SAMPLE_DATASET}?format=JSON&lang=EN&geo=AT&time=2022&time=2023"
+SAMPLES = (
+    (API_BASE, "apro_mk_cola", "geo=AT&time=2022&time=2023", "A...THS_T.AT"),
+    (
+        COMEXT_BASE,
+        "DS-059358",
+        "reporter=AT&product=10411200&sinceTimePeriod=2022&untilTimePeriod=2023",
+        "A.AT.10411200.",
+    ),
 )
-SDMX_CSV_FILE = "samples/apro_mk_cola-sdmx-csv.csv"
-SDMX_KEY = "A...THS_T.AT"
-SDMX_CSV_URL = (
-    f"{API_BASE}sdmx/2.1/data/{SAMPLE_DATASET}/{SDMX_KEY}"
-    "?format=SDMX-CSV&startPeriod=2022&endPeriod=2023"
-)
+"""Datasets sampled twice each, from the Statistics API as ``samples/<dataset>-json-stat.json``
+and from the SDMX 2.1 API as ``samples/<dataset>-sdmx-csv.csv``: base, dataset, the
+JSON-stat query's filters and the SDMX key, for 2022 and 2023. ``apro_mk_cola`` is a dataset
+of the main base, ``DS-059358`` (Prodcom: sold production, exports and imports) one of the
+Comext base."""
 KEY_ORDER_PAGE = "api-detailed-guidelines/sdmx2-1/data-query"
 KEY_ORDER_SENTENCE = "The key parameter defines values of the dimensions in the order of structure."
 """The data-query page's statement of the key's positions, checked to be there."""
@@ -149,12 +183,24 @@ LOGIN_HOST = "webgate.ec.europa.eu"
 
 NOT_REQUESTED = (
     (
-        f"{GUIDE_BASE}api-getting-started/comext-database",
-        "Comext and Prodcom (`DS-` datasets) are 0.2.0 (D44)",
+        "https://ec.europa.eu/eurostat/web/international-trade-in-goods/database#comext",
+        "the Comext database's page on Eurostat's website, linked from the Comext page; not "
+        "API documentation",
     ),
     (
-        "https://ec.europa.eu/eurostat/api/comext/dissemination",
-        "the Comext host and its WADL files; Comext and Prodcom are 0.2.0 (D44)",
+        "https://ec.europa.eu/eurostat/web/prodcom/overview",
+        "the PRODCOM statistics' overview page, linked from the Comext page; not API documentation",
+    ),
+    (
+        f"{COMEXT_BASE}sdmx/2.1/dataflow/ESTAT/all",
+        "the Comext base's list of its dataflows, linked from the Comext page; an API answer, "
+        "not documentation",
+    ),
+    (
+        "http://ec.europa.eu/eurostat/estat-navtree-portlet-prod/BulkDownloadListing"
+        "?sort=1&dir=comext",
+        "the Comext domain's bulk download listing (CSV files with their metadata), linked "
+        "from the Comext page; files outside the API",
     ),
     (f"{GUIDE_BASE}api-detailed-guidelines/sdmx3-0", "SDMX 3.0 is out of 0.1.0's scope"),
     (f"{GUIDE_BASE}api-detailed-guidelines/sdmx3-0/data-query", "SDMX 3.0 is out of 0.1.0's scope"),
@@ -1078,7 +1124,7 @@ def _placed_lines(text: bytes) -> Counter[tuple[tuple[bytes, ...], bytes]]:
     return placed
 
 
-def document(out: Path, path: str, relative: str, note: str) -> Row:
+def document(out: Path, path: str, url: str, note: str) -> Row:
     """Fetch one upstream document, kept verbatim.
 
     The service generates its WADL files per request and orders sibling elements
@@ -1086,7 +1132,6 @@ def document(out: Path, path: str, relative: str, note: str) -> Row:
     lines enclosing it, are those of the file already in the snapshot leaves that file as
     it is, so a refresh shows real changes only. Other documents compare byte for byte.
     """
-    url = API_BASE + relative
     body = fetch(url).body
     if not body.strip():
         raise _unexpected(url, "a document", "an empty body")
@@ -1107,57 +1152,67 @@ def _no_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 
 def samples(key_order: str) -> list[Row]:
-    """Fetch the two samples; check the dimension order and that the CSV rows lie in the key."""
-    stat = fetch(JSON_STAT_URL)
-    try:
-        cube = json.loads(stat.body, object_pairs_hook=_no_duplicates)
-    except ValueError as error:
-        raise SystemExit(f"GET {JSON_STAT_URL}: not usable JSON ({error})") from None
-    if not isinstance(cube, dict) or cube.get("class") != "dataset" or "id" not in cube:
-        raise SystemExit(f"GET {JSON_STAT_URL}: not a JSON-stat dataset (no class or id)")
-    ids = [str(name) for name in cube["id"]]
-    dimensions = [name for name in ids if name != "time"]
-    stat_note = (
-        f"verbatim; a JSON-stat {cube.get('version', '(no version)')} dataset "
-        f"(specification: {JSON_STAT_SPEC}, cited, not snapshotted) with the dimensions "
-        f"{', '.join(f'`{name}`' for name in ids)}; a structural sample of the Statistics "
-        "API's answer, not a test fixture"
-    )
-
-    sdmx = fetch(SDMX_CSV_URL)
-    rows = list(csv.reader(io.StringIO(_text(sdmx))))
-    if len(rows) < 2:
-        raise SystemExit(f"GET {SDMX_CSV_URL}: no data rows")
-    header = rows[0]
-    if "TIME_PERIOD" not in header or len(header) < 3:
-        raise SystemExit(f"GET {SDMX_CSV_URL}: no TIME_PERIOD column in {header}")
-    columns = header[2 : header.index("TIME_PERIOD")]
-    key = SDMX_KEY.split(".")
-    if columns != dimensions or len(key) != len(dimensions):
-        raise SystemExit(
-            f"The SDMX-CSV dimension columns {columns}, the JSON-stat dimensions "
-            f"{dimensions} and the key {SDMX_KEY} do not line up. Look at both by hand."
+    """Fetch the samples; check the dimension order and that the CSV rows lie in the key."""
+    found: list[Row] = []
+    for base, dataset, filters, sdmx_key in SAMPLES:
+        stat_url = f"{base}statistics/1.0/data/{dataset}?format=JSON&lang=EN&{filters}"
+        sdmx_url = (
+            f"{base}sdmx/2.1/data/{dataset}/{sdmx_key}"
+            "?format=SDMX-CSV&startPeriod=2022&endPeriod=2023"
         )
-    for row in rows[1:]:
-        values = dict(zip(header, row, strict=True))
-        wrong = [
-            name
-            for name, code in zip(dimensions, key, strict=True)
-            if code and values[name] != code
+        where = "" if base == API_BASE else " on the Comext base"
+        stat = fetch(stat_url)
+        try:
+            cube = json.loads(stat.body, object_pairs_hook=_no_duplicates)
+        except ValueError as error:
+            raise SystemExit(f"GET {stat_url}: not usable JSON ({error})") from None
+        if not isinstance(cube, dict) or cube.get("class") != "dataset" or "id" not in cube:
+            raise SystemExit(f"GET {stat_url}: not a JSON-stat dataset (no class or id)")
+        ids = [str(name) for name in cube["id"]]
+        dimensions = [name for name in ids if name != "time"]
+        stat_note = (
+            f"verbatim; a JSON-stat {cube.get('version', '(no version)')} dataset "
+            f"(specification: {JSON_STAT_SPEC}, cited, not snapshotted) with the dimensions "
+            f"{', '.join(f'`{name}`' for name in ids)}; a structural sample of the Statistics "
+            f"API's answer{where}, not a test fixture"
+        )
+
+        sdmx = fetch(sdmx_url)
+        rows = list(csv.reader(io.StringIO(_text(sdmx))))
+        if len(rows) < 2:
+            raise SystemExit(f"GET {sdmx_url}: no data rows")
+        header = rows[0]
+        if "TIME_PERIOD" not in header or len(header) < 3:
+            raise SystemExit(f"GET {sdmx_url}: no TIME_PERIOD column in {header}")
+        columns = header[2 : header.index("TIME_PERIOD")]
+        key = sdmx_key.split(".")
+        if columns != dimensions or len(key) != len(dimensions):
+            raise SystemExit(
+                f"The SDMX-CSV dimension columns {columns}, the JSON-stat dimensions "
+                f"{dimensions} and the key {sdmx_key} do not line up. Look at both by hand."
+            )
+        for row in rows[1:]:
+            values = dict(zip(header, row, strict=True))
+            wrong = [
+                name
+                for name, code in zip(dimensions, key, strict=True)
+                if code and values[name] != code
+            ]
+            if wrong:
+                raise SystemExit(f"GET {sdmx_url}: a row outside the key in {wrong}: {row}")
+        order = ".".join(dimensions)
+        sdmx_note = (
+            f"verbatim; SDMX-CSV with the columns {', '.join(f'`{name}`' for name in header)}; "
+            f"the key `{sdmx_key}` follows the dimension order {order}, as the CSV header and "
+            f"the JSON-stat sample's `id` list it, and `user-guide/{KEY_ORDER_PAGE}.md` states "
+            f'"{key_order}"; a structural sample of the SDMX 2.1 API\'s answer{where}, not a '
+            "test fixture"
+        )
+        found += [
+            Row(f"samples/{dataset}-json-stat.json", stat_url, stat.body, stat_note),
+            Row(f"samples/{dataset}-sdmx-csv.csv", sdmx_url, sdmx.body, sdmx_note),
         ]
-        if wrong:
-            raise SystemExit(f"GET {SDMX_CSV_URL}: a row outside the key in {wrong}: {row}")
-    order = ".".join(dimensions)
-    sdmx_note = (
-        f"verbatim; SDMX-CSV with the columns {', '.join(f'`{name}`' for name in header)}; "
-        f"the key `{SDMX_KEY}` follows the dimension order {order}, as the CSV header and the "
-        f"JSON-stat sample's `id` list it, and `user-guide/{KEY_ORDER_PAGE}.md` states "
-        f'"{key_order}"; a structural sample of the SDMX 2.1 API\'s answer, not a test fixture'
-    )
-    return [
-        Row(JSON_STAT_FILE, JSON_STAT_URL, stat.body, stat_note),
-        Row(SDMX_CSV_FILE, SDMX_CSV_URL, sdmx.body, sdmx_note),
-    ]
+    return found
 
 
 def wiki_page(url: str, subject: str) -> Missing:
@@ -1309,7 +1364,7 @@ def render_fetched(
             "title, headings, paragraphs, lists, tables, code and links and dropping the",
             "site's navigation, header, footer, scripts and styles; tables with merged cells",
             "or a nested table are kept as simplified HTML. The WADL files, the OpenAPI",
-            "document and the two samples are kept verbatim. A publisher's objection is met",
+            "document and the samples are kept verbatim. A publisher's objection is met",
             "by replacing the text with a summary that keeps the names and semantics the",
             "wrappers rely on.",
         ),
@@ -1336,7 +1391,9 @@ def render_fetched(
             "other file they are those of the body as fetched, which is the file.",
         ),
         *_paragraph(
-            f"The WADL files and the OpenAPI document come from {API_BASE}. The service",
+            f"The WADL files and the OpenAPI document come from {API_BASE}, those under",
+            f"`api/comext/` from {COMEXT_BASE}, the second base, which serves the `DS-`",
+            "datasets of Comext and Prodcom. The service",
             "generates its WADL files per request and orders sibling elements (`resource`,",
             "`method`) differently from one request to the next. A WADL answer whose lines,",
             "each taken with the lines that enclose it by indentation, are exactly those of",
@@ -1344,12 +1401,13 @@ def render_fetched(
             "a line moved under another parent included; the namespace prefixes a line",
             "declares for itself (`ns3`, `ns4`, numbered by the service in document order)",
             "are masked for that comparison. The OpenAPI document is compared byte for",
-            "byte. The two samples",
-            f"are answers for one dataset (`{SAMPLE_DATASET}`), one country and two periods,",
-            "the Statistics API's JSON-stat and the SDMX 2.1 API's SDMX-CSV; the script",
-            "checks that the SDMX-CSV's dimension columns follow the order of the JSON-stat",
-            "`id`, that the key has one position per dimension, and that every SDMX-CSV row",
-            "lies inside the key. JSON-stat 2.0 is a third-party",
+            "byte. The samples",
+            "are answers for one dataset of each base",
+            f"({', '.join(f'`{dataset}`' for _, dataset, _, _ in SAMPLES)}), one country and",
+            "two periods, each the Statistics API's JSON-stat and the SDMX 2.1 API's SDMX-CSV;",
+            "the script checks for each that the SDMX-CSV's dimension columns follow the order",
+            "of the JSON-stat `id`, that the key has one position per dimension, and that",
+            "every SDMX-CSV row lies inside the key. JSON-stat 2.0 is a third-party",
             f"specification ({JSON_STAT_SPEC}): cited, not snapshotted.",
         ),
         *_paragraph(
@@ -1435,7 +1493,7 @@ def main() -> None:
             f"user-guide/{KEY_ORDER_PAGE}.md no longer states {KEY_ORDER_SENTENCE!r}; the "
             "sample's key order needs a look by hand. Nothing was written."
         )
-    _log(f"Documents: {API_BASE}")
+    _log(f"Documents: {API_BASE}, {COMEXT_BASE}")
     rows += [document(out, *entry) for entry in DOCUMENTS]
     _log("Samples")
     rows += samples(KEY_ORDER_SENTENCE)
