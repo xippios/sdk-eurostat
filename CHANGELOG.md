@@ -142,6 +142,15 @@ All notable changes to this project are documented here. The format follows
   dimension it feeds (`params.CodelistOrigin`), in place of a tuple of ids; iterating it
   still gives the ids. `lists.json`'s `fetched` is the latest `fetched` among the
   packaged lists, which a full refresh writes as before.
+- The packaged reference data refreshed on 2026-10-28, every list in one run: the table
+  of contents, now `creationDate` `20261028T1000`, holds 10,379 leaves, four more than
+  on 2026-10-27 (the air passenger tables `ttr00012`, `ttr00016` and `ttr00017`, and
+  `sdg_07_10` filed under one more folder) and none fewer, with newer update times and
+  periods on some leaves. The eighteen codelists are unchanged upstream, their versions,
+  last updates, codes and labels the same; only their fetch times are newer. The
+  parser-test samples were cut again from the same run: the cut of the table of
+  contents differs only in its `creationDate` and its provenance comment, the STATINFO
+  answer not at all.
 
 ## [0.1.0] - 2026-10-28
 

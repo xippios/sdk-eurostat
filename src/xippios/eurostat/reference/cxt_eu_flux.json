@@ -1,7 +1,7 @@
 {
   "param": "flow",
   "endpoint": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_EU_FLUX",
-  "fetched": "2026-10-28T15:13:51Z",
+  "fetched": "2026-10-28T16:08:37Z",
   "records": [
     {
       "code": "1",

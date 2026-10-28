@@ -58,7 +58,7 @@ is the list's ``fetched``, ``meta.endpoint`` the operation it was fetched from
 (``catalogue/toc/xml``, ``sdmx/2.1/codelist/ESTAT/<ID>``, or for a codelist of the
 Comext base its full URL), ``meta.total`` ``None``. Their release metadata (Johannes,
 2026-10-27, D4) comes from ``reference/lists.json``: for the table of contents
-``meta.vintage`` is its ``creationDate`` as printed (``"20261027T1000"``) and
+``meta.vintage`` is its ``creationDate`` as printed (``"20261028T1000"``) and
 ``meta.published_at`` the same time without a zone, ``published_at_naive`` set (ADR-0022
 rule 2); for a codelist ``meta.vintage`` is its version (``"28.0"``) and
 ``meta.published_at`` its ``LAST_UPDATED`` annotation with the zone Eurostat prints, or
@@ -260,7 +260,7 @@ family's 200 rows or 64 KB: no agent needs the whole table of contents at once (
 and a search narrows it to what it looks for. ``list_codes`` takes up to 1,000 rows within
 the family's 64 KB (ADR-0016 decision 4): a code of the main base's codelists is about 45
 to 70 bytes, so a codelist comes whole up to the byte bound, eleven of the twelve
-packaged on 2026-10-27 (UNIT's 773 codes are 57,670 bytes), and CXT_INDICATORS too; GEO's
+packaged on 2026-10-28 (UNIT's 773 codes are 57,670 bytes), and CXT_INDICATORS too; GEO's
 thousands and the two PRODCOM product lists, whose labels are long, are cut with the
 note (CXT_PRODCOM2_TOTAL's 822 codes at 652 rows on 2026-10-28). ``list_products`` takes
 the same cap, so a search for a NACE class (``"1041"``: its 42 products of oils and fats
@@ -713,7 +713,7 @@ async def list_datasets_async(search: str | None = None) -> Result[list[Dataset]
     ``search`` keeps the leaves whose code or title contains the text, ignoring case:
     give one, since the whole list is far more than one answer shows. A dataset's
     ``code`` is what ``get_data`` and the slices take as ``dataset``. ``meta.vintage`` is
-    the table of contents' ``creationDate`` as printed (``"20261027T1000"``) and
+    the table of contents' ``creationDate`` as printed (``"20261028T1000"``) and
     ``meta.published_at`` the same time, which Eurostat prints without a zone
     (``meta.published_at_naive``); ``meta.retrieved_at`` is when the package's copy was
     fetched. A dataset Eurostat added since is missing until the package is refreshed.
