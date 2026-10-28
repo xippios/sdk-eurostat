@@ -18,10 +18,10 @@ package number; the GitHub number follows where there is one.
   first publish attempt failed before any upload on a transient HTTP 502 from
   Sigstore's Rekor; re-running the failed job, which Johannes approves again, uploaded
   it. Confirm the release at `https://pypi.org/pypi/xippios-eurostat/json` afterwards.
-- Floor, unchanged since 0.1.0: `xippios-core~=0.3.0` from PyPI with its `mcp`, `http`
-  and `testing` extras, no git pin; sdk-template v0.3.0 (`.copier-answers.yml`,
-  `_commit: v0.3.0`, keyless and flat, `has_files: false`); conventions 1.22, whose
-  naming rule for endpoint wrappers #10 applied.
+- Floor: core 0.3.0 and template v0.3.0, unchanged since 0.1.0; conventions 1.22
+  (0.1.0: 1.21), whose naming rule #10 applied. That is `xippios-core~=0.3.0` from PyPI
+  with its `mcp`, `http` and `testing` extras, no git pin, and sdk-template v0.3.0
+  (`.copier-answers.yml`, `_commit: v0.3.0`, keyless and flat, `has_files: false`).
 - Merged before the release, in order: #10 the wrapper rename (`chore/wrapper-names`,
   PR 1), #11 the upstream snapshot of 2026-10-28 with the Comext base
   (`docs/upstream-2026-10-28`, PR 2), #12 the Comext client (`feature/comext-client`,
@@ -117,15 +117,16 @@ named lists alone; without it the run is the whole refresh, nineteen keyless req
 
 `MCP_CAPS`: the slices 200 rows with a note each; the production tasks 200 rows with a
 note naming `reporters`, `indicators` and `since`; the trade tasks 200 rows with a note
-naming `partners`, `indicators`, `since` and `freq`; `list_datasets` the family's cap
-with a note naming `search`; `list_codes`, `list_products`, `list_cn8` and `list_hs`
-1,000 rows within the family's 64 KB with a note naming `search`; `get_data` the default
-cap.
+naming `reporters`, `partners`, `indicators`, one `flow`, `since` and `freq`;
+`list_datasets` the family's cap with a note naming `search`; `list_codes`,
+`list_products`, `list_cn8` and `list_hs` 1,000 rows within the family's 64 KB with a
+note naming `search`; `get_data` the default cap.
 
 ## What 0.2.0 leaves out
 
-- Polling an asynchronous answer (G5 Q3; 0.1.0's design round Q4). `classify` refuses it,
-  in both recorded shapes and in the one the user guide documents, with
+- Polling an asynchronous answer (G5 Q3; 0.1.0's design round Q4, in the log's
+  2026-10-27 lines and `git show v0.1.0:docs/handover.md`). `classify` refuses it, in
+  both recorded shapes and in the one the user guide documents, with
   `InvalidRequestError` naming how to narrow the query; the Statistics API's refusal
   also says to send the request again later, that API's own route.
 - CPA 2.2 lists: they wait for a consumer (G5 Q4).
@@ -138,8 +139,9 @@ cap.
 - Narrowing `get_trade_hs` by HS length: DS-059341's structure names CXT_NC, so a CN8
   code passes its check and Eurostat answers it asynchronously (the session, log 16:49).
 - SDMX 3.0 and TSV: the Comext base's SDMX 3.0 WADL is in the snapshot and nothing reads
-  it; TSV and SDMX-ML are never read (0.1.0's design round Q2). No comparison across
-  datasets or sources (ADR-0003).
+  it; TSV and SDMX-ML are never read (0.1.0's design round Q2, in the log's 2026-10-27
+  lines and `git show v0.1.0:docs/handover.md`). No comparison across datasets or
+  sources (ADR-0003).
 
 ## Pace, cache, live budget
 
@@ -153,8 +155,10 @@ cap.
   eighteen keyless requests: one smoke test per task, `list_cn8` and `list_hs` sharing
   one fetch of CXT_NC (about 6 MB); four for `get_data`, one per dataset of 0.1.0's
   design round and one on DS-059358, which is the Comext base's reachability check; and
-  the main base's reachability check (G5 Q7 said about 17). A PR's live run spends at
-  most 10, counted in its body (G5 Q7).
+  the main base's reachability check (G5 Q7 said about 17). Each tasks PR's live run
+  spends at most 10, counted in its body (G5 Q7, the briefing's budget line); the
+  release PR runs the whole live suite once, eighteen requests, by the release-prep
+  command's step 8.
 - This version's PRs, all keyless: #10 none; #11 74 requests (three probes and two
   snapshot runs); #12 19 (the ten probes of 13:37, eight recordings, one live run); PR 4
   9; PR 5 13; PR 6 19 (one whole refresh with `--samples`); this release PR 18 (the live
@@ -177,7 +181,8 @@ cap.
   product for 2023 HTTP 413, the SOAP fault `EXTRACTION_TOO_BIG`.
 - 13:55, G5, the 0.2.0 design round, Johannes, seven answers: Q1 one client, two base
   URLs, one pace, cache and `classify`, so 0.1.0's seven tasks serve `DS-` datasets at
-  once; Q2 the production and trade tasks read JSON-stat cubes through `getData` on the
+  once (five, as built: `get_data`, the three slices and `download_dataset`); Q2 the
+  production and trade tasks read JSON-stat cubes through `getData` on the
   Comext base, one request each, composing `get_data` as the slices do; Q3 no polling,
   the real asynchronous answer recorded in place of the documented-body test; Q4
   CXT_PRODCOM2_SOLD and CXT_INDICATORS packaged at latest, DS-059359's list only if it
@@ -189,10 +194,11 @@ cap.
   documented where no real answer exists; (2) the Comext base mirrors the main base's
   fixtures for DS-059358 (a cube, an unknown `DS-` dataset, an unknown dimension, an
   unknown code, the data query plain and compressed with the audited
-  `.secrets.baseline` entry, the asynchronous answer and the HTTP 413 fault); (3) one
-  live test on DS-059358, the Comext reachability check; (4) the docstrings, CLAUDE.md
-  and the README say that 0.1.0's seven tasks serve `DS-` datasets, through one
-  documented routing helper in `_client.py`.
+  `.secrets.baseline` entry), plus the asynchronous answer and the HTTP 413 fault (on
+  DS-045409); (3) one live test on DS-059358, the Comext reachability check; (4) the
+  docstrings, CLAUDE.md and the README say that 0.1.0's seven tasks serve `DS-`
+  datasets (five, as built: `get_data`, the three slices and `download_dataset`),
+  through one documented routing helper in `_client.py`.
 - 14:19, the PR 3 interview's fifth answer, Johannes: the text values. A value is a
   number where it parses, else the text as Eurostat printed it: `Observation.value` and
   `Cube.value` take a `str`, `SdmxCsvRow.obs_value` is `Decimal | str | None`
@@ -307,6 +313,7 @@ Extended during 0.2.0, all open:
 | 124 | sdk-template | the secret scan flags a recorder body_base64 line as a high-entropy string: every binary fixture of ADR-0019 trips detect-secrets (from sdk-eurostat PR 8) |
 | 125 | sdk-core | decode_csv over an open text stream, or opening a gzip path itself (from sdk-eurostat PR 8) |
 | 126 | sdk-core | gap: conventions §2 and ADR-0020 decision 1 say parse_<kind>(path) -> list[Model]; a bulk file parser yields lazily (from sdk-eurostat PR 8) |
+| 137 | sdk-core | gap: a first release (version unchanged at 0.1.0) is recognised by neither review-checklist item 13 nor sdk-gates merge-class rule 5, and the definition-of-done Docs item 7 (an entry under Unreleased) is untrue for every release PR (from the sdk-eurostat 0.1.0 release review) |
 
-Row 135, this package's own wrapper rename, landed as #10; its row file still reads
-proposed.
+Row 135, this package's own wrapper rename, reads done since 2026-10-28 20:31: it
+landed in sdk-eurostat#10.
