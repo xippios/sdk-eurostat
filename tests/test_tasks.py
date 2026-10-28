@@ -2,7 +2,7 @@
 
 ``/add-endpoint`` and ``/record-fixture`` add them.
 
-The fixtures are ``tests/fixtures/getData/<case>.json``, recorded on 2026-10-27; each
+The fixtures are ``tests/fixtures/get_data/<case>.json``, recorded on 2026-10-27; each
 test sends exactly the recorded URL, parameter order included. The asynchronous answer
 is not recorded (``tests/test_client.py`` says why); its test serves the user guide's
 documented body. The slices (``get_series``, ``get_latest_period``,
@@ -12,7 +12,7 @@ answers too: ``*_series_*``, ``*_latest_*`` and ``*_cross_section_*``, plus two 
 refused, and ``unknown_code``, an empty cross-section). The list tasks
 (``list_datasets``, ``list_codes``) send nothing: their tests read the packaged files
 under ``src/xippios/eurostat/reference/`` and take the expected values from them. The
-bulk task ``download_dataset`` replays ``tests/fixtures/dataQuery/<case>.json``, the
+bulk task ``download_dataset`` replays ``tests/fixtures/data_query/<case>.json``, the
 SDMX 2.1 data query recorded on 2026-10-27 with ``compressed=true`` (a gzip file) and
 without it, through core's ``download``; its refusals of an asynchronous answer and of
 an extraction too big serve the user guide's documented bodies, as ``get_data``'s does.
@@ -71,23 +71,23 @@ from xippios.eurostat.parse import parse_sdmx_csv
 
 FIXTURES = Path(__file__).parent / "fixtures"
 GUIDE = Path(__file__).parents[1] / "docs" / "upstream" / "user-guide" / "api-detailed-guidelines"
-ENDPOINT = "getData"
+GET_DATA = "get_data"
 CEST = timezone(timedelta(hours=2))
 
 
 def recorded_url(case: str) -> str:
-    return load_fixture(FIXTURES / ENDPOINT / f"{case}.json").request.url
+    return load_fixture(FIXTURES / GET_DATA / f"{case}.json").request.url
 
 
 def recorded_updated(case: str) -> str:
-    body = json.loads(load_fixture(FIXTURES / ENDPOINT / f"{case}.json").response.body)
+    body = json.loads(load_fixture(FIXTURES / GET_DATA / f"{case}.json").response.body)
     updated: str = body["updated"]
     return updated
 
 
 def test_get_data_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
     case = "apro_mk_cola_AT_2022_2023"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     before = datetime.now(UTC)
     result = tasks.get_data("apro_mk_cola", {"geo": "AT", "time": ["2022", "2023"]})
     after = datetime.now(UTC)
@@ -118,7 +118,7 @@ def test_get_data_answers_a_repeated_request_from_the_cache(replay_fixture: Repl
     (conventions §4; ADR-0015 decision 5), within the readings around the first call. The
     testing plugin clears the cache around each test, so the first call is a miss."""
     case = "apro_mk_cola_AT_2022_2023"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     filters = {"geo": "AT", "time": ["2022", "2023"]}
     before = datetime.now(UTC)
     first = tasks.get_data("apro_mk_cola", filters)
@@ -140,7 +140,7 @@ def test_get_data_answers_a_repeated_request_from_the_cache(replay_fixture: Repl
 
 def test_get_data_apro_cpnh1_since_until(replay_fixture: ReplayFixture) -> None:
     case = "apro_cpnh1_AT_2022_2023"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     result = tasks.get_data(
         "apro_cpnh1", {"geo": "AT"}, since_time_period="2022", until_time_period="2023"
     )
@@ -160,7 +160,7 @@ def test_get_data_apro_cpnh1_since_until(replay_fixture: ReplayFixture) -> None:
 
 def test_get_data_ef_m_farmleg_last_periods(replay_fixture: ReplayFixture) -> None:
     case = "ef_m_farmleg_AT_HLD_last_2"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     result = tasks.get_data("ef_m_farmleg", {"geo": "AT", "unit": "HLD"}, last_time_period=2)
     assert sent_urls(route) == [recorded_url(case)]
     assert result.data.id[-2:] == ["geo", "time"]
@@ -178,7 +178,7 @@ def test_get_data_ef_m_farmleg_last_periods(replay_fixture: ReplayFixture) -> No
 
 def test_get_data_unknown_code_is_an_empty_cube(replay_fixture: ReplayFixture) -> None:
     case = "unknown_code"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     result = get_data("apro_mk_cola", {"geo": "XX", "time": "2023"})
     assert sent_urls(route) == [recorded_url(case)]
     assert result.data.size[result.data.id.index("geo")] == 0
@@ -189,14 +189,14 @@ def test_get_data_unknown_code_is_an_empty_cube(replay_fixture: ReplayFixture) -
 
 
 def test_get_data_unknown_dataset(replay_fixture: ReplayFixture) -> None:
-    route = replay_fixture(ENDPOINT, "unknown_dataset")
+    route = replay_fixture(GET_DATA, "unknown_dataset")
     with pytest.raises(NotFoundError, match="NO_SUCH_DATASET"):
         tasks.get_data("no_such_dataset")
     assert sent_urls(route) == [recorded_url("unknown_dataset")]
 
 
 def test_get_data_unknown_dimension(replay_fixture: ReplayFixture) -> None:
-    replay_fixture(ENDPOINT, "unknown_dimension")
+    replay_fixture(GET_DATA, "unknown_dimension")
     with pytest.raises(InvalidRequestError, match="INVALID_QUERY_DIMENSION"):
         tasks.get_data("apro_mk_cola", {"nosuchdim": "AT"})
 
@@ -204,7 +204,7 @@ def test_get_data_unknown_dimension(replay_fixture: ReplayFixture) -> None:
 @pytest.mark.parametrize("level", [GeoLevel.COUNTRY, "country"], ids=["member", "plain"])
 def test_get_data_geo_with_geo_level(replay_fixture: ReplayFixture, level: str) -> None:
     """A plain string is accepted where the enumeration is expected, and sent as it."""
-    route = replay_fixture(ENDPOINT, "geo_with_geo_level")
+    route = replay_fixture(GET_DATA, "geo_with_geo_level")
     with pytest.raises(InvalidRequestError, match="cannot be set at the same time"):
         tasks.get_data("apro_mk_cola", {"geo": "AT"}, geo_level=cast(GeoLevel, level))
     assert sent_urls(route) == [recorded_url("geo_with_geo_level")]
@@ -212,7 +212,7 @@ def test_get_data_geo_with_geo_level(replay_fixture: ReplayFixture, level: str) 
 
 def test_get_data_takes_lang_as_a_plain_string(replay_fixture: ReplayFixture) -> None:
     case = "apro_mk_cola_AT_2022_2023"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     result = tasks.get_data(
         "apro_mk_cola", {"geo": "AT", "time": ["2022", "2023"]}, lang=cast(Lang, "EN")
     )
@@ -317,7 +317,7 @@ def test_get_data_keeps_an_updated_without_zone_as_a_naive_published_at(
     """NOT RECORDED: the recorded cube with ``updated`` stripped of its zone in memory, a
     form never seen; ``published_at`` keeps it as printed, no zone invented, with
     ``published_at_naive`` set, and the text stays the vintage (ADR-0022 rule 2)."""
-    fixture = load_fixture(FIXTURES / ENDPOINT / "apro_mk_cola_AT_2022_2023.json")
+    fixture = load_fixture(FIXTURES / GET_DATA / "apro_mk_cola_AT_2022_2023.json")
     body: dict[str, Any] = json.loads(fixture.response.body)
     body["updated"] = "2026-10-05T23:00:00"
     respx_mock.route(method="GET", host="ec.europa.eu").mock(
@@ -333,7 +333,7 @@ def test_get_data_keeps_an_updated_without_zone_as_a_naive_published_at(
 @pytest.mark.anyio
 async def test_get_data_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
     case = "apro_mk_cola_AT_2022_2023"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     payload = await mcp_call(
         server,
         "eurostat_get_data",
@@ -421,7 +421,7 @@ def test_get_data_route_refuses_an_argument_its_schema_refuses(
 def test_get_data_route_end_to_end(replay_fixture: ReplayFixture) -> None:
     """A mapping parameter makes the route a POST with a JSON body (ADR-0007)."""
     case = "apro_mk_cola_AT_2022_2023"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     app = FastAPI()
     app.include_router(router)
     with TestClient(app) as http:
@@ -440,7 +440,7 @@ def test_get_data_route_end_to_end(replay_fixture: ReplayFixture) -> None:
 
 
 def test_get_data_route_answers_a_refusal_with_422(replay_fixture: ReplayFixture) -> None:
-    replay_fixture(ENDPOINT, "unknown_dimension")
+    replay_fixture(GET_DATA, "unknown_dimension")
     app = FastAPI()
     app.include_router(router)
     with TestClient(app) as http:
@@ -471,7 +471,7 @@ FARMS = {
 
 
 def recorded_cube(case: str) -> Cube:
-    body = json.loads(load_fixture(FIXTURES / ENDPOINT / f"{case}.json").response.body)
+    body = json.loads(load_fixture(FIXTURES / GET_DATA / f"{case}.json").response.body)
     return Cube.model_validate(body)
 
 
@@ -482,7 +482,7 @@ def cube_order(cube: Cube) -> list[dict[str, str]]:
 
 def test_get_series_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
     case = "apro_mk_cola_series_AT_2015_2023"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     before = datetime.now(UTC)
     result = get_series("apro_mk_cola", {**MILK, "geo": "AT"}, since="2015", until="2023")
     after = datetime.now(UTC)
@@ -521,7 +521,7 @@ def test_get_series_ef_m_farmleg_every_period(replay_fixture: ReplayFixture) -> 
     """Without since and until the series runs over every period the dataset has: the
     farm structure survey's years, irregular, each value an integer count of holdings."""
     case = "ef_m_farmleg_series_AT_PER_NTL_FT1"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     result = get_series("ef_m_farmleg", FARMS)
     assert sent_urls(route) == [recorded_url(case)]
     assert [observation.codes["time"] for observation in result.data] == [
@@ -542,7 +542,7 @@ def test_get_series_refuses_an_answer_of_two_series(replay_fixture: ReplayFixtur
     """Two dairy products give two series: refused after the one request, which alone
     shows it, naming the dimension to pin and its codes."""
     case = "apro_mk_cola_series_two_dairyprod"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     with pytest.raises(InvalidRequestError) as refused:
         get_series(
             "apro_mk_cola",
@@ -561,7 +561,7 @@ def test_get_series_refusal_lists_at_most_twenty_codes(replay_fixture: ReplayFix
     """crops (214 codes) and strucpro (5) left open: both named, crops' first 20 codes
     and how many more."""
     case = "apro_cpnh1_AT_2022_2023"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     with pytest.raises(InvalidRequestError) as refused:
         get_series("apro_cpnh1", {"geo": "AT"}, since="2022", until="2023")
     assert sent_urls(route) == [recorded_url(case)]
@@ -578,7 +578,7 @@ def test_get_series_unknown_code_is_an_empty_list(replay_fixture: ReplayFixture)
     """An empty answer is an empty list, before the one-series check: the empty cube has
     size 0 on geo."""
     case = "apro_mk_cola_series_XX"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     result = get_series("apro_mk_cola", {**MILK, "geo": "XX"}, since="2015", until="2023")
     assert sent_urls(route) == [recorded_url(case)]
     assert result.data == []
@@ -588,7 +588,7 @@ def test_get_series_unknown_code_is_an_empty_list(replay_fixture: ReplayFixture)
 
 def test_get_latest_period_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
     case = "apro_mk_cola_latest_AT"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     before = datetime.now(UTC)
     result = get_latest_period("apro_mk_cola", {**MILK, "geo": "AT"})
     after = datetime.now(UTC)
@@ -613,7 +613,7 @@ def test_get_latest_period_apro_cpnh1_several_series(replay_fixture: ReplayFixtu
     """One crop, strucpro left open: four series with a cell in 2026, the dataset's
     latest period, in cube order; one cell carries a status."""
     case = "apro_cpnh1_latest_AT_C1110"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     result = get_latest_period("apro_cpnh1", {"crops": "C1110", "geo": "AT"})
     assert sent_urls(route) == [recorded_url(case)]
     assert [observation.codes for observation in result.data] == cube_order(recorded_cube(case))
@@ -636,7 +636,7 @@ def test_get_latest_period_apro_cpnh1_several_series(replay_fixture: ReplayFixtu
 
 def test_get_latest_period_unknown_code_is_an_empty_list(replay_fixture: ReplayFixture) -> None:
     case = "apro_mk_cola_latest_XX"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     result = get_latest_period("apro_mk_cola", {**MILK, "geo": "XX"})
     assert sent_urls(route) == [recorded_url(case)]
     assert result.data == []
@@ -646,7 +646,7 @@ def test_get_latest_period_unknown_code_is_an_empty_list(replay_fixture: ReplayF
 def test_get_cross_section_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
     """geo left out: every geo code the dataset holds for 2023, in cube order."""
     case = "apro_mk_cola_cross_section_2023"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     before = datetime.now(UTC)
     result = get_cross_section("apro_mk_cola", "2023", MILK)
     after = datetime.now(UTC)
@@ -672,7 +672,7 @@ def test_get_cross_section_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
 def test_get_cross_section_apro_cpnh1_one_crop(replay_fixture: ReplayFixture) -> None:
     """One crop over every geo code, strucpro left open: strucpro outer, geo inner."""
     case = "apro_cpnh1_cross_section_C1110_2024"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     result = get_cross_section("apro_cpnh1", "2024", {"crops": "C1110"})
     assert sent_urls(route) == [recorded_url(case)]
     cube = recorded_cube(case)
@@ -706,7 +706,7 @@ def test_get_cross_section_refuses_an_empty_period(
 def test_get_cross_section_unknown_code_is_an_empty_list(replay_fixture: ReplayFixture) -> None:
     """The recorded empty cube of PR 4: the same URL, geo=XX and time=2023."""
     case = "unknown_code"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     result = get_cross_section("apro_mk_cola", "2023", {"geo": "XX"})
     assert sent_urls(route) == [recorded_url(case)]
     assert result.data == []
@@ -764,7 +764,7 @@ def test_slices_refuse_a_parameter_as_a_filter(
 @pytest.mark.anyio
 async def test_get_series_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
     case = "apro_mk_cola_series_AT_2015_2023"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     payload = await mcp_call(
         server,
         "eurostat_get_series",
@@ -785,7 +785,7 @@ async def test_get_series_tool_end_to_end(replay_fixture: ReplayFixture) -> None
 
 @pytest.mark.anyio
 async def test_get_series_tool_answers_the_refusal_as_text(replay_fixture: ReplayFixture) -> None:
-    replay_fixture(ENDPOINT, "apro_mk_cola_series_two_dairyprod")
+    replay_fixture(GET_DATA, "apro_mk_cola_series_two_dairyprod")
     text = await mcp_call_text(
         server,
         "eurostat_get_series",
@@ -809,7 +809,7 @@ async def test_get_series_tool_answers_the_refusal_as_text(replay_fixture: Repla
 @pytest.mark.anyio
 async def test_get_cross_section_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
     case = "apro_cpnh1_cross_section_C1110_2024"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     payload = await mcp_call(
         server,
         "eurostat_get_cross_section",
@@ -824,7 +824,7 @@ async def test_get_cross_section_tool_end_to_end(replay_fixture: ReplayFixture) 
 def test_get_latest_period_route_end_to_end(replay_fixture: ReplayFixture) -> None:
     """A mapping parameter makes the route a POST with a JSON body (ADR-0007)."""
     case = "apro_mk_cola_latest_AT"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     app = FastAPI()
     app.include_router(router)
     with TestClient(app) as http:
@@ -846,7 +846,7 @@ async def test_get_latest_period_tool_cuts_a_large_slice_with_its_note(
     1,810 observations, about 719 KB of rows, cut by MCP_CAPS' byte bound (the
     family's 64 KB) with the task's own note (ADR-0016)."""
     case = "ef_m_farmleg_latest_AT_HLD"
-    route = replay_fixture(ENDPOINT, case)
+    route = replay_fixture(GET_DATA, case)
     payload = await mcp_call(
         server,
         "eurostat_get_latest_period",
@@ -1078,7 +1078,7 @@ def test_list_codes_route_end_to_end() -> None:
     assert refused.status_code == 422
 
 
-DATA_QUERY = "dataQuery"
+DATA_QUERY = "data_query"
 MILK_SLICE = "apro_mk_cola_AT_THS_T_2022_2023"
 MILK_SLICE_GZ = "apro_mk_cola_AT_THS_T_2022_2023_compressed"
 MILK_KEY = "A...THS_T.AT"

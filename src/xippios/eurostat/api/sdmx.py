@@ -44,7 +44,7 @@ takes ``firstNObservations``, ``lastNObservations``, ``detail``, ``format``, ``l
   answered on 2026-10-27 with the same ``Content-Type``,
   ``application/vnd.sdmx.data+csv;version=1.0.0``, and a gzip file
   (``estat_apro_mk_cola_filtered_en.csv.gz``) that decompresses to the plain answer
-  byte for byte (``tests/fixtures/dataQuery/``).
+  byte for byte (``tests/fixtures/data_query/``).
 
 The answer is a file, streamed to disk with core's ``download`` and never held in
 memory (ADR-0019); ``parse.sdmx_csv`` reads it. A large request is answered

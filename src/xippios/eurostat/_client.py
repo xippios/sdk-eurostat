@@ -91,7 +91,7 @@ def classify(response: httpx.Response) -> XippiosError | None:
 
     Everything else falls through to core's status mapping, a 5xx included, so that it
     is retried. An unknown code (``geo=XX``) is no error: the service answers HTTP 200
-    with an empty cube (``tests/fixtures/getData/unknown_code.json``).
+    with an empty cube (``tests/fixtures/get_data/unknown_code.json``).
     """
     media = _not_sdmx_csv(response)
     if media is not None:

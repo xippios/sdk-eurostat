@@ -5,7 +5,7 @@ module only reads them. The shapes, from the user guide
 (``docs/upstream/user-guide/api-detailed-guidelines/api-statistics.md``, "Error messages
 returned in case of invalid queries", "The geoLevel parameter" and "Asynchronous response
 in case of big extractions"; ``asynchronous-api.md`` beside it for the SOAP fault) and
-from the answers recorded under ``tests/fixtures/getData/`` on 2026-10-27:
+from the answers recorded under ``tests/fixtures/get_data/`` on 2026-10-27:
 
 - ``{"error": [{"status": 404, "id": 100, "label": "ERR_NOT_FOUND_4: ..."}]}``, an array
   of faults: recorded for an unknown dataset (HTTP 404, ``unknown_dataset.json``), an

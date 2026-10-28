@@ -422,7 +422,7 @@ Small real samples of the answers the package and its refresh script read, under
 `<kind>/<case>.*`, never written by hand (ADR-0020 decision 6, conventions §10): `toc/`
 and `codelist/` cut by `scripts/refresh_reference.py --samples` from the answers of its
 run, which rewrites their rows and keeps the others; `sdmx-csv/` the response bodies of
-the recorded `tests/fixtures/dataQuery/` exchanges, byte for byte, which
+the recorded `tests/fixtures/data_query/` exchanges, byte for byte, which
 `tests/test_parse.py` checks. One row per file: the release (upstream's identifier of
 it), the URL, the bytes and sha256 of the full answer, and when it was fetched. The
 parser tests in `tests/test_refresh_reference.py` and `tests/test_parse.py` read them;

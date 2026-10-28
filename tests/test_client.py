@@ -1,8 +1,8 @@
 """``classify`` against the recorded refusals and the documented ones.
 
-Recorded on 2026-10-27: under ``tests/fixtures/getData/`` an unknown dataset, an unknown
+Recorded on 2026-10-27: under ``tests/fixtures/get_data/`` an unknown dataset, an unknown
 dimension and ``geo`` with ``geoLevel``, all with ``error`` as an array, and the empty
-cube of an unknown code; under ``tests/fixtures/dataQuery/`` two SDMX-CSV answers, plain
+cube of an unknown code; under ``tests/fixtures/data_query/`` two SDMX-CSV answers, plain
 and ``compressed=true``. Not recorded, two kinds of tests serve answers the service was
 not seen to send:
 
@@ -32,8 +32,8 @@ from xippios.core.testing import load_fixture, response_from_fixture
 
 from xippios.eurostat._client import BASE_URL, RATE_LIMIT, classify, config
 
-FIXTURES = Path(__file__).parent / "fixtures" / "getData"
-SDMX_FIXTURES = Path(__file__).parent / "fixtures" / "dataQuery"
+FIXTURES = Path(__file__).parent / "fixtures" / "get_data"
+SDMX_FIXTURES = Path(__file__).parent / "fixtures" / "data_query"
 GUIDE = Path(__file__).parents[1] / "docs" / "upstream" / "user-guide" / "api-detailed-guidelines"
 DATA_URL = f"{BASE_URL}/statistics/1.0/data/apro_mk_cola?format=JSON&lang=EN"
 WHERE = "GET /eurostat/api/dissemination/statistics/1.0/data/apro_mk_cola"
