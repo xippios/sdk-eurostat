@@ -202,13 +202,26 @@ NOT_REQUESTED = (
         "the Comext domain's bulk download listing (CSV files with their metadata), linked "
         "from the Comext page; files outside the API",
     ),
-    (f"{GUIDE_BASE}api-detailed-guidelines/sdmx3-0", "SDMX 3.0 is out of 0.1.0's scope"),
-    (f"{GUIDE_BASE}api-detailed-guidelines/sdmx3-0/data-query", "SDMX 3.0 is out of 0.1.0's scope"),
+    (
+        f"{GUIDE_BASE}api-detailed-guidelines/sdmx3-0",
+        "SDMX 3.0 is not wrapped (the design round of 2026-10-27, D44); the Comext base's "
+        "SDMX 3.0 WADL is kept as one of its five",
+    ),
+    (
+        f"{GUIDE_BASE}api-detailed-guidelines/sdmx3-0/data-query",
+        "SDMX 3.0 is not wrapped (the design round of 2026-10-27, D44); the Comext base's "
+        "SDMX 3.0 WADL is kept as one of its five",
+    ),
     (
         f"{GUIDE_BASE}api-detailed-guidelines/sdmx3-0/structure-queries",
-        "SDMX 3.0 is out of 0.1.0's scope",
+        "SDMX 3.0 is not wrapped (the design round of 2026-10-27, D44); the Comext base's "
+        "SDMX 3.0 WADL is kept as one of its five",
     ),
-    (f"{API_BASE}sdmx/3.0/sdmx-rest.wadl", "SDMX 3.0 is out of 0.1.0's scope"),
+    (
+        f"{API_BASE}sdmx/3.0/sdmx-rest.wadl",
+        "SDMX 3.0 is not wrapped (the design round of 2026-10-27, D44); the Comext base's "
+        "SDMX 3.0 WADL is kept as one of its five",
+    ),
     (f"{GUIDE_BASE}api-detailed-guidelines/catalogue-api/rss", "the RSS feed is not used here"),
     (
         f"{GUIDE_BASE}api-detailed-guidelines/catalogue-api/metabase",
@@ -1411,8 +1424,9 @@ def render_fetched(
             f"specification ({JSON_STAT_SPEC}): cited, not snapshotted.",
         ),
         *_paragraph(
-            "The second table lists pages that were requested without a file, with the",
-            "status they answered, and pages deliberately not requested, with the reason.",
+            "The second table lists the pages and other resources that were requested",
+            "without a file, or deliberately not requested, with the status they answered",
+            "or the reason.",
         ),
         *_paragraph(
             "`Fetched` is the UTC time of the run in ISO 8601 with an explicit `Z`, taken once",
