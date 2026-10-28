@@ -16,7 +16,8 @@ empty cross-section). The production tasks (``get_sold_production``,
 ``DS-059358_AT_10411200_2022_2023``, the request ``get_data``'s test sends; the second
 ``DS-059359_AT_20158000_2022_2023``. The trade tasks (``get_trade``, ``get_trade_hs``)
 send one getData request each, recorded on the Comext base on 2026-10-28 through the
-URL each sends: ``DS-045409_AT_DE_15071090_2023`` and ``DS-059341_AT_DE_1507_2023``.
+URL each sends: ``DS-045409_AT_DE_15071090_2023`` and ``DS-059341_AT_DE_1507_2023``, and
+``DS-059341_AT_DE_15071090_cn8_on_hs_flow``, DS-059341's HTTP 413 to a CN8 code.
 Every refusal of a code a packaged list lacks sends nothing. The list tasks
 (``list_datasets``, ``list_codes``, ``list_products``, ``list_cn8``, ``list_hs``) send
 nothing: their tests read the packaged files under ``src/xippios/eurostat/reference/``
@@ -86,7 +87,16 @@ from xippios.eurostat import (
 from xippios.eurostat._client import BASE_URL, COMEXT_BASE_URL, config
 from xippios.eurostat.http import router
 from xippios.eurostat.mcp import server
-from xippios.eurostat.models import Code, Cube, Dataset, GeoLevel, Lang, LeafType, Observation
+from xippios.eurostat.models import (
+    Code,
+    Cube,
+    Dataset,
+    Freq,
+    GeoLevel,
+    Lang,
+    LeafType,
+    Observation,
+)
 from xippios.eurostat.parse import parse_sdmx_csv
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -2280,17 +2290,77 @@ def test_trade_tasks_refuse_a_code_its_list_lacks(
 
 
 @pytest.mark.parametrize("task", TRADE_TASKS, ids=["get_trade", "get_trade_hs"])
-def test_trade_tasks_refuse_a_freq_other_than_m_or_a(
-    respx_mock: respx.MockRouter, task: Callable[..., Any]
+@pytest.mark.parametrize("freq", ["Q", "m"])
+def test_trade_tasks_refuse_a_freq_outside_the_enumeration(
+    respx_mock: respx.MockRouter, task: Callable[..., Any], freq: str
 ) -> None:
+    """``Freq`` is refused as ``Lang`` is: a plain string outside it, before any request."""
     with pytest.raises(InvalidRequestError) as refused:
-        task("1507", freq="Q")
+        task("1507", freq=freq)
     assert not isinstance(refused.value, UnknownCode)
-    assert str(refused.value) == (
-        "freq='Q' is not one of 'M', 'A': 'M' for monthly periods (2023-01), 'A' for annual "
-        "ones (2023)"
-    )
+    assert str(refused.value) == f"freq={freq!r} is not one of 'A', 'M'"
     assert not respx_mock.calls
+
+
+def test_get_trade_takes_freq_as_the_enumeration_or_a_plain_string(
+    replay_fixture: ReplayFixture,
+) -> None:
+    """``Freq.M``, the default, and ``"M"`` send the same request, ``freq=M``, so the
+    second is answered from the cache; meta.request holds the plain value."""
+    route = replay_fixture(GET_DATA, TRADE)
+    by_member = get_trade(SOYA_OIL, **TRADE_SLICE, freq=Freq.M)
+    by_text = get_trade(SOYA_OIL, **TRADE_SLICE, freq="M")
+    assert sent_urls(route) == [recorded_url(TRADE)], "one request, the same URL"
+    assert by_member.meta.request == by_text.meta.request
+    assert type(by_member.meta.request["filters"]["freq"]) is str
+    assert [member.value for member in Freq] == ["A", "M"]
+
+
+@pytest.mark.anyio
+async def test_trade_tools_schema_lists_freq_and_refuse_another_value(
+    respx_mock: respx.MockRouter,
+) -> None:
+    """The MCP schema carries ``Freq``'s values, A and M, with M the default; a value
+    outside them is answered in the family's error form, before any request."""
+    tools = {tool.name: tool for tool in await server.list_tools()}
+    for name in ("eurostat_get_trade", "eurostat_get_trade_hs"):
+        schema = tools[name].input_schema
+        assert {"$ref": "#/$defs/Freq"} in schema["properties"]["freq"]["anyOf"]
+        assert schema["properties"]["freq"]["default"] == "M"
+        assert schema["$defs"]["Freq"]["enum"] == ["A", "M"]
+    text = await mcp_call_text(server, "eurostat_get_trade", {"product": "1507", "freq": "Q"})
+    assert text == "error: InvalidRequestError: freq='Q' is not one of 'A', 'M'"
+    assert not respx_mock.calls
+
+
+CN8_ON_HS = "DS-059341_AT_DE_15071090_cn8_on_hs_flow"
+
+
+def test_get_trade_hs_passes_a_cn8_code_which_ds_059341_answers_asynchronously(
+    replay_fixture: ReplayFixture,
+) -> None:
+    """Recorded on 2026-10-28: a CN8 code passes the check, since DS-059341's structure
+    names CXT_NC for its product, and DS-059341, by HS2-4-6, answers it not with an empty
+    cube but with HTTP 413 and an ``error`` array labelled ``ASYNCHRONOUS_RESPONSE``;
+    ``classify`` maps it through its HTTP 413 branch to ``InvalidRequestError``."""
+    route = replay_fixture(GET_DATA, CN8_ON_HS)
+    with pytest.raises(InvalidRequestError) as refused:
+        get_trade_hs(SOYA_OIL, **TRADE_SLICE)
+    assert not isinstance(refused.value, UnknownCode), "the package's check lets it through"
+    assert sent_urls(route) == [recorded_url(CN8_ON_HS)]
+    assert recorded_url(CN8_ON_HS) == (
+        f"{COMEXT_STATISTICS}/DS-059341?format=JSON&lang=EN&freq=M&reporter=AT&partner=DE"
+        "&product=15071090&sinceTimePeriod=2023-01&untilTimePeriod=2023-12"
+    )
+    recorded = load_fixture(FIXTURES / GET_DATA / f"{CN8_ON_HS}.json").response
+    assert recorded.status == 413
+    assert json.loads(recorded.body)["error"][0]["label"].startswith("ASYNCHRONOUS_RESPONSE")
+    assert str(refused.value) == (
+        "Eurostat refused GET /eurostat/api/comext/dissemination/statistics/1.0/data/"
+        "DS-059341 as too large (HTTP 413: fault 413: ASYNCHRONOUS_RESPONSE. Your request "
+        "will be treated asynchronously. Please try again later.): narrow the query with "
+        "fewer codes per dimension or a shorter period."
+    )
 
 
 @pytest.mark.parametrize(
@@ -2476,7 +2546,7 @@ def test_download_trade_refuses_an_unknown_code_or_freq(
     with pytest.raises(UnknownCode) as partner:
         download_trade("1507", partners=["GER"], dest=tmp_path / "t.csv.gz")
     assert partner.value.param == "partner"
-    with pytest.raises(InvalidRequestError, match=r"^freq='Q' is not one of 'M', 'A'"):
+    with pytest.raises(InvalidRequestError, match=r"^freq='Q' is not one of 'A', 'M'$"):
         download_trade("1507", freq="Q", dest=tmp_path / "t.csv.gz")
     assert not respx_mock.calls
 

@@ -49,6 +49,7 @@ __all__ = [
     "Cube",
     "Dataset",
     "Dimension",
+    "Freq",
     "GeoLevel",
     "Lang",
     "LeafType",
@@ -60,8 +61,10 @@ __all__ = [
 # Lang and GeoLevel are written by hand from
 # docs/upstream/user-guide/api-detailed-guidelines/api-statistics.md, since no endpoint
 # lists them; enums.py holds only what scripts/refresh_reference.py generates from the
-# packaged lists, and the script rewrites it whole. The adapters publish each docstring
-# as the schema's description.
+# packaged lists, and the script rewrites it whole. Freq is written by hand too: the
+# codelist CXT_FREQ, which the trade datasets' data structures name for freq, is not
+# packaged, and asynchronous-api.md counts "freq has 2 positions" for DS-045409, with "A"
+# in its example query. The adapters publish each docstring as the schema's description.
 
 
 class Lang(StrEnum):
@@ -107,6 +110,22 @@ class GeoLevel(StrEnum):
     """NUTS code level 3: small regions for specific diagnoses - 5 digits - i.e. FR413."""
     CITY = "city"
     """Code at city level - 7 digits - i.e. DE_DEL1 (Karlsruhe)."""
+
+
+class Freq(StrEnum):
+    """The frequency of a Comext trade dataset's periods: "A" (annual) or "M" (monthly).
+
+    The codes of CXT_FREQ 1.0, the codelist the data structures of DS-045409 (EU trade
+    since 1988 by HS2-4-6 and CN8, 6.6) and DS-059341 (international trade of EU and
+    non-EU countries since 2002 by HS2-4-6, 3.7) name for their ``freq`` dimension, read
+    on 2026-10-28: the two values seen, "A" for annual periods such as "2023" and "M" for
+    monthly ones such as "2023-01" ("Monthly", as the recorded cubes label it).
+    """
+
+    A = "A"
+    """Annual: periods such as "2023"."""
+    M = "M"
+    """Monthly: periods such as "2023-01"."""
 
 
 class Category(UpstreamModel):
