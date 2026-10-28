@@ -3,9 +3,11 @@
 The samples under ``tests/fixtures/files/sdmx-csv/`` are the response bodies of the
 recorded ``dataQuery`` exchanges (``tests/fixtures/data_query/``), plain and
 ``compressed=true``, byte for byte, which the first test checks: apro_mk_cola on the main
-base, and Prodcom's DS-059358 on the Comext base, whose ``OBS_VALUE`` is text where the
-indicator is a unit or a flag (``KG``, ``:E``) and which has no attribute column;
-``tests/fixtures/files/README.md`` gives their provenance (ADR-0020 decision 6). The
+base; Prodcom's DS-059358 on the Comext base, whose ``OBS_VALUE`` is text where the
+indicator is a unit or a flag (``KG``, ``:E``) and which has no attribute column; and
+Comext trade's DS-045409 on the same base, monthly, with ``partner`` and ``flow`` among
+its dimensions and no attribute column either; ``tests/fixtures/files/README.md`` gives
+their provenance (ADR-0020 decision 6). The
 tests assert the parser's shape against the sample's own text, read here with the
 standard library's ``csv``, never values or sizes typed into a test (conventions §10).
 ``test_documented_shape_*`` read the user guide's SDMX-CSV examples verbatim from the
@@ -37,13 +39,17 @@ PLAIN = SAMPLES / "apro_mk_cola_AT_THS_T_2022_2023.csv"
 PACKED = SAMPLES / "apro_mk_cola_AT_THS_T_2022_2023.csv.gz"
 PRODCOM_PLAIN = SAMPLES / "DS-059358_A_AT_10411200_2022_2023.csv"
 PRODCOM_PACKED = SAMPLES / "DS-059358_A_AT_10411200_2022_2023.csv.gz"
+TRADE_PLAIN = SAMPLES / "DS-045409_M_AT_DE_15071090_2023.csv"
+TRADE_PACKED = SAMPLES / "DS-045409_M_AT_DE_15071090_2023.csv.gz"
 RECORDED = {
     PLAIN: FIXTURES / "data_query" / "apro_mk_cola_AT_THS_T_2022_2023.json",
     PACKED: FIXTURES / "data_query" / "apro_mk_cola_AT_THS_T_2022_2023_compressed.json",
     PRODCOM_PLAIN: FIXTURES / "data_query" / "DS-059358_A_AT_10411200_2022_2023.json",
     PRODCOM_PACKED: FIXTURES / "data_query" / "DS-059358_A_AT_10411200_2022_2023_compressed.json",
+    TRADE_PLAIN: FIXTURES / "data_query" / "DS-045409_M_AT_DE_15071090_2023.json",
+    TRADE_PACKED: FIXTURES / "data_query" / "DS-045409_M_AT_DE_15071090_2023_compressed.json",
 }
-PAIRS = [(PLAIN, PACKED), (PRODCOM_PLAIN, PRODCOM_PACKED)]
+PAIRS = [(PLAIN, PACKED), (PRODCOM_PLAIN, PRODCOM_PACKED), (TRADE_PLAIN, TRADE_PACKED)]
 DATA_QUERY = TESTS.parents[0] / "docs/upstream/user-guide/api-detailed-guidelines/sdmx2-1"
 
 
@@ -103,7 +109,7 @@ def test_parse_sdmx_csv_reads_every_row_as_printed(sample: Path) -> None:
     assert all(row.conf_status for row in empty), "each with its confidentiality status"
 
 
-@pytest.mark.parametrize(("plain", "packed"), PAIRS, ids=["main", "comext"])
+@pytest.mark.parametrize(("plain", "packed"), PAIRS, ids=["main", "comext", "comext-trade"])
 def test_parse_sdmx_csv_reads_gzip_and_plain_alike(plain: Path, packed: Path) -> None:
     assert list(parse_sdmx_csv(packed)) == list(parse_sdmx_csv(plain))
 
@@ -141,6 +147,39 @@ def test_parse_sdmx_csv_keeps_prodcom_text_values_as_printed(sample: Path) -> No
     shown = {row.obs_value for row in rows if isinstance(row.obs_value, str)}
     units = {row.obs_value for row in rows if row.dimensions["indicators"] == "QNTUNIT"}
     assert units <= shown, "QNTUNIT, the quantity's unit, is text"
+
+
+@pytest.mark.parametrize("sample", [TRADE_PLAIN, TRADE_PACKED], ids=["plain", "gzip"])
+def test_parse_sdmx_csv_reads_comext_trade_rows(sample: Path) -> None:
+    """DS-045409's columns: ``partner`` and ``flow`` among the dimensions, monthly periods,
+    every value a number as printed, and no attribute column after ``OBS_VALUE``."""
+    header, table = table_of(text_of(sample))
+    assert header[-1] == "OBS_VALUE"
+    time = header.index("TIME_PERIOD")
+    rows = list(parse_sdmx_csv(sample))
+    assert len(rows) == len(table)
+    for row, cells in zip(rows, table, strict=True):
+        record = dict(zip(header, cells, strict=True))
+        assert row.dataflow == record["DATAFLOW"]
+        assert row.last_update == record["LAST UPDATE"]
+        assert (
+            list(row.dimensions)
+            == header[2:time]
+            == [
+                "freq",
+                "reporter",
+                "partner",
+                "product",
+                "flow",
+                "indicators",
+            ]
+        )
+        assert list(row.dimensions.values()) == cells[2:time]
+        assert re.fullmatch(r"\d{4}-\d{2}", row.time_period), "a monthly period as printed"
+        assert row.time_period == record["TIME_PERIOD"]
+        assert isinstance(row.obs_value, Decimal)
+        assert str(row.obs_value) == record["OBS_VALUE"], "the number as printed"
+        assert (row.obs_flag, row.conf_status, row.attributes) == (None, None, {})
 
 
 def test_parse_sdmx_csv_is_a_generator(tmp_path: Path) -> None:

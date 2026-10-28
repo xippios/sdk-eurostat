@@ -362,6 +362,30 @@ def test_only_takes_an_id_or_a_file_name_in_the_index_order() -> None:
         "cxt_indicators",
     ]
     assert script.selected(["GEO", "geo"]) == ["geo"]
+    assert script.selected(["CXT_EU_FLUX", "cxt_nc", "CXT_FREE_ISO"]) == [
+        "cxt_nc",
+        "cxt_free_iso",
+        "cxt_eu_flux",
+    ]
+
+
+def test_the_trade_codelists_follow_the_prodcom_lists_in_the_index() -> None:
+    """The three lists of the trade datasets were added with ``--only``: the index and the
+    README list them after the Prodcom lists, in ``params.CODELISTS``' order."""
+    names = [info.name for info in params.index().lists]
+    assert names[-6:] == [
+        "cxt_prodcom2_sold",
+        "cxt_prodcom2_total",
+        "cxt_indicators",
+        "cxt_nc",
+        "cxt_free_iso",
+        "cxt_eu_flux",
+    ]
+    assert list(readme_rows(REFERENCE))[-3:] == [
+        "cxt_nc.json",
+        "cxt_free_iso.json",
+        "cxt_eu_flux.json",
+    ]
 
 
 def test_only_refuses_an_unknown_name_before_any_request(
@@ -388,13 +412,17 @@ def test_codelist_endpoint_is_the_path_on_the_main_base_and_the_url_on_comext() 
         ("CXT_PRODCOM2_SOLD", "product"),
         ("CXT_PRODCOM2_TOTAL", "product"),
         ("CXT_INDICATORS", "indicators"),
+        ("CXT_NC", "product"),
+        ("CXT_FREE_ISO", "reporter"),
+        ("CXT_EU_FLUX", "flow"),
     ],
 )
 def test_comext_codelists_are_packaged_with_their_url_and_dimension(
     resource_id: str, param: str
 ) -> None:
-    """The three Comext codelists' files: ``endpoint`` the full URL on the Comext base,
-    ``param`` the dimension the Statistics API takes (Johannes, 2026-10-28)."""
+    """The six Comext codelists' files: ``endpoint`` the full URL on the Comext base,
+    ``param`` the dimension the Statistics API takes, the first in the data structure's
+    order for CXT_FREE_ISO, which feeds ``partner`` too (Johannes, 2026-10-28)."""
     assert params.CODELISTS[resource_id] == params.CodelistOrigin(COMEXT_BASE_URL, param)
     packaged = PackagedList.load(params.PACKAGE, resource_id.lower())
     assert packaged.endpoint == f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/{resource_id}"

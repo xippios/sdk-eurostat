@@ -20,8 +20,15 @@ check that the Comext base answers. The production tasks have one each there, on
 smallest slice their parameters allow, one product for Austria in one year (2023):
 ``get_sold_production`` on ``DS-059358``, ``get_total_production`` on ``DS-059359``;
 ``list_products``'s fetches the CXT_PRODCOM2_SOLD codelist from the Comext base through
-the refresh script, as ``list_codes``'s fetches STATINFO.
-A run sends fourteen keyless requests, the reachability check included. The tests assert
+the refresh script, as ``list_codes``'s fetches STATINFO. ``list_cn8`` and ``list_hs``
+share one test, which fetches the CXT_NC codelist once, about 6 MB, and checks both
+lengths of code in it. The trade tasks have one each on the smallest slice their
+parameters allow, Austria's trade with Germany in one product in one month (2023-12):
+``get_trade`` on DS-045409 (crude soya-bean oil, CN8 15071090), ``get_trade_hs`` on
+DS-059341 (soya-bean oil, HS 1507); ``download_trade`` downloads ``get_trade``'s slice and
+reads it with ``parse_sdmx_csv``, a second live parser test of the file kind ``sdmx-csv``
+on the Comext base.
+A run sends eighteen keyless requests, the reachability check included. The tests assert
 shape and release metadata, never values, which Eurostat revises twice a day, nor which
 period is the latest.
 """
@@ -31,6 +38,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 import httpx
 import pytest
@@ -306,3 +314,87 @@ async def test_get_total_production() -> None:
         "20158000", reporters=["AT"], since="2023", until="2023"
     )
     _check_production(result, dataset="DS-059359", product="20158000")
+
+
+async def test_list_cn8_and_list_hs_upstream_cxt_nc_still_reads() -> None:
+    """The CXT_NC codelist still reads as the refresh script reads it, for both tasks.
+
+    One request on the Comext base, about 6 MB, through the package's client and the
+    script's ``fetch_codelist``, shared by ``list_cn8`` and ``list_hs``: the codes in
+    order with their labels, eight-digit codes and two-, four- and six-digit ones among
+    them, the full URL as ``endpoint``, ``product`` as ``param``, the version and a
+    ``LAST_UPDATED`` with a zone. The packaged answers are read on the way, without a
+    request.
+    """
+    script = load_script()
+    answer = await script.fetch_codelist(params.TRADE_PRODUCTS)
+    packaged = script.codelist_list(answer.codelist, answer.retrieved_at)
+    info = script.codelist_info(answer.codelist)
+    assert packaged.endpoint == f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/CXT_NC"
+    assert packaged.param == "product"
+    codes = [Code.model_validate(record) for record in packaged.records]
+    assert all(code.code for code in codes)
+    assert {2, 4, 6, 8} <= {len(code.code) for code in codes}, "HS levels and CN8"
+    assert info.id == params.TRADE_PRODUCTS
+    assert info.version
+    assert info.last_updated is not None
+    assert datetime.fromisoformat(info.last_updated).utcoffset() is not None
+    for task in (tasks.list_cn8_async, tasks.list_hs_async):
+        result = await task(search="1507")
+        assert result.data
+        assert result.meta.vintage is not None
+
+
+TRADE_MONTH: dict[str, Any] = {
+    "reporters": ["AT"],
+    "partners": ["DE"],
+    "since": "2023-12",
+    "until": "2023-12",
+}
+"""The smallest trade slice: one reporter, one partner, one month."""
+
+
+def _check_trade(result: Result[list[Observation]], *, dataset: str, product: str) -> None:
+    _check_slice(result)
+    assert {observation.codes["reporter"] for observation in result.data} == {"AT"}
+    assert {observation.codes["partner"] for observation in result.data} == {"DE"}
+    assert {observation.codes["product"] for observation in result.data} == {product}
+    assert {observation.codes["time"] for observation in result.data} == {"2023-12"}
+    flows = {code.code for code in params.codes(params.TRADE_FLOWS.lower())}
+    assert {observation.codes["flow"] for observation in result.data} <= flows
+    indicators = {code.code for code in params.codes(params.PRODCOM_INDICATORS.lower())}
+    assert {observation.codes["indicators"] for observation in result.data} <= indicators
+    assert result.meta.request["dataset"] == dataset
+
+
+async def test_get_trade() -> None:
+    """DS-045409 on the Comext base: Austria's trade with Germany in crude soya-bean oil
+    (CN8 15071090), 2023-12."""
+    result = await tasks.get_trade_async("15071090", **TRADE_MONTH)
+    _check_trade(result, dataset="DS-045409", product="15071090")
+
+
+async def test_get_trade_hs() -> None:
+    """DS-059341 on the Comext base: Austria's trade with Germany in soya-bean oil (HS
+    1507), 2023-12."""
+    result = await tasks.get_trade_hs_async("1507", **TRADE_MONTH)
+    _check_trade(result, dataset="DS-059341", product="1507")
+
+
+async def test_download_trade(tmp_path: Path) -> None:
+    """DS-045409's slice of ``test_get_trade`` as gzip SDMX-CSV, read with the parser."""
+    dest = tmp_path / "soya_oil.csv.gz"
+    result = await tasks.download_trade_async("15071090", **TRADE_MONTH, dest=dest)
+    assert result.data.path == dest
+    assert dest.read_bytes()[:2] == b"\x1f\x8b", "gzip, as compressed=true answers"
+    rows = list(parse_sdmx_csv(dest))
+    assert rows, "the slice has rows"
+    assert {tuple(row.dimensions) for row in rows} == {
+        ("freq", "reporter", "partner", "product", "flow", "indicators")
+    }
+    assert {row.time_period for row in rows} == {"2023-12"}
+    assert result.meta.endpoint == "dataQuery"
+    assert result.meta.vintage == rows[0].last_update
+    assert LAST_UPDATE.fullmatch(result.meta.vintage)
+    assert result.meta.published_at_naive is True
+    assert result.meta.request["key"] == "M.AT.DE.15071090.."
