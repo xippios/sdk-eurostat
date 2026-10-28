@@ -36,14 +36,13 @@ from xippios.core.client import MemoryCache
 from xippios.eurostat._version import __version__
 from xippios.eurostat.errors import (
     AGAIN_LATER,
-    ASYNCHRONOUS_LABEL,
     NARROW_HINT,
     NO_RESULTS,
     Fault,
+    asynchronous_fault,
     error_faults,
     fault_payload,
     soap_faultstring,
-    warning_fault,
 )
 
 SOURCE = "eurostat"
@@ -134,10 +133,16 @@ def classify(response: httpx.Response) -> XippiosError | None:
       monthly flow: HTTP 200, ``application/xml``, the SOAP envelope with ``SUBMITTED``
       (``tests/fixtures/data_query/DS-045409_asynchronous.json``). Judged by the headers
       alone, since a download's body goes to the file unread.
-    - A ``warning`` whose status is 413 or whose label starts ``ASYNCHRONOUS_RESPONSE``,
-      at any HTTP status: the service will treat the request asynchronously, which this
-      package does not poll (design round Q4, 2026-10-27): ``InvalidRequestError`` saying
-      to send the request again later, the Statistics API's own route, or to narrow it.
+    - The Statistics API's asynchronous answer, at any HTTP status, 413 included: a
+      ``warning`` whose status is 413 or whose label starts ``ASYNCHRONOUS_RESPONSE``, as
+      the user guide documents it (never seen), or a fault of an ``error`` member whose
+      label starts so, as recorded on the Comext base on 2026-10-28: an ``error`` array
+      at HTTP 413 with id 413, DS-059341's answer to a CN8 code the dataset does not serve
+      (``tests/fixtures/get_data/DS-059341_AT_DE_15071090_cn8_on_hs_flow.json``). The
+      service will treat the request asynchronously, which this package does not poll
+      (design round Q4, 2026-10-27): ``InvalidRequestError`` saying to send the request
+      again later, the Statistics API's own route, or to narrow it. Checked before the
+      HTTP 413 refusal below, which an ``EXTRACTION_TOO_BIG`` label takes.
     - HTTP 404 with an ``error`` member: ``NotFoundError`` with upstream's label
       (recorded for an unknown dataset, fault 100).
     - HTTP 400 with an ``error`` member whose faults are all 100, "No results found: The
@@ -173,13 +178,11 @@ def classify(response: httpx.Response) -> XippiosError | None:
     payload = fault_payload(response)
     faults: list[Fault] = []
     if payload is not None:
-        warning = warning_fault(payload)
-        if warning is not None and (
-            warning.status == 413 or warning.label.startswith(ASYNCHRONOUS_LABEL)
-        ):
+        queued = asynchronous_fault(payload)
+        if queued is not None:
             return InvalidRequestError(
                 f"Eurostat will answer {_where(response)} asynchronously "
-                f"({warning.label}), and this package does not poll asynchronous answers: "
+                f"({queued.label}), and this package does not poll asynchronous answers: "
                 f"{AGAIN_LATER}, or {NARROW_HINT}.",
                 source=SOURCE,
             )

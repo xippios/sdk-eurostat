@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-10-28T15:21:23.405794Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/comext/dissemination/statistics/1.0/data/DS-059341?format=JSON&lang=EN&freq=M&reporter=AT&partner=DE&product=1507&sinceTimePeriod=2023-01&untilTimePeriod=2023-12"
+  },
+  "response": {
+    "body": "{\"version\":\"2.0\",\"class\":\"dataset\",\"label\":\"International trade of EU and non-EU countries since 2002 by HS2-4-6\",\"source\":\"ESTAT\",\"updated\":\"2026-10-16T11:00:00+0200\",\"value\":{\"24\":8544.000,\"25\":4370.000,\"26\":11374.000,\"27\":8983.000,\"28\":60522.000,\"29\":993.000,\"30\":12790.000,\"31\":24498.000,\"32\":18749.000,\"33\":8331.000,\"34\":13343.000,\"35\":155.000,\"0\":335243,\"1\":14663,\"2\":21182,\"3\":184463,\"4\":259769,\"5\":2702,\"6\":14819,\"7\":25214,\"8\":394108,\"9\":370281,\"10\":28664,\"11\":1222,\"12\":335243,\"13\":14663,\"14\":21182,\"15\":184463,\"16\":259769,\"17\":2702,\"18\":14819,\"19\":25214,\"20\":394108,\"21\":370281,\"22\":28664,\"23\":1222,\"60\":102963.000,\"61\":112574.000,\"62\":84437.000,\"63\":85573.000,\"64\":107007.000,\"65\":51103.000,\"66\":79688.000,\"67\":105689.000,\"68\":107695.000,\"69\":159438.000,\"70\":210611.000,\"71\":418099.000,\"36\":146173,\"37\":191470,\"38\":133125,\"39\":165343,\"40\":142586,\"41\":68522,\"42\":114893,\"43\":154261,\"44\":120230,\"45\":231526,\"46\":221322,\"47\":419247,\"48\":146173,\"49\":191470,\"50\":133125,\"51\":165343,\"52\":142586,\"53\":68522,\"54\":114893,\"55\":154261,\"56\":120230,\"57\":231526,\"58\":221322,\"59\":419247},\"id\":[\"freq\",\"reporter\",\"partner\",\"product\",\"flow\",\"indicators\",\"time\"],\"size\":[1,1,1,1,2,3,12],\"dimension\":{\"freq\":{\"label\":\"Frequency\",\"category\":{\"index\":{\"M\":0},\"label\":{\"M\":\"Monthly\"}}},\"reporter\":{\"label\":\"REPORTER\",\"category\":{\"index\":{\"AT\":0},\"label\":{\"AT\":\"Austria\"}}},\"partner\":{\"label\":\"PARTNER\",\"category\":{\"index\":{\"DE\":0},\"label\":{\"DE\":\"Germany (incl. German Democratic Republic 'DD' from 1991)\"}}},\"product\":{\"label\":\"PRODUCT\",\"category\":{\"index\":{\"1507\":0},\"label\":{\"1507\":\"Soya-bean oil and its fractions, whether or not refined (excl. chemically modified)\"}}},\"flow\":{\"label\":\"FLOW\",\"category\":{\"index\":{\"1\":0,\"2\":1},\"label\":{\"1\":\"IMPORT\",\"2\":\"EXPORT\"}}},\"indicators\":{\"label\":\"INDICATORS\",\"category\":{\"index\":{\"VALUE_EUR\":0,\"VALUE_NAC\":1,\"QUANTITY_KG\":2},\"label\":{\"VALUE_EUR\":\"VALUE_EUR\",\"VALUE_NAC\":\"VALUE_NAC\",\"QUANTITY_KG\":\"QUANTITY_KG\"}}},\"time\":{\"label\":\"TIME_PERIOD\",\"category\":{\"index\":{\"2023-01\":0,\"2023-02\":1,\"2023-03\":2,\"2023-04\":3,\"2023-05\":4,\"2023-06\":5,\"2023-07\":6,\"2023-08\":7,\"2023-09\":8,\"2023-10\":9,\"2023-11\":10,\"2023-12\":11},\"label\":{\"2023-01\":\"2023-01\",\"2023-02\":\"2023-02\",\"2023-03\":\"2023-03\",\"2023-04\":\"2023-04\",\"2023-05\":\"2023-05\",\"2023-06\":\"2023-06\",\"2023-07\":\"2023-07\",\"2023-08\":\"2023-08\",\"2023-09\":\"2023-09\",\"2023-10\":\"2023-10\",\"2023-11\":\"2023-11\",\"2023-12\":\"2023-12\"}}}},\"extension\":{\"lang\":\"EN\",\"id\":\"DS-059341\",\"agencyId\":\"ESTAT\",\"version\":\"1.0\",\"datastructure\":{\"id\":\"DS-059341\",\"agencyId\":\"ESTAT\",\"version\":\"3.7\"},\"annotation\":[{\"type\":\"DISSEMINATION_OBJECT_TYPE\",\"title\":\"DATASET\"},{\"type\":\"DISSEMINATION_TIMESTAMP_DATA\",\"date\":\"2026-10-16T11:00:00+0200\"},{\"type\":\"DISSEMINATION_TIMESTAMP_GLOBAL\",\"date\":\"2026-10-16T11:00:00+0200\"},{\"type\":\"DISSEMINATION_TIMESTAMP_PLANNED\",\"date\":\"2026-10-16T11:00:00+0200\"},{\"type\":\"ESMS_HTML\",\"title\":\"Explanatory texts (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/cache/metadata/en/ext_go_detail_sims.htm\"},{\"type\":\"UPDATE_DATA\",\"date\":\"2026-10-16T11:00:00+0200\"},{\"type\":\"UPDATE_STRUCTURE\",\"date\":\"2026-10-16T11:00:00+0200\"}],\"positions-with-no-data\":{\"freq\":[],\"reporter\":[],\"partner\":[],\"product\":[],\"flow\":[],\"indicators\":[],\"time\":[]}}}",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Wed, 28 Oct 2026 15:21:20 GMT"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ],
+      [
+        "set-cookie",
+        "REDACTED"
+      ]
+    ],
+    "status": 200
+  }
+}

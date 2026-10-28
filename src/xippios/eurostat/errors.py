@@ -23,12 +23,18 @@ from the answers recorded under ``tests/fixtures/get_data/``, on the main base o
   one fault as an object, its status as text and without an id: how the user guide
   documents the answer to ``geo`` with ``geoLevel``; the service answered that request
   with the array above when recorded, and both shapes are read.
-- ``{"warning": {"status": 413, "label": "ASYNCHRONOUS_RESPONSE. ..."}}``: the documented
-  answer to a request the service will treat asynchronously, at an HTTP status the guide
-  does not name. Not recorded: four unfiltered requests on 2026-10-27 to datasets of
-  624,554 to 853,146 values all answered synchronously, and probing stopped there
-  (Johannes, 2026-10-27); the Statistics API's asynchronous answer will be recorded when
-  first seen. The SDMX API's, an XML envelope, is recorded (``_client.classify``).
+- ``{"error": [{"status": 413, "id": 413, "label": "ASYNCHRONOUS_RESPONSE. Your request
+  will be treated asynchronously. Please try again later."}]}``, the same array at HTTP
+  413: the Statistics API's answer to a request the service will treat asynchronously,
+  recorded on the Comext base on 2026-10-28 for DS-059341 and a CN8 code the dataset
+  does not serve (``DS-059341_AT_DE_15071090_cn8_on_hs_flow.json``); its label, not its
+  id or status, tells it from ``EXTRACTION_TOO_BIG``.
+- ``{"warning": {"status": 413, "label": "ASYNCHRONOUS_RESPONSE. ..."}}``: the
+  asynchronous answer as the user guide documents it, at an HTTP status the guide does
+  not name; never seen. Four unfiltered requests on 2026-10-27 to datasets of 624,554 to
+  853,146 values all answered synchronously, and probing stopped there (Johannes,
+  2026-10-27); the answer recorded on 2026-10-28 came as the ``error`` array above. The
+  SDMX API's asynchronous answer, an XML envelope, is recorded too (``_client.classify``).
 - ``<S:Fault>`` with ``<faultcode>413</faultcode>`` and a ``<faultstring>`` such as
   ``EXTRACTION_TOO_BIG: The requested extraction is too big, ...``: the SOAP fault the
   guide documents for an SDMX request over the maximum extraction, recorded on the
@@ -55,6 +61,7 @@ __all__ = [
     "NARROW_HINT",
     "NO_RESULTS",
     "Fault",
+    "asynchronous_fault",
     "error_faults",
     "fault_payload",
     "soap_faultstring",
@@ -62,7 +69,8 @@ __all__ = [
 ]
 
 ASYNCHRONOUS_LABEL = "ASYNCHRONOUS_RESPONSE"
-"""How the label of the asynchronous answer begins (api-statistics.md)."""
+"""How the label of the asynchronous answer begins (api-statistics.md), in the documented
+``warning`` and in the recorded ``error`` array alike."""
 
 NO_RESULTS = 100
 """The fault code of "No results found" (the fault table)."""
@@ -151,6 +159,26 @@ def warning_fault(payload: dict[str, Any]) -> Fault | None:
     """The payload's ``warning`` member as a fault, or ``None``."""
     warning = payload.get("warning")
     return _fault(warning) if isinstance(warning, dict) else None
+
+
+def asynchronous_fault(payload: dict[str, Any]) -> Fault | None:
+    """The fault saying the service will treat the request asynchronously, else ``None``.
+
+    The ``warning`` member, as the user guide documents the answer, when its status is 413
+    or its label starts ``ASYNCHRONOUS_LABEL``; else the first fault of the ``error``
+    member whose label starts so, as the answer was recorded on 2026-10-28 (an ``error``
+    array at HTTP 413, id 413). The label, not the id or the status, tells it from
+    ``EXTRACTION_TOO_BIG``, which shares them.
+    """
+    warning = warning_fault(payload)
+    if warning is not None and (
+        warning.status == 413 or warning.label.startswith(ASYNCHRONOUS_LABEL)
+    ):
+        return warning
+    return next(
+        (fault for fault in error_faults(payload) if fault.label.startswith(ASYNCHRONOUS_LABEL)),
+        None,
+    )
 
 
 def soap_faultstring(response: httpx.Response) -> str | None:

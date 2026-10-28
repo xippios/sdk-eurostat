@@ -9,7 +9,9 @@ unknown ``DS-`` dataset (HTTP 404, the same ``error`` array), a filter on a dime
 ``DS-059358`` lacks, which the Comext base does not refuse as the main base does but
 refuses as too large (HTTP 413, an ``error`` array with id 413, ``EXTRACTION_TOO_BIG``;
 the estimate, 151,971,120 rows, is that of an unfiltered query, so the unknown filter
-seems to be ignored), and the empty cube of an unknown reporter; under
+seems to be ignored), the Statistics API's asynchronous answer (HTTP 413, an ``error``
+array with id 413 labelled ``ASYNCHRONOUS_RESPONSE``, DS-059341's answer to a CN8 code
+the dataset does not serve) and the empty cube of an unknown reporter; under
 ``data_query/`` two SDMX-CSV answers of ``DS-059358``, the envelope that queues an
 asynchronous answer (``DS-045409``, the whole monthly flow: HTTP 200,
 ``application/xml``, status ``SUBMITTED``) and the SOAP fault ``EXTRACTION_TOO_BIG`` at
@@ -21,9 +23,10 @@ answers replace the tests that served the user guide's documented bodies (rows 5
   guide at test time, so it is neither recorded nor hand-written: the Statistics API's
   asynchronous ``warning`` and the single-object ``error`` the guide shows for ``geo``
   with ``geoLevel`` (``api-statistics.md``). Four unfiltered requests to datasets of
-  624,554 to 853,146 values answered synchronously on 2026-10-27; probing stopped
-  there, and such an answer will be recorded when first seen and replace its test
-  (Johannes, 2026-10-27; gap row 83).
+  624,554 to 853,146 values answered synchronously on 2026-10-27, and probing stopped
+  there (Johannes, 2026-10-27); the Statistics API's asynchronous answer was recorded
+  on 2026-10-28 in another shape, the ``error`` array above, and the documented
+  ``warning``, never seen, keeps its test as the documented shape (gap row 83).
 - ``test_fault_table_*`` compose a body from a row of the fault table
   (``api-statistics.md``), read at test time, in the recorded ``error`` array form: the
   guide documents the fault codes, not their bodies (faults 100, 140 and 150 at HTTP 400).
@@ -246,8 +249,10 @@ def test_fault_table_syntax_and_semantic_errors_are_refused(code: int, status: i
 @pytest.mark.parametrize("status", [200, 413])
 def test_documented_shape_asynchronous_answer_is_refused(status: int) -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written; the Statistics API's asynchronous answer will be recorded when first
-    seen and replace this test. The guide names no HTTP status for it: both are read."""
+    hand-written, and never seen: the Statistics API's asynchronous answer was recorded on
+    2026-10-28 as an ``error`` array instead (the test after this one), and this test
+    stays for the documented ``warning`` (gap row 83). The guide names no HTTP status for
+    it: both are read."""
     assert ASYNCHRONOUS.startswith('{"warning":{"status":413, "label":"ASYNCHRONOUS_RESPONSE.')
     error = classify(answer(status, ASYNCHRONOUS))
     assert isinstance(error, InvalidRequestError)
@@ -261,6 +266,45 @@ def test_documented_shape_asynchronous_answer_is_refused(status: int) -> None:
     )
     assert "since_time_period" not in text, "classify serves every task: no task's names"
     assert_host_and_query_free(error)
+
+
+ASYNCHRONOUS_RECORDED = "DS-059341_AT_DE_15071090_cn8_on_hs_flow"
+ASYNCHRONOUS_REFUSAL = (
+    f"Eurostat will answer {COMEXT_WHERE}/statistics/1.0/data/DS-059341 asynchronously "
+    "(ASYNCHRONOUS_RESPONSE. Your request will be treated asynchronously. Please try again "
+    "later.), and this package does not poll asynchronous answers: the Statistics API "
+    "prepares the answer meanwhile and does not say when it is ready: send the same request "
+    "again later, or narrow the query with fewer codes per dimension or a shorter period."
+)
+"""``classify``'s refusal of the recorded asynchronous answer."""
+
+
+def test_statistics_api_asynchronous_answer_is_refused_as_recorded() -> None:
+    """Recorded on the Comext base on 2026-10-28: DS-059341's answer to a CN8 code the
+    dataset does not serve, HTTP 413 with an ``error`` array whose id is 413, as
+    ``EXTRACTION_TOO_BIG``'s is, and whose label starts ``ASYNCHRONOUS_RESPONSE``. The
+    label makes it the asynchronous refusal, checked before the HTTP 413 one: send the
+    request again later, or narrow it; never "too large"."""
+    response = recorded(ASYNCHRONOUS_RECORDED)
+    assert response.status_code == 413
+    fault = response.json()["error"][0]
+    assert (fault["status"], fault["id"]) == (413, 413)
+    assert fault["label"].startswith("ASYNCHRONOUS_RESPONSE")
+    error = classify(response)
+    assert isinstance(error, InvalidRequestError)
+    assert str(error) == ASYNCHRONOUS_REFUSAL
+    assert "too large" not in str(error)
+    assert_host_and_query_free(error)
+
+
+def test_statistics_api_asynchronous_error_array_is_refused_at_any_status() -> None:
+    """NOT RECORDED: the recorded body, as recorded, served at HTTP 200 in memory: the
+    label decides, at any status, as for the documented ``warning``."""
+    body = recorded(ASYNCHRONOUS_RECORDED).text
+    url = f"{COMEXT_BASE_URL}/statistics/1.0/data/DS-059341?format=JSON&lang=EN"
+    error = classify(answer(200, body, url=url))
+    assert isinstance(error, InvalidRequestError)
+    assert str(error) == ASYNCHRONOUS_REFUSAL
 
 
 def test_extraction_too_big_is_refused() -> None:

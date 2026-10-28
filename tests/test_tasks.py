@@ -5,25 +5,32 @@
 The fixtures are ``tests/fixtures/get_data/<case>.json``, recorded on the main base on
 2026-10-27, and its ``DS-*`` cases, recorded on the Comext base on 2026-10-28 for the
 Prodcom datasets ``DS-059358`` and ``DS-059359``; each test sends exactly the recorded
-URL, parameter order included. The Statistics API's asynchronous answer is not recorded
-(``tests/test_client.py`` says why); its test serves the user guide's documented body.
+URL, parameter order included. The Statistics API's asynchronous answer was recorded on
+the Comext base on 2026-10-28, an ``error`` array at HTTP 413
+(``DS-059341_AT_DE_15071090_cn8_on_hs_flow``); the user guide's documented ``warning``,
+never seen, keeps a test that serves its documented body.
 The slices (``get_series``, ``get_latest_period``, ``get_cross_section``) each send one
 getData request, so their fixtures are getData answers too: ``*_series_*``,
 ``*_latest_*`` and ``*_cross_section_*``, plus two of ``get_data``'s whose URL a slice
 sends as well (``apro_cpnh1_AT_2022_2023``, a series refused, and ``unknown_code``, an
 empty cross-section). The production tasks (``get_sold_production``,
 ``get_total_production``) send one getData request too: the first replays
-``DS-059358_AT_10411200_2022_2023``, the request ``get_data``'s test sends, and
-``DS-059358_unknown_code``, an unknown reporter; the second
+``DS-059358_AT_10411200_2022_2023``, the request ``get_data``'s test sends; the second
 ``DS-059359_AT_20158000_2022_2023`` and
 ``DS-059359_AT_20158000_indicator_not_in_dataset``, an indicator of CXT_INDICATORS that
-DS-059359 lacks, answered with an empty cube. The list tasks (``list_datasets``,
-``list_codes``, ``list_products``) send nothing: their tests read the packaged files
-under ``src/xippios/eurostat/reference/`` and take the expected values from them. The bulk
-task ``download_dataset`` replays ``tests/fixtures/data_query/<case>.json``, the SDMX 2.1
-data query recorded with ``compressed=true`` (a gzip file) and without it, on the main
-base on 2026-10-27 and on the Comext base on 2026-10-28, through core's ``download``;
-its refusals of an asynchronous answer and of an extraction too big replay the answers
+DS-059359 lacks, answered with an empty cube. The trade tasks (``get_trade``,
+``get_trade_hs``) send one getData request each, recorded on the Comext base on
+2026-10-28 through the URL each sends: ``DS-045409_AT_DE_15071090_2023`` and
+``DS-059341_AT_DE_1507_2023``, and ``DS-059341_AT_DE_15071090_cn8_on_hs_flow``,
+DS-059341's HTTP 413 to a CN8 code. Every refusal of a code a packaged list lacks sends
+nothing. The list tasks (``list_datasets``, ``list_codes``, ``list_products``,
+``list_cn8``, ``list_hs``) send nothing: their tests read the packaged files under
+``src/xippios/eurostat/reference/`` and take the expected values from them. The bulk
+tasks ``download_dataset`` and ``download_trade`` replay
+``tests/fixtures/data_query/<case>.json``, the SDMX 2.1 data query recorded with
+``compressed=true`` (a gzip file) and without it, on the main base on 2026-10-27 and on
+the Comext base on 2026-10-28, through core's ``download``; the refusals of an
+asynchronous answer and of an extraction too big replay the answers
 recorded on the Comext base for ``DS-045409``.
 """
 
@@ -65,14 +72,19 @@ from xippios.core.testing import (
 from xippios.eurostat import (
     api,
     download_dataset,
+    download_trade,
     get_cross_section,
     get_data,
     get_latest_period,
     get_series,
     get_sold_production,
     get_total_production,
+    get_trade,
+    get_trade_hs,
+    list_cn8,
     list_codes,
     list_datasets,
+    list_hs,
     list_products,
     params,
     tasks,
@@ -80,7 +92,16 @@ from xippios.eurostat import (
 from xippios.eurostat._client import BASE_URL, COMEXT_BASE_URL, config
 from xippios.eurostat.http import router
 from xippios.eurostat.mcp import server
-from xippios.eurostat.models import Code, Cube, Dataset, GeoLevel, Lang, LeafType, Observation
+from xippios.eurostat.models import (
+    Code,
+    Cube,
+    Dataset,
+    Freq,
+    GeoLevel,
+    Lang,
+    LeafType,
+    Observation,
+)
 from xippios.eurostat.parse import parse_sdmx_csv
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -289,9 +310,10 @@ def test_documented_shape_get_data_refuses_an_asynchronous_answer(
     respx_mock: respx.MockRouter,
 ) -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written: the asynchronous answer of api-statistics.md. The Statistics API's
-    asynchronous answer will be recorded when first seen and replace this test (Johannes,
-    2026-10-27)."""
+    hand-written, and never seen: the asynchronous answer of api-statistics.md. The
+    Statistics API's asynchronous answer was recorded on 2026-10-28 as an ``error`` array
+    (``test_get_trade_hs_passes_a_cn8_code_which_ds_059341_answers_asynchronously``); this
+    test stays for the documented ``warning`` (gap row 83)."""
     documented = next(
         line.strip()
         for line in (GUIDE / "api-statistics.md").read_text(encoding="utf-8").splitlines()
@@ -1100,13 +1122,17 @@ def test_list_codes_serves_every_packaged_codelist(codelist: str) -> None:
         path if origin.base_url == BASE_URL else f"{COMEXT_BASE_URL}/{path}"
     )
     assert result.meta.vintage == index_record(codelist.lower())["version"]
-    assert result.meta.published_at is not None
+    last_updated = index_record(codelist.lower())["LAST_UPDATED"]
+    assert result.meta.published_at == (
+        None if last_updated is None else datetime.fromisoformat(last_updated)
+    ), "CXT_EU_FLUX carries no LAST_UPDATED"
     assert result.meta.request == {"codelist": codelist}
 
 
 def test_list_codes_serves_the_comext_codelists() -> None:
-    """CXT_INDICATORS whole, CXT_PRODCOM2_TOTAL searched: the Comext base's codelists
-    are served as the main base's are, their endpoint the full URL."""
+    """CXT_INDICATORS whole, CXT_PRODCOM2_TOTAL and CXT_FREE_ISO searched, CXT_EU_FLUX
+    whole: the Comext base's codelists are served as the main base's are, their endpoint
+    the full URL; one without LAST_UPDATED has no published_at."""
     indicators = list_codes("CXT_INDICATORS")
     assert Code(code="PRODVAL", label="Sold production value, euro") in indicators.data
     assert indicators.meta.endpoint == (f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/CXT_INDICATORS")
@@ -1119,6 +1145,15 @@ def test_list_codes_serves_the_comext_codelists() -> None:
         "codelist": "CXT_PRODCOM2_TOTAL",
         "search": "Animal or vegetable fertilisers",
     }
+    austria = list_codes("cxt_free_iso", search="austria")
+    assert Code(code="AT", label="Austria") in austria.data
+    assert austria.meta.endpoint == f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/CXT_FREE_ISO"
+    flows = list_codes("CXT_EU_FLUX")
+    assert [code.dump_upstream() for code in flows.data] == packaged_file("cxt_eu_flux")["records"]
+    assert Code(code="1", label="IMPORT") in flows.data
+    assert flows.meta.vintage == index_record("cxt_eu_flux")["version"]
+    assert flows.meta.published_at is None
+    assert flows.meta.published_at_naive is False
 
 
 def test_list_codes_search_keeps_code_or_label_ignoring_case() -> None:
@@ -1149,6 +1184,7 @@ def test_list_codes_refuses_a_codelist_the_package_does_not_carry() -> None:
         list_codes("nace_r2")
     assert "the dimensions of apro_cpnh1, apro_mk_cola and ef_m_farmleg" in str(refused.value)
     assert "DS-059358 and DS-059359" in str(refused.value)
+    assert "DS-045409 and DS-059341" in str(refused.value)
 
 
 def test_list_codes_names_a_comext_codelist_among_the_closest() -> None:
@@ -1208,7 +1244,8 @@ async def test_list_codes_tool_cuts_geo_with_its_note() -> None:
 
 @pytest.mark.anyio
 async def test_list_codes_tool_answers_unit_whole() -> None:
-    """UNIT, the largest codelist but GEO, fits the cap: 1,000 rows within 64 KB."""
+    """UNIT, the largest codelist of the main base but GEO, fits the cap: 1,000 rows
+    within 64 KB."""
     payload = await mcp_call(server, "eurostat_list_codes", {"codelist": "UNIT"})
     assert "note" not in payload
     assert len(payload["data"]) == index_record("unit")["count"]
@@ -1300,14 +1337,18 @@ def test_download_dataset_apro_mk_cola(replay_fixture: ReplayFixture, tmp_path: 
 
 @pytest.mark.parametrize(
     ("cube", "sample"),
-    [("apro_mk_cola_AT_2022_2023", MILK_SLICE), (PRODCOM, PRODCOM_SLICE)],
-    ids=["main", "comext"],
+    [
+        ("apro_mk_cola_AT_2022_2023", MILK_SLICE),
+        (PRODCOM, PRODCOM_SLICE),
+        ("DS-045409_AT_DE_15071090_2023", "DS-045409_M_AT_DE_15071090_2023"),
+    ],
+    ids=["main", "comext", "comext-trade"],
 )
 def test_download_dataset_reads_last_update_day_first(cube: str, sample: str) -> None:
     """The recorded pairs fix the order: the JSON-stat answer's ``updated`` and the
     SDMX-CSV answer's ``LAST UPDATE`` of one dataset, recorded the same day, are one time,
     the CSV's printed day first and without the zone, on either base (apro_mk_cola's
-    05/10/26, DS-059358's 20/10/26)."""
+    05/10/26, DS-059358's 20/10/26, DS-045409's 16/10/26)."""
     updated = datetime.fromisoformat(recorded_updated(cube))
     printed = next(parse_sdmx_csv(FIXTURES / "files" / "sdmx-csv" / f"{sample}.csv"))
     assert datetime.strptime(printed.last_update, tasks.LAST_UPDATE) == updated.replace(tzinfo=None)
@@ -1548,28 +1589,39 @@ async def test_code_list_query_takes_the_comext_base(respx_mock: respx.MockRoute
     ]
 
 
-def test_download_dataset_is_no_tool_and_no_route() -> None:
-    """A bulk task: ``BULK_TASKS`` names it, so core's adapters skip it (ADR-0019 decision
-    4); the family check (``tests/test_family.py``) serves ``tasks.__all__`` minus it."""
-    assert "download_dataset" in tasks.__all__
-    assert {"download_dataset"} == set(tasks.BULK_TASKS)
+BULK = ["download_dataset", "download_trade"]
+
+
+def test_bulk_tasks_are_no_tool_and_no_route() -> None:
+    """Bulk tasks: ``BULK_TASKS`` names them, so core's adapters skip them (ADR-0019
+    decision 4); the family check (``tests/test_family.py``) serves ``tasks.__all__``
+    minus them."""
+    assert set(BULK) <= set(tasks.__all__)
+    assert set(BULK) == set(tasks.BULK_TASKS)
     paths = {route.path for route in router.routes if isinstance(route, APIRoute)}
-    assert "/eurostat/download_dataset" not in paths
     assert "/eurostat/get_data" in paths
     app = FastAPI()
     app.include_router(router)
     with TestClient(app) as http:
-        assert http.post("/eurostat/download_dataset", json={}).status_code == 404
-        assert http.get("/eurostat/download_dataset").status_code == 404
+        for name in BULK:
+            assert f"/eurostat/{name}" not in paths
+            assert http.post(f"/eurostat/{name}", json={}).status_code == 404
+            assert http.get(f"/eurostat/{name}").status_code == 404
 
 
 @pytest.mark.anyio
-async def test_download_dataset_is_no_mcp_tool(respx_mock: respx.MockRouter) -> None:
+@pytest.mark.parametrize(
+    ("name", "arguments"),
+    [("download_dataset", {"dataset": "apro_mk_cola"}), ("download_trade", {"product": "1507"})],
+)
+async def test_bulk_tasks_are_no_mcp_tool(
+    respx_mock: respx.MockRouter, name: str, arguments: dict[str, Any]
+) -> None:
     names = {tool.name for tool in await server.list_tools()}
-    assert "eurostat_download_dataset" not in names
+    assert f"eurostat_{name}" not in names
     assert "eurostat_get_data" in names
-    with pytest.raises(AssertionError, match="Unknown tool: eurostat_download_dataset"):
-        await mcp_call(server, "eurostat_download_dataset", {"dataset": "apro_mk_cola"})
+    with pytest.raises(AssertionError, match=f"Unknown tool: eurostat_{name}"):
+        await mcp_call(server, f"eurostat_{name}", arguments)
     assert not respx_mock.calls
 
 
@@ -1752,17 +1804,30 @@ def test_get_sold_production_sends_indicators_and_leaves_reporter_out(
     }
 
 
-def test_get_sold_production_unknown_reporter_is_an_empty_list(
-    replay_fixture: ReplayFixture,
+@pytest.mark.parametrize(
+    ("task", "product"), [(get_sold_production, "10411200"), (get_total_production, FERTILISERS)]
+)
+def test_production_refuses_an_unknown_reporter_naming_the_closest(
+    respx_mock: respx.MockRouter, task: Callable[..., Any], product: str
 ) -> None:
-    """A reporter is sent as given: no list of reporters is packaged, and Eurostat
-    answers one the dataset lacks with an empty cube (recorded for ``XX``)."""
-    case = "DS-059358_unknown_code"
-    route = replay_fixture(GET_DATA, case)
-    result = get_sold_production("10411200", reporters=["XX"], since="2022", until="2023")
-    assert sent_urls(route) == [recorded_url(case)]
-    assert result.data == []
-    assert result.meta.vintage == recorded_updated(case)
+    """Each reporter is checked against CXT_FREE_ISO before any request: ``XX``, which
+    Eurostat answers with an empty cube (``DS-059358_unknown_code``), is refused, and so
+    is a three-letter code, naming the two-letter one among the closest."""
+    with pytest.raises(UnknownCode) as refused:
+        task(product, reporters=["AT", "XX"], since="2022", until="2023")
+    assert isinstance(refused.value, InvalidRequestError)
+    assert refused.value.param == "reporter"
+    assert refused.value.list_name == "CXT_FREE_ISO"
+    day = f"{fetched('cxt_free_iso'):%Y-%m-%d}"
+    message = str(refused.value)
+    assert message.startswith(
+        f"'XX' is not a reporter in the packaged CXT_FREE_ISO list (fetched {day})."
+    )
+    assert 'list_codes("cxt_free_iso") lists them.' in message
+    with pytest.raises(UnknownCode) as three:
+        task(product, reporters=["AUT"])
+    assert "AT" in {code for code, _ in three.value.closest}
+    assert not respx_mock.calls, "refused before any request"
 
 
 def test_get_sold_production_refuses_an_unknown_product_naming_the_closest(
@@ -1986,3 +2051,604 @@ def test_get_sold_production_route_end_to_end(replay_fixture: ReplayFixture) -> 
     assert sent_urls(route) == [recorded_url(PRODCOM)]
     assert len(answer.json()["data"]) == 22
     assert refused.status_code == 422
+
+
+# list_cn8 and list_hs: the packaged CXT_NC by code length, as list_codes serves it; no
+# request. Their expected values are read from the packaged file.
+
+NC = "cxt_nc"
+NC_URL = f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/CXT_NC"
+CN_CODE = re.compile(r'``"?(\d{2}(?:[0-9A-Z]{2}){0,3})"?``')
+"""A CN or HS code as a docstring names it, ``15`` or ``"15071090"``, letters included
+(``"1507XXXX"``)."""
+YEARS = range(1988, 2031)
+"""Four digits a trade docstring names as a period (``"2023"``), not as an HS heading: no
+heading of chapters 19 and 20 in this range is named as an example."""
+
+
+def nc_records(lengths: set[int]) -> list[dict[str, Any]]:
+    return [record for record in packaged_file(NC)["records"] if len(record["code"]) in lengths]
+
+
+@pytest.mark.parametrize(
+    ("task", "lengths"), [(list_cn8, {8}), (list_hs, {2, 4, 6})], ids=["cn8", "hs"]
+)
+def test_list_cn8_and_list_hs_answer_their_codes_of_cxt_nc(
+    respx_mock: respx.MockRouter, task: Callable[..., Any], lengths: set[int]
+) -> None:
+    """ADR-0022 rule 1: the file's fetched, the codelist's full URL on the Comext base,
+    its version as vintage and its LAST_UPDATED, zoned, as published_at."""
+    result = task()
+    raw = packaged_file(NC)
+    info = index_record(NC)
+    assert [code.dump_upstream() for code in result.data] == nc_records(lengths)
+    assert {len(code.code) for code in result.data} == lengths
+    assert all(isinstance(code, Code) for code in result.data)
+    assert result.meta.source == "eurostat"
+    assert result.meta.endpoint == NC_URL == raw["endpoint"]
+    assert result.meta.retrieved_at == fetched(NC)
+    assert result.meta.vintage == info["version"]
+    assert result.meta.published_at == datetime.fromisoformat(info["LAST_UPDATED"])
+    assert result.meta.published_at.utcoffset() is not None
+    assert result.meta.published_at_naive is False
+    assert result.meta.request == {}
+    assert result.meta.total is None
+    assert not respx_mock.calls, "no request"
+
+
+def test_list_cn8_and_list_hs_split_cxt_nc_by_length() -> None:
+    """No eight-digit code in list_hs, none shorter in list_cn8; the lettered codes are
+    served as Eurostat lists them; CXT_NC's codes of another length (``TOTAL``) are in
+    neither, and list_codes serves the whole list."""
+    cn8 = list_cn8().data
+    hs = list_hs().data
+    assert all(len(code.code) == 8 for code in cn8)
+    assert not [code for code in hs if len(code.code) >= 8]
+    assert {"15071090", "1507XXXX"} <= {code.code for code in cn8}
+    assert {"15", "1507", "150710", "1507XX"} <= {code.code for code in hs}
+    served = {code.code for code in [*cn8, *hs]}
+    rest = [
+        record["code"] for record in packaged_file(NC)["records"] if record["code"] not in served
+    ]
+    assert "TOTAL" in rest
+    assert all(len(code) not in {2, 4, 6, 8} for code in rest)
+    assert len(cn8) + len(hs) + len(rest) == index_record(NC)["count"] == len(list_codes(NC).data)
+
+
+def test_list_cn8_search_keeps_code_or_label_ignoring_case() -> None:
+    result = list_cn8(search="SOYA")
+    expected = [
+        record
+        for record in nc_records({8})
+        if "soya" in record["code"].casefold() or "soya" in (record["label"] or "").casefold()
+    ]
+    assert [code.dump_upstream() for code in result.data] == expected
+    assert {"15071090", "12010090", "23040000"} <= {code.code for code in result.data}
+    assert result.meta.request == {"search": "SOYA"}
+
+
+def test_list_hs_search_keeps_a_heading_and_its_subheadings() -> None:
+    result = list_hs(search="1507")
+    assert {"1507", "150710", "150790"} <= {code.code for code in result.data}
+    assert all("1507" in code.code or "1507" in (code.label or "") for code in result.data)
+    assert result.meta.request == {"search": "1507"}
+
+
+def test_list_cn8_returns_a_new_list_each_call() -> None:
+    first = list_cn8(search="1507")
+    first.data.clear()
+    assert list_cn8(search="1507").data
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("tool", "note"),
+    [
+        ("list_cn8", "pass search, a part of the code or of the label (1507, soya, oilcake)"),
+        ("list_hs", "pass search, a part of the code or of the label (1507, soya, fertilisers)"),
+    ],
+)
+async def test_list_cn8_and_list_hs_tools_cut_the_list_with_their_note(
+    tool: str, note: str
+) -> None:
+    payload = await mcp_call(server, f"eurostat_{tool}", {})
+    cap = tasks.MCP_CAPS[tool]
+    shown = len(payload["data"])
+    total = len(getattr(tasks, tool)().data)
+    assert 0 < shown <= cap.max_rows < total
+    assert payload["note"] == (
+        f"showing {shown} of {total} rows (cap: {cap.max_rows} rows or {cap.max_bytes} bytes); "
+        f"{note}, to see the rest"
+    )
+    assert payload["meta"]["endpoint"] == NC_URL
+    assert payload["meta"]["vintage"] == index_record(NC)["version"]
+
+
+@pytest.mark.anyio
+async def test_list_hs_tool_answers_a_heading_whole() -> None:
+    payload = await mcp_call(server, "eurostat_list_hs", {"search": "1507"})
+    assert "note" not in payload
+    assert payload["data"] == [code.model_dump() for code in list_hs(search="1507").data]
+    assert payload["meta"]["request"] == {"search": "1507"}
+
+
+@pytest.mark.parametrize(
+    "task",
+    [
+        tasks.list_cn8_async,
+        tasks.list_hs_async,
+        tasks.get_trade_async,
+        tasks.get_trade_hs_async,
+        tasks.download_trade_async,
+    ],
+)
+def test_trade_docstrings_name_packaged_codes(task: Callable[..., Any]) -> None:
+    """Every CN or HS code a docstring names is in the packaged CXT_NC, so the examples an
+    agent reads are real codes; a refresh that drops one fails here."""
+    named = {
+        code
+        for code in CN_CODE.findall(task.__doc__ or "")
+        if not (code.isdigit() and len(code) == 4 and int(code) in YEARS)
+    }
+    assert named
+    known = {record["code"] for record in packaged_file(NC)["records"]}
+    assert named <= known, sorted(named - known)
+
+
+# The trade tasks: one getData request each on the Comext base, through get_data, so meta
+# is get_data's; recorded on 2026-10-28 through the URL each sends. Austria's trade with
+# Germany over 2023, monthly: crude soya-bean oil (CN8 15071090) in DS-045409, soya-bean
+# oil (HS heading 1507) in DS-059341.
+
+TRADE = "DS-045409_AT_DE_15071090_2023"
+TRADE_HS = "DS-059341_AT_DE_1507_2023"
+SOYA_OIL = "15071090"
+TRADE_SLICE: dict[str, Any] = {
+    "reporters": ["AT"],
+    "partners": ["DE"],
+    "since": "2023-01",
+    "until": "2023-12",
+}
+TRADE_ID = ["freq", "reporter", "partner", "product", "flow", "indicators", "time"]
+CEST = timezone(timedelta(hours=2))
+
+
+@pytest.mark.parametrize(
+    ("task", "case", "dataset", "product", "indicators"),
+    [
+        (
+            get_trade,
+            TRADE,
+            "DS-045409",
+            SOYA_OIL,
+            {"VALUE_IN_EUROS", "QUANTITY_IN_100KG", "SUPPLEMENTARY_QUANTITY"},
+        ),
+        (get_trade_hs, TRADE_HS, "DS-059341", "1507", {"VALUE_EUR", "VALUE_NAC", "QUANTITY_KG"}),
+    ],
+    ids=["ds_045409", "ds_059341"],
+)
+def test_trade_tasks_send_get_data_s_request(
+    replay_fixture: ReplayFixture,
+    task: Callable[..., Any],
+    case: str,
+    dataset: str,
+    product: str,
+    indicators: set[str],
+) -> None:
+    route = replay_fixture(GET_DATA, case)
+    before = datetime.now(UTC)
+    result = task(product, **TRADE_SLICE)
+    after = datetime.now(UTC)
+    assert sent_urls(route) == [recorded_url(case)]
+    assert sent_urls(route)[0].startswith(f"{COMEXT_STATISTICS}/{dataset}?"), "the Comext host"
+    assert sent_query(route) == {
+        "format": "JSON",
+        "lang": "EN",
+        "freq": "M",
+        "reporter": "AT",
+        "partner": "DE",
+        "product": product,
+        "sinceTimePeriod": "2023-01",
+        "untilTimePeriod": "2023-12",
+    }
+    cube = recorded_cube(case)
+    assert cube.id == TRADE_ID
+    assert all(isinstance(observation, Observation) for observation in result.data)
+    assert [observation.codes for observation in result.data] == cube_order(cube), "cube order"
+    assert [observation.value for observation in result.data] == [
+        observation.value for observation in cube.observations()
+    ]
+    assert {observation.codes["product"] for observation in result.data} == {product}
+    assert {observation.codes["flow"] for observation in result.data} == {"1", "2"}
+    assert set(cube.dimension["indicators"].category.index) == indicators
+    assert {observation.codes["indicators"] for observation in result.data} <= indicators
+    assert {observation.codes["time"][:5] for observation in result.data} == {"2023-"}
+    flows = {code.code: code.label for code in params.codes("cxt_eu_flux")}
+    assert all(o.labels["flow"] == flows[o.codes["flow"]] for o in result.data)
+    labels = {record["code"]: record["label"] for record in packaged_file(NC)["records"]}
+    assert result.data[0].labels["product"] == labels[product], "the label CXT_NC gives"
+    assert result.meta.source == "eurostat"
+    assert result.meta.endpoint == "getData"
+    assert result.meta.published_at == datetime(2026, 10, 16, 11, 0, tzinfo=CEST)
+    assert result.meta.published_at == cube.updated
+    assert result.meta.published_at_naive is False
+    assert result.meta.vintage == "2026-10-16T11:00:00+0200" == recorded_updated(case)
+    assert result.meta.request == {
+        "dataset": dataset,
+        "filters": {"freq": "M", "reporter": ["AT"], "partner": ["DE"], "product": product},
+        "lang": "EN",
+        "since_time_period": "2023-01",
+        "until_time_period": "2023-12",
+    }
+    assert result.meta.total is None
+    assert_time_between(result.meta.retrieved_at, before, after)
+
+
+def test_get_trade_sends_every_filter_in_the_structure_order(
+    replay_fixture: ReplayFixture,
+) -> None:
+    """NOT RECORDED: this request was never sent upstream. What is sent with a flow,
+    indicators, two partners, annual periods and no reporters: the filters in the data
+    structure's order, a list once per code, and no ``reporter``. The recorded answer of
+    another request (``DS-045409_AT_DE_15071090_2023``, AT and DE monthly) is served at
+    this URL, moved, not written by hand; the answer is not checked, only the request and
+    its record in ``meta.request``."""
+    url = (
+        f"{COMEXT_STATISTICS}/DS-045409?format=JSON&lang=EN&freq=A&partner=US&partner=BR"
+        "&product=1507&flow=2&indicators=VALUE_IN_EUROS&sinceTimePeriod=2022&untilTimePeriod=2023"
+    )
+    route = replay_fixture(GET_DATA, TRADE, url=url)
+    result = get_trade(
+        "1507",
+        partners=["US", "BR"],
+        flow="2",
+        since="2022",
+        until="2023",
+        freq="A",
+        indicators=["VALUE_IN_EUROS"],
+    )
+    assert sent_urls(route) == [url]
+    assert result.meta.request["filters"] == {
+        "freq": "A",
+        "partner": ["US", "BR"],
+        "product": "1507",
+        "flow": "2",
+        "indicators": ["VALUE_IN_EUROS"],
+    }
+
+
+def test_get_trade_takes_a_plain_string_as_one_partner(replay_fixture: ReplayFixture) -> None:
+    route = replay_fixture(GET_DATA, TRADE)
+    result = get_trade(SOYA_OIL, reporters="AT", partners="DE", since="2023-01", until="2023-12")
+    assert sent_urls(route) == [recorded_url(TRADE)]
+    assert result.meta.request["filters"]["partner"] == ["DE"]
+
+
+TRADE_TASKS = [get_trade, get_trade_hs]
+
+
+@pytest.mark.parametrize("task", TRADE_TASKS, ids=["get_trade", "get_trade_hs"])
+def test_trade_tasks_refuse_an_unknown_product_naming_the_closest(
+    respx_mock: respx.MockRouter, task: Callable[..., Any]
+) -> None:
+    with pytest.raises(UnknownCode) as refused:
+        task("1507109", reporters=["AT"])
+    assert isinstance(refused.value, InvalidRequestError)
+    assert refused.value.param == "product"
+    assert refused.value.list_name == "CXT_NC"
+    assert SOYA_OIL in {code for code, _ in refused.value.closest}
+    day = f"{fetched(NC):%Y-%m-%d}"
+    message = str(refused.value)
+    assert message.startswith(
+        f"'1507109' is not a product in the packaged CXT_NC list (fetched {day}). Did you mean "
+    )
+    assert "list_cn8 and list_hs list its codes." in message
+    assert not respx_mock.calls, "refused before any request"
+
+
+@pytest.mark.parametrize("task", TRADE_TASKS, ids=["get_trade", "get_trade_hs"])
+@pytest.mark.parametrize(
+    ("arguments", "param", "list_name", "near"),
+    [
+        ({"reporters": ["AUT"]}, "reporter", "CXT_FREE_ISO", "AT"),
+        ({"partners": ["DE", "XX"]}, "partner", "CXT_FREE_ISO", None),
+        ({"flow": "IMPORT"}, "flow", "CXT_EU_FLUX", "1"),
+        ({"indicators": ["VALUE_IN_EURO"]}, "indicator", "CXT_INDICATORS", "VALUE_IN_EUROS"),
+    ],
+    ids=["reporter", "partner", "flow", "indicator"],
+)
+def test_trade_tasks_refuse_a_code_its_list_lacks(
+    respx_mock: respx.MockRouter,
+    task: Callable[..., Any],
+    arguments: dict[str, Any],
+    param: str,
+    list_name: str,
+    near: str | None,
+) -> None:
+    with pytest.raises(UnknownCode) as refused:
+        task("1507", **arguments)
+    assert refused.value.param == param
+    assert refused.value.list_name == list_name
+    if near is not None:
+        assert near in {code for code, _ in refused.value.closest}
+    assert f"in the packaged {list_name} list" in str(refused.value)
+    assert not respx_mock.calls
+
+
+@pytest.mark.parametrize("task", TRADE_TASKS, ids=["get_trade", "get_trade_hs"])
+@pytest.mark.parametrize("freq", ["Q", "m"])
+def test_trade_tasks_refuse_a_freq_outside_the_enumeration(
+    respx_mock: respx.MockRouter, task: Callable[..., Any], freq: str
+) -> None:
+    """``Freq`` is refused as ``Lang`` is: a plain string outside it, before any request."""
+    with pytest.raises(InvalidRequestError) as refused:
+        task("1507", freq=freq)
+    assert not isinstance(refused.value, UnknownCode)
+    assert str(refused.value) == f"freq={freq!r} is not one of 'A', 'M'"
+    assert not respx_mock.calls
+
+
+def test_get_trade_takes_freq_as_the_enumeration_or_a_plain_string(
+    replay_fixture: ReplayFixture,
+) -> None:
+    """``Freq.M``, the default, and ``"M"`` send the same request, ``freq=M``, so the
+    second is answered from the cache; meta.request holds the plain value."""
+    route = replay_fixture(GET_DATA, TRADE)
+    by_member = get_trade(SOYA_OIL, **TRADE_SLICE, freq=Freq.M)
+    by_text = get_trade(SOYA_OIL, **TRADE_SLICE, freq="M")
+    assert sent_urls(route) == [recorded_url(TRADE)], "one request, the same URL"
+    assert by_member.meta.request == by_text.meta.request
+    assert type(by_member.meta.request["filters"]["freq"]) is str
+    assert [member.value for member in Freq] == ["A", "M"]
+
+
+@pytest.mark.anyio
+async def test_trade_tools_schema_lists_freq_and_refuse_another_value(
+    respx_mock: respx.MockRouter,
+) -> None:
+    """The MCP schema carries ``Freq``'s values, A and M, with M the default; a value
+    outside them is answered in the family's error form, before any request."""
+    tools = {tool.name: tool for tool in await server.list_tools()}
+    for name in ("eurostat_get_trade", "eurostat_get_trade_hs"):
+        schema = tools[name].input_schema
+        assert {"$ref": "#/$defs/Freq"} in schema["properties"]["freq"]["anyOf"]
+        assert schema["properties"]["freq"]["default"] == "M"
+        assert schema["$defs"]["Freq"]["enum"] == ["A", "M"]
+    text = await mcp_call_text(server, "eurostat_get_trade", {"product": "1507", "freq": "Q"})
+    assert text == "error: InvalidRequestError: freq='Q' is not one of 'A', 'M'"
+    assert not respx_mock.calls
+
+
+CN8_ON_HS = "DS-059341_AT_DE_15071090_cn8_on_hs_flow"
+
+
+def test_get_trade_hs_passes_a_cn8_code_which_ds_059341_answers_asynchronously(
+    replay_fixture: ReplayFixture,
+) -> None:
+    """Recorded on 2026-10-28: a CN8 code passes the check, since DS-059341's structure
+    names CXT_NC for its product, and DS-059341, by HS2-4-6, answers it not with an empty
+    cube but asynchronously, HTTP 413 with an ``error`` array labelled
+    ``ASYNCHRONOUS_RESPONSE``, which the package does not poll: ``classify`` refuses it as
+    an asynchronous answer, never as too large."""
+    route = replay_fixture(GET_DATA, CN8_ON_HS)
+    with pytest.raises(InvalidRequestError) as refused:
+        get_trade_hs(SOYA_OIL, **TRADE_SLICE)
+    assert not isinstance(refused.value, UnknownCode), "the package's check lets it through"
+    assert sent_urls(route) == [recorded_url(CN8_ON_HS)]
+    assert recorded_url(CN8_ON_HS) == (
+        f"{COMEXT_STATISTICS}/DS-059341?format=JSON&lang=EN&freq=M&reporter=AT&partner=DE"
+        "&product=15071090&sinceTimePeriod=2023-01&untilTimePeriod=2023-12"
+    )
+    recorded = load_fixture(FIXTURES / GET_DATA / f"{CN8_ON_HS}.json").response
+    assert recorded.status == 413
+    assert json.loads(recorded.body)["error"][0]["label"].startswith("ASYNCHRONOUS_RESPONSE")
+    assert str(refused.value) == (
+        "Eurostat will answer GET /eurostat/api/comext/dissemination/statistics/1.0/data/"
+        "DS-059341 asynchronously (ASYNCHRONOUS_RESPONSE. Your request will be treated "
+        "asynchronously. Please try again later.), and this package does not poll "
+        "asynchronous answers: the Statistics API prepares the answer meanwhile and does "
+        "not say when it is ready: send the same request again later, or narrow the query "
+        "with fewer codes per dimension or a shorter period."
+    )
+    assert "too large" not in str(refused.value)
+
+
+@pytest.mark.parametrize(
+    ("argument", "every"),
+    [("reporters", "reporter"), ("partners", "partner"), ("indicators", "indicator")],
+)
+def test_get_trade_refuses_an_empty_list(
+    respx_mock: respx.MockRouter, argument: str, every: str
+) -> None:
+    empty: dict[str, Any] = {argument: []}
+    with pytest.raises(InvalidRequestError) as refused:
+        get_trade("1507", **empty)
+    assert str(refused.value) == (
+        f"{argument} lists no code: give one code or several, or leave {argument} out for "
+        f"every {every}"
+    )
+    assert not respx_mock.calls
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("tool", "case", "product"),
+    [("get_trade", TRADE, SOYA_OIL), ("get_trade_hs", TRADE_HS, "1507")],
+    ids=["get_trade", "get_trade_hs"],
+)
+async def test_trade_tools_end_to_end(
+    replay_fixture: ReplayFixture, tool: str, case: str, product: str
+) -> None:
+    route = replay_fixture(GET_DATA, case)
+    payload = await mcp_call(server, f"eurostat_{tool}", {"product": product, **TRADE_SLICE})
+    assert sent_urls(route) == [recorded_url(case)]
+    assert "note" not in payload, "one reporter, one partner, a year: nothing cut"
+    assert [row["codes"] for row in payload["data"]] == cube_order(recorded_cube(case))
+    assert payload["meta"]["endpoint"] == "getData"
+    assert payload["meta"]["request"]["filters"] == {
+        "freq": "M",
+        "reporter": ["AT"],
+        "partner": ["DE"],
+        "product": product,
+    }
+    assert payload["meta"]["published_at"] == "2026-10-16T11:00:00+02:00"
+
+
+@pytest.mark.anyio
+async def test_get_trade_tool_answers_the_refusal_as_text() -> None:
+    text = await mcp_call_text(server, "eurostat_get_trade", {"product": "1507109"})
+    assert text.startswith(
+        "error: UnknownCode: '1507109' is not a product in the packaged CXT_NC list"
+    )
+
+
+def test_get_trade_route_end_to_end(replay_fixture: ReplayFixture) -> None:
+    """A list parameter makes the route a POST with a JSON body (ADR-0007)."""
+    route = replay_fixture(GET_DATA, TRADE)
+    app = FastAPI()
+    app.include_router(router)
+    with TestClient(app) as http:
+        answer = http.post("/eurostat/get_trade", json={"product": SOYA_OIL, **TRADE_SLICE})
+        refused = http.post("/eurostat/get_trade", json={"product": "1507109"})
+    assert answer.status_code == 200
+    assert sent_urls(route) == [recorded_url(TRADE)]
+    assert len(answer.json()["data"]) == len(cube_order(recorded_cube(TRADE)))
+    assert refused.status_code == 422
+
+
+# download_trade: DS-045409's series key built from get_trade's arguments, streamed as
+# download_dataset streams it; the slice of get_trade's fixture, recorded on 2026-10-28
+# with compressed=true and without it.
+
+TRADE_SLICE_GZ = "DS-045409_M_AT_DE_15071090_2023_compressed"
+TRADE_SLICE_PLAIN = "DS-045409_M_AT_DE_15071090_2023"
+TRADE_KEY = "M.AT.DE.15071090.."
+"""DS-045409's key: freq M, reporter AT, partner DE, product 15071090, both flows, every
+indicator."""
+
+
+def test_download_trade_ds_045409(replay_fixture: ReplayFixture, tmp_path: Path) -> None:
+    route = replay_fixture(DATA_QUERY, TRADE_SLICE_GZ)
+    recorded = recorded_data(TRADE_SLICE_GZ)
+    dest = tmp_path / "soya_oil.csv.gz"
+    before = datetime.now(UTC)
+    result = download_trade(SOYA_OIL, **TRADE_SLICE, dest=dest)
+    after = datetime.now(UTC)
+    assert sent_urls(route) == [recorded.request.url], "one exchange on the wire"
+    assert recorded.request.url == (
+        f"{COMEXT_DATA_URL}/DS-045409/{TRADE_KEY}?format=SDMX-CSV&startPeriod=2023-01"
+        "&endPeriod=2023-12&compressed=true"
+    ), "the Comext host, the key in the structure's order"
+    downloaded = result.data
+    assert dest.read_bytes() == recorded.response.content, "the gzip file as Eurostat sent it"
+    assert downloaded.path == dest
+    assert downloaded.bytes == len(recorded.response.content)
+    assert downloaded.content_type == "application/vnd.sdmx.data+csv;version=1.0.0"
+    assert downloaded.filename == "estat_ds-045409_filtered_en.csv.gz"
+    assert_time_between(downloaded.retrieved_at, before, after)
+    assert leftovers(tmp_path) == ["soya_oil.csv.gz"], "no temporary file left"
+    rows = list(parse_sdmx_csv(dest))
+    assert rows == list(
+        parse_sdmx_csv(FIXTURES / "files" / "sdmx-csv" / f"{TRADE_SLICE_PLAIN}.csv")
+    )
+    assert {tuple(row.dimensions) for row in rows} == {tuple(TRADE_ID[:-1])}
+    assert {
+        (row.dimensions["reporter"], row.dimensions["partner"], row.dimensions["product"])
+        for row in rows
+    } == {("AT", "DE", SOYA_OIL)}
+    assert {row.dimensions["flow"] for row in rows} == {"1", "2"}
+    assert {row.time_period[:5] for row in rows} == {"2023-"}
+    assert all(isinstance(row.obs_value, Decimal) for row in rows), "numbers, no text"
+    meta = result.meta
+    assert meta.source == "eurostat"
+    assert meta.endpoint == "dataQuery"
+    assert meta.retrieved_at == downloaded.retrieved_at
+    assert meta.vintage == "16/10/26 11:00:00" == rows[0].last_update
+    assert meta.published_at == datetime(2026, 10, 16, 11, 0)
+    assert meta.published_at_naive is True
+    assert meta.request == {
+        "dataset": "DS-045409",
+        "product": SOYA_OIL,
+        "reporters": ["AT"],
+        "partners": ["DE"],
+        "freq": "M",
+        "key": TRADE_KEY,
+        "start_period": "2023-01",
+        "end_period": "2023-12",
+        "format": "SDMX-CSV",
+        "compressed": True,
+    }
+    assert meta.total is None
+
+
+@pytest.mark.parametrize(
+    ("arguments", "key"),
+    [
+        ({"product": "1507"}, "M...1507.."),
+        (
+            {
+                "reporters": ["AT", "DE"],
+                "partners": "US",
+                "flow": "1",
+                "freq": "A",
+                "indicators": ["VALUE_IN_EUROS", "QUANTITY_IN_100KG"],
+            },
+            "A.AT+DE.US..1.VALUE_IN_EUROS+QUANTITY_IN_100KG",
+        ),
+    ],
+    ids=["product", "reporters"],
+)
+def test_download_trade_builds_the_key_in_the_structure_order(
+    replay_fixture: ReplayFixture, tmp_path: Path, arguments: dict[str, Any], key: str
+) -> None:
+    """The recorded answer served at the URL of another request: moved, not written by
+    hand. A position is empty for a dimension left None, ``+`` joins the codes of one,
+    and the dots and plus signs stay in the key as sent."""
+    url = f"{COMEXT_DATA_URL}/DS-045409/{key}?format=SDMX-CSV&compressed=true"
+    route = replay_fixture(DATA_QUERY, TRADE_SLICE_GZ, url=url)
+    result = download_trade(**arguments, dest=tmp_path / "trade.csv.gz")
+    assert sent_urls(route) == [url]
+    assert result.meta.request["key"] == key
+
+
+@pytest.mark.parametrize(
+    "arguments", [{}, {"partners": ["US"], "flow": "1"}], ids=["nothing", "no product or reporter"]
+)
+def test_download_trade_refuses_a_call_without_product_or_reporters(
+    respx_mock: respx.MockRouter, tmp_path: Path, arguments: dict[str, Any]
+) -> None:
+    """Eurostat serves no Comext trade dataset whole: refused before any request."""
+    with pytest.raises(InvalidRequestError) as refused:
+        download_trade(**arguments, dest=tmp_path / "trade.csv.gz")
+    assert not isinstance(refused.value, UnknownCode)
+    assert str(refused.value) == tasks.TRADE_FILTER_REQUIRED
+    assert "give product or reporters, or both" in str(refused.value)
+    assert not respx_mock.calls
+    assert leftovers(tmp_path) == []
+
+
+def test_download_trade_refuses_an_unknown_code_or_freq(
+    respx_mock: respx.MockRouter, tmp_path: Path
+) -> None:
+    with pytest.raises(UnknownCode) as product:
+        download_trade("1507109", dest=tmp_path / "t.csv.gz")
+    assert product.value.list_name == "CXT_NC"
+    with pytest.raises(UnknownCode) as partner:
+        download_trade("1507", partners=["GER"], dest=tmp_path / "t.csv.gz")
+    assert partner.value.param == "partner"
+    with pytest.raises(InvalidRequestError, match=r"^freq='Q' is not one of 'A', 'M'$"):
+        download_trade("1507", freq="Q", dest=tmp_path / "t.csv.gz")
+    assert not respx_mock.calls
+
+
+def test_download_trade_refuses_a_directory_or_a_missing_one(
+    respx_mock: respx.MockRouter, tmp_path: Path
+) -> None:
+    """``download_dataset``'s refusals, before any request."""
+    with pytest.raises(InvalidRequestError) as directory:
+        download_trade(SOYA_OIL, reporters=["AT"], dest=tmp_path)
+    assert str(directory.value) == "dest is a directory; name the file to write"
+    with pytest.raises(InvalidRequestError) as missing:
+        download_trade(SOYA_OIL, reporters=["AT"], dest=tmp_path / "no" / "t.csv.gz")
+    assert str(missing.value) == "dest's directory does not exist; create it first"
+    assert not respx_mock.calls

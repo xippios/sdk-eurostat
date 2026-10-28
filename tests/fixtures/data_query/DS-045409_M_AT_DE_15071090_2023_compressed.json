@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-10-28T15:21:43.263816Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/data/DS-045409/M.AT.DE.15071090..?format=SDMX-CSV&startPeriod=2023-01&endPeriod=2023-12&compressed=true"
+  },
+  "response": {
+    "body": "H4sIAAAAAAAAALWWzWrcQBCE74G8g48JtMfdPf++yUgOS9Zex9Im+LQYew0G43XkNXn9tHLISXNqDQh0EPoYaqqqu22G5nK9+QXrph9OtjdtM3TwNO5/w7h/O4zH/Qhv9+PxdXqPh8ePhyM8vRz+wPPr4/PD/fEwvsOwuup2N93tatPC5qLf/WzW2+7zp64fmuG87U/ReYf5Cxn8ChTOCM84nBCdI8oDV9AM0HZAHiNhRiD4sW2uh9Vwt1td7wjx+zdgZHuKFpI1MddAO8iGqQbZg8dsXJVTRyDKxsca7ATsnMmpBjtPF0m+Aprkm3E1BCGClE0MNdAMaFDlvn+Zm7Dd9nbT/88LEVmVzLNcJ/9GlcazWC/v6Hhx7pQSCqqLm+VKQjyTW5yb5bxMi59XouF0NTRLJSBHupqY5TKEoIgEF8uHpNi8QazBZvCJTazCljSboAhzmeyAozWocFyZ7UEmFCrsUUYHYMvGVTGJdIbRRLBMThBjNmRrsDNwINVgLbKlPWIyVEPsqULQJ2Nr6C09Ym1kpSizPU1CRs1CUOAyZMtBMQcLXCkQTU8XqA4so1f5orQN2LS8CAEcitkW50phWMVwLVCT7JwZFatWgStF4X1UdVBhxcgxLS7DtHp7TosneOoG9G4y719RKr9gBw8AAA==",
+    "body_base64": true,
+    "headers": [
+      [
+        "date",
+        "Wed, 28 Oct 2026 15:21:41 GMT"
+      ],
+      [
+        "content-type",
+        "application/vnd.sdmx.data+csv;version=1.0.0"
+      ],
+      [
+        "content-disposition",
+        "attachment; filename=\"estat_ds-045409_filtered_en.csv.gz\""
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ]
+    ],
+    "status": 200
+  }
+}

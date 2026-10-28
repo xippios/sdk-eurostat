@@ -49,9 +49,11 @@ All notable changes to this project are documented here. The format follows
   `until` as `sinceTimePeriod` and `untilTimePeriod`, `indicators` as `indicators`. The
   product is checked against the dataset's packaged product list and each indicator
   against `CXT_INDICATORS` before sending, so a code they lack raises `UnknownCode`
-  naming the closest codes; a reporter is sent as given, and one the dataset lacks gives
-  an empty list. Over MCP each keeps 200 rows, with a note naming `reporters`,
-  `indicators` and `since`.
+  naming the closest codes; each reporter is checked against the packaged
+  `CXT_FREE_ISO`, as the product and the indicators are; a reporter the list holds and
+  the dataset lacks is Eurostat's to answer, as an indicator the dataset lacks was (an
+  empty cube, recorded for `PRODVAL` on `DS-059359`); no such answer is recorded. Over
+  MCP each keeps 200 rows, with a note naming `reporters`, `indicators` and `since`.
 - `list_products(search=None)`: the PRODCOM products of `DS-059358` from the packaged
   `CXT_PRODCOM2_SOLD`, without a request, `meta.vintage` the codelist's version and
   `meta.published_at` its last update, with Eurostat's zone. Its description names the
@@ -69,6 +71,54 @@ All notable changes to this project are documented here. The format follows
   replaces their records in `lists.json` and their rows in `reference/README.md`, and
   keeps every other list's; the index's `fetched` becomes the latest `fetched` among
   all the packaged lists. Without `--only` the run is the whole refresh, as before.
+- Comext trade, the EU side of the trade picture, on the Comext base:
+  `get_trade(product, reporters=None, partners=None, flow=None, since=None, until=None,
+  freq=Freq.M, indicators=None)` reads `DS-045409`, EU trade since 1988 by HS2-4-6 and CN8,
+  and `get_trade_hs(...)`, with the same parameters, `DS-059341`, international trade of
+  EU and non-EU countries since 2002 by HS2-4-6, one product at a time. Each sends one
+  getData request and returns the cube's observations in cube order with `get_data`'s
+  `meta`: `freq` (`models.Freq`, `M`, monthly, by default, or `A`, a hand-written
+  enumeration of the codelist `CXT_FREQ`) and the filters given, `reporters` as
+  `reporter`, `partners` as `partner`, `flow` and `indicators`, in the data structure's
+  order, and `since` and `until` as `sinceTimePeriod` and `untilTimePeriod`. Every code
+  is checked before sending, the product against `CXT_NC`, reporters and partners
+  against `CXT_FREE_ISO`, the flow against `CXT_EU_FLUX` and indicators against
+  `CXT_INDICATORS`, so a code they lack raises `UnknownCode` naming the closest codes,
+  and a `freq` other than `A` or `M` raises `InvalidRequestError`. `DS-059341` takes
+  `CXT_NC` as its product list too, so a CN8 code passes the check there; it answers one
+  asynchronously, HTTP 413 with an `error` array labelled `ASYNCHRONOUS_RESPONSE`, the
+  Statistics API's asynchronous answer as recorded, which this package does not poll and
+  refuses with `InvalidRequestError`: send it again later, or give an HS code. The error
+  mapping refuses that shape by its label as it refuses the user guide's documented
+  `warning`, before its refusal of `EXTRACTION_TOO_BIG` as too large, which shares the
+  status and the id. Over MCP each keeps 200 rows, with a note naming `partners`,
+  `indicators`, `since` and `freq`. Fixtures recorded on the Comext base for Austria's
+  trade with Germany over 2023, monthly, in crude soya-bean oil (CN8 `15071090`) and
+  soya-bean oil (HS `1507`), and that CN8 code on `DS-059341`.
+- `list_cn8(search=None)` and `list_hs(search=None)`: the eight-digit CN codes, and the
+  HS chapters, headings and subheadings, of the packaged `CXT_NC`, without a request,
+  `meta.vintage` the codelist's version and `meta.published_at` its last update, with
+  Eurostat's zone. Their descriptions name the agricultural chapters and codes an agent
+  looks for: oil seeds, fats and oils, oil-cakes and animal feed, ethanol and beverages,
+  biodiesel, sugar, meat, dairy, cereals and fertilisers. Over MCP each takes up to
+  1,000 rows within 64 KB, with a note naming `search`.
+- `download_trade(product=None, reporters=None, partners=None, flow=None, since=None,
+  until=None, freq=Freq.M, indicators=None, *, dest)`, a bulk task like `download_dataset`,
+  in Python only: it builds `DS-045409`'s series key from `get_trade`'s arguments in the
+  dataset's order, `+` between codes and an empty position for an argument left `None`,
+  checks every code as `get_trade` does, refuses a call with neither `product` nor
+  `reporters` before any request, since Eurostat serves no Comext trade dataset whole,
+  and streams the gzip-compressed SDMX-CSV file to `dest`; `meta.request` records the
+  arguments and the key sent. Its fixture's bodies, compressed and plain, are new
+  `sdmx-csv` samples.
+- Three more codelists of the Comext base packaged, fetched on 2026-10-28, those of the
+  trade datasets: `CXT_NC` (version 11.0, 40,409 codes: 29,032 CN8 codes and 11,376 HS
+  chapters, headings and subheadings, earlier years' codes and Eurostat's lettered
+  positions for trade no regular code holds among them), their `product` codes;
+  `CXT_FREE_ISO` (10.0, 313 codes, countries and aggregates), their `reporter` and
+  `partner` codes; and `CXT_EU_FLUX` (1.0, 3 codes), their `flow` codes. `list_codes`
+  serves them as it serves the others; `CXT_EU_FLUX` names no last update, so its
+  `meta.published_at` is `None`. `cxt_nc.json` is about 7 MB, the largest packaged file.
 
 ### Changed
 

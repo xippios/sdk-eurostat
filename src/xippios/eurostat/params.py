@@ -2,11 +2,12 @@
 
 ``/refresh-reference-data`` writes them; ``PackagedList.load(PACKAGE, name)`` reads one.
 
-The table of contents and fifteen codelists ship inside the package under ``reference/``
-so that ``list_datasets``, ``list_codes`` and ``list_products`` need no request, and the
-production tasks check a product before sending one, with an index of their release
-identifiers beside them; ``scripts/refresh_reference.py`` writes the seventeen JSON
-files, never by hand (ADR-0022). The sixteen lists are packaged-list files that
+The table of contents and eighteen codelists ship inside the package under ``reference/``
+so that ``list_datasets``, ``list_codes``, ``list_products``, ``list_cn8`` and ``list_hs``
+need no request, and the production and trade tasks check their codes before sending,
+with an index of their release identifiers beside them; ``scripts/refresh_reference.py``
+writes the twenty JSON files, never by hand (ADR-0022). The nineteen lists are
+packaged-list files that
 ``PackagedList.load`` reads (``{"param", "endpoint", "fetched", "records"}`` and an
 optional ``note``); the index is plain JSON:
 
@@ -17,7 +18,7 @@ optional ``note``); the index is plain JSON:
   ``cxt_prodcom2_sold.json``): the codes of one SDMX codelist as ``models.Code`` records;
   ``param`` the dimension code the Statistics API takes, ``CODELISTS``'s (``geo``,
   ``product``). The twelve codelists of the main base keep the path they were fetched
-  from as ``endpoint`` (``sdmx/2.1/codelist/ESTAT/GEO``); the three of the Comext base
+  from as ``endpoint`` (``sdmx/2.1/codelist/ESTAT/GEO``); the six of the Comext base
   the full URL (``https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/``
   ``codelist/ESTAT/CXT_PRODCOM2_SOLD``), since the path alone would name the main base's
   operation (ADR-0022 rule 1; Johannes, 2026-10-28; gap, row 172).
@@ -26,7 +27,7 @@ optional ``note``); the index is plain JSON:
   and one ``ListInfo`` record per packaged list, with the release identifiers upstream
   gives each, which a packaged-list file has no key for (ADR-0022, amendment 8; gap, row
   111): the TOC's ``creationDate``, a codelist's ``version`` and ``LAST_UPDATED``. It is
-  derived from the sixteen answers the packaged lists come from and names no upstream
+  derived from the nineteen answers the packaged lists come from and names no upstream
   operation. The list tasks read their ``vintage`` and ``published_at`` from it, and
   ``list_codes`` the codelists it knows.
 
@@ -54,6 +55,9 @@ __all__ = [
     "PRODCOM_SOLD",
     "PRODCOM_TOTAL",
     "TOC",
+    "TRADE_COUNTRIES",
+    "TRADE_FLOWS",
+    "TRADE_PRODUCTS",
     "CodelistOrigin",
     "ListIndex",
     "ListInfo",
@@ -78,7 +82,10 @@ class CodelistOrigin(NamedTuple):
             ``_client.COMEXT_BASE_URL`` for a codelist of the Comext and Prodcom
             datasets, e.g. ``"https://ec.europa.eu/eurostat/api/comext/dissemination"``.
         param: The dimension code the Statistics API takes for its codes, the packaged
-            file's ``param``, e.g. ``"geo"`` or ``"product"``.
+            file's ``param``, e.g. ``"geo"`` or ``"product"``. A codelist that feeds two
+            dimensions names the first in the data structure's order: CXT_FREE_ISO's
+            ``param`` is ``"reporter"``, and the trade datasets name it for ``partner``
+            too (``TRADE_COUNTRIES``).
     """
 
     base_url: str
@@ -97,6 +104,23 @@ PRODCOM_INDICATORS = "CXT_INDICATORS"
 """The indicators of DS-059358 and DS-059359: their ``indicators`` dimension's codelist,
 which Comext's trade datasets share."""
 
+TRADE_PRODUCTS = "CXT_NC"
+"""The products of Comext's trade datasets DS-045409 (EU trade since 1988 by HS2-4-6 and
+CN8) and DS-059341 (International trade of EU and non-EU countries since 2002 by
+HS2-4-6): their ``product`` dimension's codelist, the Combined Nomenclature's eight-digit
+codes with the HS chapters, headings and subheadings above them (the data structures
+DS-045409 6.6 and DS-059341 3.7, read 2026-10-28)."""
+
+TRADE_COUNTRIES = "CXT_FREE_ISO"
+"""The reporters and partners of Comext's trade datasets DS-045409 and DS-059341: the
+codelist of their ``reporter`` and ``partner`` dimensions, countries and aggregates
+(``EU27_2020_EXTRA``); the production tasks check a Prodcom reporter against it too
+(Johannes, 2026-10-28)."""
+
+TRADE_FLOWS = "CXT_EU_FLUX"
+"""The flows of Comext's trade datasets DS-045409 and DS-059341: their ``flow``
+dimension's codelist."""
+
 CODELISTS: Mapping[str, CodelistOrigin] = {
     "FREQ": CodelistOrigin(BASE_URL, "freq"),
     "GEO": CodelistOrigin(BASE_URL, "geo"),
@@ -113,14 +137,19 @@ CODELISTS: Mapping[str, CodelistOrigin] = {
     PRODCOM_SOLD: CodelistOrigin(COMEXT_BASE_URL, "product"),
     PRODCOM_TOTAL: CodelistOrigin(COMEXT_BASE_URL, "product"),
     PRODCOM_INDICATORS: CodelistOrigin(COMEXT_BASE_URL, "indicators"),
+    TRADE_PRODUCTS: CodelistOrigin(COMEXT_BASE_URL, "product"),
+    TRADE_COUNTRIES: CodelistOrigin(COMEXT_BASE_URL, "reporter"),
+    TRADE_FLOWS: CodelistOrigin(COMEXT_BASE_URL, "flow"),
 }
 """The packaged codelists, by upstream's id, each with its base and its dimension.
 
 Twelve on the main base, the codelists the dimensions of apro_cpnh1, apro_mk_cola and
 ef_m_farmleg name in their data structures (Johannes, 2026-10-27, D2), each feeding the
-dimension whose code is its id lower-cased; three on the Comext base, the codelists the
-Prodcom datasets DS-059358 and DS-059359 name for ``product`` and ``indicators``
-(Johannes, 2026-10-28). The packaged file of each is its id lower-cased."""
+dimension whose code is its id lower-cased; six on the Comext base, the codelists the
+Prodcom datasets DS-059358 and DS-059359 name for ``product`` and ``indicators`` and the
+codelists the trade datasets DS-045409 and DS-059341 name for ``product``, ``reporter``
+and ``partner``, and ``flow`` (Johannes, 2026-10-28). The packaged file of each is its id
+lower-cased."""
 
 TOC = "toc"
 """The packaged table of contents, ``reference/toc.json``."""

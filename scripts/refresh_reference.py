@@ -1,7 +1,7 @@
 """Refresh the packaged reference data from upstream (``/refresh-reference-data``).
 
 Eurostat's lists are packaged as tables, not as enums: the Catalogue API's table of
-contents (TOC) and the fifteen codelists in ``params.CODELISTS``, each too large for an
+contents (TOC) and the eighteen codelists in ``params.CODELISTS``, each too large for an
 enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
 ``reference/<name>.json`` (conventions §3, ADR-0022):
 
@@ -16,8 +16,9 @@ enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
 - ``<codelist>.json``: one codelist each, the latest version in JSON-stat through
   ``api.sdmx.code_list_query`` with English labels (Johannes, 2026-10-27, D1 and D2), its
   codes and labels in upstream's order, requested on the base ``params.CODELISTS`` names
-  for it: twelve on the main base, three on the Comext base, the codelists of the Prodcom
-  datasets' ``product`` and ``indicators`` (Johannes, 2026-10-28). Its ``param`` is the
+  for it: twelve on the main base, six on the Comext base, the codelists of the Prodcom
+  datasets' ``product`` and ``indicators`` and of the trade datasets' ``product``,
+  ``reporter`` and ``partner``, and ``flow`` (Johannes, 2026-10-28). Its ``param`` is the
   dimension ``params.CODELISTS`` names (``geo``, ``product``), and its ``endpoint`` the
   path it was fetched from on the main base (``sdmx/2.1/codelist/ESTAT/GEO``) and the
   full URL on the Comext base (``codelist_endpoint``).
@@ -27,7 +28,7 @@ enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
   its release (the TOC's ``creationDate``, a codelist's ``version`` and
   ``LAST_UPDATED``), since a packaged file holds its four keys and a ``note`` and
   nothing else (ADR-0022, amendment 8; gap, row 111). It names no upstream operation:
-  it is derived from the sixteen answers.
+  it is derived from the nineteen answers.
 
 Each packaged file's ``fetched`` is the time its answer arrived, UTC to the second. The
 provenance table of ``reference/README.md`` is rewritten from the packaged files. Run
@@ -35,7 +36,7 @@ from the repository root, without a key (the API takes none)::
 
     uv run python scripts/refresh_reference.py
 
-Sixteen keyless requests: the TOC and fifteen codelists, paced by the package client.
+Nineteen keyless requests: the TOC and eighteen codelists, paced by the package client.
 ``--only <name> [<name> ...]`` fetches the named lists alone, each named by its id as
 upstream writes it (``CXT_PRODCOM2_SOLD``) or by its file (``cxt_prodcom2_sold``,
 ``toc``), one request each: it writes their files, replaces their records in

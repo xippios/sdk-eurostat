@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-10-28T15:47:41.145698Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/comext/dissemination/statistics/1.0/data/DS-059341?format=JSON&lang=EN&freq=M&reporter=AT&partner=DE&product=15071090&sinceTimePeriod=2023-01&untilTimePeriod=2023-12"
+  },
+  "response": {
+    "body": "{ \"error\": [{\"status\": 413,\"id\": 413,\"label\": \"ASYNCHRONOUS_RESPONSE. Your request will be treated asynchronously. Please try again later.\"}]}",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Wed, 28 Oct 2026 15:47:39 GMT"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ],
+      [
+        "set-cookie",
+        "REDACTED"
+      ]
+    ],
+    "status": 413
+  }
+}
