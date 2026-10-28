@@ -6,6 +6,19 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Upstream documentation snapshot refreshed on 2026-10-28 with the second API base,
+  `https://ec.europa.eu/eurostat/api/comext/dissemination`, which serves the `DS-`
+  datasets of Comext and Prodcom: the user guide's page "API - Getting started for DS-
+  prefixed datasets from Comext database" as Markdown; the base's five WADL files
+  (Statistics, SDMX 2.1, SDMX 3.0, Catalogue and asynchronous APIs) verbatim under
+  `docs/upstream/api/comext/`; and one JSON-stat and one SDMX-CSV answer for the Prodcom
+  dataset `DS-059358` as structural samples beside the two existing ones.
+  `scripts/refresh_upstream.py` captures them, and `FETCHED.md` lists the Comext page's
+  four links outside the user guide that it does not request. The pages and documents
+  already in the snapshot are unchanged upstream.
+
 ## [0.1.0] - 2026-10-28
 
 First release, on xippios-core 0.3.0 from PyPI (`~=0.3.0`), sdk-template v0.3.0 and
