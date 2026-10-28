@@ -208,8 +208,8 @@ naming the closest.
 ## Upstream terms and attribution
 
 Data comes from Eurostat dissemination API (https://ec.europa.eu/eurostat/web/main/data/database) under its own terms of use;
-this package adds no rights to it. Documentation snapshot and its attribution, Eurostat's
-reuse and citation lines among them: `docs/upstream/FETCHED.md`.
+this package adds no rights to it. Documentation snapshot and its attribution,
+Eurostat's reuse and citation lines among them: `docs/upstream/FETCHED.md`.
 
 ## Licence
 

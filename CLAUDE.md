@@ -28,6 +28,7 @@ src/xippios/eurostat/
   _version.py      __version__ from distribution metadata
   _client.py       the one configured AsyncClient (base URL, rate limit, cache) and
                    classify, upstream's documented error shapes; no key
+  errors.py        the Statistics API's fault model and its parsing, for classify
   models.py        pydantic models mirroring upstream payloads (UpstreamModel)
   api/             endpoint wrappers, one module per upstream service (statistics,
                    catalogue, sdmx), one function per operation
@@ -45,6 +46,7 @@ src/xippios/eurostat/
   reference/       packaged code lists (CSV/JSON) plus README with provenance
 scripts/
   refresh_reference.py   fetches the packaged lists through api/ and regenerates enums.py
+  refresh_upstream.py    writes docs/upstream/ and FETCHED.md (/refresh-upstream)
 tests/
   conftest.py      enables xippios.core.testing.plugin, which keeps the run offline
   fixtures/        recorded responses, <endpoint>/<case>.json, never hand-written;
@@ -52,6 +54,8 @@ tests/
   test_family.py   core's family check, one line: namespace levels, py.typed, __version__,
                    the adapters serving exactly the tasks, task shapes and docstrings, the
                    README status table, the template tag, the core bound
+  test_client.py   classify against the recorded refusals and the documented ones
+  test_models.py   Cube against the recorded answers
   test_tasks.py    per-task replay tests
   test_refresh_reference.py  the refresh script's readers on tests/fixtures/files/
   test_parse.py    parse_sdmx_csv on the samples under tests/fixtures/files/sdmx-csv/

@@ -14,10 +14,10 @@ the Statistics API's JSON-stat cubes through `get_data` and the three slices
 `get_series`, `get_latest_period` and `get_cross_section`; Eurostat's table of contents
 and twelve SDMX codelists, packaged with this version as fetched on 2026-10-27 and read
 without a request through `list_datasets` and `list_codes`; and the bulk task
-`download_dataset`, an SDMX-CSV file streamed to disk, which `parse.parse_sdmx_csv`
-reads, in Python only, with no MCP tool and no route. The other six tasks are MCP tools
-and HTTP routes. The client keeps a self-imposed pace of 30 requests per minute, since
-Eurostat documents no rate in numbers, and caches its answers of HTTP 200 for five
+`download_dataset`, in Python only, with no MCP tool and no route, which streams an
+SDMX-CSV file to disk for `parse.parse_sdmx_csv` to read. The other six tasks are MCP
+tools and HTTP routes. The client keeps a self-imposed pace of 30 requests per minute,
+since Eurostat documents no rate in numbers, and caches its answers of HTTP 200 for five
 minutes. Comext and Prodcom datasets, polling an asynchronous answer, which is refused
 with how to narrow the query, and codelists beyond the twelve are not part of it.
 Nothing was published before, so the entries under Changed record steps on the way to

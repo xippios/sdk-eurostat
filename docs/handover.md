@@ -1,8 +1,11 @@
 # Handover — xippios-eurostat 0.1.0
 
-Date: 2026-10-28 · Written in the release PR (`chore/release-0.1.0`) for the next session
-on sdk-eurostat · Decisions cite the coordination log of session `eurostat`
-(`python3 scripts/coord.py log show eurostat`) by its time, CET.
+Date: 2026-10-28 · Written in the release PR (`chore/release-0.1.0`) for the next
+session on sdk-eurostat · Decisions cite the coordination log of session `eurostat` by
+its time, CET: `coordination/log/eurostat.md` in the coordination root (`~/github/sdk`),
+whose `scripts/coord.py` is the root's script, not this repository's; its
+`log show eurostat` prints the last 20 entries by default, so read the 2026-10-27
+lines from the file.
 
 ## State
 
@@ -32,12 +35,13 @@ One base URL, `https://ec.europa.eu/eurostat/api/dissemination`, keyless; seven 
   without a request, the table of contents (10,375 leaves) and twelve SDMX codelists
   (FREQ, GEO, UNIT, CROPS, STRUCPRO, MILKITEM, DAIRYPROD, STATINFO, LEG_FORM, FARMTYPE,
   SO_EUR, UAAREA, the dimensions of apro_cpnh1, apro_mk_cola and ef_m_farmleg), every
-  codelist at its latest version, fetched 2026-10-27T19:55:36Z by
-  `scripts/refresh_reference.py` (13 keyless requests a run; the only code that parses
-  XML).
-- `download_dataset(dataset, key="", *, since=None, until=None, last_n_observations=None,
-  dest)`: one SDMX 2.1 `dataQuery` as gzip-compressed SDMX-CSV streamed to disk, named
-  in `BULK_TASKS`, so Python only; `parse.parse_sdmx_csv(path)` reads the file lazily.
+  codelist at its latest version, fetched on 2026-10-27 between 19:55:14Z and 19:55:36Z
+  by `scripts/refresh_reference.py` (13 keyless requests a run; the only code that
+  parses XML); each file keeps its own `fetched`, which is its `meta.retrieved_at`.
+- `download_dataset(dataset, key="", *, since=None, until=None,
+  last_n_observations=None, dest)`: one SDMX 2.1 `dataQuery` as gzip-compressed SDMX-CSV
+  streamed to disk, named in `BULK_TASKS`, so Python only; `parse.parse_sdmx_csv(path)`
+  reads the file lazily.
 
 The six others are MCP tools and HTTP routes. `MCP_CAPS`: the slices 200 rows with a
 note each, `list_datasets` the family's cap with a note naming `search`, `list_codes`
@@ -92,8 +96,8 @@ note each, `list_datasets` the family's cap with a note naming `search`, `list_c
   correction 14:33).
 - 14:53, the family session's answer on the caps: `ResultCap` keeps `max_rows` in core
   0.3.0, so the slices keep 200 rows with a note.
-- 18:51, Johannes: core 0.3.0 from PyPI with no git pin (#3; the re-pin PRs fall away),
-  `get_data` and the slices ported to the 0.3.0 helpers.
+- 18:51, Johannes: core 0.3.0 from PyPI with no git pin (#3; the briefing's second
+  re-pin, its PR 5, falls away), `get_data` and the slices ported to the 0.3.0 helpers.
 - 19:49, Johannes: a naive JSON-stat `updated` goes into `published_at` with
   `published_at_naive` set and `vintage` the text (ADR-0022 rule 2); the cache at core's
   defaults.
@@ -118,10 +122,14 @@ note each, `list_datasets` the family's cap with a note naming `search`, `list_c
   PR, `has_files: false` (the SDMX-CSV bulk is an API payload under ADR-0019).
 - 10:26, Johannes: no reference refresh before 0.1.0; the lists of 2026-10-27 ship; the
   next refresh is a routine PR after the release.
+- 10:48, Johannes: the wrapper rename of row 135 (D95, `getData` to `get_data`) lands
+  after 0.1.0; the release ships the current names, and the rename is the first PR of
+  the next version.
 
 ## Next
 
-- Row 135 (family, for this repository): the wrapper `getData` becomes `get_data` and
+- The first PR of the next version, row 135 (family, for this repository; Johannes
+  2026-10-28, log 10:48): the wrapper `getData` becomes `get_data` and
   `tests/fixtures/getData/` moves to `tests/fixtures/get_data/` (D95, conventions 1.22
   once core's docs PR merges); expected class `auto`, no live call.
 - The routine reference refresh after the release (`/refresh-reference-data`).
@@ -151,7 +159,7 @@ Open:
 | 89 | sdk-core | gap: a bound on a refusal text that lists codes (eurostat get_series lists at most 20 codes per unpinned dimension; from sdk-eurostat PR 7) |
 | 90 | sdk-core | gap: a task that composes another task of the same package (eurostat slices call get_data async); conventions §2 says tasks compose endpoint wrappers (from sdk-eurostat PR 7) |
 | 91 | sdk-core | ResultCap: an option to keep the last rows of a cut list, for time series ordered oldest first (from sdk-eurostat PR 7) |
-| 99 | sdk-core | stale sentences outside the release subset after core 0.3.0 (sdk-gates name; roadmap state) — extended with item (g), from the sdk-eurostat PR 9 review |
+| 99 | sdk-core | stale sentences outside the release subset after core 0.3.0 (sdk-gates name; roadmap state) |
 | 103 | sdk-core | gap: which rules bind a source that pins core 0.3.0 from PyPI before its template v0.3.0 adoption (from sdk-eurostat PR 3 review) |
 | 105 | sdk-core | gap: get_answer reports a later time on the miss that stores an entry than the hit reads back (from sdk-eurostat PR 4 on core 0.3.0) |
 | 106 | sdk-template | two scaffold texts stale on core 0.3.0: the guarded ResultCap import in tasks.py.jinja and CLAUDE.md "wrappers use client.get_json" (from the sdk-eurostat PR 4 re-check) |
@@ -164,12 +172,13 @@ Open:
 | 126 | sdk-core | gap: conventions §2 and ADR-0020 decision 1 say parse_<kind>(path) -> list[Model]; a bulk file parser yields lazily (from sdk-eurostat PR 8) |
 | 128 | sdk-core | two bulk-task gaps: core download refuses a bad dest with ValueError outside the taxonomy, and meta.endpoint for a task that downloads through an API operation (from the sdk-eurostat PR 8 review) |
 
-The rows' "PR N" are the briefing's package numbers: PRs 1 to 4 and 6 are #1 to #4 and
-#6; PR 7 (the slices) is #5, PR 8 (the bulk task) #7 and PR 9 (the adoption) #8; PR 5
-never ran.
+Row 99 is the family's; this package extended it with item (g), from the sdk-eurostat
+PR 9 review. The rows' "PR N" are the briefing's package numbers: PRs 1 to 4 and 6 are
+#1 to #4 and #6; PR 7 (the slices) is #5, PR 8 (the bulk task) #7 and PR 9 (the
+adoption) #8; PR 5 never ran.
 
-Done in template v0.3.0: 61 (keyless render wording in template v0.2.2), 63 (the CHANGELOG
-rule in CLAUDE.md and ci.yml exempts adoption PRs), 64 (adapters skip BULK_TASKS by hand
-until v0.3.0), 70 (a shared HTML-to-Markdown helper for scripts/refresh_upstream.py), 98
-(refresh_reference.py and refresh-reference-data.md call the renderers core removed;
-filed by usda-esmis, met by this package in #3).
+Done in template v0.3.0: 61 (keyless render wording in template v0.2.2), 63 (the
+CHANGELOG rule in CLAUDE.md and ci.yml exempts adoption PRs), 64 (adapters skip
+BULK_TASKS by hand until v0.3.0), 70 (a shared HTML-to-Markdown helper for
+scripts/refresh_upstream.py), 98 (refresh_reference.py and refresh-reference-data.md
+call the renderers core removed; filed by usda-esmis, met by this package in #3).
