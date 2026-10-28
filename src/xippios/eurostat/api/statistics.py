@@ -32,14 +32,14 @@ from xippios.core import parse
 from xippios.eurostat._client import SOURCE, client
 from xippios.eurostat.models import Cube, GeoLevel, Lang
 
-__all__ = ["DataAnswer", "getData"]
+__all__ = ["DataAnswer", "get_data"]
 
 ENDPOINT = "getData"
 """The operation's name, the WADL's method id."""
 
 
 class DataAnswer(NamedTuple):
-    """What ``getData`` returns: the cube and what the task's ``meta`` needs.
+    """What ``get_data`` returns: the cube and what the task's ``meta`` needs.
 
     Attributes:
         cube: The answer, parsed.
@@ -55,7 +55,7 @@ class DataAnswer(NamedTuple):
     retrieved_at: datetime
 
 
-async def getData(
+async def get_data(
     dataset_code: str,
     *,
     lang: Lang | None = None,

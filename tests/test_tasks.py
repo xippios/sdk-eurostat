@@ -1303,7 +1303,7 @@ async def test_data_query_downloads_the_plain_answer(
     route = replay_fixture(DATA_QUERY, MILK_SLICE)
     recorded = recorded_data(MILK_SLICE)
     dest = tmp_path / "milk.csv"
-    downloaded = await api.sdmx.dataQuery(
+    downloaded = await api.sdmx.data_query(
         "apro_mk_cola", dest, key=MILK_KEY, start_period="2022", end_period="2023"
     )
     assert sent_urls(route) == [recorded.request.url]

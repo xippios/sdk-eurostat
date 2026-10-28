@@ -34,7 +34,7 @@ from xippios.eurostat.errors import (
 SOURCE = "eurostat"
 BASE_URL = "https://ec.europa.eu/eurostat/api/dissemination"
 SDMX_DATA_PATH = f"{httpx.URL(BASE_URL).path}/sdmx/2.1/data/"
-"""Where the SDMX 2.1 API's data queries go (``api.sdmx.dataQuery``), as a request path
+"""Where the SDMX 2.1 API's data queries go (``api.sdmx.data_query``), as a request path
 begins."""
 SDMX_CSV = "application/vnd.sdmx.data+csv"
 """The media type of an SDMX-CSV answer, plain or ``compressed=true`` (recorded

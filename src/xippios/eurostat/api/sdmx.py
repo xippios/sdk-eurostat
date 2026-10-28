@@ -68,10 +68,10 @@ __all__ = [
     "DATA_ENDPOINT",
     "DATA_FORMAT",
     "CodelistAnswer",
-    "codeListQuery",
+    "code_list_query",
     "codelist_path",
-    "dataQuery",
     "data_path",
+    "data_query",
 ]
 
 CODELIST_ENDPOINT = "codeListQuery"
@@ -81,7 +81,7 @@ DATA_ENDPOINT = "dataQuery"
 """The data operation's name, the WADL's method id."""
 
 DATA_FORMAT = "SDMX-CSV"
-"""The ``format`` ``dataQuery`` sends: "SDMX-CSV for SDMX-CSV 1.0 flat format"."""
+"""The ``format`` ``data_query`` sends: "SDMX-CSV for SDMX-CSV 1.0 flat format"."""
 
 
 def codelist_path(agency_id: str, resource_id: str) -> str:
@@ -93,7 +93,7 @@ def codelist_path(agency_id: str, resource_id: str) -> str:
 
 
 class CodelistAnswer(NamedTuple):
-    """What ``codeListQuery`` returns.
+    """What ``code_list_query`` returns.
 
     Attributes:
         codelist: The answer, parsed.
@@ -108,7 +108,7 @@ class CodelistAnswer(NamedTuple):
     retrieved_at: datetime
 
 
-async def codeListQuery(
+async def code_list_query(
     agency_id: str, resource_id: str, *, lang: str | None = None
 ) -> CodelistAnswer:
     """Call ``codeListQuery``: the latest version of one codelist as JSON-stat.
@@ -148,7 +148,7 @@ def data_path(flow_ref: str, key: str = "") -> str:
     return f"{path}/{quote(key, safe='.+')}" if key else path
 
 
-async def dataQuery(
+async def data_query(
     flow_ref: str,
     dest: str | os.PathLike[str],
     *,

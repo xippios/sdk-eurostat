@@ -2,7 +2,7 @@
 
 ``/add-endpoint`` adds them.
 
-``get_data`` answers one Statistics API request (``api.statistics.getData``) as the
+``get_data`` answers one Statistics API request (``api.statistics.get_data``) as the
 JSON-stat cube it returns. Release metadata: ``meta.published_at`` is the cube's
 ``updated``, the dataset's last update with its zone; ``meta.vintage`` is the same
 member as upstream printed it (``"2026-10-05T23:00:00+0200"``), Eurostat's only release
@@ -32,7 +32,7 @@ rule 2); for a codelist ``meta.vintage`` is its version (``"28.0"``) and
 
 ``download_dataset`` is the bulk task, named in ``BULK_TASKS`` and so Python-only: the
 adapters skip it, no tool or route returns a file path (ADR-0019 decision 4). It streams
-one SDMX 2.1 data query (``api.sdmx.dataQuery``) as gzip-compressed SDMX-CSV to the file
+one SDMX 2.1 data query (``api.sdmx.data_query``) as gzip-compressed SDMX-CSV to the file
 the caller names and returns ``Result[Downloaded]``; ``parse.parse_sdmx_csv`` reads the
 file. Its release metadata comes from the file's first row, read through the parser:
 ``meta.vintage`` is ``LAST UPDATE`` as printed (``"05/10/26 23:00:00"``) and
@@ -302,7 +302,7 @@ async def get_data_async(
     lang = _member(Lang, lang, "lang")
     if geo_level is not None:
         geo_level = _member(GeoLevel, geo_level, "geo_level")
-    answer = await api.statistics.getData(
+    answer = await api.statistics.get_data(
         dataset,
         lang=lang,
         filters=sent,
@@ -737,7 +737,7 @@ async def download_dataset_async(
         raise InvalidRequestError("dest is a directory; name the file to write", source=SOURCE)
     if not target.parent.is_dir():
         raise InvalidRequestError("dest's directory does not exist; create it first", source=SOURCE)
-    downloaded = await api.sdmx.dataQuery(
+    downloaded = await api.sdmx.data_query(
         dataset,
         target,
         key=key,
