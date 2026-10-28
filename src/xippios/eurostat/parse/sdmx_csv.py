@@ -12,9 +12,11 @@ observation, comma-separated, lines ending in CRLF::
 ``DATAFLOW`` and ``LAST UPDATE`` come first, the dataset's dimensions in structure order
 up to ``TIME_PERIOD``, then ``OBS_VALUE`` and the observation's attributes, which differ
 by dataset (``OBS_FLAG`` and ``CONF_STATUS`` in apro_mk_cola; ``OBS_FLAG``,
-``LTAA_FLAG`` and ``LTAA`` in the guide's ENV_WAT_RES). Each row becomes a
-``models.SdmxCsvRow`` with nothing renamed or computed (ADR-0020 decision 2);
-``OBS_VALUE`` is parsed as a ``Decimal``.
+``LTAA_FLAG`` and ``LTAA`` in the guide's ENV_WAT_RES; none in Prodcom's DS-059358).
+Each row becomes a ``models.SdmxCsvRow`` with nothing renamed or computed (ADR-0020
+decision 2); ``OBS_VALUE`` is parsed as a ``Decimal`` where its text is a number and
+kept as printed where it is not, as Prodcom's units and flags are (``"KG"``, ``":E"``,
+``docs/upstream/samples/DS-059358-sdmx-csv.csv``).
 
 The header row is read first, with the standard library's ``csv``, and checked before
 any row, so a file of another layout is refused even without rows. The rows of a plain
@@ -151,10 +153,9 @@ def parse_sdmx_csv(path: str | os.PathLike[str]) -> Generator[SdmxCsvRow, None, 
 
     Raises:
         ValidationError: The file is not SDMX-CSV: its header lacks the columns above in
-            their order, a row has more or fewer values than the header, a value of
-            ``OBS_VALUE`` is not a number, the text is not UTF-8 or not CSV, or a gzip
-            file is cut short or damaged. Raised when the header is read, or at the row
-            where it is found.
+            their order, a row has more or fewer values than the header, the text is not
+            UTF-8 or not CSV, or a gzip file is cut short or damaged. Raised when the
+            header is read, or at the row where it is found.
     """
     file = Path(path)
     packed = _is_gzip(file)

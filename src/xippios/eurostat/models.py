@@ -146,8 +146,12 @@ class Observation(UpstreamModel):
             "geo": "AT", "time": "2022"}``.
         labels: The label of each of those codes, e.g. ``{"freq": "Annual", ...,
             "geo": "Austria", "time": "2022"}``; ``None`` where upstream gives none.
-        value: The cell's value as upstream's JSON number, an ``int`` for an integer
-            (``110780``) and a ``float`` otherwise (``3247.05``); ``None`` when the cell
+        value: The cell's value as upstream's JSON has it: a number, an ``int`` for an
+            integer (``110780``) and a ``float`` otherwise (``3247.05``), or the text
+            upstream prints in place of one, e.g. ``"KG"`` or ``":E"``, since the
+            ``indicators`` dimension of Prodcom's datasets (``DS-059358``) carries units
+            and flags among its measures (``QNTUNIT``, ``SCQNTFLAG``; the sample
+            ``docs/upstream/samples/DS-059358-json-stat.json``); ``None`` when the cell
             carries a status only (a confidential value, say).
         status: The cell's status as upstream writes it, e.g. ``"|C"`` or ``"n"``;
             ``None`` when it has none. The cube's ``extension["status"]["label"]`` names
@@ -156,7 +160,7 @@ class Observation(UpstreamModel):
 
     codes: dict[str, str]
     labels: dict[str, str | None]
-    value: int | float | None
+    value: int | float | str | None
     status: str | None
 
 
@@ -179,9 +183,11 @@ class Cube(UpstreamModel):
             2026-10-05 23:00 +02:00 for upstream's ``"2026-10-05T23:00:00+0200"``; naive
             if upstream prints none (never seen).
         value: The cells that have a value, by cell index as upstream prints it, each
-            number as upstream's JSON has it, an integer staying an ``int``, e.g.
-            ``{"40": 3247.05, "44": 0}``; JSON-stat's dense form, one entry per cell with
-            ``None`` for a null, is read too.
+            value as upstream's JSON has it, an integer staying an ``int``, e.g.
+            ``{"40": 3247.05, "44": 0}``, and a text staying a ``str``, e.g. ``{"12":
+            "KG", "43": ":E"}`` in Prodcom's ``DS-059358``, whose ``indicators``
+            dimension carries units and flags among its measures; JSON-stat's dense form,
+            one entry per cell with ``None`` for a null, is read too.
         status: The cells that have a status, by cell index, e.g. ``{"64": "|C"}``;
             ``None`` when upstream sends no ``status`` member (the empty cube).
         id: The dimension codes in order, e.g. ``["freq", "milkitem", "dairyprod",
@@ -200,7 +206,7 @@ class Cube(UpstreamModel):
     label: str | None = None
     source: str | None = None
     updated: datetime | None = None
-    value: dict[str, int | float | None] | list[int | float | None]
+    value: dict[str, int | float | str | None] | list[int | float | str | None]
     status: dict[str, str] | None = None
     id: list[str]
     size: list[int]
@@ -425,7 +431,8 @@ class SdmxCsvRow(UpstreamModel):
     ``OBS_FLAG``, ``LTAA_FLAG`` and ``LTAA`` in the user guide's ENV_WAT_RES). Nothing is
     renamed: each field is its column's header snake_cased, and the dimensions and the
     other attributes keep their headers as keys. Every value is text as printed but
-    ``obs_value``, a number; an empty cell is ``None`` except in a dimension.
+    ``obs_value``, a number where its text is one; an empty cell is ``None`` except in a
+    dimension.
 
     Attributes:
         dataflow: The dataflow and its version, e.g. ``"ESTAT:APRO_MK_COLA(1.0)"``;
@@ -437,8 +444,13 @@ class SdmxCsvRow(UpstreamModel):
             "AT"}``: the columns between ``LAST UPDATE`` and ``TIME_PERIOD``.
         time_period: The period, as the dataset prints it, e.g. ``"2022"``; upstream's
             ``TIME_PERIOD``.
-        obs_value: The value, e.g. ``Decimal("3247.05")``; ``None`` when the cell is
-            empty (a confidential value, say). Upstream's ``OBS_VALUE``.
+        obs_value: The value, a number where the text is one, e.g.
+            ``Decimal("3247.05")``, else the text as upstream printed it, e.g. ``"KG"``
+            or ``":E"``: the ``indicators`` dimension of Prodcom's datasets
+            (``DS-059358``) carries units and flags among its measures (``QNTUNIT``,
+            ``SCQNTFLAG``; the sample ``docs/upstream/samples/DS-059358-sdmx-csv.csv``).
+            ``None`` when the cell is empty (a confidential value, say). Upstream's
+            ``OBS_VALUE``.
         obs_flag: The observation's flag, e.g. ``"e"`` (estimated); ``None`` when empty
             or when the file has no such column. Upstream's ``OBS_FLAG``.
         conf_status: The confidentiality status, e.g. ``"C"``; ``None`` when empty or
@@ -452,7 +464,9 @@ class SdmxCsvRow(UpstreamModel):
     last_update: str = Field(validation_alias="LAST UPDATE")
     dimensions: Mapping[str, str]
     time_period: str = Field(validation_alias="TIME_PERIOD")
-    obs_value: Decimal | None = Field(validation_alias="OBS_VALUE")
+    obs_value: Decimal | str | None = Field(
+        validation_alias="OBS_VALUE", union_mode="left_to_right"
+    )
     obs_flag: str | None = Field(default=None, validation_alias="OBS_FLAG")
     conf_status: str | None = Field(default=None, validation_alias="CONF_STATUS")
     attributes: Mapping[str, str | None] = Field(default_factory=dict)

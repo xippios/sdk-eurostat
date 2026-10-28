@@ -3,7 +3,11 @@
 ``/add-endpoint`` adds them.
 
 ``get_data`` answers one Statistics API request (``api.statistics.get_data``) as the
-JSON-stat cube it returns. Release metadata: ``meta.published_at`` is the cube's
+JSON-stat cube it returns. A ``DS-`` dataset, Comext trade or Prodcom production
+(``"DS-059358"``), is requested on Eurostat's Comext base,
+``https://ec.europa.eu/eurostat/api/comext/dissemination``, by upstream's rule
+(``_client.url_for``), every other on the main base; the tasks are the same on both, and
+so are their answers' shapes. Release metadata: ``meta.published_at`` is the cube's
 ``updated``, the dataset's last update with its zone; ``meta.vintage`` is the same
 member as upstream printed it (``"2026-10-05T23:00:00+0200"``), Eurostat's only release
 identifier for a dataset (``docs/upstream/user-guide/api-introduction.md``: "there is no
@@ -259,11 +263,14 @@ async def get_data_async(
 ) -> Result[Cube]:
     """Get one Eurostat dataset, or a slice of it, as a JSON-stat 2.0 cube.
 
-    One request to the Statistics API. The cube lists the dataset's dimensions in order
-    (``id``, ``size``), each dimension's codes with their positions and labels
-    (``dimension``), and the cells that hold a value or a status (``value``,
-    ``status``), keyed by cell index: row-major over ``size``, the last dimension
-    varying fastest. ``updated`` is the dataset's last update; ``extension`` carries
+    One request to the Statistics API; a ``DS-`` dataset (Comext trade, Prodcom
+    production, e.g. ``"DS-059358"``) is requested on Eurostat's Comext base, any other
+    on the main base. The cube lists the dataset's dimensions in order (``id``,
+    ``size``), each dimension's codes with their positions and labels (``dimension``),
+    and the cells that hold a value or a status (``value``, ``status``), keyed by cell
+    index: row-major over ``size``, the last dimension varying fastest. A value is a
+    number, or the text Eurostat prints where a Prodcom indicator is a unit or a flag
+    (``"KG"``, ``":E"``). ``updated`` is the dataset's last update; ``extension`` carries
     Eurostat's annotations as sent. In Python, ``result.data.observations()`` reads the
     cells out one by one with their codes and labels. Keep slices small (a country or
     two, a few periods): the whole slice comes back at once. A filter code that matches
@@ -278,12 +285,15 @@ async def get_data_async(
 
     Args:
         dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
-            collection and dairy products, annual), ``"apro_cpnh1"`` (crop production)
-            or ``"ef_m_farmleg"`` (farm indicators by legal status).
+            collection and dairy products, annual), ``"apro_cpnh1"`` (crop production),
+            ``"ef_m_farmleg"`` (farm indicators by legal status) or ``"DS-059358"``
+            (Prodcom: sold production, exports and imports, on the Comext base).
         filters: Dimension code to one code or a list of codes, each sent as
             ``DIMENSION_CODE=VALUE``; any dimension of the dataset, codes as in the
             cube's ``dimension``, case-insensitive, e.g. ``{"geo": "AT", "time":
-            ["2022", "2023"]}`` or ``{"geo": "AT", "milkitem": "PRD"}``; ``time`` (or
+            ["2022", "2023"]}``, ``{"geo": "AT", "milkitem": "PRD"}`` or, for
+            DS-059358, ``{"reporter": "AT", "product": "10411200"}`` (fish and marine
+            oils, NACE 10.41); ``time`` (or
             ``time_period``) filters periods and is a time parameter. ``None`` asks for
             every code of every dimension.
         lang: Language of the labels: ``"EN"`` (the default), ``"FR"`` or ``"DE"``.
@@ -399,18 +409,21 @@ async def get_series_async(
     again (the request is spent, since only the answer shows it). A code that matches
     nothing gives an empty list. A ``time`` filter is refused before any request: ``since``
     and ``until`` select the periods. An unknown dataset raises ``NotFoundError``; a query
-    Eurostat refuses or judges too large, ``InvalidRequestError`` with its message.
+    Eurostat refuses or judges too large, ``InvalidRequestError`` with its message. A
+    ``DS-`` dataset (Comext, Prodcom) is requested on Eurostat's Comext base.
 
     Args:
         dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
-            collection and dairy products, annual) or ``"ef_m_farmleg"`` (farm
-            indicators by legal status).
+            collection and dairy products, annual), ``"ef_m_farmleg"`` (farm
+            indicators by legal status) or ``"DS-059358"`` (Prodcom: sold production,
+            exports and imports).
         filters: Every dimension but time, each to one code, codes as in
             ``get_data``'s cube, case-insensitive, e.g. ``{"milkitem": "PRD",
             "dairyprod": "D1110D", "unit": "THS_T", "geo": "AT"}`` for apro_mk_cola or
             ``{"statinfo": "TOTAL", "leg_form": "PER_NTL", "farmtype": "FT1",
             "so_eur": "TOTAL", "uaarea": "TOTAL", "unit": "HLD", "geo": "AT"}`` for
-            ef_m_farmleg.
+            ef_m_farmleg or ``{"reporter": "AT", "product": "10411200", "indicators":
+            "EXPVAL"}`` for DS-059358.
         since: The first period, included, as the dataset's time dimension prints it,
             e.g. ``"2015"`` (annual) or ``"2026-08"`` (monthly, as in apro_ec_poulm);
             ``None`` starts at the dataset's first period. Eurostat's ``sinceTimePeriod``.
@@ -461,17 +474,20 @@ async def get_latest_period_async(
     code that matches nothing gives an empty list. A ``time`` filter is refused before any
     request: the task asks for the latest period itself (``get_cross_section`` takes one
     period). An unknown dataset raises ``NotFoundError``; a query Eurostat refuses or judges
-    too large, ``InvalidRequestError`` with its message.
+    too large, ``InvalidRequestError`` with its message. A ``DS-`` dataset (Comext,
+    Prodcom) is requested on Eurostat's Comext base.
 
     Args:
         dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
-            collection and dairy products, annual) or ``"apro_cpnh1"`` (crop
-            production).
+            collection and dairy products, annual), ``"apro_cpnh1"`` (crop
+            production) or ``"DS-059358"`` (Prodcom: sold production, exports and
+            imports).
         filters: Dimension code to one code or a list of codes, any dimension but time,
             codes as in ``get_data``'s cube, case-insensitive, e.g. ``{"milkitem":
             "PRD", "dairyprod": "D1110D", "unit": "THS_T", "geo": "AT"}`` for
-            apro_mk_cola or ``{"crops": "C1110", "geo": ["AT", "DE"]}`` for apro_cpnh1;
-            ``None`` asks for every code of every dimension.
+            apro_mk_cola, ``{"crops": "C1110", "geo": ["AT", "DE"]}`` for apro_cpnh1 or
+            ``{"reporter": "AT", "product": "10411200"}`` for DS-059358; ``None`` asks
+            for every code of every dimension.
         lang: Language of the labels: ``"EN"`` (the default), ``"FR"`` or ``"DE"``.
     """
     sent = _filters(
@@ -511,17 +527,20 @@ async def get_cross_section_async(
     gives an empty list. A ``time`` filter, and an empty ``period``, are refused before any
     request: ``period`` is the one period. An unknown dataset raises ``NotFoundError``; a
     query Eurostat refuses or judges too large, ``InvalidRequestError`` with its message.
+    A ``DS-`` dataset (Comext, Prodcom) is requested on Eurostat's Comext base.
 
     Args:
         dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
-            collection and dairy products, annual) or ``"apro_cpnh1"`` (crop
-            production).
+            collection and dairy products, annual), ``"apro_cpnh1"`` (crop
+            production) or ``"DS-059358"`` (Prodcom: sold production, exports and
+            imports).
         period: The period, as the dataset's time dimension prints it, e.g. ``"2023"``
             (annual) or ``"2026-08"`` (monthly, as in apro_ec_poulm).
         filters: Dimension code to one code or a list of codes, any dimension but time,
             codes as in ``get_data``'s cube, case-insensitive, e.g. ``{"milkitem":
             "PRD", "dairyprod": "D1110D", "unit": "THS_T"}`` for apro_mk_cola or
-            ``{"crops": "C1110", "strucpro": "HPRD_THS_T"}`` for apro_cpnh1; ``None``
+            ``{"crops": "C1110", "strucpro": "HPRD_THS_T"}`` for apro_cpnh1 or
+            ``{"product": "10411200", "indicators": "PRODVAL"}`` for DS-059358; ``None``
             asks for every code of every dimension.
         lang: Language of the labels: ``"EN"`` (the default), ``"FR"`` or ``"DE"``.
     """
@@ -670,7 +689,9 @@ LAST_UPDATE = "%d/%m/%y %H:%M:%S"
 
 The order is fixed by the snapshot's two answers for apro_mk_cola of 2026-10-27: the
 JSON-stat sample's ``updated`` is ``"2026-10-05T23:00:00+0200"`` and the SDMX-CSV
-sample's ``LAST UPDATE`` ``"05/10/26 23:00:00"``, the same time without its zone."""
+sample's ``LAST UPDATE`` ``"05/10/26 23:00:00"``, the same time without its zone. The
+Comext base prints it alike: DS-059358's ``"2026-10-20T11:00:00+0200"`` is
+``"20/10/26 11:00:00"`` (recorded 2026-10-28), whose day cannot be read as a month."""
 
 DOT_SEGMENTS = frozenset({".", ".."})
 """Keys a URL resolves away as a path segment before sending."""
@@ -688,8 +709,10 @@ async def download_dataset_async(
     """Download a Eurostat dataset, or a slice of it, as a gzip-compressed SDMX-CSV file.
 
     Python only, no MCP tool or HTTP route (a bulk task). One request to the SDMX 2.1 API
-    (``sdmx/2.1/data/{dataset}/{key}?format=SDMX-CSV&compressed=true``), streamed to
-    ``dest``, never held in memory or cached; the file holds the answer as Eurostat sends
+    (``sdmx/2.1/data/{dataset}/{key}?format=SDMX-CSV&compressed=true``), on Eurostat's
+    Comext base for a ``DS-`` dataset (Comext trade, Prodcom production, e.g.
+    ``"DS-059358"``) and on the main base for any other, streamed to ``dest``, never held
+    in memory or cached; the file holds the answer as Eurostat sends
     it, gzip-compressed whatever ``dest``'s name, and ``parse_sdmx_csv(result.data.path)``
     from ``xippios.eurostat.parse`` reads it row by row. ``result.data`` is core's
     ``Downloaded``: the path, its size, the content type and Eurostat's file name
@@ -701,8 +724,10 @@ async def download_dataset_async(
     dot-separated, empty for every code of a dimension, ``+`` between codes, as the
     dataset's SDMX-CSV columns before ``TIME_PERIOD`` or ``get_data``'s cube (``id``,
     without its last, ``time``) list them; it is sent as given, never looked up. A
-    query Eurostat would answer asynchronously or refuses as too large (the user guide
-    names 500,000 and 5,000,000 cells for a query it has not cached) raises
+    Comext trade dataset is not served whole, only filtered (the user guide's Comext
+    page; Prodcom's datasets are the exception). A query Eurostat would answer
+    asynchronously or refuses as too large (the user guide names 500,000 and 5,000,000
+    cells for a query it has not cached) raises
     ``InvalidRequestError`` naming how to narrow it, and ``dest`` is left untouched; a
     file that is not SDMX-CSV raises ``ValidationError`` and stays at ``dest``. ``dest``
     must name a file in a directory that exists: a directory, or a missing one, is
@@ -710,12 +735,14 @@ async def download_dataset_async(
 
     Args:
         dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
-            collection and dairy products, annual) or ``"ef_m_farmleg"`` (farm
-            indicators by legal status).
+            collection and dairy products, annual), ``"ef_m_farmleg"`` (farm
+            indicators by legal status) or ``"DS-059358"`` (Prodcom: sold production,
+            exports and imports).
         key: Eurostat's series key, e.g. ``"A...THS_T.AT"`` for apro_mk_cola (freq A,
-            every milkitem and dairyprod, unit THS_T, geo AT) or ``"A.PRD.D1110D.THS_T.AT+DE"``
-            (two geo codes); ``""``, the default, downloads every code of every
-            dimension, the whole dataset.
+            every milkitem and dairyprod, unit THS_T, geo AT), ``"A.PRD.D1110D.THS_T.AT+DE"``
+            (two geo codes) or ``"A.AT.10411200."`` for DS-059358 (freq A, reporter AT,
+            product 10411200, every indicator); ``""``, the default, downloads every code
+            of every dimension, the whole dataset.
         since: The first period, included, as the dataset prints it, e.g. ``"2022"`` or
             ``"2026-08"``; Eurostat's ``startPeriod``. ``None`` starts at the first.
         until: The last period, included, e.g. ``"2023"``; Eurostat's ``endPeriod``.

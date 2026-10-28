@@ -1,8 +1,10 @@
 """``parse_sdmx_csv`` on the SDMX-CSV samples and on the user guide's documented layouts.
 
-The samples under ``tests/fixtures/files/sdmx-csv/`` are the response bodies of the two
+The samples under ``tests/fixtures/files/sdmx-csv/`` are the response bodies of the
 recorded ``dataQuery`` exchanges (``tests/fixtures/data_query/``), plain and
-``compressed=true``, byte for byte, which the first test checks;
+``compressed=true``, byte for byte, which the first test checks: apro_mk_cola on the main
+base, and Prodcom's DS-059358 on the Comext base, whose ``OBS_VALUE`` is text where the
+indicator is a unit or a flag (``KG``, ``:E``) and which has no attribute column;
 ``tests/fixtures/files/README.md`` gives their provenance (ADR-0020 decision 6). The
 tests assert the parser's shape against the sample's own text, read here with the
 standard library's ``csv``, never values or sizes typed into a test (conventions §10).
@@ -33,10 +35,15 @@ FIXTURES = TESTS / "fixtures"
 SAMPLES = FIXTURES / "files" / "sdmx-csv"
 PLAIN = SAMPLES / "apro_mk_cola_AT_THS_T_2022_2023.csv"
 PACKED = SAMPLES / "apro_mk_cola_AT_THS_T_2022_2023.csv.gz"
+PRODCOM_PLAIN = SAMPLES / "DS-059358_A_AT_10411200_2022_2023.csv"
+PRODCOM_PACKED = SAMPLES / "DS-059358_A_AT_10411200_2022_2023.csv.gz"
 RECORDED = {
     PLAIN: FIXTURES / "data_query" / "apro_mk_cola_AT_THS_T_2022_2023.json",
     PACKED: FIXTURES / "data_query" / "apro_mk_cola_AT_THS_T_2022_2023_compressed.json",
+    PRODCOM_PLAIN: FIXTURES / "data_query" / "DS-059358_A_AT_10411200_2022_2023.json",
+    PRODCOM_PACKED: FIXTURES / "data_query" / "DS-059358_A_AT_10411200_2022_2023_compressed.json",
 }
+PAIRS = [(PLAIN, PACKED), (PRODCOM_PLAIN, PRODCOM_PACKED)]
 DATA_QUERY = TESTS.parents[0] / "docs/upstream/user-guide/api-detailed-guidelines/sdmx2-1"
 
 
@@ -62,9 +69,10 @@ def test_samples_are_the_recorded_bodies() -> None:
         line = next(line for line in readme.splitlines() if line.startswith(row))
         assert f"| {len(body)} | `{hashlib.sha256(body).hexdigest()}` |" in line
         assert f"| {load_fixture(fixture).request.url} |" in line
-    assert load_fixture(RECORDED[PACKED]).response.body_base64 is True
-    assert PACKED.read_bytes()[:2] == b"\x1f\x8b", "a gzip file, as compressed=true sends it"
-    assert gzip.decompress(PACKED.read_bytes()) == PLAIN.read_bytes()
+    for plain, packed in PAIRS:
+        assert load_fixture(RECORDED[packed]).response.body_base64 is True
+        assert packed.read_bytes()[:2] == b"\x1f\x8b", "a gzip file, as compressed=true sends it"
+        assert gzip.decompress(packed.read_bytes()) == plain.read_bytes()
 
 
 @pytest.mark.parametrize("sample", [PLAIN, PACKED], ids=["plain", "gzip"])
@@ -95,8 +103,44 @@ def test_parse_sdmx_csv_reads_every_row_as_printed(sample: Path) -> None:
     assert all(row.conf_status for row in empty), "each with its confidentiality status"
 
 
-def test_parse_sdmx_csv_reads_gzip_and_plain_alike() -> None:
-    assert list(parse_sdmx_csv(PACKED)) == list(parse_sdmx_csv(PLAIN))
+@pytest.mark.parametrize(("plain", "packed"), PAIRS, ids=["main", "comext"])
+def test_parse_sdmx_csv_reads_gzip_and_plain_alike(plain: Path, packed: Path) -> None:
+    assert list(parse_sdmx_csv(packed)) == list(parse_sdmx_csv(plain))
+
+
+@pytest.mark.parametrize("sample", [PRODCOM_PLAIN, PRODCOM_PACKED], ids=["plain", "gzip"])
+def test_parse_sdmx_csv_keeps_prodcom_text_values_as_printed(sample: Path) -> None:
+    """DS-059358's ``indicators`` mix measures with units and flags, and ``OBS_VALUE``
+    prints them as text: a number is parsed, a text is kept as printed. Its header ends
+    at ``OBS_VALUE``: no attribute column."""
+    header, table = table_of(text_of(sample))
+    assert header[-1] == "OBS_VALUE"
+    time = header.index("TIME_PERIOD")
+    rows = list(parse_sdmx_csv(sample))
+    assert len(rows) == len(table)
+    texts = 0
+    for row, cells in zip(rows, table, strict=True):
+        record = dict(zip(header, cells, strict=True))
+        assert row.dataflow == record["DATAFLOW"]
+        assert (
+            list(row.dimensions) == header[2:time] == ["freq", "reporter", "product", "indicators"]
+        )
+        assert list(row.dimensions.values()) == cells[2:time]
+        assert (row.obs_flag, row.conf_status, row.attributes) == (None, None, {})
+        printed = record["OBS_VALUE"]
+        try:
+            number = Decimal(printed)
+        except ArithmeticError:
+            assert row.obs_value == printed, "a text kept as printed"
+            texts += 1
+        else:
+            assert isinstance(row.obs_value, Decimal)
+            assert row.obs_value == number
+            assert str(row.obs_value) == printed, "the number as printed"
+    assert texts, "the sample holds a text value"
+    shown = {row.obs_value for row in rows if isinstance(row.obs_value, str)}
+    units = {row.obs_value for row in rows if row.dimensions["indicators"] == "QNTUNIT"}
+    assert units <= shown, "QNTUNIT, the quantity's unit, is text"
 
 
 def test_parse_sdmx_csv_is_a_generator(tmp_path: Path) -> None:
@@ -169,20 +213,6 @@ def test_parse_sdmx_csv_refuses_a_row_that_does_not_match_its_header(tmp_path: P
     next(rows)
     with pytest.raises(ValidationError, match=r"short\.csv has a row, line 3, whose values"):
         next(rows)
-
-
-def test_parse_sdmx_csv_refuses_an_obs_value_that_is_no_number(tmp_path: Path) -> None:
-    """NOT RECORDED: the plain sample with a value replaced by ``:`` in memory."""
-    header, table = table_of(text_of(PLAIN))
-    value = table[0][header.index("OBS_VALUE")]
-    path = tmp_path / "colon.csv"
-    path.write_bytes(PLAIN.read_bytes().replace(f",{value},".encode(), b",:,", 1))
-    with pytest.raises(ValidationError) as refused:
-        list(parse_sdmx_csv(path))
-    assert str(refused.value) == (
-        "eurostat sdmx-csv line 2: 1 validation error(s); first at OBS_VALUE "
-        "(decimal_parsing): Input should be a valid decimal"
-    ), "the line and the column, never the value"
 
 
 @pytest.mark.parametrize("sample", ["toc/apro_mk.xml", "codelist/statinfo.json"])

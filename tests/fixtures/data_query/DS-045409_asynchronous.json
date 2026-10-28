@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-10-28T13:36:39.459344Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/data/DS-045409/M.....?format=SDMX-CSV&compressed=true"
+  },
+  "response": {
+    "body": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<env:Envelope xmlns:env=\"http://schemas.xmlsoap.org/soap/envelope/\"><env:Header/><env:Body><ns0:syncResponse xmlns:ns0=\"http://estat.ec.europa.eu/disschain/soap/extraction\"><processingTime>115</processingTime><queued><id>2dca129b-fe15-48e9-8df0-5b4352db8f1e</id><status>SUBMITTED</status></queued></ns0:syncResponse></env:Body></env:Envelope>",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Wed, 28 Oct 2026 13:36:36 GMT"
+      ],
+      [
+        "content-type",
+        "application/xml"
+      ],
+      [
+        "content-disposition",
+        "attachment;filename=2dca129b-fe15-48e9-8df0-5b4352db8f1e.xml"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ]
+    ],
+    "status": 200
+  }
+}

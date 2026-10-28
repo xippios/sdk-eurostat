@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-10-28T13:36:27.577269Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/comext/dissemination/statistics/1.0/data/DS-059358?format=JSON&lang=EN&reporter=AT&product=10411200&sinceTimePeriod=2022&untilTimePeriod=2023"
+  },
+  "response": {
+    "body": "{\"version\":\"2.0\",\"class\":\"dataset\",\"label\":\"Sold production, exports and imports\",\"source\":\"ESTAT\",\"updated\":\"2026-10-20T11:00:00+0200\",\"value\":{\"18\":62927,\"19\":46301,\"6\":349477,\"7\":415790,\"20\":1693847,\"21\":1018207,\"8\":16903303,\"9\":17501181,\"28\":0,\"29\":0,\"22\":0,\"23\":0,\"10\":0,\"11\":0,\"0\":0,\"1\":0,\"12\":\"KG\",\"13\":\"KG\",\"41\":0,\"35\":0,\"43\":\":E\",\"37\":\":E\"},\"id\":[\"freq\",\"reporter\",\"product\",\"indicators\",\"time\"],\"size\":[1,1,1,23,2],\"dimension\":{\"freq\":{\"label\":\"Frequency\",\"category\":{\"index\":{\"A\":0},\"label\":{\"A\":\"Annual\"}}},\"reporter\":{\"label\":\"REPORTER\",\"category\":{\"index\":{\"AT\":0},\"label\":{\"AT\":\"Austria\"}}},\"product\":{\"label\":\"PRODUCT\",\"category\":{\"index\":{\"10411200\":0},\"label\":{\"10411200\":\"Fats and oils and their fractions of fish or marine mammals (excluding chemically modified)\"}}},\"indicators\":{\"label\":\"INDICATORS\",\"category\":{\"index\":{\"PRODVAL\":0,\"PVALFLAG\":1,\"PVALBASE\":2,\"EXPVAL\":3,\"IMPVAL\":4,\"PRODQNT\":5,\"QNTUNIT\":6,\"PQNTFLAG\":7,\"PQNTBASE\":8,\"EXPQNT\":9,\"IMPQNT\":10,\"OWNPRODVAL\":11,\"OWNVALFLAG\":12,\"OWNVALBASE\":13,\"OWNPRODQNT\":14,\"OWNQNTFLAG\":15,\"OWNQNTBASE\":16,\"SCPRODVAL\":17,\"SCVALFLAG\":18,\"SCVALBASE\":19,\"SCPRODQNT\":20,\"SCQNTFLAG\":21,\"SCQNTBASE\":22},\"label\":{\"PRODVAL\":\"Sold production value, euro\",\"PVALFLAG\":\"Sold production value flag\",\"PVALBASE\":\"Sold production value rounding base\",\"EXPVAL\":\"Exports value, euro\",\"IMPVAL\":\"Imports value, euro\",\"PRODQNT\":\"Sold production quantity\",\"QNTUNIT\":\"Quantity unit\",\"PQNTFLAG\":\"Sold production quantity flag\",\"PQNTBASE\":\"Sold production quantity rounding base\",\"EXPQNT\":\"Exports quantity\",\"IMPQNT\":\"Imports quantity\",\"OWNPRODVAL\":\"Production on own account value, euro\",\"OWNVALFLAG\":\"Production on own account value flag\",\"OWNVALBASE\":\"Production on own account value rounding base\",\"OWNPRODQNT\":\"Production on own account quantity\",\"OWNQNTFLAG\":\"Production on own account quantity flag\",\"OWNQNTBASE\":\"Production on own account quantity rounding base\",\"SCPRODVAL\":\"Sub-contracted production value, euro\",\"SCVALFLAG\":\"Sub-contracted production quantity flag\",\"SCVALBASE\":\"Sub-contracted production value rounding base\",\"SCPRODQNT\":\"Sub-contracted production quantity\",\"SCQNTFLAG\":\"Sub-contracted production quantity flag\",\"SCQNTBASE\":\"Sub-contracted production quantity rounding base\"}}},\"time\":{\"label\":\"TIME_PERIOD\",\"category\":{\"index\":{\"2022\":0,\"2023\":1},\"label\":{\"2022\":\"2022\",\"2023\":\"2023\"}}}},\"extension\":{\"lang\":\"EN\",\"id\":\"DS-059358\",\"agencyId\":\"ESTAT\",\"version\":\"1.0\",\"datastructure\":{\"id\":\"DS-059358\",\"agencyId\":\"ESTAT\",\"version\":\"2.7\"},\"annotation\":[{\"type\":\"DISSEMINATION_EXPLANATORY_LINK\",\"href\":\"https://ec.europa.eu/eurostat/documents/120432/19597181/Guide+rapide+pour+acceder+aux+donnees+PRODCOM+DS-059358.pdf/1146e401-e64f-cde4-0b3b-61d7e72a4dd1?t=1758811388880\"},{\"type\":\"DISSEMINATION_EXPLANATORY_LINK\",\"href\":\"https://ec.europa.eu/eurostat/documents/120432/19597181/Schnellanleitung+f%C3%BCr+den+Zugriff+auf+j%C3%A4hrliche+Daten+zur+PRODCOM+-+DS059358.pdf/f70ca808-4d72-36a1-930b-1d16bf6383d3?t=1758811390356\"},{\"type\":\"DISSEMINATION_EXPLANATORY_LINK\",\"href\":\"https://ec.europa.eu/eurostat/documents/120432/19597181/Quick+guide+on+accessing+PRODCOM+data+DS-059358.pdf/30ad2839-31cd-32b0-c0f2-d43f200be35e?t=1758811389698\",\"text\":\"Important notice\"},{\"type\":\"DISSEMINATION_OBJECT_TYPE\",\"title\":\"DATASET\"},{\"type\":\"DISSEMINATION_TIMESTAMP_DATA\",\"date\":\"2026-10-20T11:00:00+0200\"},{\"type\":\"DISSEMINATION_TIMESTAMP_GLOBAL\",\"date\":\"2026-10-20T11:00:00+0200\"},{\"type\":\"DISSEMINATION_TIMESTAMP_PLANNED\",\"date\":\"2026-10-20T11:00:00+0200\"},{\"type\":\"ESMS_HTML\",\"title\":\"Explanatory texts (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/cache/metadata/en/prom_esms.htm\"},{\"type\":\"UPDATE_DATA\",\"date\":\"2026-10-20T11:00:00+0200\"},{\"type\":\"UPDATE_STRUCTURE\",\"date\":\"2026-10-20T11:00:00+0200\"}],\"positions-with-no-data\":{\"freq\":[],\"reporter\":[],\"product\":[],\"indicators\":[1,2,7,8,12,13,15,16,19,22],\"time\":[]}}}",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Wed, 28 Oct 2026 13:36:26 GMT"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ],
+      [
+        "set-cookie",
+        "REDACTED"
+      ]
+    ],
+    "status": 200
+  }
+}

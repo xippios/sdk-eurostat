@@ -3,7 +3,12 @@
 Reference: ``docs/upstream/api/statistics-rest.wadl``, resource ``1.0/data/{datasetCode}``
 under ``dissemination/statistics/``, method ``GET`` with the id ``getData``, answering
 ``application/json``: the operation's only name upstream gives (the OpenAPI document
-``docs/upstream/api/sdmx-rest.yaml`` lists the path without an ``operationId``). The
+``docs/upstream/api/sdmx-rest.yaml`` lists the path without an ``operationId``). The same
+operation on the second base, for the ``DS-`` datasets of Comext and Prodcom, is
+``docs/upstream/api/comext/statistics-rest.wadl``, the main one's but for its
+``resources base`` (``comext/dissemination/statistics/``): a ``DS-`` code is requested
+there, every other on the main base (``_client.url_for``;
+``docs/upstream/user-guide/api-detailed-guidelines/prefixed-datasets.md``). The
 request's grammar is ``docs/upstream/user-guide/api-detailed-guidelines/api-statistics.md``:
 ``{host_url}/statistics/1.0/data/{datasetCode}?{format}&{lang}&{filters}``, where
 
@@ -29,7 +34,7 @@ from urllib.parse import quote
 
 from xippios.core import parse
 
-from xippios.eurostat._client import SOURCE, client
+from xippios.eurostat._client import SOURCE, client, url_for
 from xippios.eurostat.models import Cube, GeoLevel, Lang
 
 __all__ = ["DataAnswer", "get_data"]
@@ -69,7 +74,8 @@ async def get_data(
 
     Args:
         dataset_code: ``datasetCode``, the dataset's online data code, e.g.
-            ``"apro_mk_cola"``.
+            ``"apro_mk_cola"``, or a Comext or Prodcom code, requested on the Comext
+            base, e.g. ``"DS-059358"``.
         lang: ``lang``, e.g. ``Lang.FR``; ``None`` leaves it out (upstream: ``EN``).
         filters: ``DIMENSION_CODE=VALUE`` filters, a dimension code to one code or a
             sequence of codes, each sent as a parameter of its own, e.g.
@@ -101,7 +107,7 @@ async def get_data(
     if geo_level is not None:
         params["geoLevel"] = str(geo_level)
     path = f"/statistics/1.0/data/{quote(dataset_code, safe='')}"
-    answer = await client.get_answer(path, params=params)
+    answer = await client.get_answer(url_for(dataset_code, path), params=params)
     updated = answer.payload.get("updated") if isinstance(answer.payload, dict) else None
     cube = parse(Cube, answer.payload, source=SOURCE, endpoint=ENDPOINT)
     return DataAnswer(

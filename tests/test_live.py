@@ -14,7 +14,10 @@ only (its test says why), ``list_codes``'s fetches the STATINFO codelist.
 ``download_dataset``'s downloads the slice its fixture holds, apro_mk_cola for Austria in
 thousand tonnes, 2022 and 2023, to a temporary file and reads it with ``parse_sdmx_csv``,
 the live parser test of the file kind ``sdmx-csv`` (ADR-0020 decision 6).
-A run sends ten keyless requests, the reachability check included. The tests assert
+``get_data`` has one more on the Comext base, the smallest slice of the Prodcom dataset
+``DS-059358`` (Austria, one product, the latest period), which is also the nightly's
+check that the Comext base answers.
+A run sends eleven keyless requests, the reachability check included. The tests assert
 shape and release metadata, never values, which Eurostat revises twice a day, nor which
 period is the latest.
 """
@@ -91,6 +94,29 @@ async def test_get_data_ef_m_farmleg() -> None:
         "ef_m_farmleg", {"geo": "AT", "unit": "HLD"}, last_time_period=2
     )
     _check(result, periods=2)
+
+
+async def test_get_data_ds_059358() -> None:
+    """Prodcom's DS-059358 on the Comext base: Austria, product 10411200 (fats and oils of
+    fish or marine mammals, NACE 10.41), the latest period."""
+    result = await tasks.get_data_async(
+        "DS-059358", {"reporter": "AT", "product": "10411200"}, last_time_period=1
+    )
+    cube = result.data
+    assert cube.class_ == "dataset"
+    assert cube.id[-1] == "time"
+    assert cube.size[-1] == 1, "the latest period"
+    assert cube.dimension["reporter"].category.index == {"AT": 0}
+    assert cube.dimension["product"].category.index == {"10411200": 0}
+    assert {"reporter", "product", "indicators"} <= set(cube.id), (
+        "Prodcom's dimensions, which only the Comext base serves"
+    )
+    assert result.meta.endpoint == "getData"
+    assert result.meta.vintage is not None
+    assert UPDATED.fullmatch(result.meta.vintage)
+    assert result.meta.published_at is not None
+    assert result.meta.published_at.tzinfo is not None
+    assert result.meta.published_at == cube.updated
 
 
 MILK = {"milkitem": "PRD", "dairyprod": "D1110D", "unit": "THS_T"}

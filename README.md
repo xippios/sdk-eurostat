@@ -37,23 +37,38 @@ milk.meta.request  # {"dataset": "apro_mk_cola", "filters": {...}, "lang": "EN"}
 
 `get_data(dataset, filters=None, *, lang=Lang.EN, since_time_period=None,
 until_time_period=None, last_time_period=None, geo_level=None)` sends one request to the
-Statistics API (`statistics/1.0/data/{datasetCode}`). `filters` maps any dimension of the
-dataset to one code or a list of codes (`{"geo": "AT", "milkitem": "PRD"}`); a `time`
-filter selects periods, and so do `since_time_period`, `until_time_period` and
-`last_time_period`. Eurostat accepts one time parameter per query, the one exception
-being `since_time_period` with `until_time_period`; any other combination is refused
-before sending. `lang` takes `Lang.EN`, `Lang.FR` or `Lang.DE` and `geo_level` a
-`GeoLevel` (`aggregate`, `country`, `nuts1`, `nuts2`, `nuts3`, `city`), both in
-`xippios.eurostat.models`; a plain string such as `"FR"` works too. A code that matches
+Statistics API (`statistics/1.0/data/{datasetCode}`). A `DS-` dataset, Comext trade or
+Prodcom production, is requested on Eurostat's Comext base, every other on the main
+base; the call and its answer are the same, and a value is the text Eurostat prints where
+a Prodcom indicator is a unit or a flag:
+
+```python
+oil = get_data(
+    "DS-059358",  # Prodcom: sold production, exports and imports
+    {"reporter": "AT", "product": "10411200"},  # fish and marine oils, NACE 10.41
+    since_time_period="2022",
+    until_time_period="2023",
+)
+oil.data.id  # ["freq", "reporter", "product", "indicators", "time"]
+oil.data.value["6"], oil.data.value["12"]  # 349477 (EXPVAL 2022), "KG" (QNTUNIT 2022)
+```
+
+`filters` maps any dimension of the dataset to one code or a list of codes (`{"geo": "AT",
+"milkitem": "PRD"}`); a `time` filter selects periods, and so do `since_time_period`,
+`until_time_period` and `last_time_period`. Eurostat accepts one time parameter per query,
+the one exception being `since_time_period` with `until_time_period`; any other
+combination is refused before sending. `lang` takes `Lang.EN`, `Lang.FR` or `Lang.DE` and
+`geo_level` a `GeoLevel` (`aggregate`, `country`, `nuts1`, `nuts2`, `nuts3`, `city`), both
+in `xippios.eurostat.models`; a plain string such as `"FR"` works too. A code that matches
 nothing gives an empty cube, size 0 on that dimension. `meta.published_at` is the cube's
-`updated` with Eurostat's zone; one printed without a zone, never seen, is kept as
-printed with `meta.published_at_naive` set, and `meta.vintage` holds the text either
-way. An unknown dataset, and Eurostat's "No results found", raise `NotFoundError`; a
-query Eurostat refuses or judges too large raises `InvalidRequestError` with Eurostat's
-message and how to narrow it. A query Eurostat would answer asynchronously raises it
-too: this package does not poll asynchronous answers, and the Statistics API's own route
-is to send the same request again later. Ask for small slices: the cube comes back
-whole, and over MCP a result above 64 KB is replaced by a preview and a note.
+`updated` with Eurostat's zone; one printed without a zone, never seen, is kept as printed
+with `meta.published_at_naive` set, and `meta.vintage` holds the text either way. An
+unknown dataset, and Eurostat's "No results found", raise `NotFoundError`; a query
+Eurostat refuses or judges too large raises `InvalidRequestError` with Eurostat's message
+and how to narrow it. A query Eurostat would answer asynchronously raises it too: this
+package does not poll asynchronous answers, and the Statistics API's own route is to send
+the same request again later. Ask for small slices: the cube comes back whole, and over
+MCP a result above 64 KB is replaced by a preview and a note.
 
 ### Slices
 
@@ -160,8 +175,11 @@ for a file without a row. A query Eurostat would answer asynchronously, or refus
 too large, raises `InvalidRequestError` naming how to narrow it. `parse_sdmx_csv(path)`
 reads the file, gzip-compressed or plain, row by row: each `SdmxCsvRow` has the
 `dataflow`, the `last_update`, the `dimensions` in column order, the `time_period`, the
-`obs_value` as a `Decimal` (`None` when empty), `obs_flag`, `conf_status` and any other
-`attributes` of the dataset, as Eurostat prints them.
+`obs_value` as a `Decimal`, or as the text printed where it is no number (Prodcom's
+`"KG"`, `":E"`), `None` when empty, `obs_flag`, `conf_status` and any other `attributes`
+of the dataset, as Eurostat prints them. A `DS-` dataset is downloaded from the Comext
+base, `key` in its own dimensions' order (`"A.AT.10411200."` for DS-059358); a Comext
+trade dataset is served filtered only, a Prodcom dataset whole as well.
 
 ## MCP
 
@@ -198,12 +216,16 @@ exactly tasks.__all__. -->
 | `codeListQuery` (`sdmx/2.1/codelist/ESTAT/{resourceID}`), packaged | `list_codes(codelist, search)`, the codes of one of twelve codelists | `eurostat_list_codes` | alpha |
 | `dataQuery` (`sdmx/2.1/data/{flowRef}/{key}`), SDMX-CSV | `download_dataset(dataset, key, dest)`, a gzip-compressed SDMX-CSV file on disk | none: a bulk task, Python only, which the adapters skip | alpha |
 
-Version 0.1.0 covers these seven tasks on Eurostat's main dissemination API,
-`https://ec.europa.eu/eurostat/api/dissemination`. Not covered: the Comext and Prodcom
-datasets (codes with the `DS-` prefix), which Eurostat serves from another base URL;
-polling an asynchronous answer, which is refused with how to narrow the query; SDMX-ML
-and TSV; codelists other than the twelve packaged ones, which `list_codes` refuses
-naming the closest.
+Five of these tasks choose the base URL by the dataset's code: `get_data`, the three
+slices and `download_dataset` request a dataset whose code starts with `DS-`, Eurostat's
+Comext and Prodcom datasets, on `https://ec.europa.eu/eurostat/api/comext/dissemination`,
+and every other on the main base URL, `https://ec.europa.eu/eurostat/api/dissemination`.
+`list_datasets` and `list_codes` list the main base's table of contents and twelve
+codelists, and do not yet list the Comext or Prodcom datasets or their codes: the Comext
+base answers `catalogue/toc/xml` with HTTP 404 (probed 2026-10-28), though its WADL lists
+it, and its codelists are not packaged yet. Not covered: polling an asynchronous answer,
+which is refused with how to narrow the query; SDMX-ML and TSV; codelists other than the
+twelve packaged ones, which `list_codes` refuses naming the closest.
 
 ## Upstream terms and attribution
 

@@ -2,26 +2,30 @@
 
 ``/add-endpoint`` and ``/record-fixture`` add them.
 
-The fixtures are ``tests/fixtures/get_data/<case>.json``, recorded on 2026-10-27; each
-test sends exactly the recorded URL, parameter order included. The asynchronous answer
-is not recorded (``tests/test_client.py`` says why); its test serves the user guide's
-documented body. The slices (``get_series``, ``get_latest_period``,
-``get_cross_section``) each send one getData request, so their fixtures are getData
-answers too: ``*_series_*``, ``*_latest_*`` and ``*_cross_section_*``, plus two of
-``get_data``'s whose URL a slice sends as well (``apro_cpnh1_AT_2022_2023``, a series
-refused, and ``unknown_code``, an empty cross-section). The list tasks
-(``list_datasets``, ``list_codes``) send nothing: their tests read the packaged files
-under ``src/xippios/eurostat/reference/`` and take the expected values from them. The
-bulk task ``download_dataset`` replays ``tests/fixtures/data_query/<case>.json``, the
-SDMX 2.1 data query recorded on 2026-10-27 with ``compressed=true`` (a gzip file) and
-without it, through core's ``download``; its refusals of an asynchronous answer and of
-an extraction too big serve the user guide's documented bodies, as ``get_data``'s does.
+The fixtures are ``tests/fixtures/get_data/<case>.json``, recorded on the main base on
+2026-10-27, and its ``DS-*`` cases, recorded on the Comext base on 2026-10-28 for the
+Prodcom dataset ``DS-059358``; each test sends exactly the recorded URL, parameter order
+included. The Statistics API's asynchronous answer is not recorded
+(``tests/test_client.py`` says why); its test serves the user guide's documented body.
+The slices (``get_series``, ``get_latest_period``, ``get_cross_section``) each send one
+getData request, so their fixtures are getData answers too: ``*_series_*``,
+``*_latest_*`` and ``*_cross_section_*``, plus two of ``get_data``'s whose URL a slice
+sends as well (``apro_cpnh1_AT_2022_2023``, a series refused, and ``unknown_code``, an
+empty cross-section). The list tasks (``list_datasets``, ``list_codes``) send nothing:
+their tests read the packaged files under ``src/xippios/eurostat/reference/`` and take
+the expected values from them. The bulk task ``download_dataset`` replays
+``tests/fixtures/data_query/<case>.json``, the SDMX 2.1 data query recorded with
+``compressed=true`` (a gzip file) and without it, on the main base on 2026-10-27 and on
+the Comext base on 2026-10-28, through core's ``download``; its refusals of an
+asynchronous answer and of an extraction too big replay the answers recorded on the
+Comext base for ``DS-045409``.
 """
 
 import json
 import re
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta, timezone
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast
 
@@ -63,7 +67,7 @@ from xippios.eurostat import (
     params,
     tasks,
 )
-from xippios.eurostat._client import config
+from xippios.eurostat._client import COMEXT_BASE_URL, config
 from xippios.eurostat.http import router
 from xippios.eurostat.mcp import server
 from xippios.eurostat.models import Code, Cube, Dataset, GeoLevel, Lang, LeafType, Observation
@@ -275,8 +279,9 @@ def test_documented_shape_get_data_refuses_an_asynchronous_answer(
     respx_mock: respx.MockRouter,
 ) -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written: the asynchronous answer of api-statistics.md. The first asynchronous
-    answer seen is recorded and replaces this test (Johannes, 2026-10-27)."""
+    hand-written: the asynchronous answer of api-statistics.md. The Statistics API's
+    asynchronous answer will be recorded when first seen and replace this test (Johannes,
+    2026-10-27)."""
     documented = next(
         line.strip()
         for line in (GUIDE / "api-statistics.md").read_text(encoding="utf-8").splitlines()
@@ -449,6 +454,120 @@ def test_get_data_route_answers_a_refusal_with_422(replay_fixture: ReplayFixture
         )
     assert answer.status_code == 422
     assert "INVALID_QUERY_DIMENSION" in answer.text
+
+
+# The Comext base: a DS- dataset is requested on COMEXT_BASE_URL (prefixed-datasets.md),
+# through the same client; the fixtures mirror the main base's, recorded on 2026-10-28.
+
+PRODCOM = "DS-059358_AT_10411200_2022_2023"
+FISH_OIL = {"reporter": "AT", "product": "10411200"}
+"""DS-059358 (Prodcom: sold production, exports and imports) for Austria and product
+10411200, fats and oils of fish or marine mammals (NACE 10.41)."""
+COMEXT_STATISTICS = f"{COMEXT_BASE_URL}/statistics/1.0/data"
+
+
+def test_get_data_ds_059358_on_the_comext_base(replay_fixture: ReplayFixture) -> None:
+    route = replay_fixture(GET_DATA, PRODCOM)
+    before = datetime.now(UTC)
+    result = tasks.get_data(
+        "DS-059358", FISH_OIL, since_time_period="2022", until_time_period="2023"
+    )
+    after = datetime.now(UTC)
+    assert sent_urls(route) == [recorded_url(PRODCOM)]
+    assert recorded_url(PRODCOM) == (
+        "https://ec.europa.eu/eurostat/api/comext/dissemination/statistics/1.0/data/"
+        "DS-059358?format=JSON&lang=EN&reporter=AT&product=10411200&sinceTimePeriod=2022"
+        "&untilTimePeriod=2023"
+    ), "the Comext host and path, the code as given"
+    cube = result.data
+    assert cube.id == ["freq", "reporter", "product", "indicators", "time"]
+    assert cube.size == [1, 1, 1, 23, 2]
+    assert result.meta.source == "eurostat"
+    assert result.meta.endpoint == "getData"
+    assert result.meta.published_at == datetime(2026, 10, 20, 11, 0, tzinfo=CEST)
+    assert result.meta.published_at == cube.updated
+    assert result.meta.published_at_naive is False
+    assert result.meta.vintage == "2026-10-20T11:00:00+0200" == recorded_updated(PRODCOM)
+    assert result.meta.request == {
+        "dataset": "DS-059358",
+        "filters": FISH_OIL,
+        "lang": "EN",
+        "since_time_period": "2022",
+        "until_time_period": "2023",
+    }
+    assert_time_between(result.meta.retrieved_at, before, after)
+    values = {(o.codes["indicators"], o.codes["time"]): o.value for o in cube.observations()}
+    assert values[("QNTUNIT", "2022")] == "KG", "a unit among the measures, as printed"
+    assert values[("SCQNTFLAG", "2023")] == values[("SCVALFLAG", "2023")] == ":E"
+    assert {value for value in values.values() if isinstance(value, str)} == {"KG", ":E"}
+    assert values[("EXPVAL", "2022")] == 349477
+    assert isinstance(values[("EXPVAL", "2022")], int), "an integer stays an integer"
+
+
+def test_get_data_unknown_ds_dataset(replay_fixture: ReplayFixture) -> None:
+    route = replay_fixture(GET_DATA, "DS-000000_unknown_dataset")
+    with pytest.raises(NotFoundError, match=r"DS-000000 \(DATA_FLOW:ALL,1\.0\) is not available"):
+        tasks.get_data("DS-000000")
+    assert sent_urls(route) == [recorded_url("DS-000000_unknown_dataset")]
+    assert recorded_url("DS-000000_unknown_dataset").startswith(f"{COMEXT_STATISTICS}/DS-000000?")
+
+
+def test_get_data_ds_059358_unknown_dimension_is_too_large(replay_fixture: ReplayFixture) -> None:
+    """The Comext base does not refuse a filter on a dimension the dataset lacks as the
+    main base does (fault 150 at HTTP 400), but as too large: HTTP 413 with an ``error``
+    array, whose fault reaches the caller. The estimate, 151,971,120 rows, is that of an
+    unfiltered query, so the unknown filter seems to be ignored."""
+    route = replay_fixture(GET_DATA, "DS-059358_unknown_dimension_too_big")
+    with pytest.raises(InvalidRequestError) as refused:
+        tasks.get_data("DS-059358", {"geo": "AT"})
+    assert sent_urls(route) == [recorded_url("DS-059358_unknown_dimension_too_big")]
+    assert str(refused.value) == (
+        "Eurostat refused GET /eurostat/api/comext/dissemination/statistics/1.0/data/"
+        "DS-059358 as too large (HTTP 413: fault 413: EXTRACTION_TOO_BIG: The requested "
+        "extraction is too big, estimated 151971120 rows, max authorised is 5000000, please "
+        "change your filters to reduce the extraction size): narrow the query with fewer "
+        "codes per dimension or a shorter period."
+    )
+
+
+def test_get_data_ds_059358_unknown_code_is_an_empty_cube(replay_fixture: ReplayFixture) -> None:
+    case = "DS-059358_unknown_code"
+    route = replay_fixture(GET_DATA, case)
+    result = get_data(
+        "DS-059358",
+        {"reporter": "XX", "product": "10411200"},
+        since_time_period="2022",
+        until_time_period="2023",
+    )
+    assert sent_urls(route) == [recorded_url(case)]
+    assert result.data.size[result.data.id.index("reporter")] == 0
+    assert result.data.value == {}
+    assert list(result.data.observations()) == []
+    assert result.meta.vintage == recorded_updated(case)
+
+
+@pytest.mark.anyio
+async def test_get_data_ds_059358_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
+    route = replay_fixture(GET_DATA, PRODCOM)
+    payload = await mcp_call(
+        server,
+        "eurostat_get_data",
+        {
+            "dataset": "DS-059358",
+            "filters": FISH_OIL,
+            "since_time_period": "2022",
+            "until_time_period": "2023",
+        },
+    )
+    assert sent_urls(route) == [recorded_url(PRODCOM)]
+    assert payload["data"]["id"] == ["freq", "reporter", "product", "indicators", "time"]
+    assert payload["data"]["value"]["12"] == "KG", "QNTUNIT 2022, text as printed"
+    assert payload["data"]["value"]["43"] == ":E", "SCQNTFLAG 2023"
+    assert payload["data"]["value"]["6"] == 349477, "EXPVAL 2022, a number"
+    assert payload["meta"]["endpoint"] == "getData"
+    assert payload["meta"]["vintage"] == "2026-10-20T11:00:00+0200"
+    assert payload["meta"]["published_at"] == "2026-10-20T11:00:00+02:00"
+    assert payload["meta"]["request"]["dataset"] == "DS-059358"
 
 
 # The slices: get_series, get_latest_period, get_cross_section. Each sends one getData
@@ -1083,6 +1202,11 @@ MILK_SLICE = "apro_mk_cola_AT_THS_T_2022_2023"
 MILK_SLICE_GZ = "apro_mk_cola_AT_THS_T_2022_2023_compressed"
 MILK_KEY = "A...THS_T.AT"
 DATA_URL = "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data"
+PRODCOM_SLICE = "DS-059358_A_AT_10411200_2022_2023"
+PRODCOM_SLICE_GZ = "DS-059358_A_AT_10411200_2022_2023_compressed"
+PRODCOM_KEY = "A.AT.10411200."
+"""DS-059358's key: freq A, reporter AT, product 10411200, every indicator."""
+COMEXT_DATA_URL = f"{COMEXT_BASE_URL}/sdmx/2.1/data"
 
 
 def recorded_data(case: str) -> Fixture:
@@ -1136,13 +1260,61 @@ def test_download_dataset_apro_mk_cola(replay_fixture: ReplayFixture, tmp_path: 
     assert meta.total is None
 
 
-def test_download_dataset_reads_last_update_day_first() -> None:
-    """The snapshot pair fixes the order: the JSON-stat answer's ``updated`` and the
-    SDMX-CSV answer's ``LAST UPDATE`` of apro_mk_cola, recorded the same day, are one
-    time, the CSV's printed day first and without the zone."""
-    updated = datetime.fromisoformat(recorded_updated("apro_mk_cola_AT_2022_2023"))
-    printed = next(parse_sdmx_csv(FIXTURES / "files" / "sdmx-csv" / f"{MILK_SLICE}.csv"))
+@pytest.mark.parametrize(
+    ("cube", "sample"),
+    [("apro_mk_cola_AT_2022_2023", MILK_SLICE), (PRODCOM, PRODCOM_SLICE)],
+    ids=["main", "comext"],
+)
+def test_download_dataset_reads_last_update_day_first(cube: str, sample: str) -> None:
+    """The recorded pairs fix the order: the JSON-stat answer's ``updated`` and the
+    SDMX-CSV answer's ``LAST UPDATE`` of one dataset, recorded the same day, are one time,
+    the CSV's printed day first and without the zone, on either base (apro_mk_cola's
+    05/10/26, DS-059358's 20/10/26)."""
+    updated = datetime.fromisoformat(recorded_updated(cube))
+    printed = next(parse_sdmx_csv(FIXTURES / "files" / "sdmx-csv" / f"{sample}.csv"))
     assert datetime.strptime(printed.last_update, tasks.LAST_UPDATE) == updated.replace(tzinfo=None)
+
+
+def test_download_dataset_ds_059358_on_the_comext_base(
+    replay_fixture: ReplayFixture, tmp_path: Path
+) -> None:
+    route = replay_fixture(DATA_QUERY, PRODCOM_SLICE_GZ)
+    recorded = recorded_data(PRODCOM_SLICE_GZ)
+    dest = tmp_path / "fish_oil.csv.gz"
+    result = download_dataset("DS-059358", PRODCOM_KEY, since="2022", until="2023", dest=dest)
+    assert sent_urls(route) == [recorded.request.url], "one exchange on the wire"
+    assert recorded.request.url == (
+        f"{COMEXT_DATA_URL}/DS-059358/{PRODCOM_KEY}?format=SDMX-CSV&startPeriod=2022"
+        "&endPeriod=2023&compressed=true"
+    ), "the Comext host and path, the code as given"
+    assert dest.read_bytes() == recorded.response.content, "the gzip file as Eurostat sent it"
+    assert result.data.bytes == len(recorded.response.content)
+    assert result.data.content_type == "application/vnd.sdmx.data+csv;version=1.0.0"
+    assert result.data.filename == "estat_ds-059358_filtered_en.csv.gz"
+    assert leftovers(tmp_path) == ["fish_oil.csv.gz"]
+    rows = list(parse_sdmx_csv(dest))
+    assert {tuple(row.dimensions) for row in rows} == {
+        ("freq", "reporter", "product", "indicators")
+    }
+    assert all(row.attributes == {} and row.obs_flag is None for row in rows), "no attribute"
+    values = {(row.dimensions["indicators"], row.time_period): row.obs_value for row in rows}
+    assert values[("QNTUNIT", "2022")] == "KG", "a unit among the measures, as printed"
+    assert values[("SCQNTFLAG", "2023")] == values[("SCVALFLAG", "2023")] == ":E"
+    assert {value for value in values.values() if isinstance(value, str)} == {"KG", ":E"}
+    assert values[("EXPVAL", "2022")] == Decimal("349477")
+    meta = result.meta
+    assert meta.endpoint == "dataQuery"
+    assert meta.vintage == "20/10/26 11:00:00" == rows[0].last_update
+    assert meta.published_at == datetime(2026, 10, 20, 11, 0)
+    assert meta.published_at_naive is True
+    assert meta.request == {
+        "dataset": "DS-059358",
+        "key": PRODCOM_KEY,
+        "start_period": "2022",
+        "end_period": "2023",
+        "format": "SDMX-CSV",
+        "compressed": True,
+    }
 
 
 def test_download_dataset_without_a_key_downloads_the_whole_dataset(
@@ -1235,81 +1407,107 @@ def test_download_dataset_refuses_a_directory_or_a_missing_one(
     assert not respx_mock.calls, "refused before any request"
 
 
-def documented_xml(contains: str) -> str:
-    """The ```xml block of the snapshot's asynchronous-api.md that contains ``contains``."""
-    text = (GUIDE / "asynchronous-api.md").read_text(encoding="utf-8")
-    return next(
-        str(block)
-        for block in re.findall(r"```xml\n(.*?)```", text, flags=re.DOTALL)
-        if contains in block
-    )
+ASYNCHRONOUS_SDMX = "DS-045409_asynchronous"
+TOO_BIG = "DS-045409_too_big_413"
 
 
-def test_documented_shape_download_dataset_refuses_an_asynchronous_answer(
-    respx_mock: respx.MockRouter, tmp_path: Path
+def test_download_dataset_refuses_an_asynchronous_answer(
+    replay_fixture: ReplayFixture, tmp_path: Path
 ) -> None:
-    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written: the envelope that queues an SDMX request (``asynchronous-api.md``, "Step
-    1: Initial request"), at HTTP 200 with an XML content type, which the guide does not
-    name. ``classify`` refuses it from the headers alone, before the body reaches a file;
-    the first asynchronous answer seen is recorded and replaces this test (gap row 83)."""
-    envelope = documented_xml("<status>SUBMITTED</status>")
-    route = respx_mock.route(method="GET", host="ec.europa.eu").mock(
-        return_value=httpx.Response(
-            200, headers={"Content-Type": "text/xml"}, content=envelope.encode("utf-8")
-        )
-    )
+    """Recorded on the Comext base: DS-045409, the whole monthly flow, is answered with the
+    envelope that queues it (``asynchronous-api.md``, "Step 1: Initial request"), at HTTP
+    200 with ``application/xml``. ``classify`` refuses it from the headers alone, before
+    the body reaches a file, and a file at ``dest`` stays as it was; the recording replaces
+    the test of the user guide's documented body (gap row 83). It queued one extraction on
+    Eurostat's side that nobody fetches (Johannes, 2026-10-28)."""
+    route = replay_fixture(DATA_QUERY, ASYNCHRONOUS_SDMX)
+    dest = tmp_path / "trade.csv.gz"
+    dest.write_bytes(b"an earlier download")
     with pytest.raises(InvalidRequestError) as refused:
-        download_dataset("ef_m_farmleg", dest=tmp_path / "farms.csv.gz")
-    assert len(route.calls) == 1
+        download_dataset("DS-045409", "M.....", dest=dest)
+    assert sent_urls(route) == [recorded_data(ASYNCHRONOUS_SDMX).request.url]
     assert str(refused.value) == (
-        "Eurostat answered GET /eurostat/api/dissemination/sdmx/2.1/data/ef_m_farmleg with "
-        "text/xml, not SDMX-CSV: a data query the SDMX API will treat asynchronously is "
-        "answered with an XML envelope that queues it, and this package does not poll "
-        "asynchronous answers: narrow the query with fewer codes per dimension or a shorter "
-        "period."
+        "Eurostat answered GET /eurostat/api/comext/dissemination/sdmx/2.1/data/DS-045409/"
+        "M..... with application/xml, not SDMX-CSV: a data query the SDMX API will treat "
+        "asynchronously is answered with an XML envelope that queues it, and this package "
+        "does not poll asynchronous answers: narrow the query with fewer codes per dimension "
+        "or a shorter period."
     )
-    assert leftovers(tmp_path) == [], "dest untouched, no temporary file left"
+    assert dest.read_bytes() == b"an earlier download", "dest untouched"
+    assert leftovers(tmp_path) == ["trade.csv.gz"], "no temporary file left"
 
 
-def test_documented_shape_download_dataset_refuses_an_extraction_too_big(
-    respx_mock: respx.MockRouter, tmp_path: Path
+def test_download_dataset_refuses_an_extraction_too_big(
+    replay_fixture: ReplayFixture, tmp_path: Path
 ) -> None:
-    """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written: the SOAP fault ``EXTRACTION_TOO_BIG`` at HTTP 413, whose body a
-    download reads for the error's text."""
-    fault = documented_xml("EXTRACTION_TOO_BIG")
-    respx_mock.route(method="GET", host="ec.europa.eu").mock(
-        return_value=httpx.Response(
-            413, headers={"Content-Type": "text/xml"}, content=fault.encode("utf-8")
-        )
-    )
+    """Recorded on the Comext base: the SOAP fault ``EXTRACTION_TOO_BIG`` at HTTP 413 for
+    five reporters and one partner over every product, monthly, for a year; a download
+    reads an error's body for the error's text. The recording replaces the test of the
+    user guide's documented body (rows 59 and 83)."""
+    route = replay_fixture(DATA_QUERY, TOO_BIG)
+    key = "M.AT+DE+FR+IT+NL.US..."
     with pytest.raises(InvalidRequestError) as refused:
-        download_dataset("ef_m_farmleg", dest=tmp_path / "farms.csv.gz")
+        download_dataset("DS-045409", key, since="2023", until="2023", dest=tmp_path / "t.csv.gz")
+    assert sent_urls(route) == [recorded_data(TOO_BIG).request.url]
+    assert recorded_data(TOO_BIG).request.url == (
+        f"{COMEXT_DATA_URL}/DS-045409/{key}?format=SDMX-CSV&startPeriod=2023&endPeriod=2023"
+        "&compressed=true"
+    ), "the plus signs and dots of the key as sent"
     text = str(refused.value)
     assert text.startswith(
-        "Eurostat refused GET /eurostat/api/dissemination/sdmx/2.1/data/ef_m_farmleg as too "
-        "large (HTTP 413: EXTRACTION_TOO_BIG: The requested extraction is too big"
+        f"Eurostat refused GET /eurostat/api/comext/dissemination/sdmx/2.1/data/DS-045409/{key} "
+        "as too large (HTTP 413: EXTRACTION_TOO_BIG: The requested extraction is too big"
     )
     assert text.endswith("narrow the query with fewer codes per dimension or a shorter period.")
     assert leftovers(tmp_path) == []
 
 
 @pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("flow", "case", "key", "filename"),
+    [
+        ("apro_mk_cola", MILK_SLICE, MILK_KEY, "estat_apro_mk_cola_filtered_en.csv"),
+        ("DS-059358", PRODCOM_SLICE, PRODCOM_KEY, "estat_ds-059358_filtered_en.csv"),
+    ],
+    ids=["main", "comext"],
+)
 async def test_data_query_downloads_the_plain_answer(
-    replay_fixture: ReplayFixture, tmp_path: Path
+    replay_fixture: ReplayFixture, tmp_path: Path, flow: str, case: str, key: str, filename: str
 ) -> None:
-    """The wrapper without ``compressed``: the plain recording, CSV as Eurostat sends it."""
-    route = replay_fixture(DATA_QUERY, MILK_SLICE)
-    recorded = recorded_data(MILK_SLICE)
-    dest = tmp_path / "milk.csv"
+    """The wrapper without ``compressed``: the plain recording, CSV as Eurostat sends it,
+    on either base."""
+    route = replay_fixture(DATA_QUERY, case)
+    recorded = recorded_data(case)
+    dest = tmp_path / "slice.csv"
     downloaded = await api.sdmx.data_query(
-        "apro_mk_cola", dest, key=MILK_KEY, start_period="2022", end_period="2023"
+        flow, dest, key=key, start_period="2022", end_period="2023"
     )
     assert sent_urls(route) == [recorded.request.url]
     assert dest.read_bytes() == recorded.response.content
-    assert downloaded.filename == "estat_apro_mk_cola_filtered_en.csv"
+    assert downloaded.filename == filename
     assert [row.time_period for row in parse_sdmx_csv(dest)][:2] == ["2022", "2023"]
+
+
+@pytest.mark.anyio
+async def test_code_list_query_takes_the_comext_base(respx_mock: respx.MockRouter) -> None:
+    """``base_url`` sends the codelist query to the Comext base: only the URL sent is
+    asserted. NOT RECORDED: the answer is the main base's STATINFO sample
+    (``tests/fixtures/files/codelist/statinfo.json``) served at the Comext base's codelist
+    path, an exchange upstream never had, so that the call completes."""
+    sample = (FIXTURES / "files" / "codelist" / "statinfo.json").read_bytes()
+    route = respx_mock.route(
+        method="GET",
+        host="ec.europa.eu",
+        path="/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/STATINFO",
+    ).mock(
+        return_value=httpx.Response(
+            200, headers={"content-type": "application/json"}, content=sample
+        )
+    )
+    await api.sdmx.code_list_query("ESTAT", "STATINFO", lang="en", base_url=COMEXT_BASE_URL)
+    assert sent_urls(route) == [
+        f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/STATINFO?format=JSON&lang=en"
+    ]
 
 
 def test_download_dataset_is_no_tool_and_no_route() -> None:

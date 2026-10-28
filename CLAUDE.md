@@ -11,7 +11,7 @@ that works here; the family rules it points to apply as well.
 | | |
 | --- | --- |
 | Upstream | Eurostat dissemination API, https://ec.europa.eu/eurostat/web/main/data/database |
-| API base URL | `https://ec.europa.eu/eurostat/api/dissemination` |
+| API base URL | `https://ec.europa.eu/eurostat/api/dissemination`, and `https://ec.europa.eu/eurostat/api/comext/dissemination` for the Comext and Prodcom datasets: a dataset or flow code that starts with `DS-` is requested on the Comext base, every other on the main one (`docs/upstream/user-guide/api-detailed-guidelines/prefixed-datasets.md`); one client serves both, `_client.url_for` applies the rule |
 | Documentation | https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-introduction, snapshotted in `docs/upstream/` |
 | Credentials | none; the API is open |
 | Rate limit | 30 requests per minute, burst 1; a self-imposed pace, upstream documents no rate in numbers (ADR-0010); the user guide states a fair-use rule without a number: past thresholds it does not give on concurrent requests, requests and extraction cost per day, 7 and 30 days, requests are answered asynchronously (`docs/upstream/user-guide/api-detailed-guidelines/asynchronous-api.md`, "Fair use of the service"); enforced client-side in `_client.py` |
@@ -26,8 +26,8 @@ src/xippios/eurostat/
   __init__.py      public surface: __version__ and re-exported task functions
   py.typed         PEP 561 marker; consumers' mypy --strict needs it
   _version.py      __version__ from distribution metadata
-  _client.py       the one configured AsyncClient (base URL, rate limit, cache) and
-                   classify, upstream's documented error shapes; no key
+  _client.py       the one configured AsyncClient (the two base URLs, url_for, rate
+                   limit, cache) and classify, upstream's documented error shapes; no key
   errors.py        the Statistics API's fault model and its parsing, for classify
   models.py        pydantic models mirroring upstream payloads (UpstreamModel)
   api/             endpoint wrappers, one module per upstream service (statistics,
@@ -59,7 +59,9 @@ tests/
   test_tasks.py    per-task replay tests
   test_refresh_reference.py  the refresh script's readers on tests/fixtures/files/
   test_parse.py    parse_sdmx_csv on the samples under tests/fixtures/files/sdmx-csv/
-  test_live.py     @pytest.mark.live smoke tests, one per task
+  test_live.py     @pytest.mark.live smoke tests, one per task and more for get_data
+                   (one per dataset, the Comext base's among them); a run sends eleven
+                   requests, as its docstring counts
 docs/upstream/     documentation snapshot and FETCHED.md
 .github/workflows/ ci.yml (the required ci check, with the CHANGELOG and fixture-size steps),
                    publish.yml (the release train: tag, build, PyPI), live.yml (nightly live
