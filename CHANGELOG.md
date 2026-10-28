@@ -18,6 +18,21 @@ All notable changes to this project are documented here. The format follows
   `scripts/refresh_upstream.py` captures them, and `FETCHED.md` lists the Comext page's
   four links outside the user guide that it does not request. The pages and documents
   already in the snapshot are unchanged upstream.
+- The Comext base, `https://ec.europa.eu/eurostat/api/comext/dissemination`, where
+  Eurostat serves its Comext trade and Prodcom production datasets, whose codes start
+  with `DS-`: `get_data`, the three slices and `download_dataset` request a `DS-`
+  dataset there and every other on the main base, by upstream's rule ("DS- prefixed
+  dataset code"), through the one client with its one pace, cache and error mapping
+  (`_client.url_for`, `_client.COMEXT_BASE_URL`); the main base's requests are
+  unchanged, and `api.sdmx.code_list_query` takes the base as `base_url`. Fixtures
+  recorded on the Comext base mirror the main base's: Prodcom's `DS-059358` as a cube
+  and as SDMX-CSV, plain and compressed, with their samples; an unknown `DS-` dataset;
+  an unknown reporter, an empty cube; and a filter on a dimension `DS-059358` lacks,
+  which the Comext base does not refuse but counts unfiltered and answers with HTTP 413
+  as too large. For `DS-045409`, EU trade since 1988 by HS2-4-6 and CN8, the first
+  asynchronous answer and the first `EXTRACTION_TOO_BIG` fault recorded replace the
+  tests on the user guide's documented bodies. One more live test, on `DS-059358`,
+  checks nightly that the Comext base answers.
 
 ### Changed
 
@@ -30,6 +45,13 @@ All notable changes to this project are documented here. The format follows
   `tests/fixtures/dataQuery/` to `tests/fixtures/data_query/`, their contents unchanged.
   `meta.endpoint` still names upstream's operation (`getData`, `dataQuery`), and the
   tasks, MCP tools and HTTP routes are unchanged.
+- A value is text where upstream prints text: `Observation.value` and the values of
+  `Cube.value` are `int | float | str | None`, and `SdmxCsvRow.obs_value` is
+  `Decimal | str | None`, a number where the text is one and the text as printed
+  otherwise, an empty cell still `None`. Prodcom's `indicators` dimension carries units
+  and flags among its measures, which Eurostat prints as values (`"KG"` for `QNTUNIT`,
+  `":E"` for `SCQNTFLAG`). `parse_sdmx_csv` no longer refuses an `OBS_VALUE` that is no
+  number.
 
 ## [0.1.0] - 2026-10-28
 
