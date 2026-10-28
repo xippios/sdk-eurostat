@@ -1,13 +1,6 @@
-"""Task-shaped functions for Eurostat dissemination API.
+"""Task functions, the public API: the adapters serve ``__all__`` (conventions §2).
 
-The public API (ADR-0001, layer 2). A task composes endpoint wrappers from ``api/``,
-resolves pagination and reference lookups, and returns ``Result[T]`` with full
-``ResultMeta``. Write the async version, derive the sync one with ``xippios.core.sync``,
-and list the sync name in ``__all__``: the MCP server and the HTTP router register
-exactly what is named there minus ``BULK_TASKS``.
-
-Docstrings are read by agents: one sentence first, then ``Args:`` with examples of
-valid values for every parameter. ``/add-endpoint`` walks through the whole recipe.
+``/add-endpoint`` adds them.
 
 ``get_data`` answers one Statistics API request (``api.statistics.getData``) as the
 JSON-stat cube it returns. Release metadata: ``meta.published_at`` is the cube's
@@ -87,7 +80,8 @@ __all__ = [
 
 BULK_TASKS: frozenset[str] = frozenset({"download_dataset"})
 """Tasks the adapters skip (ADR-0019 decision 4): ``download_dataset``, which writes a
-file and is Python-only. Written by hand until template v0.3.0 renders it (D33)."""
+file and is Python-only. Core's ``build_server`` and ``router_from_tasks`` read it from
+this module and leave its names out, so ``mcp.py`` and ``http.py`` pass ``__all__`` whole."""
 
 RESERVED_PARAMETERS = frozenset(
     {"format", "lang", "sincetimeperiod", "untiltimeperiod", "lasttimeperiod", "geolevel"}
