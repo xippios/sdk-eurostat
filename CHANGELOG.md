@@ -68,7 +68,7 @@ All notable changes to this project are documented here. The format follows
   all the packaged lists. Without `--only` the run is the whole refresh, as before.
 - Comext trade, the EU side of the trade picture, on the Comext base:
   `get_trade(product, reporters=None, partners=None, flow=None, since=None, until=None,
-  freq="M", indicators=None)` reads `DS-045409`, EU trade since 1988 by HS2-4-6 and CN8,
+  freq=Freq.M, indicators=None)` reads `DS-045409`, EU trade since 1988 by HS2-4-6 and CN8,
   and `get_trade_hs(...)`, with the same parameters, `DS-059341`, international trade of
   EU and non-EU countries since 2002 by HS2-4-6, one product at a time. Each sends one
   getData request and returns the cube's observations in cube order with `get_data`'s
@@ -98,10 +98,10 @@ All notable changes to this project are documented here. The format follows
   biodiesel, sugar, meat, dairy, cereals and fertilisers. Over MCP each takes up to
   1,000 rows within 64 KB, with a note naming `search`.
 - `download_trade(product=None, reporters=None, partners=None, flow=None, since=None,
-  until=None, freq="M", indicators=None, *, dest)`, a bulk task like `download_dataset`,
+  until=None, freq=Freq.M, indicators=None, *, dest)`, a bulk task like `download_dataset`,
   in Python only: it builds `DS-045409`'s series key from `get_trade`'s arguments in the
   dataset's order, `+` between codes and an empty position for an argument left `None`,
-  checks every code as `get_trade` does, refuses a call without `product` and
+  checks every code as `get_trade` does, refuses a call with neither `product` nor
   `reporters` before any request, since Eurostat serves no Comext trade dataset whole,
   and streams the gzip-compressed SDMX-CSV file to `dest`; `meta.request` records the
   arguments and the key sent. Its fixture's bodies, compressed and plain, are new

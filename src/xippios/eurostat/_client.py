@@ -136,7 +136,7 @@ def classify(response: httpx.Response) -> XippiosError | None:
       ``warning`` whose status is 413 or whose label starts ``ASYNCHRONOUS_RESPONSE``, as
       the user guide documents it (never seen), or a fault of an ``error`` member whose
       label starts so, as recorded on the Comext base on 2026-10-28: an ``error`` array
-      at HTTP 413 with id 413, DS-059341's answer to a CN8 code the flow does not serve
+      at HTTP 413 with id 413, DS-059341's answer to a CN8 code the dataset does not serve
       (``tests/fixtures/get_data/DS-059341_AT_DE_15071090_cn8_on_hs_flow.json``). The
       service will treat the request asynchronously, which this package does not poll
       (design round Q4, 2026-10-27): ``InvalidRequestError`` saying to send the request

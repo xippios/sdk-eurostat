@@ -157,7 +157,7 @@ heading = get_trade_hs("1507", reporters=["AT"], partners=["DE"], since="2023-12
 
 Eurostat's Comext trade statistics, the EU side of the trade picture, are served on the
 Comext base. `get_trade(product, reporters=None, partners=None, flow=None, since=None,
-until=None, freq="M", indicators=None)` reads DS-045409, EU trade since 1988 by HS2-4-6
+until=None, freq=Freq.M, indicators=None)` reads DS-045409, EU trade since 1988 by HS2-4-6
 and CN8, and `get_trade_hs(...)`, with the same parameters, DS-059341, international trade
 of EU and non-EU countries since 2002 by HS2-4-6, one product at a time: each sends one
 `get_data` request and returns the cube's observations in cube order (reporter, partner,
@@ -283,7 +283,7 @@ oil.meta.request["key"]  # "M.AT..15071090..": every partner, both flows, every 
 ```
 
 `download_trade(product=None, reporters=None, partners=None, flow=None, since=None,
-until=None, freq="M", indicators=None, *, dest)` is the second bulk task, Python only as
+until=None, freq=Freq.M, indicators=None, *, dest)` is the second bulk task, Python only as
 well: it builds DS-045409's series key from `get_trade`'s arguments in the dataset's
 order, freq.reporter.partner.product.flow.indicators, `+` between codes and an empty
 position for an argument left `None`, checks every code as `get_trade` does, and

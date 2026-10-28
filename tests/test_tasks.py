@@ -2208,11 +2208,17 @@ def test_trade_tasks_send_get_data_s_request(
 def test_get_trade_sends_every_filter_in_the_structure_order(
     replay_fixture: ReplayFixture,
 ) -> None:
-    """What is sent with a flow, indicators, two partners, annual periods and no
-    reporters: the filters in the data structure's order, a list once per code, and no
-    ``reporter``. The recorded answer is served, since replay matches method, host and
-    path; only the request is checked."""
-    route = replay_fixture(GET_DATA, TRADE)
+    """NOT RECORDED: this request was never sent upstream. What is sent with a flow,
+    indicators, two partners, annual periods and no reporters: the filters in the data
+    structure's order, a list once per code, and no ``reporter``. The recorded answer of
+    another request (``DS-045409_AT_DE_15071090_2023``, AT and DE monthly) is served at
+    this URL, moved, not written by hand; the answer is not checked, only the request and
+    its record in ``meta.request``."""
+    url = (
+        f"{COMEXT_STATISTICS}/DS-045409?format=JSON&lang=EN&freq=A&partner=US&partner=BR"
+        "&product=1507&flow=2&indicators=VALUE_IN_EUROS&sinceTimePeriod=2022&untilTimePeriod=2023"
+    )
+    route = replay_fixture(GET_DATA, TRADE, url=url)
     result = get_trade(
         "1507",
         partners=["US", "BR"],
@@ -2222,10 +2228,7 @@ def test_get_trade_sends_every_filter_in_the_structure_order(
         freq="A",
         indicators=["VALUE_IN_EUROS"],
     )
-    assert sent_urls(route) == [
-        f"{COMEXT_STATISTICS}/DS-045409?format=JSON&lang=EN&freq=A&partner=US&partner=BR"
-        "&product=1507&flow=2&indicators=VALUE_IN_EUROS&sinceTimePeriod=2022&untilTimePeriod=2023"
-    ]
+    assert sent_urls(route) == [url]
     assert result.meta.request["filters"] == {
         "freq": "A",
         "partner": ["US", "BR"],

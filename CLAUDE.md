@@ -112,8 +112,10 @@ keeps every other list's file, `lists.json` record and provenance row; the index
 dataset's own product list before sending: DS-059358's is CXT_PRODCOM2_SOLD, DS-059359's
 CXT_PRODCOM2_TOTAL, 822 of the first list's 4,788 codes (chiefly chemicals, fertilisers
 and metals) on 2026-10-28; each indicator is checked against CXT_INDICATORS, which
-Comext's trade datasets share, and each reporter against CXT_FREE_ISO; a reporter the
-list holds and the dataset lacks still gives an empty cube.
+Comext's trade datasets share, and each reporter against CXT_FREE_ISO. What Eurostat
+answers a code a list holds and the dataset lacks is its own, as recorded: an empty cube
+for an unknown reporter (`XX`, `DS-059358_unknown_code`), the asynchronous answer for a
+CN8 code on DS-059341.
 
 The trade tasks read DS-045409 (EU trade since 1988 by HS2-4-6 and CN8, data structure
 6.6) and DS-059341 (international trade of EU and non-EU countries since 2002 by HS2-4-6,
@@ -136,7 +138,7 @@ poll. `list_cn8` and `list_hs` split CXT_NC by code length: eight characters, an
 four or six; its lettered codes (`1507XXXX`, `15SSS421`) are Eurostat's positions for
 trade no regular code holds and are served as listed, and its one code of five characters,
 `TOTAL`, is in neither. A Comext trade dataset is served filtered only
-(`prefixed-datasets.md`), so `download_trade` refuses a call without `product` and
+(`prefixed-datasets.md`), so `download_trade` refuses a call with neither `product` nor
 `reporters` before any request; Eurostat answers up to 500,000 estimated cells at once,
 queues up to 5,000,000 (the asynchronous answer `classify` refuses) and refuses more with
 HTTP 413 (`asynchronous-api.md`).

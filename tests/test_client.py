@@ -10,7 +10,7 @@ unknown ``DS-`` dataset (HTTP 404, the same ``error`` array), a filter on a dime
 counts unfiltered and refuses as too large (HTTP 413, an ``error`` array with id 413,
 ``EXTRACTION_TOO_BIG``), the Statistics API's asynchronous answer (HTTP 413, an
 ``error`` array with id 413 labelled ``ASYNCHRONOUS_RESPONSE``, DS-059341's answer to a
-CN8 code the flow does not serve) and the empty cube of an unknown reporter; under
+CN8 code the dataset does not serve) and the empty cube of an unknown reporter; under
 ``data_query/`` two SDMX-CSV answers of ``DS-059358``, the envelope that queues an
 asynchronous answer (``DS-045409``, the whole monthly flow: HTTP 200,
 ``application/xml``, status ``SUBMITTED``) and the SOAP fault ``EXTRACTION_TOO_BIG`` at
@@ -280,7 +280,7 @@ ASYNCHRONOUS_REFUSAL = (
 
 def test_statistics_api_asynchronous_answer_is_refused_as_recorded() -> None:
     """Recorded on the Comext base on 2026-10-28: DS-059341's answer to a CN8 code the
-    flow does not serve, HTTP 413 with an ``error`` array whose id is 413, as
+    dataset does not serve, HTTP 413 with an ``error`` array whose id is 413, as
     ``EXTRACTION_TOO_BIG``'s is, and whose label starts ``ASYNCHRONOUS_RESPONSE``. The
     label makes it the asynchronous refusal, checked before the HTTP 413 one: send the
     request again later, or narrow it; never "too large"."""
