@@ -14,8 +14,9 @@ are those of a client with one base.
 answers that are no SDMX-CSV, onto the family's taxonomy once (ADR-0008); ``errors``
 reads them. Both bases answer in the same shapes, recorded on each, though not always to
 the same request: a filter on a dimension the dataset lacks is fault 150 at HTTP 400 on
-the main base, and on the Comext base, which counts the query unfiltered, HTTP 413 as
-too large. Answers of HTTP 200 are cached in core's ``MemoryCache`` with its default
+the main base, and HTTP 413 as too large on the Comext base, whose estimate for
+DS-059358, 151,971,120 rows, is that of an unfiltered query, so the unknown filter seems
+to be ignored. Answers of HTTP 200 are cached in core's ``MemoryCache`` with its default
 lifetime of five minutes, up to core's ``cache_max_bytes`` of 8 MiB a body (ADR-0019
 decision 3), so a larger cube is returned and fetched again the next time; a file
 streamed to disk with ``download`` never touches the cache.
@@ -136,7 +137,7 @@ def classify(response: httpx.Response) -> XippiosError | None:
       ``warning`` whose status is 413 or whose label starts ``ASYNCHRONOUS_RESPONSE``, as
       the user guide documents it (never seen), or a fault of an ``error`` member whose
       label starts so, as recorded on the Comext base on 2026-10-28: an ``error`` array
-      at HTTP 413 with id 413, DS-059341's answer to a CN8 code the flow does not serve
+      at HTTP 413 with id 413, DS-059341's answer to a CN8 code the dataset does not serve
       (``tests/fixtures/get_data/DS-059341_AT_DE_15071090_cn8_on_hs_flow.json``). The
       service will treat the request asynchronously, which this package does not poll
       (design round Q4, 2026-10-27): ``InvalidRequestError`` saying to send the request
@@ -154,7 +155,8 @@ def classify(response: httpx.Response) -> XippiosError | None:
       upstream's text: the faults of an ``error`` member, described as at HTTP 400, or
       else the ``faultstring`` of a SOAP fault. Recorded on the Comext base: the
       Statistics API's ``error`` array with id 413, ``EXTRACTION_TOO_BIG``, its answer to
-      a filter on a dimension the dataset lacks, which it counts unfiltered
+      a filter on a dimension the dataset lacks, whose estimate, 151,971,120 rows, is
+      that of an unfiltered query, so the unknown filter seems to be ignored
       (``tests/fixtures/get_data/DS-059358_unknown_dimension_too_big.json``), and the SOAP
       fault ``EXTRACTION_TOO_BIG`` the user guide documents for the SDMX APIs (an
       extraction over 5,000,000 cells;

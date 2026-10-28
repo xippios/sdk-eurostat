@@ -10,14 +10,15 @@ from the answers recorded under ``tests/fixtures/get_data/``, on the main base o
 
 - ``{"error": [{"status": 404, "id": 100, "label": "ERR_NOT_FOUND_4: ..."}]}``, an array
   of faults: recorded for an unknown dataset (HTTP 404, ``unknown_dataset.json``, and
-  ``DS_unknown_dataset.json`` on the Comext base), an unknown dimension (HTTP 400, id
+  ``DS-000000_unknown_dataset.json`` on the Comext base), an unknown dimension (HTTP 400, id
   150, ``unknown_dimension.json``) and ``geo`` together with ``geoLevel`` (HTTP 400, id
   400, ``geo_with_geo_level.json``).
 - ``{"error": [{"status": 413, "id": 413, "label": "EXTRACTION_TOO_BIG: ..."}]}``, the
   same array at HTTP 413: recorded on the Comext base for a filter on a dimension the
-  dataset lacks, which it counts unfiltered and judges too large, "estimated 151971120
-  rows, max authorised is 5000000" (``DS-059358_unknown_dimension_too_big.json``), where
-  the main base answers fault 150 at HTTP 400.
+  dataset lacks, judged too large, "estimated 151971120 rows, max authorised is 5000000"
+  (``DS-059358_unknown_dimension_too_big.json``), where the main base answers fault 150
+  at HTTP 400. The estimate is that of an unfiltered query, so the unknown filter seems
+  to be ignored.
 - ``{"error": {"status": "400", "label": "'geo' parameter and 'geoLevel' parameter ..."}}``,
   one fault as an object, its status as text and without an id: how the user guide
   documents the answer to ``geo`` with ``geoLevel``; the service answered that request
@@ -25,9 +26,9 @@ from the answers recorded under ``tests/fixtures/get_data/``, on the main base o
 - ``{"error": [{"status": 413, "id": 413, "label": "ASYNCHRONOUS_RESPONSE. Your request
   will be treated asynchronously. Please try again later."}]}``, the same array at HTTP
   413: the Statistics API's answer to a request the service will treat asynchronously,
-  recorded on the Comext base on 2026-10-28 for DS-059341 and a CN8 code the flow does
-  not serve (``DS-059341_AT_DE_15071090_cn8_on_hs_flow.json``); its label, not its id or
-  status, tells it from ``EXTRACTION_TOO_BIG``.
+  recorded on the Comext base on 2026-10-28 for DS-059341 and a CN8 code the dataset
+  does not serve (``DS-059341_AT_DE_15071090_cn8_on_hs_flow.json``); its label, not its
+  id or status, tells it from ``EXTRACTION_TOO_BIG``.
 - ``{"warning": {"status": 413, "label": "ASYNCHRONOUS_RESPONSE. ..."}}``: the
   asynchronous answer as the user guide documents it, at an HTTP status the guide does
   not name; never seen. Four unfiltered requests on 2026-10-27 to datasets of 624,554 to

@@ -33,8 +33,8 @@ observations in cube order with ``get_data``'s ``meta``. The product is checked 
 the dataset's packaged product list first (CXT_PRODCOM2_SOLD, CXT_PRODCOM2_TOTAL), each
 reporter against CXT_FREE_ISO and each indicator against CXT_INDICATORS, so a code a list
 lacks raises ``UnknownCode`` without a request (conventions §5); a reporter the list holds
-and the dataset lacks gives an empty list, as an unknown code gives ``get_data`` an empty
-cube.
+and the dataset lacks is Eurostat's to answer, as an indicator the dataset lacks was (an
+empty cube, recorded for PRODVAL on DS-059359); no such answer is recorded.
 
 The trade tasks, ``get_trade`` and ``get_trade_hs``, read Comext's trade datasets on the
 Comext base as the production tasks read Prodcom's, DS-045409 (EU trade since 1988 by
@@ -72,8 +72,8 @@ and so Python-only: the adapters skip them, no tool or route returns a file path
 gzip-compressed SDMX-CSV to the file the caller names and returns
 ``Result[Downloaded]``; ``parse.parse_sdmx_csv`` reads the file. ``download_trade``
 builds DS-045409's series key from ``get_trade``'s arguments, checked as ``get_trade``
-checks them, and refuses a call without ``product`` and ``reporters``, since Eurostat
-serves no Comext trade dataset whole. Their release metadata comes from the file's first
+checks them, and refuses a call with neither ``product`` nor ``reporters``, since
+Eurostat serves no Comext trade dataset whole. Their release metadata comes from the file's first
 row, read through the parser: ``meta.vintage`` is ``LAST UPDATE`` as printed
 (``"05/10/26 23:00:00"``) and ``meta.published_at`` the same time without a zone,
 ``published_at_naive`` set (ADR-0022 rule 2); ``meta.endpoint`` is ``"dataQuery"``.
@@ -845,8 +845,9 @@ async def list_products_async(search: str | None = None) -> Result[list[Code]]:
     production, exports and imports), thousands of manufactured goods, food and
     agricultural inputs among them. A product is an eight-digit code that starts with its
     NACE class: ``1041`` for vegetable and animal oils and fats, ``2015`` for
-    fertilisers. A few codes carry a letter (``101200Z1``, ``2410T110``) and stand for
-    several products together, as their labels say. The list keeps the codes of earlier
+    fertilisers. A few codes end in Z and a digit (``101200Z1``, fresh, chilled or
+    frozen whole geese, ducks and guinea fowls) and stand for several products together,
+    as their labels say. The list keeps the codes of earlier
     PRODCOM years beside the current ones, so one label can stand under two codes (crude
     sunflower-seed and safflower oil is ``10412300`` and ``10412400``). For agriculture:
     crude oils such as ``10412100`` (crude soya-bean oil) and refined ones such as
@@ -920,16 +921,16 @@ async def list_cn8_async(search: str | None = None) -> Result[list[Code]]:
     1.5 % fat, unsweetened, in packings of more than 2.5 kg); cereals under ``10``
     (``10019900``, wheat; ``10059000``, maize); fertilisers under ``31`` (``31021010``,
     urea). CXT_NC's codes are split by length, as upstream writes them: this task serves
-    those of eight characters, ``"ZZZZZZZZ"`` (no label) among them, ``list_hs`` those of
-    two, four and six, and ``list_codes("cxt_nc")`` the whole list, ``"TOTAL"`` with it. A
-    code with letters in it (``"1507XXXX"``, ``"15SSS421"``, ``"99YYY000"``) is
-    Eurostat's position for trade that no regular code holds, as its label says: not
-    elsewhere specified (XX), confidential (S), under the declaration limit (YYY),
-    carried by post (P) and the like. ``search`` keeps the
-    codes whose code or label contains the text, ignoring case. ``meta.vintage`` is the
-    codelist's version (``"11.0"``) and ``meta.published_at`` its last update, with
-    Eurostat's zone; ``meta.endpoint`` is the codelist's URL on the Comext base and
-    ``meta.retrieved_at`` when the package's copy was fetched.
+    those of eight characters, ``"ZZZZZZZZ"`` (labelled ``"<No Label>"``) among them,
+    ``list_hs`` those of two, four and six, and ``list_codes("cxt_nc")`` the whole list,
+    ``"TOTAL"`` with it. A code with letters in it (``"1507XXXX"``, ``"15SSS421"``,
+    ``"99YYY000"``) is Eurostat's position for trade that no regular code holds, as its
+    label says: not elsewhere specified (XX), confidential (S), under the declaration
+    limit (YYY), carried by post (P) and the like. ``search`` keeps the codes whose code
+    or label contains the text, ignoring case. ``meta.vintage`` is the codelist's version
+    (``"11.0"``) and ``meta.published_at`` its last update, with Eurostat's zone;
+    ``meta.endpoint`` is the codelist's URL on the Comext base and ``meta.retrieved_at``
+    when the package's copy was fetched.
 
     Args:
         search: Text to look for in the code or the English label, ignoring case, e.g.
@@ -1001,18 +1002,32 @@ UNKNOWN_PRODUCT = (
 """Why a production task refuses a product its packaged list lacks (conventions §5)."""
 
 UNKNOWN_INDICATOR = (
-    "An indicator the dataset lacks would give an empty cube, so the package checks each "
-    "indicator against its copy of CXT_INDICATORS before sending; "
+    "The package checks each indicator against its copy of CXT_INDICATORS, the indicators "
+    "of the Prodcom and Comext datasets, before sending; "
     'list_codes("cxt_indicators") lists them.'
 )
-"""Why a production or trade task refuses an indicator CXT_INDICATORS lacks (conventions §5)."""
+"""Why a production or trade task refuses an indicator CXT_INDICATORS lacks (conventions §5).
+
+The check is against the whole list, which Comext's trade datasets share: an indicator
+in it that the dataset lacks passes, and Eurostat answers it with an empty cube
+(recorded for PRODVAL on DS-059359)."""
 
 UNKNOWN_COUNTRY = (
-    "A reporter or partner the dataset lacks would give an empty cube, so the package "
-    "checks each against its copy of CXT_FREE_ISO, Comext's list of reporters and partners, "
-    'before sending; list_codes("cxt_free_iso") lists them.'
+    "The package checks each reporter and partner against its copy of CXT_FREE_ISO, "
+    "Comext's list of reporters and partners, before sending; "
+    'list_codes("cxt_free_iso") lists them.'
 )
 """Why a production or trade task refuses a reporter or partner CXT_FREE_ISO lacks."""
+
+PRODUCTION_DATASETS: Mapping[str, tuple[str, str]] = {
+    params.PRODCOM_SOLD: (
+        f"{SOLD_PRODUCTION} (sold production, exports and imports)",
+        "get_sold_production",
+    ),
+    params.PRODCOM_TOTAL: (f"{TOTAL_PRODUCTION} (total production)", "get_total_production"),
+}
+"""Each Prodcom product list's dataset and the task that serves it, for a refusal that
+names the other dataset where a product is served."""
 
 
 @functools.cache
@@ -1021,11 +1036,16 @@ def _labels(name: str) -> Mapping[str, str]:
     return MappingProxyType({code.code: code.label or code.code for code in params.codes(name)})
 
 
-def _check_code(param: str, value: str, codelist: str, reason: str) -> None:
+def _check_code(
+    param: str, value: str, codelist: str, reason: str, hint: str | None = None
+) -> None:
     """Refuse ``value`` when the packaged codelist ``codelist`` lacks it (conventions §5).
 
+    ``hint``, when given, explains the value in place of the closest codes, which are
+    then neither named nor kept.
+
     Raises:
-        UnknownCode: Naming the list, its fetch date and the closest codes.
+        UnknownCode: Naming the list, its fetch date and the closest codes, or the hint.
     """
     labels = _labels(codelist.lower())
     if value not in labels:
@@ -1034,7 +1054,8 @@ def _check_code(param: str, value: str, codelist: str, reason: str) -> None:
             value,
             list_name=codelist,
             fetched=params.packaged(codelist.lower()).fetched,
-            closest=closest(value, labels),
+            closest=() if hint else closest(value, labels),
+            hint=hint,
             reason=reason,
             source=SOURCE,
         )
@@ -1084,20 +1105,22 @@ async def _production(
     """One Prodcom dataset's observations for one product: one ``get_data`` request.
 
     ``products`` is the id of the dataset's product codelist. Every code is checked
-    before the request, each reporter against CXT_FREE_ISO; the filters go out in the
-    order reporter, product, indicators.
+    before the request, each reporter against CXT_FREE_ISO; a product the list lacks that
+    the other Prodcom dataset's list holds is refused naming the task that serves it, in
+    place of the closest codes. The filters go out in the order reporter, product,
+    indicators.
     """
-    _check_code(
-        "product",
-        product,
-        products,
-        f"{UNKNOWN_PRODUCT} "
-        + (
-            "list_products lists them."
-            if products == params.PRODCOM_SOLD
-            else f'list_codes("{products.lower()}") lists them.'
-        ),
+    listed = (
+        "list_products lists them."
+        if products == params.PRODCOM_SOLD
+        else f'list_codes("{products.lower()}") lists them.'
     )
+    elsewhere = " ".join(
+        f"{product} is a product of {dataset}: {task} serves it."
+        for codelist, (dataset, task) in PRODUCTION_DATASETS.items()
+        if codelist != products and product in _labels(codelist.lower())
+    )
+    _check_code("product", product, products, f"{UNKNOWN_PRODUCT} {listed}", elsewhere or None)
     filters: dict[str, str | list[str]] = {}
     if reporters is not None:
         filters["reporter"] = _checked(
@@ -1141,14 +1164,18 @@ async def get_sold_production_async(
     SCPRODQNT, with SCVALFLAG, SCVALBASE, SCQNTFLAG, SCQNTBASE). A value is a number, or
     the text Eurostat prints for a unit or a flag (``"KG"``, ``":E"``). ``product`` is
     checked against the package's copy of the dataset's product list
-    (CXT_PRODCOM2_SOLD, which ``list_products`` lists), and each indicator against
-    CXT_INDICATORS, and each reporter against CXT_FREE_ISO, Comext's list of reporters
-    and partners, before any request: a code they lack raises ``UnknownCode`` naming the
-    closest, and a reporter the list holds and the dataset lacks gives an empty list.
-    ``meta`` is ``get_data``'s: ``meta.request`` holds the dataset and the filters sent,
-    ``meta.published_at`` the dataset's last update with Eurostat's zone and
-    ``meta.vintage`` the same time as printed. A query Eurostat refuses or judges too
-    large raises ``InvalidRequestError`` with its message.
+    (CXT_PRODCOM2_SOLD, which ``list_products`` lists), each reporter against
+    CXT_FREE_ISO, Comext's list of reporters and partners, and each indicator against the
+    whole of CXT_INDICATORS, before any request: a code they lack raises
+    ``UnknownCode`` naming the closest. CXT_INDICATORS holds the Comext trade datasets'
+    indicators too, so one of them that this dataset lacks (``VALUE_IN_EUROS``, or
+    DS-059359's ``APRODQNT``) passes the check, and Eurostat answers such an indicator
+    with an empty cube, as recorded for PRODVAL on DS-059359: an empty list. A reporter
+    the list holds and the dataset lacks is Eurostat's to answer, as the indicator was;
+    no such answer is recorded. ``meta`` is ``get_data``'s: ``meta.request`` holds the
+    dataset and the filters sent, ``meta.published_at`` the dataset's last update with
+    Eurostat's zone and ``meta.vintage`` the same time as printed. A query Eurostat
+    refuses or judges too large raises ``InvalidRequestError`` with its message.
 
     Args:
         product: One PRODCOM product code, e.g. ``"10412100"`` (crude soya-bean oil),
@@ -1193,12 +1220,17 @@ async def get_total_production_async(
     APQNTBASE. A value is a number, or the text Eurostat prints for a unit or a flag
     (``"KG"``). ``product`` is checked against the package's copy of the dataset's
     product list (CXT_PRODCOM2_TOTAL, which ``list_codes("cxt_prodcom2_total")`` lists),
-    each indicator against CXT_INDICATORS, and each reporter against CXT_FREE_ISO,
-    Comext's list of reporters and partners, before any request: a code they lack raises
-    ``UnknownCode`` naming the closest, and a reporter the list holds and the dataset
-    lacks gives an empty list. ``meta`` is ``get_data``'s: ``meta.request`` holds the
-    dataset and the filters sent, ``meta.published_at`` the dataset's last update with
-    Eurostat's zone and ``meta.vintage`` the same time as printed. A query Eurostat
+    each reporter against CXT_FREE_ISO, Comext's list of reporters and partners, and each
+    indicator against the whole of CXT_INDICATORS, before any request: a code they lack
+    raises ``UnknownCode`` naming the closest, and a sold-production product outside this
+    dataset names ``get_sold_production``. CXT_INDICATORS holds the indicators of
+    DS-059358 and of the Comext trade datasets too, so one of them that this dataset
+    lacks (``PRODVAL``) passes the check, and Eurostat answers it with an empty cube: an
+    empty list (recorded). A reporter the list holds and the dataset lacks is Eurostat's
+    to answer, as the indicator was; no such answer is recorded. ``meta`` is
+    ``get_data``'s: ``meta.request`` holds the dataset and the filters sent,
+    ``meta.published_at`` the dataset's last update with Eurostat's zone and
+    ``meta.vintage`` the same time as printed. A query Eurostat
     refuses or judges too large raises ``InvalidRequestError`` with its message.
 
     Args:
@@ -1236,15 +1268,14 @@ TRADE_DIMENSIONS = ("freq", "reporter", "partner", "product", "flow", "indicator
 positions of ``download_trade``'s key."""
 
 UNKNOWN_TRADE_PRODUCT = (
-    "A product the dataset lacks would give an empty cube, so the package checks the "
-    "product against its copy of CXT_NC, the trade datasets' product list, before sending; "
-    "list_cn8 and list_hs list its codes."
+    "The package checks the product against its copy of CXT_NC, the trade datasets' "
+    "product list, before sending; list_cn8 and list_hs list its codes."
 )
 """Why a trade task refuses a product CXT_NC lacks (conventions §5)."""
 
 UNKNOWN_FLOW = (
-    "A flow the dataset lacks would give an empty cube, so the package checks the flow "
-    'against its copy of CXT_EU_FLUX before sending; list_codes("cxt_eu_flux") lists them.'
+    "The package checks the flow against its copy of CXT_EU_FLUX before sending; "
+    'list_codes("cxt_eu_flux") lists them.'
 )
 """Why a trade task refuses a flow CXT_EU_FLUX lacks (conventions §5)."""
 
@@ -1351,9 +1382,8 @@ async def get_trade_async(
     each reporter and partner against CXT_FREE_ISO, the flow against CXT_EU_FLUX and each
     indicator against CXT_INDICATORS; a code they lack raises ``UnknownCode`` naming the
     closest. A code they hold that the dataset lacks is Eurostat's to answer, with an
-    empty list or a refusal (``InvalidRequestError``), and a product without trade in the
-    periods asked for gives an empty list. ``freq`` other than ``"M"`` or ``"A"`` is
-    refused with ``InvalidRequestError``. ``meta`` is ``get_data``'s:
+    empty list or a refusal (``InvalidRequestError``). ``freq`` other than ``"M"`` or
+    ``"A"`` is refused with ``InvalidRequestError``. ``meta`` is ``get_data``'s:
     ``meta.request`` holds the dataset and the filters sent, ``meta.published_at`` the
     dataset's last update with Eurostat's zone and ``meta.vintage`` the same time as
     printed. Keep the slice small: one product for one reporter and every partner over a
@@ -1409,25 +1439,23 @@ async def get_trade_hs_async(
     international trade of EU and non-EU countries since 2002 by HS2-4-6. ``product`` is
     an HS chapter, heading or subheading, a two-, four- or six-digit code, which
     ``list_hs`` lists. The dataset's data structure names CXT_NC as its product list,
-    which ``get_trade`` shares and which holds the eight-digit CN codes too, so a CN8 code
-    passes the package's check, and DS-059341 answers one (``"15071090"``, recorded on
-    2026-10-28) not with an empty list but asynchronously, HTTP 413
+    which ``get_trade`` shares and which holds the eight-digit CN codes too, so the
+    package checks a product against CXT_NC and a CN8 code passes; DS-059341 answered one
+    (``"15071090"``, recorded on 2026-10-28) asynchronously, HTTP 413
     ``ASYNCHRONOUS_RESPONSE``, which this package does not poll: it raises
     ``InvalidRequestError``; give an HS code instead (``"1507"``, ``"150710"``). Each
-    observation
-    carries its code and label on every dimension (``freq``, ``reporter``, ``partner``,
-    ``product``, ``flow``, ``indicators``, ``time``), its value and its status, in cube
-    order: reporter by reporter, partner by partner, flow by flow, indicator by
-    indicator, oldest period first. The flows are ``"1"`` (imports) and ``"2"``
+    observation carries its code and label on every dimension (``freq``, ``reporter``,
+    ``partner``, ``product``, ``flow``, ``indicators``, ``time``), its value and its
+    status, in cube order: reporter by reporter, partner by partner, flow by flow,
+    indicator by indicator, oldest period first. The flows are ``"1"`` (imports) and ``"2"``
     (exports); the indicators VALUE_EUR (the value in euro), VALUE_NAC (the value in
     national currency) and QUANTITY_KG (the quantity in kg). Every code is checked
     against the package's copies of Eurostat's lists before any request: the product
     against CXT_NC, each reporter and partner against CXT_FREE_ISO, the flow against
     CXT_EU_FLUX and each indicator against CXT_INDICATORS; a code they lack raises
     ``UnknownCode`` naming the closest. A code they hold that the dataset lacks is
-    Eurostat's to answer, as the CN8 code above was, and a product without trade in the
-    periods asked for gives an empty list. ``freq`` other than ``"M"`` or ``"A"`` is
-    refused with ``InvalidRequestError``. ``meta`` is ``get_data``'s: ``meta.request``
+    Eurostat's to answer, as the CN8 code above was. ``freq`` other than ``"M"`` or
+    ``"A"`` is refused with ``InvalidRequestError``. ``meta`` is ``get_data``'s: ``meta.request``
     holds the dataset and the filters sent, ``meta.published_at`` the dataset's last
     update with Eurostat's zone and ``meta.vintage`` the same time as printed. Keep the
     slice small: a query Eurostat would answer asynchronously or refuses as too large
@@ -1637,7 +1665,7 @@ TRADE_FILTER_REQUIRED = (
     "and DS-045409 for every product of every reporter is far past the 5,000,000 cells it "
     "answers; download_dataset takes a series key of your own"
 )
-"""Why ``download_trade`` refuses a call without ``product`` and ``reporters``
+"""Why ``download_trade`` refuses a call with neither ``product`` nor ``reporters``
 (``prefixed-datasets.md``: "full datasets cannot be downloaded because of their size")."""
 
 

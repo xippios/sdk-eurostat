@@ -28,13 +28,17 @@ All notable changes to this project are documented here. The format follows
   recorded on the Comext base mirror the main base's: Prodcom's `DS-059358` as a cube
   and as SDMX-CSV, plain and compressed, with their samples; an unknown `DS-` dataset;
   an unknown reporter, an empty cube; and a filter on a dimension `DS-059358` lacks,
-  which the Comext base does not refuse but counts unfiltered and answers with HTTP 413
-  as too large, with an `error` array whose label, upstream's `EXTRACTION_TOO_BIG` text,
-  now reaches the caller: the error mapping reads the faults of an `error` array at HTTP
-  413 as it does at 400 and 404. For `DS-045409`, EU trade since 1988 by HS2-4-6 and
-  CN8, the first asynchronous answer and the first `EXTRACTION_TOO_BIG` fault recorded
-  replace the tests on the user guide's documented bodies. One more live test, on
-  `DS-059358`, checks nightly that the Comext base answers.
+  which the Comext base does not refuse as the main base does but answers with HTTP 413
+  as too large (the estimate, 151,971,120 rows, is that of an unfiltered query, so the
+  unknown filter seems to be ignored), with an `error` array whose label, upstream's
+  `EXTRACTION_TOO_BIG` text, now reaches the caller: the error mapping reads the faults
+  of an `error` array at HTTP 413 as it does at 400 and 404. For `DS-045409`, EU trade
+  since 1988 by HS2-4-6 and CN8, the first asynchronous answer and the first
+  `EXTRACTION_TOO_BIG` fault recorded replace the tests that served the user guide's two
+  documented SDMX bodies, the envelope that queues an asynchronous answer and the
+  `EXTRACTION_TOO_BIG` SOAP fault; the tests on the Statistics API's documented
+  `warning` and single-object `error` stay. One more live test, on `DS-059358`, checks
+  nightly that the Comext base answers.
 - Prodcom production, the agricultural focus of this version, on the Comext base:
   `get_sold_production(product, reporters=None, since=None, until=None,
   indicators=None)` reads `DS-059358`, sold production, exports and imports, and
@@ -47,8 +51,9 @@ All notable changes to this project are documented here. The format follows
   against `CXT_INDICATORS` before sending, so a code they lack raises `UnknownCode`
   naming the closest codes; each reporter is checked against the packaged
   `CXT_FREE_ISO`, as the product and the indicators are; a reporter the list holds and
-  the dataset lacks gives an empty list. Over MCP each keeps 200 rows, with a note naming
-  `reporters`, `indicators` and `since`.
+  the dataset lacks is Eurostat's to answer, as an indicator the dataset lacks was (an
+  empty cube, recorded for `PRODVAL` on `DS-059359`); no such answer is recorded. Over
+  MCP each keeps 200 rows, with a note naming `reporters`, `indicators` and `since`.
 - `list_products(search=None)`: the PRODCOM products of `DS-059358` from the packaged
   `CXT_PRODCOM2_SOLD`, without a request, `meta.vintage` the codelist's version and
   `meta.published_at` its last update, with Eurostat's zone. Its description names the
@@ -68,7 +73,7 @@ All notable changes to this project are documented here. The format follows
   all the packaged lists. Without `--only` the run is the whole refresh, as before.
 - Comext trade, the EU side of the trade picture, on the Comext base:
   `get_trade(product, reporters=None, partners=None, flow=None, since=None, until=None,
-  freq="M", indicators=None)` reads `DS-045409`, EU trade since 1988 by HS2-4-6 and CN8,
+  freq=Freq.M, indicators=None)` reads `DS-045409`, EU trade since 1988 by HS2-4-6 and CN8,
   and `get_trade_hs(...)`, with the same parameters, `DS-059341`, international trade of
   EU and non-EU countries since 2002 by HS2-4-6, one product at a time. Each sends one
   getData request and returns the cube's observations in cube order with `get_data`'s
@@ -98,10 +103,10 @@ All notable changes to this project are documented here. The format follows
   biodiesel, sugar, meat, dairy, cereals and fertilisers. Over MCP each takes up to
   1,000 rows within 64 KB, with a note naming `search`.
 - `download_trade(product=None, reporters=None, partners=None, flow=None, since=None,
-  until=None, freq="M", indicators=None, *, dest)`, a bulk task like `download_dataset`,
+  until=None, freq=Freq.M, indicators=None, *, dest)`, a bulk task like `download_dataset`,
   in Python only: it builds `DS-045409`'s series key from `get_trade`'s arguments in the
   dataset's order, `+` between codes and an empty position for an argument left `None`,
-  checks every code as `get_trade` does, refuses a call without `product` and
+  checks every code as `get_trade` does, refuses a call with neither `product` nor
   `reporters` before any request, since Eurostat serves no Comext trade dataset whole,
   and streams the gzip-compressed SDMX-CSV file to `dest`; `meta.request` records the
   arguments and the key sent. Its fixture's bodies, compressed and plain, are new

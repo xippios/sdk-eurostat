@@ -7,10 +7,11 @@ SDMX-CSV answers, plain and ``compressed=true``. Recorded on the Comext base on
 2026-10-28, mirroring them: under ``get_data/`` the Prodcom cube ``DS-059358``, an
 unknown ``DS-`` dataset (HTTP 404, the same ``error`` array), a filter on a dimension
 ``DS-059358`` lacks, which the Comext base does not refuse as the main base does but
-counts unfiltered and refuses as too large (HTTP 413, an ``error`` array with id 413,
-``EXTRACTION_TOO_BIG``), the Statistics API's asynchronous answer (HTTP 413, an
-``error`` array with id 413 labelled ``ASYNCHRONOUS_RESPONSE``, DS-059341's answer to a
-CN8 code the flow does not serve) and the empty cube of an unknown reporter; under
+refuses as too large (HTTP 413, an ``error`` array with id 413, ``EXTRACTION_TOO_BIG``;
+the estimate, 151,971,120 rows, is that of an unfiltered query, so the unknown filter
+seems to be ignored), the Statistics API's asynchronous answer (HTTP 413, an ``error``
+array with id 413 labelled ``ASYNCHRONOUS_RESPONSE``, DS-059341's answer to a CN8 code
+the dataset does not serve) and the empty cube of an unknown reporter; under
 ``data_query/`` two SDMX-CSV answers of ``DS-059358``, the envelope that queues an
 asynchronous answer (``DS-045409``, the whole monthly flow: HTTP 200,
 ``application/xml``, status ``SUBMITTED``) and the SOAP fault ``EXTRACTION_TOO_BIG`` at
@@ -280,7 +281,7 @@ ASYNCHRONOUS_REFUSAL = (
 
 def test_statistics_api_asynchronous_answer_is_refused_as_recorded() -> None:
     """Recorded on the Comext base on 2026-10-28: DS-059341's answer to a CN8 code the
-    flow does not serve, HTTP 413 with an ``error`` array whose id is 413, as
+    dataset does not serve, HTTP 413 with an ``error`` array whose id is 413, as
     ``EXTRACTION_TOO_BIG``'s is, and whose label starts ``ASYNCHRONOUS_RESPONSE``. The
     label makes it the asynchronous refusal, checked before the HTTP 413 one: send the
     request again later, or narrow it; never "too large"."""
@@ -328,9 +329,11 @@ def test_extraction_too_big_is_refused() -> None:
 
 def test_statistics_api_too_big_is_refused_on_the_comext_base() -> None:
     """Recorded on the Comext base: a filter on a dimension ``DS-059358`` lacks (``geo``)
-    is counted unfiltered and answered with HTTP 413 and an ``error`` array whose id is
-    413 (``EXTRACTION_TOO_BIG``), not with the main base's fault 150 at HTTP 400. It is
-    refused as too large, the array's fault described as at HTTP 400."""
+    is answered with HTTP 413 and an ``error`` array whose id is 413
+    (``EXTRACTION_TOO_BIG``), not with the main base's fault 150 at HTTP 400; the
+    estimate, 151,971,120 rows, is that of an unfiltered query, so the unknown filter
+    seems to be ignored. It is refused as too large, the array's fault described as at
+    HTTP 400."""
     response = recorded("DS-059358_unknown_dimension_too_big")
     assert response.status_code == 413
     assert '"label": "EXTRACTION_TOO_BIG' in response.text
@@ -348,7 +351,7 @@ def test_statistics_api_too_big_is_refused_on_the_comext_base() -> None:
 
 def test_unknown_ds_dataset_is_not_found() -> None:
     """Recorded on the Comext base: the main base's shape, an ``error`` array at HTTP 404."""
-    error = classify(recorded("DS_unknown_dataset"))
+    error = classify(recorded("DS-000000_unknown_dataset"))
     assert isinstance(error, NotFoundError)
     assert str(error) == (
         f"Eurostat answered {COMEXT_WHERE}/statistics/1.0/data/DS-000000 with HTTP 404 "

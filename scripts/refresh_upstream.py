@@ -29,7 +29,8 @@ served beside them. This script writes:
   SDMX-CSV answer, structural samples of the formats (test fixtures are recorded
   separately, never here).
 - ``FETCHED.md``: regenerated entirely: what was fetched, when, its size and sha256, the
-  pages not fetched and why, and the attribution quoted from Eurostat's copyright notice.
+  pages and other resources not fetched and why, and the attribution quoted from Eurostat's
+  copyright notice.
 
 Two Confluence pages (``WIKI_PAGES``) are requested once each without credentials; they
 redirect an anonymous client to EU Login, and the script records that and stops
@@ -231,7 +232,8 @@ NOT_REQUESTED = (
     (f"{GUIDE_BASE}api-faq/excel-power-query", "a FAQ child page outside this snapshot's list"),
     (JSON_STAT_SPEC, "JSON-stat 2.0 is a third-party specification: cited, not snapshotted"),
 )
-"""Pages linked from the user guide that are deliberately not requested, with the reason."""
+"""Pages and other resources linked from the user guide (an API answer, a bulk listing, a
+specification among them) that are deliberately not requested, with the reason."""
 
 COPYRIGHT_URL = "https://ec.europa.eu/eurostat/web/main/help/copyright-notice"
 LICENCE_START = "The copyright for the editorial content of this website"

@@ -66,7 +66,9 @@ tests/
   test_refresh_reference.py  the refresh script's readers on tests/fixtures/files/, and
                    its --only merge, offline
   test_parse.py    parse_sdmx_csv on the samples under tests/fixtures/files/sdmx-csv/
-  test_live.py     @pytest.mark.live smoke tests, one per task
+  test_live.py     @pytest.mark.live smoke tests, one per task and more for get_data
+                   (one per dataset, the Comext base's among them); a run sends eighteen
+                   requests, as its docstring counts
 docs/upstream/     documentation snapshot and FETCHED.md
 .github/workflows/ ci.yml (the required ci check, with the CHANGELOG and fixture-size steps),
                    publish.yml (the release train: tag, build, PyPI), live.yml (nightly live
@@ -103,7 +105,7 @@ path they were fetched from as `endpoint` (`sdmx/2.1/codelist/ESTAT/GEO`); the s
 Comext base, the Prodcom datasets' `product` and `indicators` lists and the trade
 datasets' `product`, `reporter` and `flow` lists, the full URL
 (`https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_INDICATORS`),
-since the path alone names the main base's operation (Johannes, 2026-10-28; gap, row 111).
+since the path alone names the main base's operation (Johannes, 2026-10-28; gap, row 172).
 CXT_FREE_ISO feeds `partner` too; its `param` is `reporter`, the first of the two in the
 data structures' order.
 `scripts/refresh_reference.py --only <name> [<name> ...]` refreshes the named lists and
@@ -112,8 +114,13 @@ keeps every other list's file, `lists.json` record and provenance row; the index
 dataset's own product list before sending: DS-059358's is CXT_PRODCOM2_SOLD, DS-059359's
 CXT_PRODCOM2_TOTAL, 822 of the first list's 4,788 codes (chiefly chemicals, fertilisers
 and metals) on 2026-10-28; each indicator is checked against CXT_INDICATORS, which
-Comext's trade datasets share, and each reporter against CXT_FREE_ISO; a reporter the
-list holds and the dataset lacks still gives an empty cube.
+Comext's trade datasets share, and each reporter against CXT_FREE_ISO. What Eurostat
+answers a code a list holds and the dataset lacks is its own, as recorded: an empty cube
+for an indicator DS-059359 lacks (`PRODVAL`,
+`DS-059359_AT_20158000_indicator_not_in_dataset`), the asynchronous answer for a CN8 code
+on DS-059341 (`DS-059341_AT_DE_15071090_cn8_on_hs_flow`); a code no list holds (`XX`,
+which Eurostat answered with an empty cube, `DS-059358_unknown_code`) the package refuses
+before sending.
 
 The trade tasks read DS-045409 (EU trade since 1988 by HS2-4-6 and CN8, data structure
 6.6) and DS-059341 (international trade of EU and non-EU countries since 2002 by HS2-4-6,
@@ -136,7 +143,7 @@ poll. `list_cn8` and `list_hs` split CXT_NC by code length: eight characters, an
 four or six; its lettered codes (`1507XXXX`, `15SSS421`) are Eurostat's positions for
 trade no regular code holds and are served as listed, and its one code of five characters,
 `TOTAL`, is in neither. A Comext trade dataset is served filtered only
-(`prefixed-datasets.md`), so `download_trade` refuses a call without `product` and
+(`prefixed-datasets.md`), so `download_trade` refuses a call with neither `product` nor
 `reporters` before any request; Eurostat answers up to 500,000 estimated cells at once,
 queues up to 5,000,000 (the asynchronous answer `classify` refuses) and refuses more with
 HTTP 413 (`asynchronous-api.md`).
