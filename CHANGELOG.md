@@ -6,6 +6,27 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-28
+
+Second release, on xippios-core 0.3.0 from PyPI (`~=0.3.0`), sdk-template v0.3.0 and
+conventions 1.22, its floor. It adds Eurostat's Comext base,
+`https://ec.europa.eu/eurostat/api/comext/dissemination`, where Eurostat serves its
+Comext trade and Prodcom production datasets, whose codes start with `DS-`: the one
+client requests such a dataset there and every other on the main base, so `get_data`,
+the three slices and `download_dataset` serve both. Prodcom production comes as
+`list_products`, `get_sold_production` and `get_total_production`; Comext trade as
+`list_cn8`, `list_hs`, `get_trade`, `get_trade_hs` and `download_trade`, a bulk task in
+Python only. Six codelists of the Comext base are packaged beside the twelve of the main
+base, eighteen in all, and the table of contents is refreshed. A value is text where
+Eurostat prints text, a unit or a flag among Prodcom's measures, and the four endpoint
+wrappers are named after their upstream operations by the family's naming rule.
+Eurostat's asynchronous answer, now recorded from both its Statistics API and its SDMX
+API, is refused with how to narrow the query, never polled. Of the fifteen tasks,
+thirteen are MCP tools and HTTP routes and two are bulk tasks; the nightly live run
+sends eighteen requests. The renamed wrappers, the widened value types and
+`params.CODELISTS`, now a mapping, change 0.1.0's public surface, which makes this a
+minor release.
+
 ### Added
 
 - Upstream documentation snapshot refreshed on 2026-10-28 with the second API base,
