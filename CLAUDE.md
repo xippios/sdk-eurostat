@@ -218,3 +218,19 @@ The API needs no key, so the workflow uses no secret.
 
 Prefer the smallest change that satisfies the documents above, state the assumption in
 the PR description, and stop rather than guess at upstream semantics or public API shape.
+
+## Eurostat dissemination API specifics
+
+Two kinds of fixture beyond the recorded `<endpoint>/<case>.json`:
+
+`tests/fixtures/dataQuery/*_compressed.json` holds a gzip file as its body, which no grep
+reads: it is stored base64 (`body_base64`, recorded with `Scrub(allow_binary=True)`) and
+decompresses to the plain recording beside it, byte for byte, which `tests/test_parse.py`
+checks.
+
+`tests/fixtures/files/<kind>/<case>.*` are the parser tests' samples, never written by
+hand: `toc/` and `codelist/` of the answers `scripts/refresh_reference.py` reads, cut by
+its `--samples` run from the answers it packaged; `sdmx-csv/` the response bodies of the
+recorded `tests/fixtures/dataQuery/` exchanges, byte for byte.
+`tests/fixtures/files/README.md` gives each one's release, URL, sha256 and fetch time
+(ADR-0020 decision 6).
