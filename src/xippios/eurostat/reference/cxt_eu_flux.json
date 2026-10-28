@@ -1,0 +1,19 @@
+{
+  "param": "flow",
+  "endpoint": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_EU_FLUX",
+  "fetched": "2026-10-28T15:13:51Z",
+  "records": [
+    {
+      "code": "1",
+      "label": "IMPORT"
+    },
+    {
+      "code": "2",
+      "label": "EXPORT"
+    },
+    {
+      "code": "3",
+      "label": "RE-EXPORT"
+    }
+  ]
+}

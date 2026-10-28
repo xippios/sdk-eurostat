@@ -1,5 +1,5 @@
 {
-  "fetched": "2026-10-28T14:25:04Z",
+  "fetched": "2026-10-28T15:13:51Z",
   "lists": [
     {
       "name": "toc",
@@ -160,6 +160,36 @@
       "LAST_UPDATED": "2026-10-19T11:00:00+0200",
       "creationDate": null,
       "count": 44
+    },
+    {
+      "name": "cxt_nc",
+      "kind": "codelist",
+      "id": "CXT_NC",
+      "label": "NC",
+      "version": "11.0",
+      "LAST_UPDATED": "2025-01-19T11:00:00+0100",
+      "creationDate": null,
+      "count": 40409
+    },
+    {
+      "name": "cxt_free_iso",
+      "kind": "codelist",
+      "id": "CXT_FREE_ISO",
+      "label": "FREE_ISO",
+      "version": "10.0",
+      "LAST_UPDATED": "2026-01-13T23:00:00+0100",
+      "creationDate": null,
+      "count": 313
+    },
+    {
+      "name": "cxt_eu_flux",
+      "kind": "codelist",
+      "id": "CXT_EU_FLUX",
+      "label": "EU_FLUX",
+      "version": "1.0",
+      "LAST_UPDATED": null,
+      "creationDate": null,
+      "count": 3
     }
   ]
 }

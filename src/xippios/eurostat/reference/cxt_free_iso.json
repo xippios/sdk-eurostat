@@ -1,0 +1,1259 @@
+{
+  "param": "reporter",
+  "endpoint": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_FREE_ISO",
+  "fetched": "2026-10-28T15:13:49Z",
+  "records": [
+    {
+      "code": "AD",
+      "label": "Andorra"
+    },
+    {
+      "code": "AE",
+      "label": "United Arab Emirates"
+    },
+    {
+      "code": "AF",
+      "label": "Afghanistan"
+    },
+    {
+      "code": "AG",
+      "label": "Antigua and Barbuda"
+    },
+    {
+      "code": "AI",
+      "label": "Anguilla"
+    },
+    {
+      "code": "AL",
+      "label": "Albania"
+    },
+    {
+      "code": "AM",
+      "label": "Armenia"
+    },
+    {
+      "code": "AN",
+      "label": "Netherlands Antilles (incl. Aruba 'AW' -> 1986)"
+    },
+    {
+      "code": "AO",
+      "label": "Angola"
+    },
+    {
+      "code": "AQ",
+      "label": "Antarctica"
+    },
+    {
+      "code": "AR",
+      "label": "Argentina"
+    },
+    {
+      "code": "AS",
+      "label": "American Samoa"
+    },
+    {
+      "code": "AT",
+      "label": "Austria"
+    },
+    {
+      "code": "AU",
+      "label": "Australia"
+    },
+    {
+      "code": "AW",
+      "label": "Aruba"
+    },
+    {
+      "code": "AZ",
+      "label": "Azerbaijan"
+    },
+    {
+      "code": "BA",
+      "label": "Bosnia and Herzegovina"
+    },
+    {
+      "code": "BB",
+      "label": "Barbados"
+    },
+    {
+      "code": "BD",
+      "label": "Bangladesh"
+    },
+    {
+      "code": "BE",
+      "label": "Belgium (incl. Luxembourg 'LU' -> 1998)"
+    },
+    {
+      "code": "BF",
+      "label": "Burkina Faso"
+    },
+    {
+      "code": "BG",
+      "label": "Bulgaria"
+    },
+    {
+      "code": "BH",
+      "label": "Bahrain"
+    },
+    {
+      "code": "BI",
+      "label": "Burundi"
+    },
+    {
+      "code": "BJ",
+      "label": "Benin"
+    },
+    {
+      "code": "BL",
+      "label": "Saint Barthélemy"
+    },
+    {
+      "code": "BM",
+      "label": "Bermuda"
+    },
+    {
+      "code": "BN",
+      "label": "Brunei Darussalam"
+    },
+    {
+      "code": "BO",
+      "label": "Bolivia, Plurinational State of"
+    },
+    {
+      "code": "BQ",
+      "label": "Bonaire, Sint Eustatius and Saba"
+    },
+    {
+      "code": "BR",
+      "label": "Brazil"
+    },
+    {
+      "code": "BS",
+      "label": "Bahamas"
+    },
+    {
+      "code": "BT",
+      "label": "Bhutan"
+    },
+    {
+      "code": "BV",
+      "label": "Bouvet Island"
+    },
+    {
+      "code": "BW",
+      "label": "Botswana"
+    },
+    {
+      "code": "BY",
+      "label": "Belarus (Belorussia)"
+    },
+    {
+      "code": "BZ",
+      "label": "Belize"
+    },
+    {
+      "code": "CA",
+      "label": "Canada"
+    },
+    {
+      "code": "CC",
+      "label": "Cocos Islands (or Keeling Islands)"
+    },
+    {
+      "code": "CD",
+      "label": "Congo, Democratic Republic of"
+    },
+    {
+      "code": "CF",
+      "label": "Central African Republic"
+    },
+    {
+      "code": "CG",
+      "label": "Congo"
+    },
+    {
+      "code": "CH",
+      "label": "Switzerland (incl. Liechtenstein 'LI' -> 1994)"
+    },
+    {
+      "code": "CI",
+      "label": "Côte d’Ivoire (Ivory Coast)"
+    },
+    {
+      "code": "CK",
+      "label": "Cook Islands"
+    },
+    {
+      "code": "CL",
+      "label": "Chile"
+    },
+    {
+      "code": "CM",
+      "label": "Cameroon"
+    },
+    {
+      "code": "CN",
+      "label": "China"
+    },
+    {
+      "code": "CO",
+      "label": "Colombia"
+    },
+    {
+      "code": "CR",
+      "label": "Costa Rica"
+    },
+    {
+      "code": "CS",
+      "label": "Serbia and Montenegro(2004-2005);Czechoslovakia(1976-1992)"
+    },
+    {
+      "code": "CU",
+      "label": "Cuba"
+    },
+    {
+      "code": "CV",
+      "label": "Cabo Verde"
+    },
+    {
+      "code": "CW",
+      "label": "Curaçao"
+    },
+    {
+      "code": "CX",
+      "label": "Christmas Island"
+    },
+    {
+      "code": "CY",
+      "label": "Cyprus"
+    },
+    {
+      "code": "CZ",
+      "label": "Czechia"
+    },
+    {
+      "code": "DD",
+      "label": "German Democratic Republic"
+    },
+    {
+      "code": "DE",
+      "label": "Germany (incl. German Democratic Republic 'DD' from 1991)"
+    },
+    {
+      "code": "DJ",
+      "label": "Djibouti"
+    },
+    {
+      "code": "DK",
+      "label": "Denmark"
+    },
+    {
+      "code": "DM",
+      "label": "Dominica"
+    },
+    {
+      "code": "DO",
+      "label": "Dominican Republic"
+    },
+    {
+      "code": "DZ",
+      "label": "Algeria"
+    },
+    {
+      "code": "EA",
+      "label": "Euro area (AT-01/1999, BE-01/1999, BG-01/2026,CY-01/2008, DE-01/1999, EE-01/2011, ES-01/1999, FI-01/1999, FR-01/1999, GR-01/2001, HR-01/2023, IE-01/1999, IT-01/1999, LT-01/2015, LU-01/1999, LV-01/2014, MT-01/2008, NL-01/1999, PT-01/1999, SI-01/2007, SK-01/2009)"
+    },
+    {
+      "code": "EA19",
+      "label": "Euro area - 19 countries (AT, BE, CY, DE, EE, ES, FI, FR, GR, IE, IT, LT, LU, LV, MT, NL, PT, SI, SK)"
+    },
+    {
+      "code": "EA19_EXTRA",
+      "label": "Extra-euro area - 19 countries (= 'WORLD' - 'EA19_INTRA')"
+    },
+    {
+      "code": "EA19_INTRA",
+      "label": "Intra-euro area - 19 countries (AT, BE, CY, DE, EE, ES, FI, FR, GR, IE, IT, LT, LU, LV, MT, NL, PT, SI, SK, QR, QV, QY)"
+    },
+    {
+      "code": "EA20",
+      "label": "Euro area - 20 countries (AT, BE, CY, DE, EE, ES, FI, FR, GR, HR, IE, IT, LT, LU, LV, MT, NL, PT, SI, SK)"
+    },
+    {
+      "code": "EA20_EXTRA",
+      "label": "Extra-euro area - 20 countries (= 'WORLD' - 'EA20_INTRA')"
+    },
+    {
+      "code": "EA20_INTRA",
+      "label": "Intra-euro area - 20 countries (AT, BE, CY, DE, EE, ES, FI, FR, GR, HR, IE, IT, LT, LU, LV, MT, NL, PT, SI, SK, QR, QV, QY)"
+    },
+    {
+      "code": "EA21",
+      "label": "Euro area - 21 countries (AT, BE, BG, CY, DE, EE, ES, FI, FR, GR, HR, IE, IT, LT, LU, LV, MT, NL, PT, SI, SK)"
+    },
+    {
+      "code": "EA21_EXTRA",
+      "label": "Extra-euro area - 21 countries (= 'WORLD' - 'EA21_INTRA')"
+    },
+    {
+      "code": "EA21_INTRA",
+      "label": "Intra-euro area - 20 countries (AT, BE, BG, CY, DE, EE, ES, FI, FR, GR, HR, IE, IT, LT, LU, LV, MT, NL, PT, SI, SK, QR, QV, QY)"
+    },
+    {
+      "code": "EA_EXTRA",
+      "label": "Extra-euro area (= 'WORLD' - 'EA_INTRA')"
+    },
+    {
+      "code": "EA_INTRA",
+      "label": "Intra-euro area (AT-01/1999, BE-01/1999, CY-01/2008, DE-01/1999, EE-01/2011, ES-01/1999, FI-01/1999, FR-01/1999, GR-01/2001, HR-01/2023, IE-01/1999, IT-01/1999, LT-01/2015, LU-01/1999, LV-01/2014, MT-01/2008, NL-01/1999, PT-01/1999, SI-01/2007, SK-01/2009, QR-01/1999, QV-01/1999, QY-01/1999)"
+    },
+    {
+      "code": "EC",
+      "label": "Ecuador"
+    },
+    {
+      "code": "EE",
+      "label": "Estonia"
+    },
+    {
+      "code": "EG",
+      "label": "Egypt"
+    },
+    {
+      "code": "EH",
+      "label": "Western Sahara(2013-2500);Ceuta and Melilla, Spanish Sahara(1976-1976)"
+    },
+    {
+      "code": "ER",
+      "label": "Eritrea"
+    },
+    {
+      "code": "ES",
+      "label": "Spain (incl. Canary Islands 'XB' from 1997)"
+    },
+    {
+      "code": "ET",
+      "label": "Ethiopia (incl. Eritrea 'ER' -> 1993)"
+    },
+    {
+      "code": "EU",
+      "label": "European Union (AT-01/1995, BE-01/1958, BG-01/2007, CY-05/2004, CZ-05/2004, DE-01/1958, DK-01/1973, EE-05/2004, ES-01/1986, FI-01/1995, FR-01/1958, GB-01/1973->01/2020, GR-01/1981, HR-07/2013, HU-05/2004, IE-01/1973, IT-01/1958, LT-05/2004, LU-01/1958, LV-05/2004, MT-05/2004, NL-01/1958, PL-05/2004, PT-01/1986, RO-01/2007, SE-01/1995, SI-05/2004, SK-05/2004)"
+    },
+    {
+      "code": "EU15",
+      "label": "European Union - 15 countries (1995-2004) (BE, DK, DE, IE, GR, ES, FR, IT, LU, NL, AT, PT, FI, SE, GB)"
+    },
+    {
+      "code": "EU27_2007",
+      "label": "European Union - 27 countries (2007-2013) (BE, BG, CZ, DK, DE, EE, IE, GR, ES, FR, IT, CY, LV, LT, LU, HU, MT, NL, AT, PL, PT, RO, SI, SK, FI, SE, GB)"
+    },
+    {
+      "code": "EU27_2020",
+      "label": "European Union - 27 countries (AT, BE, BG, CY, CZ, DE, DK, EE, ES, FI, FR, GR, HR, HU, IE, IT, LT, LU, LV, MT, NL, PL, PT, RO, SE, SI, SK)"
+    },
+    {
+      "code": "EU27_2020_EXTRA",
+      "label": "Extra-EU27 (= 'WORLD' - 'EU27_2020_INTRA')"
+    },
+    {
+      "code": "EU27_2020_INTRA",
+      "label": "Intra-EU27 (AT, BE, BG, CY, CZ, DE, DK, EE, ES, FI, FR, GR, HR, HU, IE, IT, LT, LU, LV, MT, NL, PL, PT, RO, SE, SI, SK, QR, QV, QY)"
+    },
+    {
+      "code": "EU28",
+      "label": "European Union - 28 countries (2013-2020) (AT, BE, BG, CY, CZ, DE, DK, EE, ES, FI, FR, GB, GR, HR, HU, IE, IT, LT, LU, LV, MT, NL, PL, PT, RO, SE, SI, SK)"
+    },
+    {
+      "code": "EU28_EXTRA",
+      "label": "Extra-EU28 (= 'WORLD' - 'EU28_INTRA')"
+    },
+    {
+      "code": "EU28_INTRA",
+      "label": "Intra-EU28 (AT, BE, BG, CY, CZ, DE, DK, EE, ES, FI, FR, GB, GR, HR, HU, IE, IT, LT, LU, LV, MT, NL, PL, PT, RO, SE, SI, SK, QR, QV, QY)"
+    },
+    {
+      "code": "EUROZONE",
+      "label": "Euro area (AT-01/1999, BE-01/1999, CY-01/2008, DE-01/1999, EE-01/2011, ES-01/1999, FI-01/1999, FR-01/1999, GR-01/2001, HR-01/2023, IE-01/1999, IT-01/1999, LT-01/2015, LU-01/1999, LV-01/2014, MT-01/2008, NL-01/1999, PT-01/1999, SI-01/2007, SK-01/2009)"
+    },
+    {
+      "code": "EUROZONE_EXTRA",
+      "label": "Extra-euro area (= 'WORLD' - 'EUROZONE_INTRA')"
+    },
+    {
+      "code": "EUROZONE_INTRA",
+      "label": "Intra-euro area (AT-01/1999, BE-01/1999, CY-01/2008, DE-01/1999, EE-01/2011, ES-01/1999, FI-01/1999, FR-01/1999, GR-01/2001, HR-01/2023, IE-01/1999, IT-01/1999, LT-01/2015, LU-01/1999, LV-01/2014, MT-01/2008, NL-01/1999, PT-01/1999, SI-01/2007, SK-01/2009, QR-01/1999, QV-01/1999, QY-01/1999)"
+    },
+    {
+      "code": "EU_EXTRA",
+      "label": "Extra-EU (= 'WORLD' - 'EU_INTRA')"
+    },
+    {
+      "code": "EU_INTRA",
+      "label": "Intra-EU (AT-01/1995, BE-01/1958, BG-01/2007, CY-05/2004, CZ-05/2004, DE-01/1958, DK-01/1973, EE-05/2004, ES-01/1986, FI-01/1995, FR-01/1958, GB-01/1973->01/2020, GR-01/1981, HR-07/2013, HU-05/2004, IE-01/1973, IT-01/1958, LT-05/2004, LU-01/1958, LV-05/2004, MT-05/2004, NL-01/1958, PL-05/2004, PT-01/1986, RO-01/2007, SE-01/1995, SI-05/2004, SK-05/2004, QR-01/1993, QV-01/1993, QY-01/1988)"
+    },
+    {
+      "code": "EXT_EA",
+      "label": "Extra-euro area"
+    },
+    {
+      "code": "EXT_EA19",
+      "label": "Extra-euro area - 19 countries (from 2015)"
+    },
+    {
+      "code": "EXT_EA20",
+      "label": "Extra-euro area - 20 countries (from 2023)"
+    },
+    {
+      "code": "EXT_EA21",
+      "label": "Extra-euro area - 21 countries (from 2026)"
+    },
+    {
+      "code": "EXT_EU",
+      "label": "Extra-EU"
+    },
+    {
+      "code": "EXT_EU27_2020",
+      "label": "Extra-EU27 (from 2020)"
+    },
+    {
+      "code": "FI",
+      "label": "Finland"
+    },
+    {
+      "code": "FJ",
+      "label": "Fiji"
+    },
+    {
+      "code": "FK",
+      "label": "Falkland Islands (Malvinas)"
+    },
+    {
+      "code": "FM",
+      "label": "Micronesia, Federated States of"
+    },
+    {
+      "code": "FO",
+      "label": "Faroe Islands"
+    },
+    {
+      "code": "FR",
+      "label": "France (incl. Saint Barthélemy 'BL' -> 2012; incl. French Guiana 'GF', Guadeloupe 'GP', Martinique 'MQ', Réunion 'RE' from 1997; incl. Mayotte 'YT' from 2014)"
+    },
+    {
+      "code": "GA",
+      "label": "Gabon"
+    },
+    {
+      "code": "GB",
+      "label": "United Kingdom"
+    },
+    {
+      "code": "GD",
+      "label": "Grenada"
+    },
+    {
+      "code": "GE",
+      "label": "Georgia"
+    },
+    {
+      "code": "GF",
+      "label": "French Guiana"
+    },
+    {
+      "code": "GH",
+      "label": "Ghana"
+    },
+    {
+      "code": "GI",
+      "label": "Gibraltar"
+    },
+    {
+      "code": "GL",
+      "label": "Greenland"
+    },
+    {
+      "code": "GM",
+      "label": "Gambia"
+    },
+    {
+      "code": "GN",
+      "label": "Guinea"
+    },
+    {
+      "code": "GP",
+      "label": "Guadeloupe"
+    },
+    {
+      "code": "GQ",
+      "label": "Equatorial Guinea"
+    },
+    {
+      "code": "GR",
+      "label": "Greece"
+    },
+    {
+      "code": "GS",
+      "label": "South Georgia and South Sandwich Islands"
+    },
+    {
+      "code": "GT",
+      "label": "Guatemala"
+    },
+    {
+      "code": "GU",
+      "label": "Guam"
+    },
+    {
+      "code": "GW",
+      "label": "Guinea-Bissau"
+    },
+    {
+      "code": "GY",
+      "label": "Guyana"
+    },
+    {
+      "code": "HK",
+      "label": "Hong Kong"
+    },
+    {
+      "code": "HM",
+      "label": "Heard Island and McDonald Islands"
+    },
+    {
+      "code": "HN",
+      "label": "Honduras"
+    },
+    {
+      "code": "HR",
+      "label": "Croatia"
+    },
+    {
+      "code": "HT",
+      "label": "Haiti"
+    },
+    {
+      "code": "HU",
+      "label": "Hungary"
+    },
+    {
+      "code": "ID",
+      "label": "Indonesia (incl. East Timor 'TP' from 1977 -> 2000)"
+    },
+    {
+      "code": "IE",
+      "label": "Ireland (Eire)"
+    },
+    {
+      "code": "IL",
+      "label": "Israel (incl. West Bank and Gaza Strip 'XP' -> 1994)"
+    },
+    {
+      "code": "IN",
+      "label": "India"
+    },
+    {
+      "code": "INT_EA",
+      "label": "Intra-euro area"
+    },
+    {
+      "code": "INT_EA19",
+      "label": "Intra-euro area - 19 countries (from 2015)"
+    },
+    {
+      "code": "INT_EA20",
+      "label": "Intra-euro area - 20 countries (from 2023)"
+    },
+    {
+      "code": "INT_EA21",
+      "label": "Intra-euro area - 21 countries (from 2026)"
+    },
+    {
+      "code": "INT_EU",
+      "label": "Intra-EU"
+    },
+    {
+      "code": "INT_EU27_2020",
+      "label": "Intra-EU27 (from 2020)"
+    },
+    {
+      "code": "IO",
+      "label": "British Indian Ocean Territory"
+    },
+    {
+      "code": "IQ",
+      "label": "Iraq"
+    },
+    {
+      "code": "IR",
+      "label": "Iran, Islamic Republic of"
+    },
+    {
+      "code": "IS",
+      "label": "Iceland"
+    },
+    {
+      "code": "IT",
+      "label": "Italy (incl. San Marino 'SM' -> 1993)"
+    },
+    {
+      "code": "JM",
+      "label": "Jamaica"
+    },
+    {
+      "code": "JO",
+      "label": "Jordan"
+    },
+    {
+      "code": "JP",
+      "label": "Japan"
+    },
+    {
+      "code": "KE",
+      "label": "Kenya"
+    },
+    {
+      "code": "KG",
+      "label": "Kyrgyzstan"
+    },
+    {
+      "code": "KH",
+      "label": "Cambodia"
+    },
+    {
+      "code": "KI",
+      "label": "Kiribati (incl. Solomon Islands 'SB', Tuvalu 'TV' -> 1979; incl. Pitcairn 'PN' -> 1980)"
+    },
+    {
+      "code": "KM",
+      "label": "Comoros (incl. Mayotte 'YT' -> 1976)"
+    },
+    {
+      "code": "KN",
+      "label": "St Kitts and Nevis"
+    },
+    {
+      "code": "KP",
+      "label": "Korea, Democratic People’s Republic of (North Korea)"
+    },
+    {
+      "code": "KR",
+      "label": "Korea, Republic of (South Korea)"
+    },
+    {
+      "code": "KW",
+      "label": "Kuwait"
+    },
+    {
+      "code": "KY",
+      "label": "Cayman Islands"
+    },
+    {
+      "code": "KZ",
+      "label": "Kazakhstan"
+    },
+    {
+      "code": "LA",
+      "label": "Lao People’s Democratic Republic (Laos)"
+    },
+    {
+      "code": "LB",
+      "label": "Lebanon"
+    },
+    {
+      "code": "LC",
+      "label": "St Lucia"
+    },
+    {
+      "code": "LI",
+      "label": "Liechtenstein"
+    },
+    {
+      "code": "LK",
+      "label": "Sri Lanka"
+    },
+    {
+      "code": "LR",
+      "label": "Liberia"
+    },
+    {
+      "code": "LS",
+      "label": "Lesotho"
+    },
+    {
+      "code": "LT",
+      "label": "Lithuania"
+    },
+    {
+      "code": "LU",
+      "label": "Luxembourg"
+    },
+    {
+      "code": "LV",
+      "label": "Latvia"
+    },
+    {
+      "code": "LY",
+      "label": "Libya"
+    },
+    {
+      "code": "MA",
+      "label": "Morocco"
+    },
+    {
+      "code": "MD",
+      "label": "Moldova, Republic of"
+    },
+    {
+      "code": "ME",
+      "label": "Montenegro"
+    },
+    {
+      "code": "MG",
+      "label": "Madagascar"
+    },
+    {
+      "code": "MH",
+      "label": "Marshall Islands"
+    },
+    {
+      "code": "MK",
+      "label": "North Macedonia"
+    },
+    {
+      "code": "ML",
+      "label": "Mali"
+    },
+    {
+      "code": "MM",
+      "label": "Myanmar (Burma)"
+    },
+    {
+      "code": "MN",
+      "label": "Mongolia"
+    },
+    {
+      "code": "MO",
+      "label": "Macao"
+    },
+    {
+      "code": "MP",
+      "label": "Northern Mariana Islands"
+    },
+    {
+      "code": "MQ",
+      "label": "Martinique"
+    },
+    {
+      "code": "MR",
+      "label": "Mauritania (incl. Spanish Sahara from 1977)"
+    },
+    {
+      "code": "MS",
+      "label": "Montserrat"
+    },
+    {
+      "code": "MT",
+      "label": "Malta"
+    },
+    {
+      "code": "MU",
+      "label": "Mauritius"
+    },
+    {
+      "code": "MV",
+      "label": "Maldives"
+    },
+    {
+      "code": "MW",
+      "label": "Malawi"
+    },
+    {
+      "code": "MX",
+      "label": "Mexico"
+    },
+    {
+      "code": "MY",
+      "label": "Malaysia"
+    },
+    {
+      "code": "MZ",
+      "label": "Mozambique"
+    },
+    {
+      "code": "NA",
+      "label": "Namibia"
+    },
+    {
+      "code": "NC",
+      "label": "New Caledonia"
+    },
+    {
+      "code": "NE",
+      "label": "Niger"
+    },
+    {
+      "code": "NF",
+      "label": "Norfolk Island"
+    },
+    {
+      "code": "NG",
+      "label": "Nigeria"
+    },
+    {
+      "code": "NI",
+      "label": "Nicaragua"
+    },
+    {
+      "code": "NL",
+      "label": "Netherlands"
+    },
+    {
+      "code": "NO",
+      "label": "Norway (incl. Svalbard and Jan Mayen 'SJ' -> 1994 and again from 1997)"
+    },
+    {
+      "code": "NP",
+      "label": "Nepal"
+    },
+    {
+      "code": "NR",
+      "label": "Nauru"
+    },
+    {
+      "code": "NU",
+      "label": "Niue"
+    },
+    {
+      "code": "NZ",
+      "label": "New Zealand"
+    },
+    {
+      "code": "OM",
+      "label": "Oman"
+    },
+    {
+      "code": "PA",
+      "label": "Panama (incl. Panama Canal Zone 'PZ' from 1981)"
+    },
+    {
+      "code": "PE",
+      "label": "Peru"
+    },
+    {
+      "code": "PF",
+      "label": "French Polynesia"
+    },
+    {
+      "code": "PG",
+      "label": "Papua New Guinea"
+    },
+    {
+      "code": "PH",
+      "label": "Philippines"
+    },
+    {
+      "code": "PK",
+      "label": "Pakistan"
+    },
+    {
+      "code": "PL",
+      "label": "Poland"
+    },
+    {
+      "code": "PM",
+      "label": "St Pierre and Miquelon"
+    },
+    {
+      "code": "PN",
+      "label": "Pitcairn"
+    },
+    {
+      "code": "PS",
+      "label": "Occupied Palestinian Territory (West Bank (incl. East Jerusalem) and Gaza Strip)"
+    },
+    {
+      "code": "PT",
+      "label": "Portugal"
+    },
+    {
+      "code": "PW",
+      "label": "Palau"
+    },
+    {
+      "code": "PY",
+      "label": "Paraguay"
+    },
+    {
+      "code": "PZ",
+      "label": "Panama Canal Zone"
+    },
+    {
+      "code": "QA",
+      "label": "Qatar"
+    },
+    {
+      "code": "QP",
+      "label": "High seas"
+    },
+    {
+      "code": "QQ",
+      "label": "Stores and provisions"
+    },
+    {
+      "code": "QR",
+      "label": "Stores and provisions within the framework of intra-Union trade"
+    },
+    {
+      "code": "QS",
+      "label": "Stores and provisions within the framework of extra-Union trade"
+    },
+    {
+      "code": "QT",
+      "label": "West Indies (incl. Dominica 'DM', St Lucia 'LC', St Vincent and the Grenadines 'VC' -> 1979; incl. Antigua and Barbuda 'AG' -> 1982; incl. St Kitts and Nevis 'KN' -> 1985)"
+    },
+    {
+      "code": "QU",
+      "label": "Countries and territories not specified"
+    },
+    {
+      "code": "QV",
+      "label": "Countries and territories not specified within the framework of intra-Union trade"
+    },
+    {
+      "code": "QW",
+      "label": "Countries and territories not specified within the framework of extra-Union trade"
+    },
+    {
+      "code": "QX",
+      "label": "Countries and territories not specified for commercial or military reasons"
+    },
+    {
+      "code": "QY",
+      "label": "Countries and territories not specified for commercial or military reasons in the framework of intra-Union trade"
+    },
+    {
+      "code": "QZ",
+      "label": "Countries and territories not specified for commercial or military reasons in the framework of extra-Union trade"
+    },
+    {
+      "code": "RE",
+      "label": "Réunion"
+    },
+    {
+      "code": "RO",
+      "label": "Romania"
+    },
+    {
+      "code": "RU",
+      "label": "Russian Federation (Russia)"
+    },
+    {
+      "code": "RW",
+      "label": "Rwanda"
+    },
+    {
+      "code": "SA",
+      "label": "Saudi Arabia"
+    },
+    {
+      "code": "SB",
+      "label": "Solomon Islands"
+    },
+    {
+      "code": "SC",
+      "label": "Seychelles"
+    },
+    {
+      "code": "SD",
+      "label": "Sudan (incl. South Sudan 'SS' -> 2012)"
+    },
+    {
+      "code": "SE",
+      "label": "Sweden"
+    },
+    {
+      "code": "SG",
+      "label": "Singapore"
+    },
+    {
+      "code": "SH",
+      "label": "Saint Helena, Ascension and Tristan da Cunha"
+    },
+    {
+      "code": "SI",
+      "label": "Slovenia"
+    },
+    {
+      "code": "SJ",
+      "label": "Svalbard and Jan Mayen"
+    },
+    {
+      "code": "SK",
+      "label": "Slovakia"
+    },
+    {
+      "code": "SL",
+      "label": "Sierra Leone"
+    },
+    {
+      "code": "SM",
+      "label": "San Marino"
+    },
+    {
+      "code": "SN",
+      "label": "Senegal"
+    },
+    {
+      "code": "SO",
+      "label": "Somalia"
+    },
+    {
+      "code": "SR",
+      "label": "Suriname"
+    },
+    {
+      "code": "SS",
+      "label": "South Sudan"
+    },
+    {
+      "code": "ST",
+      "label": "Sao Tome and Principe"
+    },
+    {
+      "code": "SU",
+      "label": "Soviet Union"
+    },
+    {
+      "code": "SV",
+      "label": "El Salvador"
+    },
+    {
+      "code": "SX",
+      "label": "Sint Maarten (Dutch part)"
+    },
+    {
+      "code": "SY",
+      "label": "Syrian Arab Republic (Syria)"
+    },
+    {
+      "code": "SZ",
+      "label": "Eswatini (Ngwane)"
+    },
+    {
+      "code": "TC",
+      "label": "Turks and Caicos Islands"
+    },
+    {
+      "code": "TD",
+      "label": "Chad"
+    },
+    {
+      "code": "TF",
+      "label": "French Southern Territories"
+    },
+    {
+      "code": "TG",
+      "label": "Togo"
+    },
+    {
+      "code": "TH",
+      "label": "Thailand"
+    },
+    {
+      "code": "TJ",
+      "label": "Tajikistan"
+    },
+    {
+      "code": "TK",
+      "label": "Tokelau"
+    },
+    {
+      "code": "TL",
+      "label": "Timor-Leste"
+    },
+    {
+      "code": "TM",
+      "label": "Turkmenistan"
+    },
+    {
+      "code": "TN",
+      "label": "Tunisia"
+    },
+    {
+      "code": "TO",
+      "label": "Tonga"
+    },
+    {
+      "code": "TP",
+      "label": "East Timor(2001-2002);Portuguese Timor(1976-1976)"
+    },
+    {
+      "code": "TR",
+      "label": "Türkiye"
+    },
+    {
+      "code": "TT",
+      "label": "Trinidad and Tobago"
+    },
+    {
+      "code": "TV",
+      "label": "Tuvalu"
+    },
+    {
+      "code": "TW",
+      "label": "Taiwan"
+    },
+    {
+      "code": "TZ",
+      "label": "Tanzania, United Republic of"
+    },
+    {
+      "code": "UA",
+      "label": "Ukraine"
+    },
+    {
+      "code": "UG",
+      "label": "Uganda"
+    },
+    {
+      "code": "UM",
+      "label": "United States Minor Outlying Islands"
+    },
+    {
+      "code": "US",
+      "label": "United States (incl. Navassa Island (part of 'UM') from 1995 -> 2000)"
+    },
+    {
+      "code": "UY",
+      "label": "Uruguay"
+    },
+    {
+      "code": "UZ",
+      "label": "Uzbekistan"
+    },
+    {
+      "code": "VA",
+      "label": "Holy See (Vatican City State)"
+    },
+    {
+      "code": "VC",
+      "label": "St Vincent and the Grenadines"
+    },
+    {
+      "code": "VD",
+      "label": "North Viet Nam"
+    },
+    {
+      "code": "VE",
+      "label": "Venezuela, Bolivarian Republic of"
+    },
+    {
+      "code": "VG",
+      "label": "Virgin Islands, British (incl. Montserrat 'MS' -> 1994)"
+    },
+    {
+      "code": "VI",
+      "label": "Virgin Islands, United States"
+    },
+    {
+      "code": "VN",
+      "label": "Viet Nam (incl. North Viet Nam 'VD' from 1977)"
+    },
+    {
+      "code": "VU",
+      "label": "Vanuatu"
+    },
+    {
+      "code": "WF",
+      "label": "Wallis and Futuna"
+    },
+    {
+      "code": "WORLD",
+      "label": "All countries of the world"
+    },
+    {
+      "code": "WS",
+      "label": "Samoa"
+    },
+    {
+      "code": "XA",
+      "label": "American Oceania (incl. Federated States of Micronesia 'FM', Marshall Islands 'MH' -> 1991; incl. Northern Mariana Islands 'MP' -> 1993; incl. Palau 'PW', Navassa Island (part of 'UM') -> 1994)"
+    },
+    {
+      "code": "XB",
+      "label": "Canary Islands"
+    },
+    {
+      "code": "XC",
+      "label": "Ceuta (incl. Melilla 'XL' -> 1998)"
+    },
+    {
+      "code": "XI",
+      "label": "United Kingdom (Northern Ireland)"
+    },
+    {
+      "code": "XK",
+      "label": "Kosovo"
+    },
+    {
+      "code": "XL",
+      "label": "Melilla"
+    },
+    {
+      "code": "XM",
+      "label": "Montenegro"
+    },
+    {
+      "code": "XO",
+      "label": "Australian Oceania"
+    },
+    {
+      "code": "XP",
+      "label": "West Bank (incl. East Jerusalem) and Gaza Strip"
+    },
+    {
+      "code": "XR",
+      "label": "Polar regions"
+    },
+    {
+      "code": "XS",
+      "label": "Serbia"
+    },
+    {
+      "code": "XU",
+      "label": "United Kingdom (excluding Northern Ireland)"
+    },
+    {
+      "code": "XZ",
+      "label": "New Zealand Oceania"
+    },
+    {
+      "code": "YD",
+      "label": "South Yemen"
+    },
+    {
+      "code": "YE",
+      "label": "Yemen (incl. South Yemen 'YD' from 1991)"
+    },
+    {
+      "code": "YT",
+      "label": "Mayotte"
+    },
+    {
+      "code": "YU",
+      "label": "Yugoslavia (incl. Bosnia and Herzegovina 'BA', Croatia 'HR', Slovenia 'SI' -> 1991; incl. North Macedonia 'MK' -> 1992)"
+    },
+    {
+      "code": "ZA",
+      "label": "South Africa (incl. Namibia 'NA' -> 1989)"
+    },
+    {
+      "code": "ZM",
+      "label": "Zambia"
+    },
+    {
+      "code": "ZW",
+      "label": "Zimbabwe"
+    }
+  ]
+}

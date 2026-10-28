@@ -54,6 +54,9 @@ __all__ = [
     "PRODCOM_SOLD",
     "PRODCOM_TOTAL",
     "TOC",
+    "TRADE_COUNTRIES",
+    "TRADE_FLOWS",
+    "TRADE_PRODUCTS",
     "CodelistOrigin",
     "ListIndex",
     "ListInfo",
@@ -78,7 +81,10 @@ class CodelistOrigin(NamedTuple):
             ``_client.COMEXT_BASE_URL`` for a codelist of the Comext and Prodcom
             datasets, e.g. ``"https://ec.europa.eu/eurostat/api/comext/dissemination"``.
         param: The dimension code the Statistics API takes for its codes, the packaged
-            file's ``param``, e.g. ``"geo"`` or ``"product"``.
+            file's ``param``, e.g. ``"geo"`` or ``"product"``. A codelist that feeds two
+            dimensions names the first in the data structure's order: CXT_FREE_ISO's
+            ``param`` is ``"reporter"``, and the trade datasets name it for ``partner``
+            too (``TRADE_COUNTRIES``).
     """
 
     base_url: str
@@ -97,6 +103,23 @@ PRODCOM_INDICATORS = "CXT_INDICATORS"
 """The indicators of DS-059358 and DS-059359: their ``indicators`` dimension's codelist,
 which Comext's trade datasets share."""
 
+TRADE_PRODUCTS = "CXT_NC"
+"""The products of Comext's trade datasets DS-045409 (EU trade since 1988 by HS2-4-6 and
+CN8) and DS-059341 (International trade of EU and non-EU countries since 2002 by
+HS2-4-6): their ``product`` dimension's codelist, the Combined Nomenclature's eight-digit
+codes with the HS chapters, headings and subheadings above them (the data structures
+DS-045409 6.6 and DS-059341 3.7, read 2026-10-28)."""
+
+TRADE_COUNTRIES = "CXT_FREE_ISO"
+"""The reporters and partners of Comext's trade datasets DS-045409 and DS-059341: the
+codelist of their ``reporter`` and ``partner`` dimensions, countries and aggregates
+(``EU27_2020_EXTRA``); the production tasks check a Prodcom reporter against it too
+(Johannes, 2026-10-28)."""
+
+TRADE_FLOWS = "CXT_EU_FLUX"
+"""The flows of Comext's trade datasets DS-045409 and DS-059341: their ``flow``
+dimension's codelist."""
+
 CODELISTS: Mapping[str, CodelistOrigin] = {
     "FREQ": CodelistOrigin(BASE_URL, "freq"),
     "GEO": CodelistOrigin(BASE_URL, "geo"),
@@ -113,6 +136,9 @@ CODELISTS: Mapping[str, CodelistOrigin] = {
     PRODCOM_SOLD: CodelistOrigin(COMEXT_BASE_URL, "product"),
     PRODCOM_TOTAL: CodelistOrigin(COMEXT_BASE_URL, "product"),
     PRODCOM_INDICATORS: CodelistOrigin(COMEXT_BASE_URL, "indicators"),
+    TRADE_PRODUCTS: CodelistOrigin(COMEXT_BASE_URL, "product"),
+    TRADE_COUNTRIES: CodelistOrigin(COMEXT_BASE_URL, "reporter"),
+    TRADE_FLOWS: CodelistOrigin(COMEXT_BASE_URL, "flow"),
 }
 """The packaged codelists, by upstream's id, each with its base and its dimension.
 

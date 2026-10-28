@@ -70,3 +70,6 @@ fetch.
 | `cxt_prodcom2_sold.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_SOLD` | 2026-10-28T14:25:01Z |
 | `cxt_prodcom2_total.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_TOTAL` | 2026-10-28T14:25:02Z |
 | `cxt_indicators.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_INDICATORS` | 2026-10-28T14:25:04Z |
+| `cxt_nc.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_NC` | 2026-10-28T15:13:49Z |
+| `cxt_free_iso.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_FREE_ISO` | 2026-10-28T15:13:49Z |
+| `cxt_eu_flux.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_EU_FLUX` | 2026-10-28T15:13:51Z |
