@@ -26,7 +26,8 @@ src/xippios/eurostat/
   __init__.py      public surface: __version__ and re-exported task functions
   py.typed         PEP 561 marker; consumers' mypy --strict needs it
   _version.py      __version__ from distribution metadata
-  _client.py       the one configured AsyncClient (base URL, key, rate limit)
+  _client.py       the one configured AsyncClient (base URL, rate limit, cache) and
+                   classify, upstream's documented error shapes; no key
   models.py        pydantic models mirroring upstream payloads (UpstreamModel)
   api/             endpoint wrappers, one module per upstream service (statistics,
                    catalogue, sdmx), one function per operation
