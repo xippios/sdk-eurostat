@@ -1,11 +1,11 @@
 # Handover — xippios-eurostat 0.1.0
 
 Date: 2026-10-28 · Written in the release PR (`chore/release-0.1.0`) for the next
-session on sdk-eurostat · Decisions cite the coordination log of session `eurostat` by
-its time, CET: `coordination/log/eurostat.md` in the coordination root (`~/github/sdk`),
-whose `scripts/coord.py` is the root's script, not this repository's; its
-`log show eurostat` prints the last 20 entries by default, so read the 2026-10-27
-lines from the file.
+session on sdk-eurostat · Decisions cite the coordination log of session `sdk-eurostat`
+by its time, CET: `coordination/log/sdk-eurostat.md` in the coordination root
+(`~/github/sdk`), whose `scripts/coord.py` is the root's script, not this repository's;
+its `log show sdk-eurostat` prints the last 20 entries by default, so read the
+2026-10-27 lines from the file.
 
 ## State
 
@@ -131,7 +131,8 @@ note each, `list_datasets` the family's cap with a note naming `search`, `list_c
 - The first PR of the next version, row 135 (family, for this repository; Johannes
   2026-10-28, log 10:48): the wrapper `getData` becomes `get_data` and
   `tests/fixtures/getData/` moves to `tests/fixtures/get_data/` (D95, conventions 1.22
-  once core's docs PR merges); expected class `auto`, no live call.
+  once core's docs PR merges); class `human` by sdk-gates rule 3, since the move re-keys
+  the audited `.secrets.baseline` entry (row 124); no live call.
 - The routine reference refresh after the release (`/refresh-reference-data`).
 - 0.2.0: Comext and Prodcom; polling the asynchronous answer if a consumer needs it.
 
