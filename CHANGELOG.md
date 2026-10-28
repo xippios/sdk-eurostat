@@ -19,6 +19,18 @@ All notable changes to this project are documented here. The format follows
   four links outside the user guide that it does not request. The pages and documents
   already in the snapshot are unchanged upstream.
 
+### Changed
+
+- The four endpoint wrappers are named after their upstream operations in snake case,
+  by the family's naming rule (conventions 1.22 §2 and §10): `api.statistics.getData`
+  is now `api.statistics.get_data`, `api.catalogue.getTocXml` `api.catalogue.get_toc_xml`,
+  `api.sdmx.codeListQuery` `api.sdmx.code_list_query` and `api.sdmx.dataQuery`
+  `api.sdmx.data_query`, each in its module as before. The recorded fixtures moved to the
+  wrappers' names, `tests/fixtures/getData/` to `tests/fixtures/get_data/` and
+  `tests/fixtures/dataQuery/` to `tests/fixtures/data_query/`, their contents unchanged.
+  `meta.endpoint` still names upstream's operation (`getData`, `dataQuery`), and the
+  tasks, MCP tools and HTTP routes are unchanged.
+
 ## [0.1.0] - 2026-10-28
 
 First release, on xippios-core 0.3.0 from PyPI (`~=0.3.0`), sdk-template v0.3.0 and

@@ -49,7 +49,7 @@ scripts/
   refresh_upstream.py    writes docs/upstream/ and FETCHED.md (/refresh-upstream)
 tests/
   conftest.py      enables xippios.core.testing.plugin, which keeps the run offline
-  fixtures/        recorded responses, <endpoint>/<case>.json, never hand-written;
+  fixtures/        recorded responses, <wrapper>/<case>.json, never hand-written;
                    files/<kind>/ the parser tests' samples, provenance in its README
   test_family.py   core's family check, one line: namespace levels, py.typed, __version__,
                    the adapters serving exactly the tasks, task shapes and docstrings, the
@@ -88,9 +88,9 @@ never run live tests. The API needs no key, so the workflow uses no secret.
 
 ## Eurostat dissemination API specifics
 
-Two kinds of fixture beyond the recorded `<endpoint>/<case>.json`:
+Two kinds of fixture beyond the recorded `<wrapper>/<case>.json`:
 
-`tests/fixtures/dataQuery/*_compressed.json` holds a gzip file as its body, which no grep
+`tests/fixtures/data_query/*_compressed.json` holds a gzip file as its body, which no grep
 reads: it is stored base64 (`body_base64`, recorded with `Scrub(allow_binary=True)`) and
 decompresses to the plain recording beside it, byte for byte, which `tests/test_parse.py`
 checks.
@@ -98,6 +98,6 @@ checks.
 `tests/fixtures/files/<kind>/<case>.*` are the parser tests' samples, never written by
 hand: `toc/` and `codelist/` of the answers `scripts/refresh_reference.py` reads, cut by
 its `--samples` run from the answers it packaged; `sdmx-csv/` the response bodies of the
-recorded `tests/fixtures/dataQuery/` exchanges, byte for byte.
+recorded `tests/fixtures/data_query/` exchanges, byte for byte.
 `tests/fixtures/files/README.md` gives each one's release, URL, sha256 and fetch time
 (ADR-0020 decision 6).

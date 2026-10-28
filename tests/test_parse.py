@@ -1,7 +1,7 @@
 """``parse_sdmx_csv`` on the SDMX-CSV samples and on the user guide's documented layouts.
 
 The samples under ``tests/fixtures/files/sdmx-csv/`` are the response bodies of the two
-recorded ``dataQuery`` exchanges (``tests/fixtures/dataQuery/``), plain and
+recorded ``dataQuery`` exchanges (``tests/fixtures/data_query/``), plain and
 ``compressed=true``, byte for byte, which the first test checks;
 ``tests/fixtures/files/README.md`` gives their provenance (ADR-0020 decision 6). The
 tests assert the parser's shape against the sample's own text, read here with the
@@ -34,8 +34,8 @@ SAMPLES = FIXTURES / "files" / "sdmx-csv"
 PLAIN = SAMPLES / "apro_mk_cola_AT_THS_T_2022_2023.csv"
 PACKED = SAMPLES / "apro_mk_cola_AT_THS_T_2022_2023.csv.gz"
 RECORDED = {
-    PLAIN: FIXTURES / "dataQuery" / "apro_mk_cola_AT_THS_T_2022_2023.json",
-    PACKED: FIXTURES / "dataQuery" / "apro_mk_cola_AT_THS_T_2022_2023_compressed.json",
+    PLAIN: FIXTURES / "data_query" / "apro_mk_cola_AT_THS_T_2022_2023.json",
+    PACKED: FIXTURES / "data_query" / "apro_mk_cola_AT_THS_T_2022_2023_compressed.json",
 }
 DATA_QUERY = TESTS.parents[0] / "docs/upstream/user-guide/api-detailed-guidelines/sdmx2-1"
 
