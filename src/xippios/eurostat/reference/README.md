@@ -28,19 +28,19 @@ geo.records[0]  # {"code": "EUR", "label": "Europe"}
   the packaged lists come from and names no upstream operation, so it has no origin and
   no row in the table below.
 
-Rules:
+The script, not the package, parses the TOC's XML, the only XML parsed anywhere (D44),
+and it reads the codelists as JSON-stat. A record's fields are upstream's (`lastUpdate`,
+`dataStart`), and `path`, `code` and `label` name what the package reads out of the
+tree's nesting and a codelist's `category`. No enum is generated from these lists, too
+large for one; `enums.py` is the renderer's empty module.
 
-- Files come from the upstream through `scripts/refresh_reference.py`
-  (`/refresh-reference-data`), never typed in by hand; the script rewrites the table
-  below. The script, not the package, parses the TOC's XML, the only XML parsed
-  anywhere (D44), and it reads the codelists as JSON-stat.
-- Files keep upstream's names: a record's fields are upstream's (`lastUpdate`,
-  `dataStart`), and `path`, `code` and `label` name what the package reads out of the
-  tree's nesting and a codelist's `category`.
-- No enum is generated from these lists, too large for one; `enums.py` is the
-  renderer's empty module.
-- Every packaged list has a row below naming the upstream operation it came from and
-  when it was fetched.
+Each packaged-list file holds `{"param", "endpoint", "fetched", "records"}` and an
+optional `"note"`, upstream's records under upstream's field names, written by
+`/refresh-reference-data`'s script, `scripts/refresh_reference.py`, with
+`PackagedList.write`, never by hand, and read with `PackagedList.load`; the script
+rewrites the table below. One row per packaged list: Origin is the endpoint it was
+fetched from, none being rebuilt from a `docs/upstream/` file; Fetched is the UTC time of
+that fetch.
 
 | File | Origin | Fetched |
 | --- | --- | --- |
