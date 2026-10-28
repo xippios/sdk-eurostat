@@ -131,7 +131,7 @@ CXT_INDICATORS list, before sending: a code they lack raises `UnknownCode` namin
 closest. CXT_INDICATORS also holds the indicators of the other dataset and of Comext's
 trade datasets, so one the dataset lacks (`PRODVAL` for DS-059359) passes the check and
 Eurostat answers it with an empty cube, an empty list. A reporter the list holds and the
-dataset lacks gives an empty list.
+dataset lacks is Eurostat's to answer, as the indicator was; no such answer is recorded.
 `list_products(search=None)` lists DS-059358's products (CXT_PRODCOM2_SOLD), eight-digit
 codes that start with their NACE class (`1041` oils and fats, `2015` fertilisers);
 DS-059359 covers a few hundred of them, chiefly chemicals, fertilisers and metals, which

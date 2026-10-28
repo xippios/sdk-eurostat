@@ -116,8 +116,11 @@ CXT_PRODCOM2_TOTAL, 822 of the first list's 4,788 codes (chiefly chemicals, fert
 and metals) on 2026-10-28; each indicator is checked against CXT_INDICATORS, which
 Comext's trade datasets share, and each reporter against CXT_FREE_ISO. What Eurostat
 answers a code a list holds and the dataset lacks is its own, as recorded: an empty cube
-for an unknown reporter (`XX`, `DS-059358_unknown_code`), the asynchronous answer for a
-CN8 code on DS-059341.
+for an indicator DS-059359 lacks (`PRODVAL`,
+`DS-059359_AT_20158000_indicator_not_in_dataset`), the asynchronous answer for a CN8 code
+on DS-059341 (`DS-059341_AT_DE_15071090_cn8_on_hs_flow`); a code no list holds (`XX`,
+which Eurostat answered with an empty cube, `DS-059358_unknown_code`) the package refuses
+before sending.
 
 The trade tasks read DS-045409 (EU trade since 1988 by HS2-4-6 and CN8, data structure
 6.6) and DS-059341 (international trade of EU and non-EU countries since 2002 by HS2-4-6,

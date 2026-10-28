@@ -1171,11 +1171,11 @@ async def get_sold_production_async(
     indicators too, so one of them that this dataset lacks (``VALUE_IN_EUROS``, or
     DS-059359's ``APRODQNT``) passes the check, and Eurostat answers such an indicator
     with an empty cube, as recorded for PRODVAL on DS-059359: an empty list. A reporter
-    the list holds and the dataset lacks gives an empty list. ``meta`` is
-    ``get_data``'s: ``meta.request`` holds the dataset and the filters sent,
-    ``meta.published_at`` the dataset's last update with Eurostat's zone and
-    ``meta.vintage`` the same time as printed. A query Eurostat refuses or judges too
-    large raises ``InvalidRequestError`` with its message.
+    the list holds and the dataset lacks is Eurostat's to answer, as the indicator was;
+    no such answer is recorded. ``meta`` is ``get_data``'s: ``meta.request`` holds the
+    dataset and the filters sent, ``meta.published_at`` the dataset's last update with
+    Eurostat's zone and ``meta.vintage`` the same time as printed. A query Eurostat
+    refuses or judges too large raises ``InvalidRequestError`` with its message.
 
     Args:
         product: One PRODCOM product code, e.g. ``"10412100"`` (crude soya-bean oil),
@@ -1226,9 +1226,10 @@ async def get_total_production_async(
     dataset names ``get_sold_production``. CXT_INDICATORS holds the indicators of
     DS-059358 and of the Comext trade datasets too, so one of them that this dataset
     lacks (``PRODVAL``) passes the check, and Eurostat answers it with an empty cube: an
-    empty list (recorded). A reporter the list holds and the dataset lacks gives an empty
-    list. ``meta`` is ``get_data``'s: ``meta.request`` holds the dataset and the filters
-    sent, ``meta.published_at`` the dataset's last update with Eurostat's zone and
+    empty list (recorded). A reporter the list holds and the dataset lacks is Eurostat's
+    to answer, as the indicator was; no such answer is recorded. ``meta`` is
+    ``get_data``'s: ``meta.request`` holds the dataset and the filters sent,
+    ``meta.published_at`` the dataset's last update with Eurostat's zone and
     ``meta.vintage`` the same time as printed. A query Eurostat
     refuses or judges too large raises ``InvalidRequestError`` with its message.
 
