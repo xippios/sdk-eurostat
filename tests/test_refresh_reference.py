@@ -174,6 +174,25 @@ def test_samples_are_listed_with_their_provenance() -> None:
     )
 
 
+def test_samples_readme_keeps_the_rows_the_script_does_not_cut(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``--samples`` rewrites the rows of the kinds it cuts (``toc/``, ``codelist/``) and
+    keeps the others, the ``sdmx-csv/`` bodies of the recorded ``dataQuery`` exchanges;
+    the committed README is what the script writes."""
+    committed = (SAMPLES / "README.md").read_text(encoding="utf-8")
+    assert committed.startswith(script.SAMPLES_README)
+    rows = [line for line in committed.splitlines() if line.startswith("| `")]
+    kept = [line for line in rows if line.startswith("| `sdmx-csv/")]
+    assert len(kept) == 2
+    (tmp_path / "README.md").write_text(committed, encoding="utf-8")
+    monkeypatch.setattr(script, "SAMPLES", tmp_path)
+    toc_row = "| `toc/apro_mk.xml` | a new run's row |"
+    script.write_samples_readme([script.Sample(tmp_path / "toc" / "apro_mk.xml", toc_row)])
+    written = (tmp_path / "README.md").read_text(encoding="utf-8")
+    assert written == script.SAMPLES_README + "".join(f"{line}\n" for line in [toc_row, *kept])
+
+
 def test_every_packaged_list_is_indexed() -> None:
     """``lists.json`` is plain JSON with keys of its own, no packaged list: it names no
     upstream operation; every packaged list has one record in it."""

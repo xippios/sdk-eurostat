@@ -53,6 +53,7 @@ files alone, without a request: after a core release changes the renderer (conve
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -109,6 +110,10 @@ and one with a pre-defined table under it."""
 
 SAMPLE_CODELIST = "STATINFO"
 """The codelist the sample keeps whole: 18 KB on 2026-10-27."""
+
+SAMPLE_KINDS = ("toc", "codelist")
+"""The sample kinds this script cuts; the README rows of any other kind are kept as they
+are (``sdmx-csv/``, the bodies of the recorded ``dataQuery`` exchanges)."""
 
 
 def _tag(name: str) -> str:
@@ -413,22 +418,39 @@ def write_codelist_sample(answer: api.sdmx.CodelistAnswer, dest: Path) -> Sample
 
 SAMPLES_README = """# Parser-test samples
 
-Small real samples of the answers `scripts/refresh_reference.py` reads, under
-`<kind>/<case>.*`, cut by `scripts/refresh_reference.py --samples` from the answers of
-its run, never by hand (ADR-0020 decision 6, conventions §10). One row per file: the
-release (upstream's identifier of it), the URL, the bytes and sha256 of the full answer,
-and when it was fetched. The parser tests in `tests/test_refresh_reference.py` read
-them; they assert shape, never values or sizes.
+Small real samples of the answers the package and its refresh script read, under
+`<kind>/<case>.*`, never written by hand (ADR-0020 decision 6, conventions §10): `toc/`
+and `codelist/` cut by `scripts/refresh_reference.py --samples` from the answers of its
+run, which rewrites their rows and keeps the others; `sdmx-csv/` the response bodies of
+the recorded `tests/fixtures/dataQuery/` exchanges, byte for byte, which
+`tests/test_parse.py` checks. One row per file: the release (upstream's identifier of
+it), the URL, the bytes and sha256 of the full answer, and when it was fetched. The
+parser tests in `tests/test_refresh_reference.py` and `tests/test_parse.py` read them;
+they assert shape, never values or sizes.
 
 | File | Release | URL | Bytes | sha256 | Fetched | What |
 | --- | --- | --- | --- | --- | --- | --- |
 """
 
+SAMPLE_ROW = re.compile(r"^\| `(?P<kind>[^/`]+)/[^`]*` \|")
+"""A sample's row in the README, its kind the first part of its path."""
+
 
 def write_samples_readme(samples: Sequence[Sample]) -> None:
-    """Write ``tests/fixtures/files/README.md`` with one row per sample."""
-    rows = "".join(f"{sample.row}\n" for sample in samples)
-    (SAMPLES / "README.md").write_text(SAMPLES_README + rows, encoding="utf-8")
+    """Write ``tests/fixtures/files/README.md``: one row per sample of this run.
+
+    The rows of the samples this script does not cut (a kind outside ``SAMPLE_KINDS``)
+    are kept as they are, after this run's.
+    """
+    path = SAMPLES / "README.md"
+    kept = []
+    if path.is_file():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            row = SAMPLE_ROW.match(line)
+            if row is not None and row["kind"] not in SAMPLE_KINDS:
+                kept.append(line)
+    rows = "".join(f"{line}\n" for line in [*(sample.row for sample in samples), *kept])
+    path.write_text(SAMPLES_README + rows, encoding="utf-8")
 
 
 README_TABLE = "| File | Origin | Fetched |\n| --- | --- | --- |\n"

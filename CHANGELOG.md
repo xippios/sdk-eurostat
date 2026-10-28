@@ -78,6 +78,22 @@ All notable changes to this project are documented here. The format follows
   a derived index in plain JSON (`fetched` and `lists`) that holds upstream's release
   identifiers of every list; `--samples` cuts the parser tests' samples under
   `tests/fixtures/files/` from the same run. Thirteen keyless requests.
+- `download_dataset(dataset, key="", *, since=None, until=None,
+  last_n_observations=None, dest)`, the bulk task: one SDMX 2.1 data query through the
+  new wrapper `api.sdmx.dataQuery` (`sdmx/2.1/data/{flowRef}/{key}`, `format=SDMX-CSV`,
+  `compressed=true`), streamed to `dest` with core's `download` and returned as
+  `Result[Downloaded]`; `key` is Eurostat's series key as given, `since`, `until` and
+  `last_n_observations` its `startPeriod`, `endPeriod` and `lastNObservations`.
+  `meta.vintage` is the first row's `LAST UPDATE` as printed and `meta.published_at` its
+  time, day first, without a zone, `published_at_naive` set. Named in `BULK_TASKS`, so
+  Python only: no MCP tool and no route.
+- `parse.parse_sdmx_csv(path)`: an SDMX-CSV file, gzip-compressed or plain, read row by
+  row (plain through core's `decode_csv`), each row an `SdmxCsvRow` with `dataflow`,
+  `last_update`, the `dimensions` in column order, `time_period`, `obs_value` as a
+  `Decimal`, `obs_flag`, `conf_status` and any other `attributes`.
+- `classify` refuses a 2xx answer to an SDMX data query whose `Content-Type` is not
+  SDMX-CSV's, such as the XML envelope that queues an asynchronous answer, with
+  `InvalidRequestError` naming how to narrow the query.
 
 ### Changed
 
