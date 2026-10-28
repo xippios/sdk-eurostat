@@ -125,9 +125,10 @@ cube's observations in cube order with `get_data`'s `meta`. `reporters` are coun
 `PRODQNT` in `QNTUNIT`, `EXPVAL`, `EXPQNT`, `IMPVAL`, `IMPQNT` for DS-059358; `APRODQNT`
 in `QNTUNIT` for DS-059359), `None` for every one. A value is a number, or the text
 Eurostat prints for a unit or a flag (`"KG"`, `":E"`). The product is checked against the
-dataset's product list packaged with this version, and each indicator against
-CXT_INDICATORS, before sending: a code they lack raises `UnknownCode` naming the closest.
-A reporter is sent as given, and one the dataset lacks gives an empty list.
+dataset's product list packaged with this version, each reporter against CXT_FREE_ISO,
+Comext's list of reporters and partners, and each indicator against CXT_INDICATORS,
+before sending: a code they lack raises `UnknownCode` naming the closest, and a code they
+hold that the dataset lacks gives an empty list.
 `list_products(search=None)` lists DS-059358's products (CXT_PRODCOM2_SOLD), eight-digit
 codes that start with their NACE class (`1041` oils and fats, `2015` fertilisers);
 DS-059359 covers a few hundred of them, chiefly chemicals, fertilisers and metals, which
@@ -135,6 +136,50 @@ DS-059359 covers a few hundred of them, chiefly chemicals, fertilisers and metal
 cap, 200 rows or 64 KB, with a note naming `reporters`, `indicators` and `since`, and
 `eurostat_list_products` takes up to 1,000 rows within 64 KB, with a note naming
 `search`.
+
+### Comext trade
+
+```python
+from xippios.eurostat import get_trade, get_trade_hs, list_cn8, list_hs
+
+list_cn8(search="crude soya-bean oil").data[1]
+# Code(code="15071090", label="Crude soya-bean oil, whether or not degummed (excl. for ...")
+list_hs(search="soya").data[0]  # Code(code="1201", label="Soya beans, whether or not broken")
+oil = get_trade("15071090", reporters=["AT"], partners=["DE"], since="2023-01", until="2023-12")
+values = {(o.codes["flow"], o.codes["indicators"], o.codes["time"]): o.value for o in oil.data}
+values["2", "VALUE_IN_EUROS", "2023-12"]  # 305451: Austria's exports to Germany, in euro
+values["2", "QUANTITY_IN_100KG", "2023-12"]  # 3372.15, in 100 kg
+oil.meta.request  # {"dataset": "DS-045409", "filters": {"freq": "M", "reporter": ["AT"], ...}, ...}
+heading = get_trade_hs("1507", reporters=["AT"], partners=["DE"], since="2023-12", until="2023-12")
+[(o.codes["flow"], o.codes["indicators"], o.value) for o in heading.data][:2]
+# [("1", "VALUE_EUR", 1222), ("1", "VALUE_NAC", 1222)]: imports of soya-bean oil, HS 1507
+```
+
+Eurostat's Comext trade statistics, the EU side of the trade picture, are served on the
+Comext base. `get_trade(product, reporters=None, partners=None, flow=None, since=None,
+until=None, freq="M", indicators=None)` reads DS-045409, EU trade since 1988 by HS2-4-6
+and CN8, and `get_trade_hs(...)`, with the same parameters, DS-059341, international
+trade of EU and non-EU countries since 2002 by HS2-4-6, one product at a time: each sends
+one `get_data` request and returns the cube's observations in cube order (reporter,
+partner, flow, indicator, oldest period first) with `get_data`'s `meta`. `product` is an
+eight-digit CN code (`"15071090"`, crude soya-bean oil) or an HS chapter, heading or
+subheading (`"15"`, `"1507"`, `"150710"`); `reporters` and `partners` are country codes
+of CXT_FREE_ISO (`["AT"]`, `["DE", "US"]`), which holds aggregates too
+(`"EU27_2020_EXTRA"`, `"WORLD"`); `flow` is
+`"1"` for imports and `"2"` for exports, `None` for both; `freq` `"M"` for monthly periods
+(`since="2023-01"`) or `"A"` for annual ones (`since="2023"`); `indicators` the measures,
+`VALUE_IN_EUROS`, `QUANTITY_IN_100KG` and `SUPPLEMENTARY_QUANTITY` in DS-045409,
+`VALUE_EUR`, `VALUE_NAC` and `QUANTITY_KG` in DS-059341, `None` for every one. Every
+code is checked against the lists packaged with this version before sending, the product
+against CXT_NC, the reporters and partners against CXT_FREE_ISO, the flow against
+CXT_EU_FLUX and the indicators against CXT_INDICATORS: a code they lack raises
+`UnknownCode` naming the closest. `list_cn8(search=None)` and `list_hs(search=None)` list
+CXT_NC's eight-digit codes and its two-, four- and six-digit ones, without a request;
+a code with letters in it (`"1507XXXX"`, `"15SSS421"`) is Eurostat's position for trade no
+regular code holds (not elsewhere specified, confidential), as its label says. Over MCP
+the trade tasks keep the family's cap, 200 rows or 64 KB, with a note naming `partners`,
+`indicators`, `since` and `freq`, and `eurostat_list_cn8` and `eurostat_list_hs` take up
+to 1,000 rows within 64 KB, with a note naming `search`.
 
 ### Datasets and codes
 
@@ -163,19 +208,21 @@ listing in the tree, each with its code, type, English title, the folders above 
 period and its number of values as Eurostat prints them. `meta.vintage` is the table of
 contents' `creationDate` as printed and `meta.published_at` the same time, which
 Eurostat prints without a zone, so `meta.published_at_naive` is set.
-`list_codes(codelist, search=None)` reads one of fifteen SDMX codelists
+`list_codes(codelist, search=None)` reads one of eighteen SDMX codelists
 (`sdmx/2.1/codelist/ESTAT/<ID>`, English labels): FREQ, GEO, UNIT, CROPS, STRUCPRO,
 MILKITEM, DAIRYPROD, STATINFO, LEG_FORM, FARMTYPE, SO_EUR and UAAREA, the codelists of
 the dimensions of apro_cpnh1, apro_mk_cola and ef_m_farmleg, named as the dimension is
 (`"geo"`, case-insensitive); and from the Comext base CXT_PRODCOM2_SOLD,
 CXT_PRODCOM2_TOTAL and CXT_INDICATORS, the `product` and `indicators` codes of the
-Prodcom datasets, whose `meta.endpoint` is the codelist's full URL there.
-`meta.vintage` is the codelist's version and `meta.published_at` its last update.
+Prodcom datasets, and CXT_NC, CXT_FREE_ISO and CXT_EU_FLUX, the `product`, `reporter`
+and `partner`, and `flow` codes of the Comext trade datasets, whose `meta.endpoint` is
+the codelist's full URL there. `meta.vintage` is the codelist's version and
+`meta.published_at` its last update, `None` for CXT_EU_FLUX, which names none.
 Another name raises `UnknownCode` naming the closest packaged codelists. `search` keeps
 the records whose code or title (label) contains the text, ignoring case. Over MCP
 `eurostat_list_datasets` keeps the family's cap and `eurostat_list_codes` takes up to
-1,000 codes within the family's 64 KB, so every packaged codelist but GEO and the two
-PRODCOM product lists comes whole; both notes name `search`.
+1,000 codes within the family's 64 KB, so every packaged codelist but GEO, the two
+PRODCOM product lists and CXT_NC comes whole; both notes name `search`.
 
 ### Bulk download
 
@@ -221,6 +268,26 @@ of the dataset, as Eurostat prints them. A `DS-` dataset is downloaded from the 
 base, `key` in its own dimensions' order (`"A.AT.10411200."` for DS-059358); a Comext
 trade dataset is served filtered only, a Prodcom dataset whole as well.
 
+```python
+from xippios.eurostat import download_trade
+
+oil = download_trade(
+    "15071090", reporters=["AT"], since="2023-01", until="2023-12", dest=Path("oil.csv.gz")
+)
+oil.meta.request["key"]  # "M.AT..15071090..": every partner, both flows, every indicator
+```
+
+`download_trade(product=None, reporters=None, partners=None, flow=None, since=None,
+until=None, freq="M", indicators=None, *, dest)` is the second bulk task, Python only as
+well: it builds DS-045409's series key from `get_trade`'s arguments in the dataset's
+order, freq.reporter.partner.product.flow.indicators, `+` between codes and an empty
+position for an argument left `None`, checks every code as `get_trade` does, and
+downloads the file as `download_dataset` does; `meta.request` records the arguments and
+the key sent. `product` or `reporters` is required, since Eurostat serves no Comext trade
+dataset whole; a query too large for Eurostat to answer at once (500,000 cells, the
+product of the codes each position matches) raises `InvalidRequestError` naming how to
+narrow it. `download_dataset("DS-045409", key)` takes a key of your own.
+
 ## MCP
 
 ```json
@@ -253,18 +320,23 @@ exactly tasks.__all__. -->
 | `getData` with `lastTimePeriod=1` | `get_latest_period(dataset, filters)`, the observations of the most recent period | `eurostat_get_latest_period` | alpha |
 | `getData` with `time` | `get_cross_section(dataset, period, filters)`, the observations of one period | `eurostat_get_cross_section` | alpha |
 | `getTocXml` (`catalogue/toc/xml`), packaged | `list_datasets(search)`, the datasets and tables of the table of contents | `eurostat_list_datasets` | alpha |
-| `codeListQuery` (`sdmx/2.1/codelist/ESTAT/{resourceID}`), packaged | `list_codes(codelist, search)`, the codes of one of fifteen codelists, three of them the Comext base's | `eurostat_list_codes` | alpha |
+| `codeListQuery` (`sdmx/2.1/codelist/ESTAT/{resourceID}`), packaged | `list_codes(codelist, search)`, the codes of one of eighteen codelists, six of them the Comext base's | `eurostat_list_codes` | alpha |
 | `codeListQuery` (`sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_SOLD`, Comext base), packaged | `list_products(search)`, the PRODCOM products of DS-059358 | `eurostat_list_products` | alpha |
 | `getData` on DS-059358 (Comext base) | `get_sold_production(product, reporters, since, until, indicators)`, Prodcom's sold production, exports and imports of one product as observations | `eurostat_get_sold_production` | alpha |
 | `getData` on DS-059359 (Comext base) | `get_total_production(product, reporters, since, until, indicators)`, Prodcom's total production of one product as observations | `eurostat_get_total_production` | alpha |
 | `dataQuery` (`sdmx/2.1/data/{flowRef}/{key}`), SDMX-CSV | `download_dataset(dataset, key, dest)`, a gzip-compressed SDMX-CSV file on disk | none: a bulk task, Python only, which the adapters skip | alpha |
+| `codeListQuery` (`sdmx/2.1/codelist/ESTAT/CXT_NC`, Comext base), packaged | `list_cn8(search)`, the eight-digit CN codes of the trade datasets | `eurostat_list_cn8` | alpha |
+| `codeListQuery` (`sdmx/2.1/codelist/ESTAT/CXT_NC`, Comext base), packaged | `list_hs(search)`, the HS chapters, headings and subheadings of the trade datasets | `eurostat_list_hs` | alpha |
+| `getData` on DS-045409 (Comext base) | `get_trade(product, reporters, partners, flow, since, until, freq, indicators)`, EU trade in one CN8 or HS product as observations | `eurostat_get_trade` | alpha |
+| `getData` on DS-059341 (Comext base) | `get_trade_hs(product, reporters, partners, flow, since, until, freq, indicators)`, trade of EU and non-EU countries in one HS product as observations | `eurostat_get_trade_hs` | alpha |
+| `dataQuery` on DS-045409 (Comext base), SDMX-CSV | `download_trade(product, reporters, partners, flow, since, until, freq, indicators, dest)`, DS-045409's slice as a gzip-compressed SDMX-CSV file on disk | none: a bulk task, Python only, which the adapters skip | alpha |
 
-These ten tasks cover Eurostat's dissemination API on its two base URLs: the main one,
+These fifteen tasks cover Eurostat's dissemination API on its two base URLs: the main one,
 `https://ec.europa.eu/eurostat/api/dissemination`, and
 `https://ec.europa.eu/eurostat/api/comext/dissemination`, where Eurostat serves the
 Comext and Prodcom datasets, whose codes start with `DS-`; the dataset's code chooses the
 base. Not covered: polling an asynchronous answer, which is refused with how to narrow
-the query; SDMX-ML and TSV; codelists other than the fifteen packaged ones, which
+the query; SDMX-ML and TSV; codelists other than the eighteen packaged ones, which
 `list_codes` refuses naming the closest.
 
 ## Upstream terms and attribution
