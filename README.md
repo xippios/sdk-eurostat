@@ -170,7 +170,8 @@ reads the file, gzip-compressed or plain, row by row: each `SdmxCsvRow` has the
   "mcpServers": {
     "eurostat": {
       "command": "uvx",
-      "args": ["--from", "xippios-eurostat[mcp]", "xippios-eurostat-mcp"]    }
+      "args": ["--from", "xippios-eurostat[mcp]", "xippios-eurostat-mcp"]
+    }
   }
 }
 ```
@@ -185,7 +186,7 @@ Tools are read-only and named `eurostat_<verb>_<noun>`. Results are capped, at
 heading and the "Task function" column. Each row's Task function cell starts with the
 task's name in backticks, alone or as its call (`get_data(code, year)`); several tasks in
 one row are backticked names separated by commas; prose may follow. The tables list
-exactly tasks.__all__ and tasks_write.__all__. -->
+exactly tasks.__all__. -->
 
 | Upstream operation | Task function | MCP tool | Status |
 | --- | --- | --- | --- |
@@ -197,10 +198,18 @@ exactly tasks.__all__ and tasks_write.__all__. -->
 | `codeListQuery` (`sdmx/2.1/codelist/ESTAT/{resourceID}`), packaged | `list_codes(codelist, search)`, the codes of one of twelve codelists | `eurostat_list_codes` | alpha |
 | `dataQuery` (`sdmx/2.1/data/{flowRef}/{key}`), SDMX-CSV | `download_dataset(dataset, key, dest)`, a gzip-compressed SDMX-CSV file on disk | none: a bulk task, Python only, which the adapters skip | alpha |
 
+Version 0.1.0 covers these seven tasks on Eurostat's main dissemination API,
+`https://ec.europa.eu/eurostat/api/dissemination`. Not covered: the Comext and Prodcom
+datasets (codes with the `DS-` prefix), which Eurostat serves from another base URL;
+polling an asynchronous answer, which is refused with how to narrow the query; SDMX-ML
+and TSV; codelists other than the twelve packaged ones, which `list_codes` refuses
+naming the closest.
+
 ## Upstream terms and attribution
 
 Data comes from Eurostat dissemination API (https://ec.europa.eu/eurostat/web/main/data/database) under its own terms of use;
-this package adds no rights to it. Documentation snapshot: `docs/upstream/`.
+this package adds no rights to it. Documentation snapshot and its attribution, Eurostat's
+reuse and citation lines among them: `docs/upstream/FETCHED.md`.
 
 ## Licence
 
