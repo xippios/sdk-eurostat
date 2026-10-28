@@ -66,7 +66,9 @@ tests/
   test_refresh_reference.py  the refresh script's readers on tests/fixtures/files/, and
                    its --only merge, offline
   test_parse.py    parse_sdmx_csv on the samples under tests/fixtures/files/sdmx-csv/
-  test_live.py     @pytest.mark.live smoke tests, one per task
+  test_live.py     @pytest.mark.live smoke tests, one per task and more for get_data
+                   (one per dataset, the Comext base's among them); a run sends eighteen
+                   requests, as its docstring counts
 docs/upstream/     documentation snapshot and FETCHED.md
 .github/workflows/ ci.yml (the required ci check, with the CHANGELOG and fixture-size steps),
                    publish.yml (the release train: tag, build, PyPI), live.yml (nightly live
@@ -103,7 +105,7 @@ path they were fetched from as `endpoint` (`sdmx/2.1/codelist/ESTAT/GEO`); the s
 Comext base, the Prodcom datasets' `product` and `indicators` lists and the trade
 datasets' `product`, `reporter` and `flow` lists, the full URL
 (`https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_INDICATORS`),
-since the path alone names the main base's operation (Johannes, 2026-10-28; gap, row 111).
+since the path alone names the main base's operation (Johannes, 2026-10-28; gap, row 172).
 CXT_FREE_ISO feeds `partner` too; its `param` is `reporter`, the first of the two in the
 data structures' order.
 `scripts/refresh_reference.py --only <name> [<name> ...]` refreshes the named lists and

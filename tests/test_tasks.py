@@ -16,18 +16,21 @@ sends as well (``apro_cpnh1_AT_2022_2023``, a series refused, and ``unknown_code
 empty cross-section). The production tasks (``get_sold_production``,
 ``get_total_production``) send one getData request too: the first replays
 ``DS-059358_AT_10411200_2022_2023``, the request ``get_data``'s test sends; the second
-``DS-059359_AT_20158000_2022_2023``. The trade tasks (``get_trade``, ``get_trade_hs``)
-send one getData request each, recorded on the Comext base on 2026-10-28 through the
-URL each sends: ``DS-045409_AT_DE_15071090_2023`` and ``DS-059341_AT_DE_1507_2023``, and
-``DS-059341_AT_DE_15071090_cn8_on_hs_flow``, DS-059341's HTTP 413 to a CN8 code.
-Every refusal of a code a packaged list lacks sends nothing. The list tasks
-(``list_datasets``, ``list_codes``, ``list_products``, ``list_cn8``, ``list_hs``) send
-nothing: their tests read the packaged files under ``src/xippios/eurostat/reference/``
-and take the expected values from them. The bulk tasks ``download_dataset`` and
-``download_trade`` replay ``tests/fixtures/data_query/<case>.json``, the SDMX 2.1 data
-query recorded with ``compressed=true`` (a gzip file) and without it, on the main base on
-2026-10-27 and on the Comext base on 2026-10-28, through core's ``download``; the
-refusals of an asynchronous answer and of an extraction too big replay the answers
+``DS-059359_AT_20158000_2022_2023`` and
+``DS-059359_AT_20158000_indicator_not_in_dataset``, an indicator of CXT_INDICATORS that
+DS-059359 lacks, answered with an empty cube. The trade tasks (``get_trade``,
+``get_trade_hs``) send one getData request each, recorded on the Comext base on
+2026-10-28 through the URL each sends: ``DS-045409_AT_DE_15071090_2023`` and
+``DS-059341_AT_DE_1507_2023``, and ``DS-059341_AT_DE_15071090_cn8_on_hs_flow``,
+DS-059341's HTTP 413 to a CN8 code. Every refusal of a code a packaged list lacks sends
+nothing. The list tasks (``list_datasets``, ``list_codes``, ``list_products``,
+``list_cn8``, ``list_hs``) send nothing: their tests read the packaged files under
+``src/xippios/eurostat/reference/`` and take the expected values from them. The bulk
+tasks ``download_dataset`` and ``download_trade`` replay
+``tests/fixtures/data_query/<case>.json``, the SDMX 2.1 data query recorded with
+``compressed=true`` (a gzip file) and without it, on the main base on 2026-10-27 and on
+the Comext base on 2026-10-28, through core's ``download``; the refusals of an
+asynchronous answer and of an extraction too big replay the answers
 recorded on the Comext base for ``DS-045409``.
 """
 
@@ -534,17 +537,18 @@ def test_get_data_ds_059358_on_the_comext_base(replay_fixture: ReplayFixture) ->
 
 
 def test_get_data_unknown_ds_dataset(replay_fixture: ReplayFixture) -> None:
-    route = replay_fixture(GET_DATA, "DS_unknown_dataset")
+    route = replay_fixture(GET_DATA, "DS-000000_unknown_dataset")
     with pytest.raises(NotFoundError, match=r"DS-000000 \(DATA_FLOW:ALL,1\.0\) is not available"):
         tasks.get_data("DS-000000")
-    assert sent_urls(route) == [recorded_url("DS_unknown_dataset")]
-    assert recorded_url("DS_unknown_dataset").startswith(f"{COMEXT_STATISTICS}/DS-000000?")
+    assert sent_urls(route) == [recorded_url("DS-000000_unknown_dataset")]
+    assert recorded_url("DS-000000_unknown_dataset").startswith(f"{COMEXT_STATISTICS}/DS-000000?")
 
 
 def test_get_data_ds_059358_unknown_dimension_is_too_large(replay_fixture: ReplayFixture) -> None:
-    """The Comext base does not refuse a filter on a dimension the dataset lacks, as the
-    main base does (fault 150 at HTTP 400): it counts the query unfiltered and refuses it
-    as too large, HTTP 413 with an ``error`` array, whose fault reaches the caller."""
+    """The Comext base does not refuse a filter on a dimension the dataset lacks as the
+    main base does (fault 150 at HTTP 400), but as too large: HTTP 413 with an ``error``
+    array, whose fault reaches the caller. The estimate, 151,971,120 rows, is that of an
+    unfiltered query, so the unknown filter seems to be ignored."""
     route = replay_fixture(GET_DATA, "DS-059358_unknown_dimension_too_big")
     with pytest.raises(InvalidRequestError) as refused:
         tasks.get_data("DS-059358", {"geo": "AT"})
@@ -1564,15 +1568,25 @@ async def test_data_query_downloads_the_plain_answer(
 
 
 @pytest.mark.anyio
-async def test_code_list_query_takes_the_comext_base(replay_fixture: ReplayFixture) -> None:
-    """``base_url`` sends the codelist query to the Comext base. The recorded 404 of an
-    unknown ``DS-`` dataset is served at that URL: moved, not written by hand; its refusal
-    is ``classify``'s, as for any codelist query."""
-    url = f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/FREQ?format=JSON&lang=en"
-    route = replay_fixture(GET_DATA, "DS_unknown_dataset", url=url)
-    with pytest.raises(NotFoundError):
-        await api.sdmx.code_list_query("ESTAT", "FREQ", lang="en", base_url=COMEXT_BASE_URL)
-    assert sent_urls(route) == [url]
+async def test_code_list_query_takes_the_comext_base(respx_mock: respx.MockRouter) -> None:
+    """``base_url`` sends the codelist query to the Comext base: only the URL sent is
+    asserted. NOT RECORDED: the answer is the main base's STATINFO sample
+    (``tests/fixtures/files/codelist/statinfo.json``) served at the Comext base's codelist
+    path, an exchange upstream never had, so that the call completes."""
+    sample = (FIXTURES / "files" / "codelist" / "statinfo.json").read_bytes()
+    route = respx_mock.route(
+        method="GET",
+        host="ec.europa.eu",
+        path="/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/STATINFO",
+    ).mock(
+        return_value=httpx.Response(
+            200, headers={"content-type": "application/json"}, content=sample
+        )
+    )
+    await api.sdmx.code_list_query("ESTAT", "STATINFO", lang="en", base_url=COMEXT_BASE_URL)
+    assert sent_urls(route) == [
+        f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/STATINFO?format=JSON&lang=en"
+    ]
 
 
 BULK = ["download_dataset", "download_trade"]
@@ -1769,15 +1783,19 @@ def test_get_sold_production_takes_a_plain_string_as_one_reporter(
 def test_get_sold_production_sends_indicators_and_leaves_reporter_out(
     replay_fixture: ReplayFixture,
 ) -> None:
-    """What is sent with indicators and without reporters: ``indicators`` once per code,
-    after ``product``, and no ``reporter``. The recorded answer for every indicator is
-    served, since replay matches method, host and path; only the request is checked."""
-    route = replay_fixture(GET_DATA, PRODCOM)
-    result = get_sold_production("10411200", since="2022", indicators=["PRODVAL", "QNTUNIT"])
-    assert sent_urls(route) == [
+    """NOT RECORDED: this request was never sent upstream. What is sent with indicators
+    and without reporters: ``indicators`` once per code, after ``product``, and no
+    ``reporter``. The recorded answer of another request
+    (``DS-059358_AT_10411200_2022_2023``, every indicator for AT) is served at this URL,
+    moved, not written by hand; the answer is not checked, only the request and its
+    record in ``meta.request``."""
+    url = (
         f"{COMEXT_STATISTICS}/DS-059358?format=JSON&lang=EN&product=10411200"
         "&indicators=PRODVAL&indicators=QNTUNIT&sinceTimePeriod=2022"
-    ]
+    )
+    route = replay_fixture(GET_DATA, PRODCOM, url=url)
+    result = get_sold_production("10411200", since="2022", indicators=["PRODVAL", "QNTUNIT"])
+    assert sent_urls(route) == [url]
     assert result.meta.request == {
         "dataset": "DS-059358",
         "filters": {"product": "10411200", "indicators": ["PRODVAL", "QNTUNIT"]},
@@ -1836,24 +1854,59 @@ def test_get_total_production_refuses_a_product_its_list_lacks(
     respx_mock: respx.MockRouter,
 ) -> None:
     """DS-059359's products are CXT_PRODCOM2_TOTAL's, a part of the sold list's: a sold
-    product outside it is refused before any request, naming list_codes."""
+    product outside it, crude soya-bean oil, is refused before any request, naming
+    list_codes and the task that serves it."""
     total = {record["code"] for record in packaged_file("cxt_prodcom2_total")["records"]}
     sold = {record["code"] for record in packaged_file(PRODUCTS)["records"]}
-    assert "10411200" in sold - total
+    assert "10412100" in sold - total
     with pytest.raises(UnknownCode) as refused:
-        get_total_production("10411200")
+        get_total_production("10412100")
     assert refused.value.list_name == "CXT_PRODCOM2_TOTAL"
-    assert 'list_codes("cxt_prodcom2_total") lists them.' in str(refused.value)
+    assert refused.value.closest == (), "the hint replaces the other list's closest codes"
+    day = f"{fetched('cxt_prodcom2_total'):%Y-%m-%d}"
+    assert str(refused.value) == (
+        f"'10412100' is not a product in the packaged CXT_PRODCOM2_TOTAL list (fetched {day}). "
+        "10412100 is a product of DS-059358 (sold production, exports and imports): "
+        "get_sold_production serves it. A product the dataset lacks would give an empty "
+        "cube, so the package checks the product against its copy of the dataset's product "
+        'list before sending. list_codes("cxt_prodcom2_total") lists them. If upstream '
+        "added it since, the packaged list needs a refresh (/refresh-reference-data)."
+    )
     assert not respx_mock.calls
 
 
-@pytest.mark.parametrize("task", [get_sold_production, get_total_production])
-def test_production_refuses_an_unknown_indicator(
-    respx_mock: respx.MockRouter, task: Callable[..., Any]
+def test_get_sold_production_names_the_total_production_task_for_its_product(
+    respx_mock: respx.MockRouter, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    product = "10411200" if task is get_sold_production else FERTILISERS
+    """The other way round: every product of DS-059359 is in the sold list today, so the
+    sold list is emptied by a monkeypatch to show the refusal naming get_total_production."""
+    labels = tasks._labels
+    monkeypatch.setattr(tasks, "_labels", lambda name: {} if name == PRODUCTS else labels(name))
     with pytest.raises(UnknownCode) as refused:
-        task(product, indicators=["PRODVAL", "PRODVALUE"])
+        get_sold_production(FERTILISERS)
+    message = str(refused.value)
+    assert (
+        f"list (fetched {fetched(PRODUCTS):%Y-%m-%d}). {FERTILISERS} is a product of "
+        "DS-059359 (total production): get_total_production serves it. A product"
+    ) in message
+    assert "Did you mean" not in message
+    assert refused.value.closest == ()
+    assert not respx_mock.calls
+
+
+@pytest.mark.parametrize(
+    ("task", "product", "indicator"),
+    [
+        (get_sold_production, "10411200", "PRODVAL"),
+        (get_total_production, FERTILISERS, "APRODQNT"),
+    ],
+)
+def test_production_refuses_an_unknown_indicator(
+    respx_mock: respx.MockRouter, task: Callable[..., Any], product: str, indicator: str
+) -> None:
+    """An indicator of the dataset passes, one CXT_INDICATORS lacks is refused."""
+    with pytest.raises(UnknownCode) as refused:
+        task(product, indicators=[indicator, "PRODVALUE"])
     assert refused.value.param == "indicator"
     assert refused.value.list_name == "CXT_INDICATORS"
     assert "PRODVAL" in {code for code, _ in refused.value.closest}
@@ -1911,6 +1964,32 @@ def test_get_total_production_ds_059359(replay_fixture: ReplayFixture) -> None:
         "until_time_period": "2023",
     }
     assert_time_between(result.meta.retrieved_at, before, after)
+
+
+def test_get_total_production_indicator_the_dataset_lacks_is_an_empty_list(
+    replay_fixture: ReplayFixture,
+) -> None:
+    """The check is against the whole CXT_INDICATORS list: PRODVAL, DS-059358's sold
+    production value, is in it but not in DS-059359, so it is sent, and Eurostat answers
+    HTTP 200 with an empty cube, no code on ``indicators`` (recorded 2026-10-28)."""
+    case = "DS-059359_AT_20158000_indicator_not_in_dataset"
+    indicators = {record["code"] for record in packaged_file("cxt_indicators")["records"]}
+    served = recorded_cube(TOTAL).dimension["indicators"].category.index
+    assert "PRODVAL" in indicators - set(served)
+    route = replay_fixture(GET_DATA, case)
+    result = get_total_production(
+        FERTILISERS, reporters=["AT"], since="2022", until="2023", indicators=["PRODVAL"]
+    )
+    assert sent_urls(route) == [recorded_url(case)]
+    assert sent_query(route)["indicators"] == "PRODVAL"
+    assert recorded_cube(case).size[recorded_cube(case).id.index("indicators")] == 0
+    assert result.data == []
+    assert result.meta.request["filters"] == {
+        "reporter": ["AT"],
+        "product": FERTILISERS,
+        "indicators": ["PRODVAL"],
+    }
+    assert result.meta.vintage == recorded_updated(case)
 
 
 @pytest.mark.anyio

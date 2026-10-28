@@ -21,7 +21,7 @@ optional ``note``); the index is plain JSON:
   from as ``endpoint`` (``sdmx/2.1/codelist/ESTAT/GEO``); the six of the Comext base
   the full URL (``https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/``
   ``codelist/ESTAT/CXT_PRODCOM2_SOLD``), since the path alone would name the main base's
-  operation (ADR-0022 rule 1; gap, row 111).
+  operation (ADR-0022 rule 1; Johannes, 2026-10-28; gap, row 172).
 - ``lists.json``: not a packaged list but the package's derived index, plain JSON read
   with ``load_json`` (``ListIndex``): the latest ``fetched`` among the packaged lists
   and one ``ListInfo`` record per packaged list, with the release identifiers upstream

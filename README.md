@@ -126,9 +126,12 @@ cube's observations in cube order with `get_data`'s `meta`. `reporters` are coun
 in `QNTUNIT` for DS-059359), `None` for every one. A value is a number, or the text
 Eurostat prints for a unit or a flag (`"KG"`, `":E"`). The product is checked against the
 dataset's product list packaged with this version, each reporter against CXT_FREE_ISO,
-Comext's list of reporters and partners, and each indicator against CXT_INDICATORS,
-before sending: a code they lack raises `UnknownCode` naming the closest, and a reporter
-the list holds and the dataset lacks gives an empty list.
+Comext's list of reporters and partners, and each indicator against the whole
+CXT_INDICATORS list, before sending: a code they lack raises `UnknownCode` naming the
+closest. CXT_INDICATORS also holds the indicators of the other dataset and of Comext's
+trade datasets, so one the dataset lacks (`PRODVAL` for DS-059359) passes the check and
+Eurostat answers it with an empty cube, an empty list. A reporter the list holds and the
+dataset lacks gives an empty list.
 `list_products(search=None)` lists DS-059358's products (CXT_PRODCOM2_SOLD), eight-digit
 codes that start with their NACE class (`1041` oils and fats, `2015` fertilisers);
 DS-059359 covers a few hundred of them, chiefly chemicals, fertilisers and metals, which
@@ -336,13 +339,22 @@ exactly tasks.__all__. -->
 | `getData` on DS-059341 (Comext base) | `get_trade_hs(product, reporters, partners, flow, since, until, freq, indicators)`, trade of EU and non-EU countries in one HS product as observations | `eurostat_get_trade_hs` | alpha |
 | `dataQuery` on DS-045409 (Comext base), SDMX-CSV | `download_trade(product, reporters, partners, flow, since, until, freq, indicators, dest)`, DS-045409's slice as a gzip-compressed SDMX-CSV file on disk | none: a bulk task, Python only, which the adapters skip | alpha |
 
-These fifteen tasks cover Eurostat's dissemination API on its two base URLs: the main one,
-`https://ec.europa.eu/eurostat/api/dissemination`, and
-`https://ec.europa.eu/eurostat/api/comext/dissemination`, where Eurostat serves the
-Comext and Prodcom datasets, whose codes start with `DS-`; the dataset's code chooses the
-base. Not covered: polling an asynchronous answer, which is refused with how to narrow
-the query; SDMX-ML and TSV; codelists other than the eighteen packaged ones, which
-`list_codes` refuses naming the closest.
+Five of these fifteen tasks choose the base URL by the dataset's code: `get_data`, the
+three slices and `download_dataset` request a dataset whose code starts with `DS-`,
+Eurostat's Comext and Prodcom datasets, on
+`https://ec.europa.eu/eurostat/api/comext/dissemination`, and every other on the main base
+URL, `https://ec.europa.eu/eurostat/api/dissemination`. The two production tasks,
+`get_sold_production` and `get_total_production`, and the three trade tasks, `get_trade`,
+`get_trade_hs` and `download_trade`, always request the Comext base, which serves
+Prodcom's DS-059358 and DS-059359 and Comext's DS-045409 and DS-059341. `list_codes`
+lists eighteen packaged codelists, twelve of the main base and six of the Comext base;
+`list_products` lists the Comext base's list of sold-production products,
+CXT_PRODCOM2_SOLD, and `list_cn8` and `list_hs` the trade datasets' products, CXT_NC.
+`list_datasets` lists the main base's table of contents only, and does not list the
+Comext or Prodcom datasets: the Comext base answers `catalogue/toc/xml` with HTTP 404
+(probed 2026-10-28), though its WADL lists it. Not covered: polling an asynchronous
+answer, which is refused with how to narrow the query; SDMX-ML and TSV; codelists other
+than the eighteen packaged ones, which `list_codes` refuses naming the closest.
 
 ## Upstream terms and attribution
 
