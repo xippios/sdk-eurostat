@@ -16,8 +16,12 @@ thousand tonnes, 2022 and 2023, to a temporary file and reads it with ``parse_sd
 the live parser test of the file kind ``sdmx-csv`` (ADR-0020 decision 6).
 ``get_data`` has one more on the Comext base, the smallest slice of the Prodcom dataset
 ``DS-059358`` (Austria, one product, the latest period), which is also the nightly's
-check that the Comext base answers.
-A run sends eleven keyless requests, the reachability check included. The tests assert
+check that the Comext base answers. The production tasks have one each there, on the
+smallest slice their parameters allow, one product for Austria in one year (2023):
+``get_sold_production`` on ``DS-059358``, ``get_total_production`` on ``DS-059359``;
+``list_products``'s fetches the CXT_PRODCOM2_SOLD codelist from the Comext base through
+the refresh script, as ``list_codes``'s fetches STATINFO.
+A run sends fourteen keyless requests, the reachability check included. The tests assert
 shape and release metadata, never values, which Eurostat revises twice a day, nor which
 period is the latest.
 """
@@ -32,8 +36,8 @@ import httpx
 import pytest
 from xippios.core import Result
 
-from xippios.eurostat import tasks
-from xippios.eurostat._client import BASE_URL, config
+from xippios.eurostat import params, tasks
+from xippios.eurostat._client import BASE_URL, COMEXT_BASE_URL, config
 from xippios.eurostat.api import catalogue
 from xippios.eurostat.models import Code, Cube, Dataset, Observation, SdmxCsvRow
 from xippios.eurostat.parse import parse_sdmx_csv
@@ -252,3 +256,54 @@ async def test_list_codes_upstream_statinfo_still_reads() -> None:
     result = await tasks.list_codes_async("statinfo")
     assert result.data
     assert result.meta.vintage is not None
+
+
+async def test_list_products_upstream_cxt_prodcom2_sold_still_reads() -> None:
+    """The CXT_PRODCOM2_SOLD codelist still reads as the refresh script reads it.
+
+    One request on the Comext base through the package's client and the script's
+    ``fetch_codelist``: the codes in order with their labels, the full URL as
+    ``endpoint``, ``product`` as ``param``, the version and a ``LAST_UPDATED`` with a zone.
+    """
+    script = load_script()
+    answer = await script.fetch_codelist(params.PRODCOM_SOLD)
+    packaged = script.codelist_list(answer.codelist, answer.retrieved_at)
+    info = script.codelist_info(answer.codelist)
+    assert packaged.endpoint == f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_SOLD"
+    assert packaged.param == "product"
+    assert packaged.records
+    assert all(Code.model_validate(record).code for record in packaged.records)
+    assert info.id == params.PRODCOM_SOLD
+    assert info.version
+    assert info.last_updated is not None
+    assert datetime.fromisoformat(info.last_updated).utcoffset() is not None
+    result = await tasks.list_products_async(search="1041")
+    assert result.data
+    assert result.meta.vintage is not None
+
+
+def _check_production(result: Result[list[Observation]], *, dataset: str, product: str) -> None:
+    _check_slice(result)
+    assert {observation.codes["reporter"] for observation in result.data} == {"AT"}
+    assert {observation.codes["product"] for observation in result.data} == {product}
+    assert {observation.codes["time"] for observation in result.data} == {"2023"}
+    indicators = {code.code for code in params.codes(params.PRODCOM_INDICATORS.lower())}
+    assert {observation.codes["indicators"] for observation in result.data} <= indicators
+    assert result.meta.request["dataset"] == dataset
+
+
+async def test_get_sold_production() -> None:
+    """DS-059358 on the Comext base: Austria, product 10411200 (fish and marine oils), 2023."""
+    result = await tasks.get_sold_production_async(
+        "10411200", reporters=["AT"], since="2023", until="2023"
+    )
+    _check_production(result, dataset="DS-059358", product="10411200")
+
+
+async def test_get_total_production() -> None:
+    """DS-059359 on the Comext base: Austria, product 20158000 (animal or vegetable
+    fertilisers), 2023."""
+    result = await tasks.get_total_production_async(
+        "20158000", reporters=["AT"], since="2023", until="2023"
+    )
+    _check_production(result, dataset="DS-059359", product="20158000")

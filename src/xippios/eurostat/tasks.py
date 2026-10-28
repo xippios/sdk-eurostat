@@ -24,11 +24,24 @@ The slices, ``get_series``, ``get_latest_period`` and ``get_cross_section``, eac
 ``meta``: ``meta.request`` names what was sent, in ``get_data``'s terms. Nothing here
 compares datasets or sources (ADR-0003).
 
-The list tasks, ``list_datasets`` and ``list_codes``, answer from the packaged lists
-(``params``) without a request, by ADR-0022 rule 1: ``meta.retrieved_at`` is the list's
-``fetched``, ``meta.endpoint`` the operation it was fetched from (``catalogue/toc/xml``,
-``sdmx/2.1/codelist/ESTAT/<ID>``), ``meta.total`` ``None``. Their release metadata
-(Johannes, 2026-10-27, D4) comes from ``reference/lists.json``: for the table of contents
+The production tasks, ``get_sold_production`` and ``get_total_production``, read
+Prodcom's two datasets on the Comext base, DS-059358 (sold production, exports and
+imports) and DS-059359 (total production): each sends one ``get_data`` request, as the
+slices do, with a ``product`` filter, ``reporter`` and ``indicators`` filters where
+given and ``sinceTimePeriod`` and ``untilTimePeriod``, and returns the cube's
+observations in cube order with ``get_data``'s ``meta``. The product is checked against
+the dataset's packaged product list first (CXT_PRODCOM2_SOLD, CXT_PRODCOM2_TOTAL), and
+each indicator against CXT_INDICATORS, so a code a list lacks raises ``UnknownCode``
+without a request (conventions §5); a reporter is sent as given, since no list of
+reporters is packaged, and one the dataset lacks gives an empty list, as an unknown
+code gives ``get_data`` an empty cube.
+
+The list tasks, ``list_datasets``, ``list_codes`` and ``list_products``, answer from the
+packaged lists (``params``) without a request, by ADR-0022 rule 1: ``meta.retrieved_at``
+is the list's ``fetched``, ``meta.endpoint`` the operation it was fetched from
+(``catalogue/toc/xml``, ``sdmx/2.1/codelist/ESTAT/<ID>``, or for a codelist of the
+Comext base its full URL), ``meta.total`` ``None``. Their release metadata (Johannes,
+2026-10-27, D4) comes from ``reference/lists.json``: for the table of contents
 ``meta.vintage`` is its ``creationDate`` as printed (``"20261027T1000"``) and
 ``meta.published_at`` the same time without a zone, ``published_at_naive`` set (ADR-0022
 rule 2); for a codelist ``meta.vintage`` is its version (``"28.0"``) and
@@ -44,6 +57,7 @@ file. Its release metadata comes from the file's first row, read through the par
 (ADR-0022 rule 2); ``meta.endpoint`` is ``"dataQuery"``.
 """
 
+import functools
 import math
 import os
 from collections.abc import Mapping, Sequence
@@ -51,6 +65,7 @@ from contextlib import closing
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from xippios.core import (
@@ -78,8 +93,11 @@ __all__ = [
     "get_data",
     "get_latest_period",
     "get_series",
+    "get_sold_production",
+    "get_total_production",
     "list_codes",
     "list_datasets",
+    "list_products",
 ]
 
 BULK_TASKS: frozenset[str] = frozenset({"download_dataset"})
@@ -129,6 +147,28 @@ MCP_CAPS: Mapping[str, ResultCap] = {
         max_rows=1000,
         note="pass search, a part of the code or of the label (AT, austria), to see the rest",
     ),
+    "list_products": ResultCap(
+        max_rows=1000,
+        note=(
+            "pass search, a part of the code or of the label (1041, soya, oilcake), to see the rest"
+        ),
+    ),
+    "get_sold_production": ResultCap(
+        max_rows=200,
+        note=(
+            "rows run reporter by reporter and indicator by indicator, oldest year first: "
+            "ask for fewer reporters or indicators (PRODVAL, PRODQNT, QNTUNIT), or a later "
+            "since, to see the rest"
+        ),
+    ),
+    "get_total_production": ResultCap(
+        max_rows=200,
+        note=(
+            "rows run reporter by reporter and indicator by indicator, oldest year first: "
+            "ask for fewer reporters or indicators (APRODQNT, QNTUNIT), or a later since, "
+            "to see the rest"
+        ),
+    ),
 }
 """MCP result caps of their own, by task function name (conventions §8, ADR-0016).
 
@@ -141,13 +181,25 @@ a whole ef_m_farmleg table for one country (1,810 rows) is cut. What each cap ad
 its note, naming the task's own way to see the rest. ``get_data`` returns a cube, not a
 list, and keeps the default cap.
 
+The production tasks serve the same observations, 258 to 346 bytes each as compact JSON
+in the two recorded Prodcom answers, a product's label in every one, so the family's
+64 KB holds about 190 to 250 rows and they keep the family's 200 rows too: one product
+for one reporter over two years is 22 rows (DS-059358, 23 indicators) or 4 (DS-059359,
+4 indicators), and every reporter over every year is cut, with a note naming
+``reporters``, ``indicators`` and ``since``.
+
 The list tasks' caps add the note that names ``search``. ``list_datasets`` keeps the
 family's 200 rows or 64 KB: no agent needs the whole table of contents at once (over
 10,000 leaves, about 400 bytes each as compact JSON, so the bytes cut it at about 150),
 and a search narrows it to what it looks for. ``list_codes`` takes up to 1,000 rows within
-the family's 64 KB (ADR-0016 decision 4): a code is about 45 to 70 bytes, so a codelist
-comes whole up to the byte bound, eleven of the twelve packaged on 2026-10-27 (UNIT's 773
-codes are 57,670 bytes), and GEO's thousands are cut with the note.
+the family's 64 KB (ADR-0016 decision 4): a code of the main base's codelists is about 45
+to 70 bytes, so a codelist comes whole up to the byte bound, eleven of the twelve
+packaged on 2026-10-27 (UNIT's 773 codes are 57,670 bytes), and CXT_INDICATORS too; GEO's
+thousands and the two PRODCOM product lists, whose labels are long, are cut with the
+note (CXT_PRODCOM2_TOTAL's 822 codes at 652 rows on 2026-10-28). ``list_products`` takes
+the same cap, so a search for a NACE class (``"1041"``: its 42 products of oils and fats
+and 13 codes that hold the digits elsewhere, 55 rows on 2026-10-28) or a word comes
+whole.
 """
 
 
@@ -621,36 +673,63 @@ list_datasets = sync(list_datasets_async)
 
 UNPACKAGED_CODELIST = (
     "The package carries the codelists of the dimensions of apro_cpnh1, apro_mk_cola and "
-    "ef_m_farmleg only; for any other dataset, get_data's cube lists the codes it answers "
-    "with on each dimension, with their labels."
+    "ef_m_farmleg, and of the product and indicators dimensions of the Prodcom datasets "
+    "DS-059358 and DS-059359, only; for any other dataset, get_data's cube lists the codes "
+    "it answers with on each dimension, with their labels."
 )
 """Why ``list_codes`` refuses a codelist the package does not carry."""
+
+
+def _codelist_answer(
+    info: params.ListInfo, search: str | None, request: Mapping[str, Any]
+) -> Result[list[Code]]:
+    """The codes of the packaged codelist ``info`` names that ``search`` keeps, with meta.
+
+    ADR-0022 rule 1: the packaged file's ``meta``, its version as ``vintage`` and its
+    ``LAST_UPDATED`` as ``published_at``, with the zone Eurostat prints.
+    """
+    packaged = params.packaged(info.name)
+    found = [entry for entry in params.codes(info.name) if matches(search, entry.code, entry.label)]
+    published = _release_time(info.last_updated)
+    meta = packaged.meta(
+        SOURCE,
+        request=request,
+        vintage=info.version,
+        published_at=published,
+        published_at_naive=published is not None and published.tzinfo is None,
+    )
+    return Result(data=found, meta=meta)
 
 
 async def list_codes_async(codelist: str, search: str | None = None) -> Result[list[Code]]:
     """List the codes of one Eurostat codelist, the values a dimension filter takes.
 
-    Answers from the package's copies of twelve SDMX codelists
-    (``sdmx/2.1/codelist/ESTAT/<ID>``, English labels), without a request: FREQ, GEO,
-    UNIT, CROPS, STRUCPRO, MILKITEM, DAIRYPROD, STATINFO, LEG_FORM, FARMTYPE, SO_EUR and
-    UAAREA, the codelists of the dimensions of apro_cpnh1, apro_mk_cola and
-    ef_m_farmleg, each named as its dimension is in upper case. A codelist holds every
-    code Eurostat defines in it, more than any one dataset uses: GEO has thousands. A
-    dimension's filter takes its codes, e.g. ``get_data("apro_mk_cola", {"geo": "AT"})``.
-    ``search`` keeps the codes whose code or label contains the text, ignoring case.
-    A codelist the package does not carry raises ``UnknownCode`` naming the closest it
-    does. ``meta.vintage`` is the codelist's version (``"28.0"``) and
-    ``meta.published_at`` its last update, with Eurostat's zone; ``meta.retrieved_at``
-    is when the package's copy was fetched. A code Eurostat added since is missing until
-    the package is refreshed.
+    Answers from the package's copies of fifteen SDMX codelists
+    (``sdmx/2.1/codelist/ESTAT/<ID>``, English labels), without a request. Twelve come
+    from Eurostat's main base: FREQ, GEO, UNIT, CROPS, STRUCPRO, MILKITEM, DAIRYPROD,
+    STATINFO, LEG_FORM, FARMTYPE, SO_EUR and UAAREA, the codelists of the dimensions of
+    apro_cpnh1, apro_mk_cola and ef_m_farmleg, each named as its dimension is in upper
+    case. Three come from the Comext base, the codelists of the Prodcom datasets:
+    CXT_PRODCOM2_SOLD, the ``product`` codes of DS-059358 (sold production, exports and
+    imports; ``list_products`` serves it too), CXT_PRODCOM2_TOTAL, the ``product`` codes of
+    DS-059359 (total production), and CXT_INDICATORS, the ``indicators`` codes of both,
+    which Comext's trade datasets share. A codelist holds every code Eurostat defines in
+    it, more than any one dataset uses: GEO has thousands. A dimension's filter takes its
+    codes, e.g. ``get_data("apro_mk_cola", {"geo": "AT"})``. ``search`` keeps the codes
+    whose code or label contains the text, ignoring case. A codelist the package does not
+    carry raises ``UnknownCode`` naming the closest it does. ``meta.vintage`` is the
+    codelist's version (``"28.0"``) and ``meta.published_at`` its last update, with
+    Eurostat's zone; ``meta.retrieved_at`` is when the package's copy was fetched. A code
+    Eurostat added since is missing until the package is refreshed.
 
     Args:
         codelist: The codelist, case-insensitive: ``"geo"``, ``"unit"``, ``"freq"``,
             ``"crops"``, ``"strucpro"``, ``"milkitem"``, ``"dairyprod"``,
-            ``"statinfo"``, ``"leg_form"``, ``"farmtype"``, ``"so_eur"`` or
-            ``"uaarea"``.
+            ``"statinfo"``, ``"leg_form"``, ``"farmtype"``, ``"so_eur"``, ``"uaarea"``,
+            ``"cxt_prodcom2_sold"``, ``"cxt_prodcom2_total"`` or ``"cxt_indicators"``.
         search: Text to look for in the code or the English label, ignoring case, e.g.
-            ``"austria"``, ``"AT"`` or ``"wheat"``; ``None`` lists every code.
+            ``"austria"``, ``"AT"``, ``"wheat"`` or ``"fertilisers"``; ``None`` lists
+            every code.
     """
     known = {
         info.id: info
@@ -668,20 +747,284 @@ async def list_codes_async(codelist: str, search: str | None = None) -> Result[l
             reason=UNPACKAGED_CODELIST,
             source=SOURCE,
         )
-    packaged = params.packaged(info.name)
-    found = [entry for entry in params.codes(info.name) if matches(search, entry.code, entry.label)]
-    published = _release_time(info.last_updated)
-    meta = packaged.meta(
-        SOURCE,
-        request={"codelist": info.id, "search": search},
-        vintage=info.version,
-        published_at=published,
-        published_at_naive=published is not None and published.tzinfo is None,
-    )
-    return Result(data=found, meta=meta)
+    return _codelist_answer(info, search, {"codelist": info.id, "search": search})
 
 
 list_codes = sync(list_codes_async)
+
+
+async def list_products_async(search: str | None = None) -> Result[list[Code]]:
+    """List the PRODCOM product codes and labels that get_sold_production takes.
+
+    Answers from the package's copy of the Comext codelist CXT_PRODCOM2_SOLD (English
+    labels), without a request: the ``product`` codes of Prodcom's DS-059358 (sold
+    production, exports and imports), thousands of manufactured goods, food and
+    agricultural inputs among them. A product is an eight-digit code that starts with its
+    NACE class: ``1041`` for vegetable and animal oils and fats, ``2015`` for
+    fertilisers. A few codes end in Z and a digit (``101200Z1``, fresh, chilled or
+    frozen whole geese, ducks and guinea fowls) and stand for several products together,
+    as their labels say. The list keeps the codes of earlier
+    PRODCOM years beside the current ones, so one label can stand under two codes (crude
+    sunflower-seed and safflower oil is ``10412300`` and ``10412400``). For agriculture:
+    crude oils such as ``10412100`` (crude soya-bean oil) and refined ones such as
+    ``10415400`` (refined sunflower-seed and safflower oil) under ``1041``; the
+    oil-cakes ``10414130`` (soya-bean), ``10414150`` (sunflower seed) and ``10414170``
+    (rape or colza seed); ethanol, ``20147400`` (undenatured, of at least 80 % vol) and
+    ``20147500`` (denatured); biodiesel, ``20595800``; sugar under ``1081`` (``10811230``,
+    refined white cane or beet sugar); animal feed under ``1091`` (``10911035``, for
+    cattle); meat under ``1011`` and ``1012`` (``10111140``, beef and veal carcases);
+    dairy under ``1051`` (``10513030``, butter); beverages under ``11`` (``11051000``,
+    beer); fertilisers under ``2015`` (``20153130``, urea). DS-059359 (total production,
+    ``get_total_production``) takes the codes of CXT_PRODCOM2_TOTAL, a few hundred of
+    these, chiefly chemicals, fertilisers and metals:
+    ``list_codes("cxt_prodcom2_total")`` lists them. ``search`` keeps the products whose
+    code or label contains the text, ignoring case. ``meta.vintage`` is the codelist's
+    version (``"6.0"``) and ``meta.published_at`` its last update, with Eurostat's zone;
+    ``meta.endpoint`` is the codelist's URL on the Comext base and ``meta.retrieved_at``
+    when the package's copy was fetched.
+
+    Args:
+        search: Text to look for in the code or the English label, ignoring case, e.g.
+            ``"soya"``, ``"oilcake"``, ``"ethyl alcohol"``, ``"fertilisers"`` or
+            ``"1041"`` (a NACE class, and the few codes that hold the digits elsewhere);
+            ``None`` lists every product.
+    """
+    info = params.list_info()[params.PRODCOM_SOLD.lower()]
+    return _codelist_answer(info, search, {"search": search})
+
+
+list_products = sync(list_products_async)
+
+
+SOLD_PRODUCTION = "DS-059358"
+"""Prodcom's sold production, exports and imports, annual, on the Comext base."""
+
+TOTAL_PRODUCTION = "DS-059359"
+"""Prodcom's total production, annual, on the Comext base."""
+
+UNKNOWN_PRODUCT = (
+    "A product the dataset lacks would give an empty cube, so the package checks the "
+    "product against its copy of the dataset's product list before sending."
+)
+"""Why a production task refuses a product its packaged list lacks (conventions §5)."""
+
+UNKNOWN_INDICATOR = (
+    "The package checks each indicator against its copy of CXT_INDICATORS, the indicators "
+    "of the Prodcom and Comext datasets, before sending; "
+    'list_codes("cxt_indicators") lists them.'
+)
+"""Why a production task refuses an indicator CXT_INDICATORS lacks (conventions §5).
+
+The check is against the whole list, which Comext's trade datasets share: an indicator
+in it that the dataset lacks passes, and Eurostat answers it with an empty cube
+(recorded for PRODVAL on DS-059359)."""
+
+PRODUCTION_DATASETS: Mapping[str, tuple[str, str]] = {
+    params.PRODCOM_SOLD: (
+        f"{SOLD_PRODUCTION} (sold production, exports and imports)",
+        "get_sold_production",
+    ),
+    params.PRODCOM_TOTAL: (f"{TOTAL_PRODUCTION} (total production)", "get_total_production"),
+}
+"""Each Prodcom product list's dataset and the task that serves it, for a refusal that
+names the other dataset where a product is served."""
+
+
+@functools.cache
+def _labels(name: str) -> Mapping[str, str]:
+    """The packaged codelist ``name``'s codes to their labels, the code where it has none."""
+    return MappingProxyType({code.code: code.label or code.code for code in params.codes(name)})
+
+
+def _check_code(
+    param: str, value: str, codelist: str, reason: str, hint: str | None = None
+) -> None:
+    """Refuse ``value`` when the packaged codelist ``codelist`` lacks it (conventions §5).
+
+    ``hint``, when given, explains the value in place of the closest codes, which are
+    then neither named nor kept.
+
+    Raises:
+        UnknownCode: Naming the list, its fetch date and the closest codes, or the hint.
+    """
+    labels = _labels(codelist.lower())
+    if value not in labels:
+        raise UnknownCode(
+            param,
+            value,
+            list_name=codelist,
+            fetched=params.packaged(codelist.lower()).fetched,
+            closest=() if hint else closest(value, labels),
+            hint=hint,
+            reason=reason,
+            source=SOURCE,
+        )
+
+
+def _listed(name: str, values: Sequence[str], every: str) -> list[str]:
+    """The codes of a list parameter as sent: one code or several, never none.
+
+    A plain string is one code, not a sequence of letters.
+
+    Raises:
+        InvalidRequestError: The list holds no code, which would send no filter.
+    """
+    listed = [values] if isinstance(values, str) else list(values)
+    if not listed:
+        raise InvalidRequestError(
+            f"{name} lists no code: give one code or several, or leave {name} out for {every}",
+            source=SOURCE,
+        )
+    return listed
+
+
+async def _production(
+    dataset: str,
+    products: str,
+    product: str,
+    reporters: Sequence[str] | None,
+    since: str | None,
+    until: str | None,
+    indicators: Sequence[str] | None,
+) -> Result[list[Observation]]:
+    """One Prodcom dataset's observations for one product: one ``get_data`` request.
+
+    ``products`` is the id of the dataset's product codelist. Every code is checked
+    before the request; a product the list lacks that the other Prodcom dataset's list
+    holds is refused naming the task that serves it, in place of the closest codes. The
+    filters go out in the order reporter, product, indicators.
+    """
+    listed = (
+        "list_products lists them."
+        if products == params.PRODCOM_SOLD
+        else f'list_codes("{products.lower()}") lists them.'
+    )
+    elsewhere = " ".join(
+        f"{product} is a product of {dataset}: {task} serves it."
+        for codelist, (dataset, task) in PRODUCTION_DATASETS.items()
+        if codelist != products and product in _labels(codelist.lower())
+    )
+    _check_code("product", product, products, f"{UNKNOWN_PRODUCT} {listed}", elsewhere or None)
+    filters: dict[str, str | list[str]] = {}
+    if reporters is not None:
+        filters["reporter"] = _listed("reporters", reporters, "every reporter")
+    filters["product"] = product
+    if indicators is not None:
+        filters["indicators"] = _listed("indicators", indicators, "every indicator")
+        for code in filters["indicators"]:
+            _check_code("indicator", code, params.PRODCOM_INDICATORS, UNKNOWN_INDICATOR)
+    answer = await get_data_async(
+        dataset, filters, since_time_period=since, until_time_period=until
+    )
+    return Result(data=list(answer.data.observations()), meta=answer.meta)
+
+
+async def get_sold_production_async(
+    product: str,
+    reporters: Sequence[str] | None = None,
+    since: str | None = None,
+    until: str | None = None,
+    indicators: Sequence[str] | None = None,
+) -> Result[list[Observation]]:
+    """Get Prodcom's sold production, exports and imports of one product, by country and year.
+
+    One request to the Statistics API on Eurostat's Comext base for Prodcom's annual
+    dataset DS-059358. Each observation carries its code and label on every dimension
+    (``freq``, ``reporter``, ``product``, ``indicators``, ``time``), its value and its
+    status, in cube order: reporter by reporter, indicator by indicator, oldest year
+    first. The indicators are the measures, PRODVAL (sold production value, euro),
+    PRODQNT (sold production quantity) in QNTUNIT (its unit, e.g. ``"KG"``), EXPVAL and
+    EXPQNT (exports, value in euro and quantity) and IMPVAL and IMPQNT (imports), and
+    beside them each measure's flag and rounding base (PVALFLAG, PVALBASE, PQNTFLAG,
+    PQNTBASE), production on own account (OWNPRODVAL, OWNPRODQNT, with OWNVALFLAG,
+    OWNVALBASE, OWNQNTFLAG, OWNQNTBASE) and sub-contracted production (SCPRODVAL,
+    SCPRODQNT, with SCVALFLAG, SCVALBASE, SCQNTFLAG, SCQNTBASE). A value is a number, or
+    the text Eurostat prints for a unit or a flag (``"KG"``, ``":E"``). ``product`` is
+    checked against the package's copy of the dataset's product list
+    (CXT_PRODCOM2_SOLD, which ``list_products`` lists), and each indicator against the
+    whole of CXT_INDICATORS, before any request: a code they lack raises
+    ``UnknownCode`` naming the closest. CXT_INDICATORS holds the Comext trade datasets'
+    indicators too, so one of them that this dataset lacks (``VALUE_IN_EUROS``, or
+    DS-059359's ``APRODQNT``) passes the check, and Eurostat answers such an indicator
+    with an empty cube, as recorded for PRODVAL on DS-059359: an empty list. A reporter
+    is sent as given, and one the dataset lacks gives an empty list. ``meta`` is
+    ``get_data``'s: ``meta.request`` holds the dataset and the filters sent,
+    ``meta.published_at`` the dataset's last update with Eurostat's zone and
+    ``meta.vintage`` the same time as printed. A query Eurostat refuses or judges too
+    large raises ``InvalidRequestError`` with its message.
+
+    Args:
+        product: One PRODCOM product code, e.g. ``"10412100"`` (crude soya-bean oil),
+            ``"10414130"`` (soya-bean oilcake), ``"20147400"`` (undenatured ethyl
+            alcohol of at least 80 % vol), ``"20595800"`` (biodiesel) or ``"10411200"``
+            (fish and marine oils); ``list_products`` lists them.
+        reporters: Reporting countries, as the cube's ``reporter`` codes, e.g.
+            ``["AT"]`` or ``["DE", "FR"]``; ``None`` asks for every reporter.
+        since: The first year, included, e.g. ``"2022"``; ``None`` starts at the
+            dataset's first. Eurostat's ``sinceTimePeriod``.
+        until: The last year, included, e.g. ``"2023"``; ``None`` runs to the latest.
+            Eurostat's ``untilTimePeriod``.
+        indicators: Indicator codes, e.g. ``["PRODVAL", "PRODQNT", "QNTUNIT"]`` or
+            ``["EXPVAL", "IMPVAL"]``; ``None`` asks for every indicator the dataset
+            serves.
+    """
+    return await _production(
+        SOLD_PRODUCTION, params.PRODCOM_SOLD, product, reporters, since, until, indicators
+    )
+
+
+get_sold_production = sync(get_sold_production_async)
+
+
+async def get_total_production_async(
+    product: str,
+    reporters: Sequence[str] | None = None,
+    since: str | None = None,
+    until: str | None = None,
+    indicators: Sequence[str] | None = None,
+) -> Result[list[Observation]]:
+    """Get Prodcom's total production of one product, by country and year.
+
+    One request to the Statistics API on Eurostat's Comext base for Prodcom's annual
+    dataset DS-059359, which covers a few hundred products, chiefly chemicals,
+    fertilisers and metals. Each observation carries its code and label on every
+    dimension (``freq``, ``reporter``, ``product``, ``indicators``, ``time``), its value
+    and its status, in cube order: reporter by reporter, indicator by indicator, oldest
+    year first. The indicators are APRODQNT (actual production quantity) in QNTUNIT (its
+    unit, e.g. ``"KG"``), and APRODQNT's flag and rounding base, APQNTFLAG and
+    APQNTBASE. A value is a number, or the text Eurostat prints for a unit or a flag
+    (``"KG"``). ``product`` is checked against the package's copy of the dataset's
+    product list (CXT_PRODCOM2_TOTAL, which ``list_codes("cxt_prodcom2_total")`` lists),
+    and each indicator against the whole of CXT_INDICATORS, before any request: a code
+    they lack raises ``UnknownCode`` naming the closest, and a sold-production product
+    outside this dataset names ``get_sold_production``. CXT_INDICATORS holds the
+    indicators of DS-059358 and of the Comext trade datasets too, so one of them that
+    this dataset lacks (``PRODVAL``) passes the check, and Eurostat answers it with an
+    empty cube: an empty list (recorded). A reporter is sent as given, and one the
+    dataset lacks gives an empty list. ``meta`` is ``get_data``'s: ``meta.request`` holds
+    the dataset and the filters sent, ``meta.published_at`` the dataset's last update
+    with Eurostat's zone and ``meta.vintage`` the same time as printed. A query Eurostat
+    refuses or judges too large raises ``InvalidRequestError`` with its message.
+
+    Args:
+        product: One product code of CXT_PRODCOM2_TOTAL, e.g. ``"20158000"`` (animal or
+            vegetable fertilisers), ``"20153130"`` (urea of more than 45 % nitrogen) or
+            ``"20151075"`` (anhydrous ammonia).
+        reporters: Reporting countries, as the cube's ``reporter`` codes, e.g.
+            ``["AT"]`` or ``["DE", "FR"]``; ``None`` asks for every reporter.
+        since: The first year, included, e.g. ``"2022"``; ``None`` starts at the
+            dataset's first. Eurostat's ``sinceTimePeriod``.
+        until: The last year, included, e.g. ``"2023"``; ``None`` runs to the latest.
+            Eurostat's ``untilTimePeriod``.
+        indicators: Indicator codes, e.g. ``["APRODQNT", "QNTUNIT"]``; ``None`` asks for
+            every indicator the dataset serves.
+    """
+    return await _production(
+        TOTAL_PRODUCTION, params.PRODCOM_TOTAL, product, reporters, since, until, indicators
+    )
+
+
+get_total_production = sync(get_total_production_async)
 
 
 LAST_UPDATE = "%d/%m/%y %H:%M:%S"

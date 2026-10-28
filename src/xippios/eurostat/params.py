@@ -2,25 +2,31 @@
 
 ``/refresh-reference-data`` writes them; ``PackagedList.load(PACKAGE, name)`` reads one.
 
-The table of contents and twelve codelists ship inside the package under ``reference/``
-so that ``list_datasets`` and ``list_codes`` need no request, with an index of their
-release identifiers beside them; ``scripts/refresh_reference.py`` writes the fourteen
-JSON files, never by hand (ADR-0022). The thirteen lists are packaged-list files that
+The table of contents and fifteen codelists ship inside the package under ``reference/``
+so that ``list_datasets``, ``list_codes`` and ``list_products`` need no request, and the
+production tasks check a product before sending one, with an index of their release
+identifiers beside them; ``scripts/refresh_reference.py`` writes the seventeen JSON
+files, never by hand (ADR-0022). The sixteen lists are packaged-list files that
 ``PackagedList.load`` reads (``{"param", "endpoint", "fetched", "records"}`` and an
 optional ``note``); the index is plain JSON:
 
 - ``toc.json``: every leaf of the Catalogue API's table of contents
   (``catalogue/toc/xml``), datasets and tables, as ``models.Dataset`` records; ``param``
   ``datasetCode``, what a leaf's code feeds.
-- ``<codelist>.json``, the codelist's id lower-cased (``geo.json``): the codes of one
-  SDMX codelist (``sdmx/2.1/codelist/ESTAT/<ID>``) as ``models.Code`` records; ``param``
-  the dimension code the Statistics API takes (``geo``).
+- ``<codelist>.json``, the codelist's id lower-cased (``geo.json``,
+  ``cxt_prodcom2_sold.json``): the codes of one SDMX codelist as ``models.Code`` records;
+  ``param`` the dimension code the Statistics API takes, ``CODELISTS``'s (``geo``,
+  ``product``). The twelve codelists of the main base keep the path they were fetched
+  from as ``endpoint`` (``sdmx/2.1/codelist/ESTAT/GEO``); the three of the Comext base
+  the full URL (``https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/``
+  ``codelist/ESTAT/CXT_PRODCOM2_SOLD``), since the path alone would name the main base's
+  operation (ADR-0022 rule 1; Johannes, 2026-10-28; gap, row 172).
 - ``lists.json``: not a packaged list but the package's derived index, plain JSON read
-  with ``load_json`` (``ListIndex``): when the run's last answer arrived and one
-  ``ListInfo`` record per packaged list, with the release identifiers upstream gives
-  each, which a packaged-list file has no key for (ADR-0022, amendment 8; gap, row 111):
-  the TOC's ``creationDate``, a codelist's ``version`` and ``LAST_UPDATED``. It is
-  derived from the thirteen answers the packaged lists come from and names no upstream
+  with ``load_json`` (``ListIndex``): the latest ``fetched`` among the packaged lists
+  and one ``ListInfo`` record per packaged list, with the release identifiers upstream
+  gives each, which a packaged-list file has no key for (ADR-0022, amendment 8; gap, row
+  111): the TOC's ``creationDate``, a codelist's ``version`` and ``LAST_UPDATED``. It is
+  derived from the sixteen answers the packaged lists come from and names no upstream
   operation. The list tasks read their ``vintage`` and ``published_at`` from it, and
   ``list_codes`` the codelists it knows.
 
@@ -29,11 +35,13 @@ No enum is generated from them (too large for one, the design round of 2026-10-2
 """
 
 import functools
+from collections.abc import Mapping
+from typing import NamedTuple
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 from xippios.core import PackagedList, UpstreamModel, load_json, parse
 
-from xippios.eurostat._client import SOURCE
+from xippios.eurostat._client import BASE_URL, COMEXT_BASE_URL, SOURCE
 from xippios.eurostat.models import Code, Dataset
 
 __all__ = [
@@ -42,7 +50,11 @@ __all__ = [
     "INDEX",
     "PACKAGE",
     "PACKAGED_LISTS",
+    "PRODCOM_INDICATORS",
+    "PRODCOM_SOLD",
+    "PRODCOM_TOTAL",
     "TOC",
+    "CodelistOrigin",
     "ListIndex",
     "ListInfo",
     "codes",
@@ -57,23 +69,58 @@ PACKAGE = "xippios.eurostat"
 AGENCY = "ESTAT"
 """The agency that maintains the packaged codelists."""
 
-CODELISTS: tuple[str, ...] = (
-    "FREQ",
-    "GEO",
-    "UNIT",
-    "CROPS",
-    "STRUCPRO",
-    "MILKITEM",
-    "DAIRYPROD",
-    "STATINFO",
-    "LEG_FORM",
-    "FARMTYPE",
-    "SO_EUR",
-    "UAAREA",
-)
-"""The packaged codelists, by upstream's id: the codelists the dimensions of apro_cpnh1,
-apro_mk_cola and ef_m_farmleg name in their data structures (Johannes, 2026-10-27, D2).
-For each, the dimension's code is the id lower-cased."""
+
+class CodelistOrigin(NamedTuple):
+    """Where a packaged codelist is fetched and which dimension it feeds.
+
+    Attributes:
+        base_url: The base that serves it: ``_client.BASE_URL``, or
+            ``_client.COMEXT_BASE_URL`` for a codelist of the Comext and Prodcom
+            datasets, e.g. ``"https://ec.europa.eu/eurostat/api/comext/dissemination"``.
+        param: The dimension code the Statistics API takes for its codes, the packaged
+            file's ``param``, e.g. ``"geo"`` or ``"product"``.
+    """
+
+    base_url: str
+    param: str
+
+
+PRODCOM_SOLD = "CXT_PRODCOM2_SOLD"
+"""The products of DS-059358 (Prodcom, sold production, exports and imports): its
+``product`` dimension's codelist (the data structure DS-059358 2.7)."""
+
+PRODCOM_TOTAL = "CXT_PRODCOM2_TOTAL"
+"""The products of DS-059359 (Prodcom, total production): its ``product`` dimension's
+codelist (the data structure DS-059359 2.7, read 2026-10-28)."""
+
+PRODCOM_INDICATORS = "CXT_INDICATORS"
+"""The indicators of DS-059358 and DS-059359: their ``indicators`` dimension's codelist,
+which Comext's trade datasets share."""
+
+CODELISTS: Mapping[str, CodelistOrigin] = {
+    "FREQ": CodelistOrigin(BASE_URL, "freq"),
+    "GEO": CodelistOrigin(BASE_URL, "geo"),
+    "UNIT": CodelistOrigin(BASE_URL, "unit"),
+    "CROPS": CodelistOrigin(BASE_URL, "crops"),
+    "STRUCPRO": CodelistOrigin(BASE_URL, "strucpro"),
+    "MILKITEM": CodelistOrigin(BASE_URL, "milkitem"),
+    "DAIRYPROD": CodelistOrigin(BASE_URL, "dairyprod"),
+    "STATINFO": CodelistOrigin(BASE_URL, "statinfo"),
+    "LEG_FORM": CodelistOrigin(BASE_URL, "leg_form"),
+    "FARMTYPE": CodelistOrigin(BASE_URL, "farmtype"),
+    "SO_EUR": CodelistOrigin(BASE_URL, "so_eur"),
+    "UAAREA": CodelistOrigin(BASE_URL, "uaarea"),
+    PRODCOM_SOLD: CodelistOrigin(COMEXT_BASE_URL, "product"),
+    PRODCOM_TOTAL: CodelistOrigin(COMEXT_BASE_URL, "product"),
+    PRODCOM_INDICATORS: CodelistOrigin(COMEXT_BASE_URL, "indicators"),
+}
+"""The packaged codelists, by upstream's id, each with its base and its dimension.
+
+Twelve on the main base, the codelists the dimensions of apro_cpnh1, apro_mk_cola and
+ef_m_farmleg name in their data structures (Johannes, 2026-10-27, D2), each feeding the
+dimension whose code is its id lower-cased; three on the Comext base, the codelists the
+Prodcom datasets DS-059358 and DS-059359 name for ``product`` and ``indicators``
+(Johannes, 2026-10-28). The packaged file of each is its id lower-cased."""
 
 TOC = "toc"
 """The packaged table of contents, ``reference/toc.json``."""
@@ -94,7 +141,8 @@ class ListInfo(UpstreamModel):
     names, as printed.
 
     Attributes:
-        name: The packaged file, without ``.json``, e.g. ``"geo"`` or ``"toc"``.
+        name: The packaged file, without ``.json``, e.g. ``"geo"``,
+            ``"cxt_prodcom2_sold"`` or ``"toc"``.
         kind: ``"toc"`` or ``"codelist"``.
         id: The codelist's id, e.g. ``"GEO"`` (``extension.id``); ``None`` for the TOC.
         label: The codelist's name, e.g. ``"Geopolitical entity (reporting)"``;
@@ -125,8 +173,9 @@ class ListIndex(BaseModel):
     the packaged lists come from and names no upstream operation.
 
     Attributes:
-        fetched: When the refresh run's last answer arrived, timezone-aware UTC, e.g.
-            2026-10-27 19:55:36 UTC.
+        fetched: The latest ``fetched`` among the packaged lists, timezone-aware UTC,
+            e.g. 2026-10-27 19:55:36 UTC: when the last answer of the refresh runs that
+            wrote them arrived, a run with ``--only`` refreshing some of them.
         lists: One record per packaged list, the TOC first.
     """
 

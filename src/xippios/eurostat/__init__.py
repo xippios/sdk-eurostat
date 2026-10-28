@@ -11,8 +11,11 @@ from xippios.eurostat.tasks import (
     get_data,
     get_latest_period,
     get_series,
+    get_sold_production,
+    get_total_production,
     list_codes,
     list_datasets,
+    list_products,
 )
 
 __all__ = [
@@ -22,6 +25,9 @@ __all__ = [
     "get_data",
     "get_latest_period",
     "get_series",
+    "get_sold_production",
+    "get_total_production",
     "list_codes",
     "list_datasets",
+    "list_products",
 ]
