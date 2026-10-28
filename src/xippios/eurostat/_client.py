@@ -1,13 +1,11 @@
-"""The configured ``xippios.core`` client for Eurostat dissemination API.
+"""The package's one configured ``AsyncClient`` and its error mapping (conventions §6).
 
-One ``AsyncClient`` for the whole package: task functions share its rate limiter, and
-the same instance serves the sync facades and the MCP server. ``classify`` maps the
-Statistics API's documented refusals, and the SDMX 2.1 data API's answers that are no
-SDMX-CSV, onto the family's taxonomy once (ADR-0008); ``errors`` reads them. Answers of
-HTTP 200 are cached in core's ``MemoryCache`` with its default lifetime of five minutes,
-up to core's ``cache_max_bytes`` of 8 MiB a body (ADR-0019 decision 3), so a larger cube
-is returned and fetched again the next time; a file streamed to disk with ``download``
-never touches the cache.
+``classify`` maps the Statistics API's documented refusals, and the SDMX 2.1 data API's
+answers that are no SDMX-CSV, onto the family's taxonomy once (ADR-0008); ``errors``
+reads them. Answers of HTTP 200 are cached in core's ``MemoryCache`` with its default
+lifetime of five minutes, up to core's ``cache_max_bytes`` of 8 MiB a body (ADR-0019
+decision 3), so a larger cube is returned and fetched again the next time; a file
+streamed to disk with ``download`` never touches the cache.
 """
 
 import httpx
@@ -147,21 +145,8 @@ config = ClientConfig(
     cache=MemoryCache(),
 )
 
-# An upstream that reports an hourly or daily quota installs one QuotaPolicy, from
-# xippios.core, on config: it reads the quota headers of every answer and never sends
-# into a spent quota, waiting within the policy's pause_cap or raising RateLimitError
-# (ADR-0015; ADR-0010 decisions 3 and 4). Name only headers that count that quota, never
-# a pace (None turns one off); window is the fallback wait, 86400.0 for a daily quota.
-# classify, the ClientConfig hook, maps upstream's answer to a spent quota to
-# RateLimitError with retry_after. A source without a quota adds nothing.
-#
-# policy = QuotaPolicy(
-#     window=3600.0,
-#     limit_header="x-ratelimit-limit",
-#     remaining_header="x-ratelimit-remaining",
-#     source=SOURCE,
-# )
-# config = policy.install(config)
+# A source with a documented hourly or daily quota installs a QuotaPolicy of its own on
+# config (conventions §6, ADR-0015); core's README shows how.
 
 client = AsyncClient(config)
 
