@@ -1,0 +1,443 @@
+{
+  "param": "statinfo",
+  "endpoint": "sdmx/2.1/codelist/ESTAT/STATINFO",
+  "fetched": "2026-10-27T19:55:28Z",
+  "records": [
+    {
+      "code": "TOTAL",
+      "label": "Total"
+    },
+    {
+      "code": "UNI",
+      "label": "Universe"
+    },
+    {
+      "code": "SPL",
+      "label": "Sample"
+    },
+    {
+      "code": "SRC",
+      "label": "Survey data source"
+    },
+    {
+      "code": "AVG",
+      "label": "Average"
+    },
+    {
+      "code": "AVG_3Y",
+      "label": "Three-year average"
+    },
+    {
+      "code": "AVG_4Y",
+      "label": "Four-year average"
+    },
+    {
+      "code": "AVG_10Y",
+      "label": "Ten-year average"
+    },
+    {
+      "code": "AVG_30Y",
+      "label": "Thirty-year average"
+    },
+    {
+      "code": "AVG_A_MOV",
+      "label": "Annual moving average"
+    },
+    {
+      "code": "MEAN",
+      "label": "Mean income"
+    },
+    {
+      "code": "MMEAN",
+      "label": "Measured mean"
+    },
+    {
+      "code": "CMEAN",
+      "label": "Calculated mean"
+    },
+    {
+      "code": "MEAN_EI",
+      "label": "Mean equivalised income"
+    },
+    {
+      "code": "MED_EI",
+      "label": "Median equivalised income"
+    },
+    {
+      "code": "MED_ECE",
+      "label": "Median equivalised consumption expenditure"
+    },
+    {
+      "code": "MED",
+      "label": "Median"
+    },
+    {
+      "code": "SD",
+      "label": "Standard deviation"
+    },
+    {
+      "code": "SE",
+      "label": "Standard error"
+    },
+    {
+      "code": "CV",
+      "label": "Coefficient of variation"
+    },
+    {
+      "code": "CVA",
+      "label": "Coefficient of variation for absolute value"
+    },
+    {
+      "code": "CVR",
+      "label": "Coefficient of variation for relative value"
+    },
+    {
+      "code": "CV_PLI",
+      "label": "Coefficient of variation of price level indices"
+    },
+    {
+      "code": "CV_VI_HAB",
+      "label": "Coefficient of variation of volume indices of expenditure per capita"
+    },
+    {
+      "code": "CUM",
+      "label": "Cumulative series"
+    },
+    {
+      "code": "VAL",
+      "label": "Value"
+    },
+    {
+      "code": "VAL_A",
+      "label": "Annual value"
+    },
+    {
+      "code": "RV",
+      "label": "Relative value"
+    },
+    {
+      "code": "END",
+      "label": "Value at the end of the period"
+    },
+    {
+      "code": "MAX",
+      "label": "Maximum value within period"
+    },
+    {
+      "code": "MIN",
+      "label": "Minimum value within period"
+    },
+    {
+      "code": "DISP_NUTS2",
+      "label": "Dispersion at NUTS level 2"
+    },
+    {
+      "code": "DISP_NUTS3",
+      "label": "Dispersion at NUTS level 3"
+    },
+    {
+      "code": "SUM3Y",
+      "label": "Sum of the last 3 years"
+    },
+    {
+      "code": "SUM4Y",
+      "label": "Sum of the last 4 years"
+    },
+    {
+      "code": "SUM6Y",
+      "label": "Sum of the last 6 years"
+    },
+    {
+      "code": "NSME",
+      "label": "Unsmoothed estimate"
+    },
+    {
+      "code": "SME",
+      "label": "Smoothed estimate"
+    },
+    {
+      "code": "SME_UP95",
+      "label": "Smoothed estimate - upper boundary of the 95% confidence interval"
+    },
+    {
+      "code": "SME_LW95",
+      "label": "Smoothed estimate - lower boundary of the 95% confidence interval"
+    },
+    {
+      "code": "UP95",
+      "label": "Upper boundary of the 95% confidence interval"
+    },
+    {
+      "code": "LW95",
+      "label": "Lower boundary of the 95% confidence interval"
+    },
+    {
+      "code": "STA",
+      "label": "Status"
+    },
+    {
+      "code": "CR4",
+      "label": "Concentration ratio (four largest entities)"
+    },
+    {
+      "code": "R_MED_I",
+      "label": "Ratio of relative median income"
+    },
+    {
+      "code": "WT",
+      "label": "Weight"
+    },
+    {
+      "code": "COWEU",
+      "label": "Country weights for European Union (EU6-1958, EU9-1973, EU10-1981, EU12-1986, EU15-1995, EU25-2004, EU27-2007, EU28-2013, EU27-2020)"
+    },
+    {
+      "code": "COWEU27_2020",
+      "label": "Country weights for EU27 (from 2020)"
+    },
+    {
+      "code": "COWEU28",
+      "label": "Country weights for EU28 (2013-2020)"
+    },
+    {
+      "code": "COWEU27_2007",
+      "label": "Country weights for EU27 (2007-2013)"
+    },
+    {
+      "code": "COWEU25",
+      "label": "Country weights for EU25 (2004-2006)"
+    },
+    {
+      "code": "COWEU15",
+      "label": "Country weights for EU15 (1995-2004)"
+    },
+    {
+      "code": "COWEA",
+      "label": "Country weights for the euro area (EA11-1999, EA12-2001, EA13-2007, EA15-2008, EA16-2009, EA17-2011, EA18-2014, EA19-2015, EA20-2023,  EA21-2026)"
+    },
+    {
+      "code": "COWEA21",
+      "label": "Country weights for EA21 (euro area from 2026)"
+    },
+    {
+      "code": "COWEA20",
+      "label": "Country weights for EA20 (euro area 2023-2025)"
+    },
+    {
+      "code": "COWEA19",
+      "label": "Country weights for EA19 (euro area 2015-2022)"
+    },
+    {
+      "code": "COWEA18",
+      "label": "Country weights for EA18 (euro area - 2014)"
+    },
+    {
+      "code": "COWEA17",
+      "label": "Country weights for EA17 (euro area - 2011-2013)"
+    },
+    {
+      "code": "COWEA16",
+      "label": "Country weights for EA16 (euro area - 2009-2010)"
+    },
+    {
+      "code": "COWEA15",
+      "label": "Country weights for EA15 (euro area - 2008)"
+    },
+    {
+      "code": "COWEA13",
+      "label": "Country weights for EA13 (euro area - 2007)"
+    },
+    {
+      "code": "COWEA12",
+      "label": "Country weights for EA12 (euro area - 2001-2006)"
+    },
+    {
+      "code": "COWEEA",
+      "label": "Country weights for EEA (European Economic Area)"
+    },
+    {
+      "code": "IW",
+      "label": "Item weights"
+    },
+    {
+      "code": "IWBS",
+      "label": "Item weights for industry, construction and services (except activities of households as employers and extra-territorial organisations and bodies) - NACE rev.2, B to S"
+    },
+    {
+      "code": "NONE",
+      "label": "No income"
+    },
+    {
+      "code": "Q1",
+      "label": "First quartile"
+    },
+    {
+      "code": "Q2",
+      "label": "Second quartile"
+    },
+    {
+      "code": "Q3",
+      "label": "Third quartile"
+    },
+    {
+      "code": "Q4",
+      "label": "Fourth quartile"
+    },
+    {
+      "code": "QU1",
+      "label": "First quintile"
+    },
+    {
+      "code": "QU2",
+      "label": "Second quintile"
+    },
+    {
+      "code": "QU3",
+      "label": "Third quintile"
+    },
+    {
+      "code": "QU4",
+      "label": "Fourth quintile"
+    },
+    {
+      "code": "QU5",
+      "label": "Fifth quintile"
+    },
+    {
+      "code": "D1",
+      "label": "First decile"
+    },
+    {
+      "code": "D2",
+      "label": "Second decile"
+    },
+    {
+      "code": "D3",
+      "label": "Third decile"
+    },
+    {
+      "code": "D4",
+      "label": "Fourth decile"
+    },
+    {
+      "code": "D5",
+      "label": "Fifth decile"
+    },
+    {
+      "code": "D6",
+      "label": "Sixth decile"
+    },
+    {
+      "code": "D7",
+      "label": "Seventh decile"
+    },
+    {
+      "code": "D8",
+      "label": "Eighth decile"
+    },
+    {
+      "code": "D9",
+      "label": "Ninth decile"
+    },
+    {
+      "code": "D10",
+      "label": "Tenth decile"
+    },
+    {
+      "code": "P1",
+      "label": "First percentile"
+    },
+    {
+      "code": "P2",
+      "label": "Second percentile"
+    },
+    {
+      "code": "P3",
+      "label": "Third percentile"
+    },
+    {
+      "code": "P4",
+      "label": "Fourth percentile"
+    },
+    {
+      "code": "P5",
+      "label": "Fifth percentile"
+    },
+    {
+      "code": "P10",
+      "label": "Tenth percentile"
+    },
+    {
+      "code": "P25",
+      "label": "Twenty-fifth percentile"
+    },
+    {
+      "code": "S2",
+      "label": "Second sextile"
+    },
+    {
+      "code": "P75",
+      "label": "Seventy-fifth percentile"
+    },
+    {
+      "code": "P90",
+      "label": "Ninetieth percentile"
+    },
+    {
+      "code": "P95",
+      "label": "Ninety-fifth percentile"
+    },
+    {
+      "code": "P96",
+      "label": "Ninety-sixth percentile"
+    },
+    {
+      "code": "P97",
+      "label": "Ninety-seventh percentile"
+    },
+    {
+      "code": "P98",
+      "label": "Ninety-eighth percentile"
+    },
+    {
+      "code": "P99",
+      "label": "Ninety-ninth percentile"
+    },
+    {
+      "code": "P100",
+      "label": "Hundredth percentile"
+    },
+    {
+      "code": "UNK",
+      "label": "Unknown"
+    },
+    {
+      "code": "AVG_TRP",
+      "label": "Average per trip"
+    },
+    {
+      "code": "AVG_NGT",
+      "label": "Average per night"
+    },
+    {
+      "code": "ABVTH",
+      "label": "Above threshold"
+    },
+    {
+      "code": "BLWTH",
+      "label": "Below threshold"
+    },
+    {
+      "code": "TC",
+      "label": "Top cut-off point"
+    },
+    {
+      "code": "SHARE",
+      "label": "Share of national equivalised income"
+    },
+    {
+      "code": "GINI_HND",
+      "label": "Gini coefficient (scale from 0 to 100)"
+    }
+  ]
+}

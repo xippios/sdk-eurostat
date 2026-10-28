@@ -1,0 +1,91 @@
+{
+  "param": "uaarea",
+  "endpoint": "sdmx/2.1/codelist/ESTAT/UAAREA",
+  "fetched": "2026-10-27T19:55:36Z",
+  "records": [
+    {
+      "code": "TOTAL",
+      "label": "Total"
+    },
+    {
+      "code": "HA0",
+      "label": "Zero ha"
+    },
+    {
+      "code": "HA_GT0_LT2",
+      "label": "Over 0 ha to less than 2 ha"
+    },
+    {
+      "code": "HA_GT0_LT5",
+      "label": "Over 0 ha to less than 5 ha"
+    },
+    {
+      "code": "HA_LT2",
+      "label": "Less than 2 ha"
+    },
+    {
+      "code": "HA2-4",
+      "label": "From 2 to 4.9 ha"
+    },
+    {
+      "code": "HA2-19",
+      "label": "From 2 to 19.9 ha"
+    },
+    {
+      "code": "HA5-9",
+      "label": "From 5 to 9.9 ha"
+    },
+    {
+      "code": "HA5-29",
+      "label": "From 5 to 29.9 ha"
+    },
+    {
+      "code": "HA_LT10",
+      "label": "Less than 10 ha"
+    },
+    {
+      "code": "HA10-19",
+      "label": "From 10 to 19.9 ha"
+    },
+    {
+      "code": "HA_10-100",
+      "label": "From 10 to 99.9 ha"
+    },
+    {
+      "code": "HA20-29",
+      "label": "From 20 to 29.9 ha"
+    },
+    {
+      "code": "HA_GE20",
+      "label": "20 ha or over"
+    },
+    {
+      "code": "HA30-49",
+      "label": "From 30 to 49.9 ha"
+    },
+    {
+      "code": "HA30-99",
+      "label": "From 30 to 99.9 ha"
+    },
+    {
+      "code": "HA50-99",
+      "label": "From 50 to 99.9 ha"
+    },
+    {
+      "code": "HA100-249",
+      "label": "From 100 to 249.9 ha"
+    },
+    {
+      "code": "HA_GE100",
+      "label": "100 ha or over"
+    },
+    {
+      "code": "HA_GT100",
+      "label": "Over 100 ha"
+    },
+    {
+      "code": "HA_GE250",
+      "label": "250 ha or over"
+    }
+  ]
+}

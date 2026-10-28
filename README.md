@@ -84,6 +84,44 @@ refuses a `time` filter before sending, since it selects the periods itself, and
 Over MCP each slice keeps the family's cap, 200 rows or 64 KB, with a note of its own on
 how to see the rest.
 
+### Datasets and codes
+
+```python
+from xippios.eurostat import list_codes, list_datasets
+
+milk = list_datasets(search="milk")  # 18 leaves of the table of contents
+cola = list_datasets(search="apro_mk_cola").data[0]
+cola.code, cola.type  # ("apro_mk_cola", "dataset")
+cola.title  # "Production of main cows' milk products - annual data"
+cola.path  # "Database by themes > Agriculture, forestry and fisheries > ... > Milk and milk products"
+cola.last_update, cola.data_start, cola.data_end  # ("05.10.2026", "1968", "2025"), as printed
+milk.meta.vintage, milk.meta.published_at  # "20261027T1000", 2026-10-27 10:00 without a zone
+austria = list_codes("geo", search="austria")
+austria.data  # [Code(code="AT", label="Austria")]
+austria.meta.vintage, austria.meta.published_at  # "28.0", 2026-03-25 23:00+01:00
+list_codes("unit", search="THS_T").data[0]  # Code(code="THS_T", label="Thousand tonnes")
+```
+
+Both answer from lists packaged with this version, without a request: `meta.retrieved_at`
+is when the package fetched the list, `meta.endpoint` the operation it came from.
+`list_datasets(search=None)` reads Eurostat's table of contents (`catalogue/toc/xml`):
+every dataset and pre-defined table of the navigation tree, over 10,000 leaves, one per
+listing in the tree, each with its code, type, English title, the folders above it
+(`path`, joined with `" > "`), its last update and structure change, its first and last
+period and its number of values as Eurostat prints them. `meta.vintage` is the table of
+contents' `creationDate` as printed and `meta.published_at` the same time, which
+Eurostat prints without a zone, so `meta.published_at_naive` is set.
+`list_codes(codelist, search=None)` reads one of twelve SDMX codelists
+(`sdmx/2.1/codelist/ESTAT/<ID>`, English labels): FREQ, GEO, UNIT, CROPS, STRUCPRO,
+MILKITEM, DAIRYPROD, STATINFO, LEG_FORM, FARMTYPE, SO_EUR and UAAREA, the codelists of
+the dimensions of apro_cpnh1, apro_mk_cola and ef_m_farmleg, named as the dimension is
+(`"geo"`, case-insensitive). `meta.vintage` is the codelist's version and
+`meta.published_at` its last update. Another name raises `UnknownCode` naming the
+closest packaged codelists. `search` keeps the records whose code or title (label)
+contains the text, ignoring case. Over MCP `eurostat_list_datasets` keeps the family's
+cap and `eurostat_list_codes` takes up to 1,000 codes within the family's 64 KB, so
+every packaged codelist but GEO comes whole; both notes name `search`.
+
 ## MCP
 
 ```json
@@ -114,6 +152,8 @@ exactly tasks.__all__ and tasks_write.__all__. -->
 | `getData` with `sinceTimePeriod` and `untilTimePeriod` | `get_series(dataset, filters, since, until)`, one series as observations in cube order, which runs oldest period first in every recorded cube | `eurostat_get_series` | alpha |
 | `getData` with `lastTimePeriod=1` | `get_latest_period(dataset, filters)`, the observations of the most recent period | `eurostat_get_latest_period` | alpha |
 | `getData` with `time` | `get_cross_section(dataset, period, filters)`, the observations of one period | `eurostat_get_cross_section` | alpha |
+| `getTocXml` (`catalogue/toc/xml`), packaged | `list_datasets(search)`, the datasets and tables of the table of contents | `eurostat_list_datasets` | alpha |
+| `codeListQuery` (`sdmx/2.1/codelist/ESTAT/{resourceID}`), packaged | `list_codes(codelist, search)`, the codes of one of twelve codelists | `eurostat_list_codes` | alpha |
 
 ## Upstream terms and attribution
 

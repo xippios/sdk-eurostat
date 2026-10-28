@@ -1,0 +1,459 @@
+{
+  "param": "farmtype",
+  "endpoint": "sdmx/2.1/codelist/ESTAT/FARMTYPE",
+  "fetched": "2026-10-27T19:55:32Z",
+  "records": [
+    {
+      "code": "TOTAL",
+      "label": "Total"
+    },
+    {
+      "code": "CR",
+      "label": "Crops"
+    },
+    {
+      "code": "FT1_SO",
+      "label": "Specialist field crops (calculated with Standard Output)"
+    },
+    {
+      "code": "FT15_SO",
+      "label": "Specialist cereals, oilseed and protein crops (calculated with Standard Output)"
+    },
+    {
+      "code": "FT16_SO",
+      "label": "General field cropping (calculated with Standard Output)"
+    },
+    {
+      "code": "FT2_SO",
+      "label": "Specialist horticulture (calculated with Standard Output)"
+    },
+    {
+      "code": "FT21_SO",
+      "label": "Specialist horticulture indoor (calculated with Standard Output)"
+    },
+    {
+      "code": "FT22_SO",
+      "label": "Specialist horticulture outdoor (calculated with Standard Output)"
+    },
+    {
+      "code": "FT23_SO",
+      "label": "Other horticulture (calculated with Standard Output)"
+    },
+    {
+      "code": "FT3_SO",
+      "label": "Specialist permanent crops (calculated with Standard Output)"
+    },
+    {
+      "code": "FT35_SO",
+      "label": "Specialist vineyards (calculated with Standard Output)"
+    },
+    {
+      "code": "FT36_SO",
+      "label": "Specialist fruit and citrus fruit (calculated with Standard Output)"
+    },
+    {
+      "code": "FT37_SO",
+      "label": "Specialist olives (calculated with Standard Output)"
+    },
+    {
+      "code": "FT38_SO",
+      "label": "Various permanent crops combined (calculated with Standard Output)"
+    },
+    {
+      "code": "LS",
+      "label": "Livestock"
+    },
+    {
+      "code": "FT4_SO",
+      "label": "Specialist grazing livestock (calculated with Standard Output)"
+    },
+    {
+      "code": "FT45_SO",
+      "label": "Specialist dairying (calculated with Standard Output)"
+    },
+    {
+      "code": "FT46_SO",
+      "label": "Specialist cattle-rearing and fattening (calculated with Standard Output)"
+    },
+    {
+      "code": "FT47_SO",
+      "label": "Cattle-dairying, rearing and fattening combined (calculated with Standard Output)"
+    },
+    {
+      "code": "FT48_SO",
+      "label": "Sheep, goats and other grazing livestock (calculated with Standard Output)"
+    },
+    {
+      "code": "FT5_SO",
+      "label": "Specialist granivores (calculated with Standard Output)"
+    },
+    {
+      "code": "FT51_SO",
+      "label": "Specialist pigs (calculated with Standard Output)"
+    },
+    {
+      "code": "FT52_SO",
+      "label": "Specialist poultry (calculated with Standard Output)"
+    },
+    {
+      "code": "FT53_SO",
+      "label": "Various granivores combined (calculated with Standard Output)"
+    },
+    {
+      "code": "FT6_SO",
+      "label": "Mixed cropping (calculated with Standard Output)"
+    },
+    {
+      "code": "FT61_SO",
+      "label": "Mixed cropping (calculated with Standard Output)"
+    },
+    {
+      "code": "OTH",
+      "label": "Other"
+    },
+    {
+      "code": "FT7_SO",
+      "label": "Mixed livestock farms (calculated with Standard Output)"
+    },
+    {
+      "code": "FT73_SO",
+      "label": "Mixed livestock, mainly grazing livestock (calculated with Standard Output)"
+    },
+    {
+      "code": "FT74_SO",
+      "label": "Mixed livestock, mainly granivores (calculated with Standard Output)"
+    },
+    {
+      "code": "FT8_SO",
+      "label": "Mixed crops-livestock (calculated with Standard Output)"
+    },
+    {
+      "code": "FT83_SO",
+      "label": "Field crops-grazing livestock combined (calculated with Standard Output)"
+    },
+    {
+      "code": "FT84_SO",
+      "label": "Various crops and livestock combined (calculated with Standard Output)"
+    },
+    {
+      "code": "FT9_SO",
+      "label": "Non-classified farms (calculated with Standard Output)"
+    },
+    {
+      "code": "FT90_SO",
+      "label": "Non-classified farms (calculated with Standard Output)"
+    },
+    {
+      "code": "FT1_SGM",
+      "label": "Specialist field crops (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT11_SGM",
+      "label": "Specialist cereals (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT12_SGM",
+      "label": "General field cropping (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT13_SGM",
+      "label": "Specialist cereals, oilseed and protein crops (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT14_SGM",
+      "label": "General field cropping (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT2_SGM",
+      "label": "Specialist horticulture (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT20_SGM",
+      "label": "Specialist horticulture (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT3_SGM",
+      "label": "Specialist permanent crops (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT31_SGM",
+      "label": "Specialist vineyards (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT32_SGM",
+      "label": "Specialist fruit and citrus fruit (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT33_SGM",
+      "label": "Specialist olives (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT34_SGM",
+      "label": "Various permanent crops combined (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT4_SGM",
+      "label": "Specialist grazing livestock (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT41_SGM",
+      "label": "Specialist dairying (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT42_SGM",
+      "label": "Specialist cattle-rearing and fattening (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT43_SGM",
+      "label": "Cattle-dairying, rearing and fattening combined (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT44_SGM",
+      "label": "Sheep, goats and other grazing livestock (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT5_SGM",
+      "label": "Specialist granivores (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT50_SGM",
+      "label": "Specialist granivores (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT6_SGM",
+      "label": "Mixed cropping (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT60_SGM",
+      "label": "Mixed cropping (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT7_SGM",
+      "label": "Mixed livestock farms (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT71_SGM",
+      "label": "Mixed livestock, mainly grazing livestock (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT72_SGM",
+      "label": "Mixed livestock, mainly granivores (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT8_SGM",
+      "label": "Mixed crops-livestock (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT81_SGM",
+      "label": "Field crops-grazing livestock combined (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT82_SGM",
+      "label": "Various crops and livestock combined (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT9_SGM",
+      "label": "Non-classifiable farms (calculated with Standard Gross Margin)"
+    },
+    {
+      "code": "FT1",
+      "label": "Specialist field crops"
+    },
+    {
+      "code": "FT11",
+      "label": "Specialist cereals"
+    },
+    {
+      "code": "FT12",
+      "label": "General field cropping"
+    },
+    {
+      "code": "FT13",
+      "label": "Specialist cereals, oilseed and protein crops"
+    },
+    {
+      "code": "FT14",
+      "label": "General field cropping"
+    },
+    {
+      "code": "FT15",
+      "label": "Specialist cereals, oilseed and protein crops"
+    },
+    {
+      "code": "FT16",
+      "label": "General field cropping"
+    },
+    {
+      "code": "FT2",
+      "label": "Specialist horticulture"
+    },
+    {
+      "code": "FT20",
+      "label": "Specialist horticulture"
+    },
+    {
+      "code": "FT21",
+      "label": "Specialist horticulture indoor"
+    },
+    {
+      "code": "FT22",
+      "label": "Specialist horticulture outdoor"
+    },
+    {
+      "code": "FT23",
+      "label": "Other horticulture"
+    },
+    {
+      "code": "FT3",
+      "label": "Specialist permanent crops"
+    },
+    {
+      "code": "FT31",
+      "label": "Specialist vineyards"
+    },
+    {
+      "code": "FT32",
+      "label": "Specialist fruit and citrus fruit"
+    },
+    {
+      "code": "FT33",
+      "label": "Specialist olives"
+    },
+    {
+      "code": "FT34",
+      "label": "Various permanent crops combined"
+    },
+    {
+      "code": "FT35",
+      "label": "Specialist vineyards"
+    },
+    {
+      "code": "FT36",
+      "label": "Specialist fruit and citrus fruit"
+    },
+    {
+      "code": "FT37",
+      "label": "Specialist olives"
+    },
+    {
+      "code": "FT38",
+      "label": "Various permanent crops combined"
+    },
+    {
+      "code": "FT4",
+      "label": "Specialist grazing livestock"
+    },
+    {
+      "code": "FT41",
+      "label": "Specialist dairying"
+    },
+    {
+      "code": "FT42",
+      "label": "Specialist cattle-rearing and fattening"
+    },
+    {
+      "code": "FT43",
+      "label": "Cattle-dairying, rearing and fattening combined"
+    },
+    {
+      "code": "FT44",
+      "label": "Sheep, goats and other grazing livestock"
+    },
+    {
+      "code": "FT45",
+      "label": "Specialist dairying"
+    },
+    {
+      "code": "FT46",
+      "label": "Specialist cattle-rearing and fattening"
+    },
+    {
+      "code": "FT47",
+      "label": "Cattle-dairying, rearing and fattening combined"
+    },
+    {
+      "code": "FT48",
+      "label": "Sheep, goats and other grazing livestock"
+    },
+    {
+      "code": "FT5",
+      "label": "Specialist granivores"
+    },
+    {
+      "code": "FT50",
+      "label": "Specialist granivores"
+    },
+    {
+      "code": "FT51",
+      "label": "Specialist pigs"
+    },
+    {
+      "code": "FT52",
+      "label": "Specialist poultry"
+    },
+    {
+      "code": "FT53",
+      "label": "Various granivores combined"
+    },
+    {
+      "code": "FT6",
+      "label": "Mixed cropping"
+    },
+    {
+      "code": "FT60",
+      "label": "Mixed cropping"
+    },
+    {
+      "code": "FT61",
+      "label": "Mixed cropping"
+    },
+    {
+      "code": "FT7",
+      "label": "Mixed livestock farms"
+    },
+    {
+      "code": "FT71",
+      "label": "Mixed livestock, mainly grazing livestock"
+    },
+    {
+      "code": "FT72",
+      "label": "Mixed livestock, mainly granivores"
+    },
+    {
+      "code": "FT73",
+      "label": "Mixed livestock, mainly grazing livestock"
+    },
+    {
+      "code": "FT74",
+      "label": "Mixed livestock, mainly granivores"
+    },
+    {
+      "code": "FT8",
+      "label": "Mixed crops-livestock"
+    },
+    {
+      "code": "FT81",
+      "label": "Field crops-grazing livestock combined"
+    },
+    {
+      "code": "FT82",
+      "label": "Various crops and livestock combined"
+    },
+    {
+      "code": "FT83",
+      "label": "Field crops-grazing livestock combined"
+    },
+    {
+      "code": "FT84",
+      "label": "Various crops and livestock combined"
+    },
+    {
+      "code": "FT9",
+      "label": "Non-classified farms"
+    },
+    {
+      "code": "FT90",
+      "label": "Non-classified farms"
+    }
+  ]
+}

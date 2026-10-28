@@ -11,6 +11,16 @@ from xippios.eurostat.tasks import (
     get_data,
     get_latest_period,
     get_series,
+    list_codes,
+    list_datasets,
 )
 
-__all__ = ["__version__", "get_cross_section", "get_data", "get_latest_period", "get_series"]
+__all__ = [
+    "__version__",
+    "get_cross_section",
+    "get_data",
+    "get_latest_period",
+    "get_series",
+    "list_codes",
+    "list_datasets",
+]

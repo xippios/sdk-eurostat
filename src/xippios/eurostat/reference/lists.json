@@ -1,0 +1,135 @@
+{
+  "fetched": "2026-10-27T19:55:36Z",
+  "lists": [
+    {
+      "name": "toc",
+      "kind": "toc",
+      "id": null,
+      "label": null,
+      "version": null,
+      "LAST_UPDATED": null,
+      "creationDate": "20261027T1000",
+      "count": 10375
+    },
+    {
+      "name": "freq",
+      "kind": "codelist",
+      "id": "FREQ",
+      "label": "Time frequency",
+      "version": "3.9",
+      "LAST_UPDATED": "2025-11-07T23:00:00+0100",
+      "creationDate": null,
+      "count": 12
+    },
+    {
+      "name": "geo",
+      "kind": "codelist",
+      "id": "GEO",
+      "label": "Geopolitical entity (reporting)",
+      "version": "28.0",
+      "LAST_UPDATED": "2026-03-25T23:00:00+0100",
+      "creationDate": null,
+      "count": 4292
+    },
+    {
+      "name": "unit",
+      "kind": "codelist",
+      "id": "UNIT",
+      "label": "Unit of measure",
+      "version": "84.0",
+      "LAST_UPDATED": "2026-10-21T23:00:00+0200",
+      "creationDate": null,
+      "count": 773
+    },
+    {
+      "name": "crops",
+      "kind": "codelist",
+      "id": "CROPS",
+      "label": "Crops",
+      "version": "17.0",
+      "LAST_UPDATED": "2026-09-21T23:00:00+0200",
+      "creationDate": null,
+      "count": 725
+    },
+    {
+      "name": "strucpro",
+      "kind": "codelist",
+      "id": "STRUCPRO",
+      "label": "Structure of production",
+      "version": "9.0",
+      "LAST_UPDATED": "2026-06-29T11:00:00+0200",
+      "creationDate": null,
+      "count": 24
+    },
+    {
+      "name": "milkitem",
+      "kind": "codelist",
+      "id": "MILKITEM",
+      "label": "Item of milk",
+      "version": "3.0",
+      "LAST_UPDATED": "2025-09-09T23:00:00+0200",
+      "creationDate": null,
+      "count": 17
+    },
+    {
+      "name": "dairyprod",
+      "kind": "codelist",
+      "id": "DAIRYPROD",
+      "label": "Dairy and other animal products (except meat)",
+      "version": "4.1",
+      "LAST_UPDATED": "2026-04-27T23:00:00+0200",
+      "creationDate": null,
+      "count": 166
+    },
+    {
+      "name": "statinfo",
+      "kind": "codelist",
+      "id": "STATINFO",
+      "label": "Statistical information",
+      "version": "16.0",
+      "LAST_UPDATED": "2026-05-11T23:00:00+0200",
+      "creationDate": null,
+      "count": 109
+    },
+    {
+      "name": "leg_form",
+      "kind": "codelist",
+      "id": "LEG_FORM",
+      "label": "Legal form",
+      "version": "2.0",
+      "LAST_UPDATED": "2026-10-26T23:00:00+0100",
+      "creationDate": null,
+      "count": 28
+    },
+    {
+      "name": "farmtype",
+      "kind": "codelist",
+      "id": "FARMTYPE",
+      "label": "Farm type",
+      "version": "3.3",
+      "LAST_UPDATED": "2025-07-07T23:00:00+0200",
+      "creationDate": null,
+      "count": 113
+    },
+    {
+      "name": "so_eur",
+      "kind": "codelist",
+      "id": "SO_EUR",
+      "label": "Standard output in Euros",
+      "version": "8.0",
+      "LAST_UPDATED": "2025-04-28T23:00:00+0200",
+      "creationDate": null,
+      "count": 68
+    },
+    {
+      "name": "uaarea",
+      "kind": "codelist",
+      "id": "UAAREA",
+      "label": "Utilised agricultural area",
+      "version": "5.0",
+      "LAST_UPDATED": "2025-04-28T23:00:00+0200",
+      "creationDate": null,
+      "count": 21
+    }
+  ]
+}

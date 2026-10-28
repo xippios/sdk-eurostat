@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Cut by scripts/refresh_reference.py with its samples option from https://ec.europa.eu/eurostat/api/dissemination/catalogue/toc/xml, creationDate 20261027T1000, 23310491 bytes, sha256 40043970a6ecd003df517d839d0322d2d7a108b04a962bde58bd944b2b491768, fetched 2026-10-27T19:55:14Z: the folder apro_mk with its leaves apro_mk_cola, apro_mk_farm and the folders above it, every other branch and leaf left out. -->
+<nt:tree xmlns:nt="urn:eu.europa.ec.eurostat.navtree" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:eu.europa.ec.eurostat.navtree https://ec.europa.eu/eurostat/api/dissemination/catalogue/toc/TableOfContent.xsd" creationDate="20261027T1000">
+  <nt:branch>
+    <nt:title language="en">Database by themes</nt:title>
+    <nt:title language="fr">Base de données par thèmes</nt:title>
+    <nt:title language="de">Datenbank nach Themen</nt:title>
+    <nt:code>data</nt:code>
+    <nt:children>
+      <nt:branch>
+        <nt:title language="en">Agriculture, forestry and fisheries</nt:title>
+        <nt:title language="fr">Agriculture, sylviculture et pêche</nt:title>
+        <nt:title language="de">Landwirtschaft, Forstwirtschaft und Fischerei</nt:title>
+        <nt:code>agric</nt:code>
+        <nt:children>
+          <nt:branch>
+            <nt:title language="en">Agriculture</nt:title>
+            <nt:title language="fr">Agriculture</nt:title>
+            <nt:title language="de">Landwirtschaft</nt:title>
+            <nt:code>agr</nt:code>
+            <nt:children>
+              <nt:branch>
+                <nt:title language="en">Animal production</nt:title>
+                <nt:title language="fr">Productions animales</nt:title>
+                <nt:title language="de">Tiererzeugung</nt:title>
+                <nt:code>apro_anip</nt:code>
+                <nt:children>
+                  <nt:branch>
+                    <nt:title language="en">Milk and milk products</nt:title>
+                    <nt:title language="fr">Lait et production de lait</nt:title>
+                    <nt:title language="de">Milch und Milcherzeugnisse</nt:title>
+                    <nt:code>apro_mk</nt:code>
+                    <nt:children>
+                      <nt:leaf type="dataset">
+                        <nt:title language="en">Production of main cows' milk products - annual data</nt:title>
+                        <nt:title language="fr">Collecte de lait de vache et produits obtenus - données annuelles</nt:title>
+                        <nt:title language="de">Produktion der wichtigsten Milcherzeugnisse aus Kuhmilch – jährliche Daten</nt:title>
+                        <nt:code>apro_mk_cola</nt:code>
+                        <nt:lastUpdate>05.10.2026</nt:lastUpdate>
+                        <nt:lastModified>09.03.2026</nt:lastModified>
+                        <nt:dataStart>1968</nt:dataStart>
+                        <nt:dataEnd>2025</nt:dataEnd>
+                        <nt:values>9502</nt:values>
+                        <nt:source language="en">Eurostat</nt:source>
+                        <nt:source language="fr">Eurostat</nt:source>
+                        <nt:source language="de">Eurostat</nt:source>
+                        <nt:unit language="en" />
+                        <nt:unit language="fr" />
+                        <nt:unit language="de" />
+                        <nt:shortDescription language="en" />
+                        <nt:shortDescription language="fr" />
+                        <nt:shortDescription language="de" />
+                        <nt:metadata format="html">https://ec.europa.eu/eurostat/cache/metadata/en/apro_anip_esms.htm</nt:metadata>
+                        <nt:metadata format="sdmx">https://ec.europa.eu/eurostat/api/dissemination/files?file=metadata/apro_anip_esms.sdmx.zip</nt:metadata>
+                        <nt:downloadLink format="tsv">https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/APRO_MK_COLA?format=tsv&amp;compressed=true</nt:downloadLink>
+                      </nt:leaf>
+                      <nt:leaf type="dataset">
+                        <nt:title language="en">Production and utilization of milk on the farm - annual data</nt:title>
+                        <nt:title language="fr">Production et utilisation du lait à la ferme - données annuelles</nt:title>
+                        <nt:title language="de">Erzeugung und Verwendung von Milch in den landwirtschaftlichen Betrieben - jährliche Daten</nt:title>
+                        <nt:code>apro_mk_farm</nt:code>
+                        <nt:lastUpdate>07.07.2026</nt:lastUpdate>
+                        <nt:lastModified>10.09.2025</nt:lastModified>
+                        <nt:dataStart>1960</nt:dataStart>
+                        <nt:dataEnd>2024</nt:dataEnd>
+                        <nt:values>39037</nt:values>
+                        <nt:source language="en">Eurostat</nt:source>
+                        <nt:source language="fr">Eurostat</nt:source>
+                        <nt:source language="de">Eurostat</nt:source>
+                        <nt:unit language="en" />
+                        <nt:unit language="fr" />
+                        <nt:unit language="de" />
+                        <nt:shortDescription language="en" />
+                        <nt:shortDescription language="fr" />
+                        <nt:shortDescription language="de" />
+                        <nt:metadata format="html">https://ec.europa.eu/eurostat/cache/metadata/en/apro_anip_esms.htm</nt:metadata>
+                        <nt:metadata format="sdmx">https://ec.europa.eu/eurostat/api/dissemination/files?file=metadata/apro_anip_esms.sdmx.zip</nt:metadata>
+                        <nt:downloadLink format="tsv">https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/APRO_MK_FARM?format=tsv&amp;compressed=true</nt:downloadLink>
+                        <nt:children>
+                          <nt:leaf type="table">
+                            <nt:title language="en">Production of milk on farms</nt:title>
+                            <nt:title language="fr">Production du lait à la ferme</nt:title>
+                            <nt:title language="de">Erzeugung von Milch in den landwirtschaftlichen Betrieben</nt:title>
+                            <nt:code>tag00041</nt:code>
+                            <nt:lastUpdate>07.07.2026</nt:lastUpdate>
+                            <nt:lastModified>10.09.2025</nt:lastModified>
+                            <nt:dataStart>2013</nt:dataStart>
+                            <nt:dataEnd>2024</nt:dataEnd>
+                            <nt:values>385</nt:values>
+                            <nt:source language="en">Eurostat</nt:source>
+                            <nt:source language="fr">Eurostat</nt:source>
+                            <nt:source language="de">Eurostat</nt:source>
+                            <nt:unit language="en" />
+                            <nt:unit language="fr" />
+                            <nt:unit language="de" />
+                            <nt:shortDescription language="en">&lt;p&gt;Total raw milk production on farms from cows, ewes, goats and buffaloes. Little or no milk other than from cows is produced in certain countries. Values are expressed in 1000 t.&amp;nbsp;&lt;/p&gt;</nt:shortDescription>
+                            <nt:shortDescription language="fr">&lt;p&gt;Production totale de lait cru de vaches, brebis, chèvres et buffles dans les exploitations. Peu ou pas d'autre lait que de vache est produits dans certains pays. Les valeurs sont exprimées en 1000 t.&lt;/p&gt;</nt:shortDescription>
+                            <nt:shortDescription language="de">&lt;p&gt;Gesamte Rohmilcherzeugung in den landwirtschaftlichen Betrieben&amp;nbsp;von Kuh-, Schaf-, Ziegen- und Büffelkuhmilch. In bestimmten Ländern wird wenig oder keine Milch von anderen Tieren als Kühen produziert. Die Werte werden in 1000 t angegeben.&lt;/p&gt;</nt:shortDescription>
+                            <nt:metadata format="html">https://ec.europa.eu/eurostat/cache/metadata/en/apro_anip_esms.htm</nt:metadata>
+                            <nt:metadata format="sdmx">https://ec.europa.eu/eurostat/api/dissemination/files?file=metadata/apro_anip_esms.sdmx.zip</nt:metadata>
+                            <nt:downloadLink format="tsv">https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/TAG00041?format=tsv&amp;compressed=true</nt:downloadLink>
+                          </nt:leaf>
+                        </nt:children>
+                      </nt:leaf>
+                    </nt:children>
+                  </nt:branch>
+                </nt:children>
+              </nt:branch>
+            </nt:children>
+          </nt:branch>
+        </nt:children>
+      </nt:branch>
+    </nt:children>
+  </nt:branch>
+</nt:tree>

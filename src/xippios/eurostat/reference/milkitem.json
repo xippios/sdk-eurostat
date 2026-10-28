@@ -1,0 +1,75 @@
+{
+  "param": "milkitem",
+  "endpoint": "sdmx/2.1/codelist/ESTAT/MILKITEM",
+  "fetched": "2026-10-27T19:55:27Z",
+  "records": [
+    {
+      "code": "PTEN",
+      "label": "Protein content"
+    },
+    {
+      "code": "PTEN_ORG",
+      "label": "Protein content - organic"
+    },
+    {
+      "code": "PTEN_MC_ORG",
+      "label": "Cows' milk protein content - organic"
+    },
+    {
+      "code": "PRD",
+      "label": "Product obtained"
+    },
+    {
+      "code": "PRD_ORG",
+      "label": "Product obtained - organic"
+    },
+    {
+      "code": "BTE",
+      "label": "Butter equivalent"
+    },
+    {
+      "code": "FAT",
+      "label": "Fat content (t)"
+    },
+    {
+      "code": "FAT_ORG",
+      "label": "Fat content - organic"
+    },
+    {
+      "code": "USM",
+      "label": "Utilization of skimmed milk and buttermilk (1 000 t)"
+    },
+    {
+      "code": "USM_ORG",
+      "label": "Use of skimmed milk - organic"
+    },
+    {
+      "code": "UWM",
+      "label": "Utilization of whole milk (1 000 t)"
+    },
+    {
+      "code": "UWM_ORG",
+      "label": "Use of whole milk - organic"
+    },
+    {
+      "code": "WPE",
+      "label": "Whey powder equivalent"
+    },
+    {
+      "code": "FCA",
+      "label": "Fat content (% of product weight) (annual)"
+    },
+    {
+      "code": "PCA",
+      "label": "Protein content (% of product weight) (annual)"
+    },
+    {
+      "code": "PRO",
+      "label": "Products obtained (1 000 t)"
+    },
+    {
+      "code": "PAT",
+      "label": "Protein content (t)"
+    }
+  ]
+}
