@@ -171,18 +171,17 @@ def test_parse_sdmx_csv_refuses_a_row_that_does_not_match_its_header(tmp_path: P
         next(rows)
 
 
-def test_parse_sdmx_csv_refuses_an_obs_value_that_is_no_number(tmp_path: Path) -> None:
-    """NOT RECORDED: the plain sample with a value replaced by ``:`` in memory."""
+def test_parse_sdmx_csv_keeps_an_obs_value_that_is_no_number_as_printed(tmp_path: Path) -> None:
+    """NOT RECORDED: the plain sample with a value replaced by ``:E`` in memory, the text
+    Prodcom prints for a flag among its measures; kept as printed, the next row's number
+    still parsed."""
     header, table = table_of(text_of(PLAIN))
     value = table[0][header.index("OBS_VALUE")]
-    path = tmp_path / "colon.csv"
-    path.write_bytes(PLAIN.read_bytes().replace(f",{value},".encode(), b",:,", 1))
-    with pytest.raises(ValidationError) as refused:
-        list(parse_sdmx_csv(path))
-    assert str(refused.value) == (
-        "eurostat sdmx-csv line 2: 1 validation error(s); first at OBS_VALUE "
-        "(decimal_parsing): Input should be a valid decimal"
-    ), "the line and the column, never the value"
+    path = tmp_path / "flag.csv"
+    path.write_bytes(PLAIN.read_bytes().replace(f",{value},".encode(), b",:E,", 1))
+    rows = list(parse_sdmx_csv(path))
+    assert rows[0].obs_value == ":E"
+    assert rows[1].obs_value == Decimal(table[1][header.index("OBS_VALUE")])
 
 
 @pytest.mark.parametrize("sample", ["toc/apro_mk.xml", "codelist/statinfo.json"])
