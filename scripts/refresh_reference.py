@@ -1,7 +1,7 @@
 """Refresh the packaged reference data from upstream (``/refresh-reference-data``).
 
 Eurostat's lists are packaged as tables, not as enums: the Catalogue API's table of
-contents (TOC) and the twelve codelists in ``params.CODELISTS``, each too large for an
+contents (TOC) and the fifteen codelists in ``params.CODELISTS``, each too large for an
 enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
 ``reference/<name>.json`` (conventions §3, ADR-0022):
 
@@ -15,14 +15,19 @@ enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
   This script is the only code that parses XML (D44; ADR-0020 decision 3).
 - ``<codelist>.json``: one codelist each, the latest version in JSON-stat through
   ``api.sdmx.code_list_query`` with English labels (Johannes, 2026-10-27, D1 and D2), its
-  codes and labels in upstream's order.
+  codes and labels in upstream's order, requested on the base ``params.CODELISTS`` names
+  for it: twelve on the main base, three on the Comext base, the codelists of the Prodcom
+  datasets' ``product`` and ``indicators`` (Johannes, 2026-10-28). Its ``param`` is the
+  dimension ``params.CODELISTS`` names (``geo``, ``product``), and its ``endpoint`` the
+  path it was fetched from on the main base (``sdmx/2.1/codelist/ESTAT/GEO``) and the
+  full URL on the Comext base (``codelist_endpoint``).
 - ``lists.json``: not a packaged list but a derived index, plain JSON with keys of its
-  own (``params.ListIndex``): ``fetched``, when the run's last answer arrived, and
-  ``lists``, one record per packaged list with what upstream gives each as its release
-  (the TOC's ``creationDate``, a codelist's ``version`` and ``LAST_UPDATED``), since a
-  packaged file holds its four keys and a ``note`` and nothing else (ADR-0022,
-  amendment 8; gap, row 111). It names no upstream operation: it is derived from the
-  thirteen answers.
+  own (``params.ListIndex``): ``fetched``, the latest ``fetched`` among the packaged
+  lists, and ``lists``, one record per packaged list with what upstream gives each as
+  its release (the TOC's ``creationDate``, a codelist's ``version`` and
+  ``LAST_UPDATED``), since a packaged file holds its four keys and a ``note`` and
+  nothing else (ADR-0022, amendment 8; gap, row 111). It names no upstream operation:
+  it is derived from the sixteen answers.
 
 Each packaged file's ``fetched`` is the time its answer arrived, UTC to the second. The
 provenance table of ``reference/README.md`` is rewritten from the packaged files. Run
@@ -30,7 +35,13 @@ from the repository root, without a key (the API takes none)::
 
     uv run python scripts/refresh_reference.py
 
-Thirteen keyless requests: the TOC and twelve codelists, paced by the package client.
+Sixteen keyless requests: the TOC and fifteen codelists, paced by the package client.
+``--only <name> [<name> ...]`` fetches the named lists alone, each named by its id as
+upstream writes it (``CXT_PRODCOM2_SOLD``) or by its file (``cxt_prodcom2_sold``,
+``toc``), one request each: it writes their files, replaces their records in
+``lists.json`` and their rows in ``reference/README.md`` and keeps every other list's
+as it was, and the index's ``fetched`` becomes the latest ``fetched`` among all the
+packaged lists, the previous index's or this run's, whichever is later.
 ``--samples`` also cuts the parser tests' samples from the same answers, without a
 request of its own: a folder of the TOC with two of its leaves and the folders above it
 under ``tests/fixtures/files/toc/``, and the STATINFO codelist whole under
@@ -287,15 +298,32 @@ def toc_info(toc: Toc) -> ListInfo:
     )
 
 
+def codelist_endpoint(resource_id: str) -> str:
+    """A packaged codelist's ``endpoint``: its path on the main base, else its full URL.
+
+    ``sdmx/2.1/codelist/ESTAT/GEO`` for a codelist of the main base, as packaged since
+    0.1.0; ``https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/``
+    ``ESTAT/CXT_PRODCOM2_SOLD`` for one of the Comext base, whose path alone would name
+    the main base's operation (Johannes, 2026-10-28; ADR-0022 rule 1; gap, row 111).
+
+    Raises:
+        KeyError: ``params.CODELISTS`` does not name the codelist.
+    """
+    path = api.sdmx.codelist_path(params.AGENCY, resource_id)
+    base_url = params.CODELISTS[resource_id].base_url
+    return path if base_url == BASE_URL else f"{base_url}/{path}"
+
+
 def codelist_list(codelist: Codelist, fetched: datetime) -> PackagedList:
     """A packaged codelist: its codes and labels, in upstream's order.
 
-    ``param`` is the dimension code the Statistics API takes, the id lower-cased.
+    ``param`` is the dimension code the Statistics API takes, as ``params.CODELISTS``
+    names it (``geo``, ``product``), and ``endpoint`` is ``codelist_endpoint``'s.
     """
     resource_id = codelist.extension.id
     return PackagedList(
-        param=resource_id.lower(),
-        endpoint=api.sdmx.codelist_path(params.AGENCY, resource_id),
+        param=params.CODELISTS[resource_id].param,
+        endpoint=codelist_endpoint(resource_id),
         fetched=fetched,
         records=[code.dump_upstream() for code in codelist.codes()],
     )
@@ -321,8 +349,10 @@ async def fetch_toc(dest: Path) -> Downloaded:
 
 
 async def fetch_codelist(resource_id: str) -> api.sdmx.CodelistAnswer:
-    """One codelist, the latest version with English labels: one request."""
-    return await api.sdmx.code_list_query(params.AGENCY, resource_id, lang=LANG)
+    """One codelist, the latest version with English labels, on its base: one request."""
+    return await api.sdmx.code_list_query(
+        params.AGENCY, resource_id, lang=LANG, base_url=params.CODELISTS[resource_id].base_url
+    )
 
 
 def _utc(moment: datetime) -> str:
@@ -405,8 +435,9 @@ def write_codelist_sample(answer: api.sdmx.CodelistAnswer, dest: Path) -> Sample
     text = json.dumps(answer.payload, ensure_ascii=False, separators=(",", ":"))
     dest.write_text(text, encoding="utf-8")
     extension = answer.codelist.extension
+    base_url = params.CODELISTS[extension.id].base_url
     url = (
-        f"{BASE_URL}/{api.sdmx.codelist_path(params.AGENCY, extension.id)}?format=JSON&lang={LANG}"
+        f"{base_url}/{api.sdmx.codelist_path(params.AGENCY, extension.id)}?format=JSON&lang={LANG}"
     )
     row = (
         f"| `{dest.relative_to(SAMPLES)}` | `{extension.version}` (version) | {url} | "
@@ -455,23 +486,80 @@ def write_samples_readme(samples: Sequence[Sample]) -> None:
 
 README_TABLE = "| File | Origin | Fetched |\n| --- | --- | --- |\n"
 
+README_ROW = re.compile(r"^\| `(?P<name>[^`]+)\.json` \|")
+"""A packaged list's row in the provenance table, its file's name without ``.json``."""
 
-def write_reference_readme(written: Mapping[str, PackagedList]) -> None:
+
+def packaged_names() -> list[str]:
+    """The packaged lists' file names, without ``.json``, in the index's order.
+
+    ``params.PACKAGED_LISTS``, read from ``params.CODELISTS`` at the call, so a test that
+    narrows the codelists narrows them too.
+    """
+    return [params.TOC, *(resource_id.lower() for resource_id in params.CODELISTS)]
+
+
+def write_reference_readme(written: Mapping[str, PackagedList], *, keep: bool = False) -> None:
     """Rewrite the provenance table at the end of ``reference/README.md``.
 
-    One row per packaged list; ``lists.json``, the derived index, has no origin and no
-    row, and the README's text says so.
+    One row per packaged list, in the index's order: this run's for the lists in
+    ``written``; with ``keep``, a run with ``--only``, every other packaged list's row as
+    it was. ``lists.json``, the derived index, has no origin and no row, and the README's
+    text says so.
     """
     path = REFERENCE / "README.md"
     text = path.read_text(encoding="utf-8")
-    head, found, _ = text.partition(README_TABLE)
+    head, found, table = text.partition(README_TABLE)
     if not found:
         raise SystemExit(f"{path.name} has no provenance table to rewrite")
-    rows = "".join(
-        f"| `{name}.json` | `{packaged.endpoint}` | {_utc(packaged.fetched)} |\n"
-        for name, packaged in written.items()
-    )
-    path.write_text(head + README_TABLE + rows, encoding="utf-8")
+    kept: dict[str, str] = {}
+    if keep:
+        for line in table.splitlines():
+            row = README_ROW.match(line)
+            if row is not None:
+                kept[row["name"]] = line
+    rows = []
+    for name in packaged_names():
+        packaged = written.get(name)
+        if packaged is not None:
+            rows.append(f"| `{name}.json` | `{packaged.endpoint}` | {_utc(packaged.fetched)} |")
+        elif name in kept:
+            rows.append(kept[name])
+    path.write_text(head + README_TABLE + "".join(f"{row}\n" for row in rows), encoding="utf-8")
+
+
+def read_index() -> params.ListIndex:
+    """The committed ``reference/lists.json``, for a run with ``--only`` to merge into.
+
+    Raises:
+        SystemExit: The index is missing; a run without ``--only`` writes it whole.
+    """
+    path = REFERENCE / f"{params.INDEX}.json"
+    if not path.is_file():
+        raise SystemExit(f"{path.name} is not written yet: run the script without --only")
+    return params.ListIndex.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def merge_index(
+    previous: params.ListIndex, infos: Sequence[ListInfo], written: Mapping[str, PackagedList]
+) -> tuple[list[ListInfo], datetime]:
+    """The records and ``fetched`` of the index after a run with ``--only``.
+
+    One record per packaged list, in the index's order: this run's for the lists it
+    fetched, the previous record for every other, and none for a list neither has. The
+    index's ``fetched`` is the latest ``fetched`` among all the packaged lists: the
+    previous index's, the latest of the lists it recorded, or the latest of this run's,
+    whichever is later, since a list's ``fetched`` only moves forward.
+    """
+    fresh = {info.name: info for info in infos}
+    before = {info.name: info for info in previous.lists}
+    merged = [
+        fresh[name] if name in fresh else before[name]
+        for name in packaged_names()
+        if name in fresh or name in before
+    ]
+    latest = max([previous.fetched, *(packaged.fetched for packaged in written.values())])
+    return merged, latest
 
 
 def write_index(infos: Sequence[ListInfo], fetched: datetime) -> None:
@@ -530,23 +618,48 @@ class Fetched(NamedTuple):
     samples: list[Sample]
 
 
-async def fetch_all(work: Path, *, samples: bool) -> Fetched:
+def selected(names: Sequence[str]) -> list[str]:
+    """The packaged lists ``--only`` names, as file names, in the index's order.
+
+    A name is a codelist's id as upstream writes it (``CXT_PRODCOM2_SOLD``) or a packaged
+    list's file without ``.json`` (``cxt_prodcom2_sold``, ``toc``).
+
+    Raises:
+        SystemExit: A name is neither, before any request; the message names the known.
+    """
+    known = {name: name for name in packaged_names()}
+    known.update({resource_id: resource_id.lower() for resource_id in params.CODELISTS})
+    unknown = [name for name in names if name not in known]
+    if unknown:
+        raise SystemExit(
+            f"--only: {', '.join(unknown)} is no packaged list; give a codelist's id "
+            f"({', '.join(params.CODELISTS)}) or a file ({', '.join(packaged_names())})"
+        )
+    chosen = {known[name] for name in names}
+    return [name for name in packaged_names() if name in chosen]
+
+
+async def fetch_all(work: Path, *, samples: bool, only: Sequence[str] | None = None) -> Fetched:
     """Fetch the TOC and every codelist, one request each, and build their files.
 
-    The TOC goes to ``work`` while it is read; nothing else touches the disk here but the
-    samples, when asked for.
+    ``only``, file names from ``selected``, fetches those lists alone; ``None`` fetches
+    every one. The TOC goes to ``work`` while it is read; nothing else touches the disk
+    here but the samples, when asked for.
     """
     written: dict[str, PackagedList] = {}
     infos: list[ListInfo] = []
     cut: list[Sample] = []
-    downloaded = await fetch_toc(work / "toc.xml")
-    toc = read_toc(downloaded.path)
-    written[params.TOC] = toc_list(toc, downloaded.retrieved_at)
-    infos.append(toc_info(toc))
-    if samples:
-        dest = SAMPLES / "toc" / f"{SAMPLE_FOLDER}.xml"
-        cut.append(cut_toc_sample(downloaded.path, downloaded, toc, dest))
+    if only is None or params.TOC in only:
+        downloaded = await fetch_toc(work / "toc.xml")
+        toc = read_toc(downloaded.path)
+        written[params.TOC] = toc_list(toc, downloaded.retrieved_at)
+        infos.append(toc_info(toc))
+        if samples:
+            dest = SAMPLES / "toc" / f"{SAMPLE_FOLDER}.xml"
+            cut.append(cut_toc_sample(downloaded.path, downloaded, toc, dest))
     for resource_id in params.CODELISTS:
+        if only is not None and resource_id.lower() not in only:
+            continue
         answer = await fetch_codelist(resource_id)
         if answer.codelist.extension.id != resource_id:
             raise SystemExit(f"asked for {resource_id}, got {answer.codelist.extension.id}")
@@ -558,15 +671,26 @@ async def fetch_all(work: Path, *, samples: bool) -> Fetched:
     return Fetched(written, infos, cut)
 
 
-def refresh(*, samples: bool = False) -> None:
-    """Fetch every list, write its file, ``lists.json`` and the README, render ``enums.py``."""
+def refresh(*, samples: bool = False, only: Sequence[str] | None = None) -> None:
+    """Fetch every list, write its file, ``lists.json`` and the README, render ``enums.py``.
+
+    ``only``, the names ``--only`` gives, fetches those lists alone and merges them into
+    the committed index and README (``merge_index``, ``write_reference_readme``); every
+    name is checked before the first request.
+    """
+    chosen = None if only is None else selected(only)
+    previous = None if chosen is None else read_index()
     REFERENCE.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory() as work:
-        fetched = sync(fetch_all)(Path(work), samples=samples)
+        fetched = sync(fetch_all)(Path(work), samples=samples, only=chosen)
     for name, packaged in fetched.written.items():
         write(name, packaged)
-    write_index(fetched.infos, max(packaged.fetched for packaged in fetched.written.values()))
-    write_reference_readme(fetched.written)
+    if previous is None:
+        latest = max(packaged.fetched for packaged in fetched.written.values())
+        write_index(fetched.infos, latest)
+    else:
+        write_index(*merge_index(previous, fetched.infos, fetched.written))
+    write_reference_readme(fetched.written, keep=previous is not None)
     if fetched.samples:
         write_samples_readme(fetched.samples)
         for sample in fetched.samples:
@@ -595,7 +719,7 @@ def render_only() -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    """Refresh from upstream, or with ``--render-only`` regenerate ``enums.py`` alone."""
+    """Refresh from upstream, some lists with ``--only``, or regenerate ``enums.py`` alone."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
     choice = parser.add_mutually_exclusive_group()
     choice.add_argument(
@@ -608,13 +732,22 @@ def main(argv: Sequence[str] | None = None) -> None:
         action="store_true",
         help="also cut the parser tests' samples under tests/fixtures/files/ from this run",
     )
+    choice.add_argument(
+        "--only",
+        nargs="+",
+        metavar="NAME",
+        help=(
+            "fetch these lists alone, each a codelist's id (CXT_PRODCOM2_SOLD) or a file "
+            "(cxt_prodcom2_sold, toc), and keep every other list's file, record and row"
+        ),
+    )
     args = parser.parse_args(argv)
     if shared := sorted(LISTS.keys() & ID_LISTS.keys()):
         raise SystemExit(f"a list is named in both LISTS and ID_LISTS: {shared}")
     if args.render_only:
         render_only()
     else:
-        refresh(samples=args.samples)
+        refresh(samples=args.samples, only=args.only)
 
 
 if __name__ == "__main__":
