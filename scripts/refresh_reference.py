@@ -304,7 +304,7 @@ def codelist_endpoint(resource_id: str) -> str:
     ``sdmx/2.1/codelist/ESTAT/GEO`` for a codelist of the main base, as packaged since
     0.1.0; ``https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/``
     ``ESTAT/CXT_PRODCOM2_SOLD`` for one of the Comext base, whose path alone would name
-    the main base's operation (Johannes, 2026-10-28; ADR-0022 rule 1; gap, row 111).
+    the main base's operation (ADR-0022 rule 1; Johannes, 2026-10-28; gap, row 172).
 
     Raises:
         KeyError: ``params.CODELISTS`` does not name the codelist.

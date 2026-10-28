@@ -99,7 +99,7 @@ the dimension it feeds, the packaged file's `param`. The twelve of the main base
 path they were fetched from as `endpoint` (`sdmx/2.1/codelist/ESTAT/GEO`); the three of
 the Comext base, the Prodcom datasets' `product` and `indicators` lists, the full URL
 (`https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_INDICATORS`),
-since the path alone names the main base's operation (Johannes, 2026-10-28; gap, row 111).
+since the path alone names the main base's operation (Johannes, 2026-10-28; gap, row 172).
 `scripts/refresh_reference.py --only <name> [<name> ...]` refreshes the named lists and
 keeps every other list's file, `lists.json` record and provenance row; the index's
 `fetched` is the latest among all lists. The production tasks check a product against the
