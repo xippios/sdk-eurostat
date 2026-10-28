@@ -6,7 +6,7 @@ enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
 ``reference/<name>.json`` (conventions §3, ADR-0022):
 
 - ``toc.json``: the TOC, downloaded whole to a temporary file through
-  ``api.catalogue.getTocXml`` (core's ``download``, which streams the body to disk; 23 MB
+  ``api.catalogue.get_toc_xml`` (core's ``download``, which streams the body to disk; 23 MB
   on 2026-10-27), then read from that file a megabyte at a time with the standard
   library's ``xml.etree.ElementTree`` pull parser (``TocParser``), each element cleared
   once read: every ``leaf``, datasets and tables alike, with its code, type, English
@@ -14,7 +14,7 @@ enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
   ``lastUpdate``, ``lastModified``, ``dataStart``, ``dataEnd`` and ``values`` as printed.
   This script is the only code that parses XML (D44; ADR-0020 decision 3).
 - ``<codelist>.json``: one codelist each, the latest version in JSON-stat through
-  ``api.sdmx.codeListQuery`` with English labels (Johannes, 2026-10-27, D1 and D2), its
+  ``api.sdmx.code_list_query`` with English labels (Johannes, 2026-10-27, D1 and D2), its
   codes and labels in upstream's order.
 - ``lists.json``: not a packaged list but a derived index, plain JSON with keys of its
   own (``params.ListIndex``): ``fetched``, when the run's last answer arrived, and
@@ -316,13 +316,13 @@ def codelist_info(codelist: Codelist) -> ListInfo:
 
 
 async def fetch_toc(dest: Path) -> Downloaded:
-    """Stream the TOC's XML to ``dest`` through ``api.catalogue.getTocXml``: one request."""
-    return await api.catalogue.getTocXml(dest)
+    """Stream the TOC's XML to ``dest`` through ``api.catalogue.get_toc_xml``: one request."""
+    return await api.catalogue.get_toc_xml(dest)
 
 
 async def fetch_codelist(resource_id: str) -> api.sdmx.CodelistAnswer:
     """One codelist, the latest version with English labels: one request."""
-    return await api.sdmx.codeListQuery(params.AGENCY, resource_id, lang=LANG)
+    return await api.sdmx.code_list_query(params.AGENCY, resource_id, lang=LANG)
 
 
 def _utc(moment: datetime) -> str:
@@ -422,7 +422,7 @@ Small real samples of the answers the package and its refresh script read, under
 `<kind>/<case>.*`, never written by hand (ADR-0020 decision 6, conventions §10): `toc/`
 and `codelist/` cut by `scripts/refresh_reference.py --samples` from the answers of its
 run, which rewrites their rows and keeps the others; `sdmx-csv/` the response bodies of
-the recorded `tests/fixtures/dataQuery/` exchanges, byte for byte, which
+the recorded `tests/fixtures/data_query/` exchanges, byte for byte, which
 `tests/test_parse.py` checks. One row per file: the release (upstream's identifier of
 it), the URL, the bytes and sha256 of the full answer, and when it was fetched. The
 parser tests in `tests/test_refresh_reference.py` and `tests/test_parse.py` read them;

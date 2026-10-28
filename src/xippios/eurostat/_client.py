@@ -34,7 +34,7 @@ from xippios.eurostat.errors import (
 SOURCE = "eurostat"
 BASE_URL = "https://ec.europa.eu/eurostat/api/dissemination"
 SDMX_DATA_PATH = f"{httpx.URL(BASE_URL).path}/sdmx/2.1/data/"
-"""Where the SDMX 2.1 API's data queries go (``api.sdmx.dataQuery``), as a request path
+"""Where the SDMX 2.1 API's data queries go (``api.sdmx.data_query``), as a request path
 begins."""
 SDMX_CSV = "application/vnd.sdmx.data+csv"
 """The media type of an SDMX-CSV answer, plain or ``compressed=true`` (recorded
@@ -91,7 +91,7 @@ def classify(response: httpx.Response) -> XippiosError | None:
 
     Everything else falls through to core's status mapping, a 5xx included, so that it
     is retried. An unknown code (``geo=XX``) is no error: the service answers HTTP 200
-    with an empty cube (``tests/fixtures/getData/unknown_code.json``).
+    with an empty cube (``tests/fixtures/get_data/unknown_code.json``).
     """
     media = _not_sdmx_csv(response)
     if media is not None:

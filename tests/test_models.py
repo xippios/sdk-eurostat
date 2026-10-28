@@ -1,6 +1,6 @@
 """``Cube`` against the recorded answers: every member kept, the cells read out right.
 
-The cubes are the recorded answers under ``tests/fixtures/getData/``. Where a test needs
+The cubes are the recorded answers under ``tests/fixtures/get_data/``. Where a test needs
 a shape the service did not send (JSON-stat's dense ``value`` array, an incoherent
 cube), it derives it in memory from a recorded body and says so; no fixture is written.
 """
@@ -16,7 +16,7 @@ from xippios.core.testing import load_fixture
 
 from xippios.eurostat.models import Cube, Observation
 
-FIXTURES = Path(__file__).parent / "fixtures" / "getData"
+FIXTURES = Path(__file__).parent / "fixtures" / "get_data"
 CUBES = [
     "apro_mk_cola_AT_2022_2023",
     "apro_cpnh1_AT_2022_2023",
