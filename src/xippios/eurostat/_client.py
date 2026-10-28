@@ -38,6 +38,7 @@ from xippios.eurostat.errors import (
     ASYNCHRONOUS_LABEL,
     NARROW_HINT,
     NO_RESULTS,
+    Fault,
     error_faults,
     fault_payload,
     soap_faultstring,
@@ -144,15 +145,15 @@ def classify(response: httpx.Response) -> XippiosError | None:
     - HTTP 400 with any other ``error`` member, an array or one object:
       ``InvalidRequestError`` with upstream's label (recorded for an unknown dimension,
       fault 150, and for ``geo`` with ``geoLevel``; the fault table's 140 alike).
-    - HTTP 413 otherwise: ``InvalidRequestError`` naming how to narrow the query, with the
-      ``faultstring`` of a SOAP fault where the body is one. Recorded on the Comext base:
-      the SOAP fault ``EXTRACTION_TOO_BIG`` the user guide documents for the SDMX APIs
-      (an extraction over 5,000,000 cells;
-      ``tests/fixtures/data_query/DS-045409_too_big_413.json``), and the Statistics API's
-      ``error`` array with id 413 and the same text, its answer to a filter on a
-      dimension the dataset lacks, which it counts unfiltered
-      (``tests/fixtures/get_data/DS-059358_unknown_dimension.json``); the array's label
-      is not read at 413.
+    - HTTP 413 otherwise: ``InvalidRequestError`` naming how to narrow the query, with
+      upstream's text: the faults of an ``error`` member, described as at HTTP 400, or
+      else the ``faultstring`` of a SOAP fault. Recorded on the Comext base: the
+      Statistics API's ``error`` array with id 413, ``EXTRACTION_TOO_BIG``, its answer to
+      a filter on a dimension the dataset lacks, which it counts unfiltered
+      (``tests/fixtures/get_data/DS-059358_unknown_dimension_too_big.json``), and the SOAP
+      fault ``EXTRACTION_TOO_BIG`` the user guide documents for the SDMX APIs (an
+      extraction over 5,000,000 cells;
+      ``tests/fixtures/data_query/DS-045409_too_big_413.json``).
 
     Everything else falls through to core's status mapping, a 5xx included, so that it
     is retried. An unknown code (``geo=XX``) is no error: the service answers HTTP 200
@@ -168,6 +169,7 @@ def classify(response: httpx.Response) -> XippiosError | None:
         )
     status = response.status_code
     payload = fault_payload(response)
+    faults: list[Fault] = []
     if payload is not None:
         warning = warning_fault(payload)
         if warning is not None and (
@@ -192,7 +194,7 @@ def classify(response: httpx.Response) -> XippiosError | None:
                 source=SOURCE,
             )
     if status == 413:
-        fault = soap_faultstring(response)
+        fault = "; ".join(item.describe() for item in faults) or soap_faultstring(response)
         return InvalidRequestError(
             f"Eurostat refused {_where(response)} as too large "
             f"(HTTP 413{': ' + fault if fault else ''}): {NARROW_HINT}.",

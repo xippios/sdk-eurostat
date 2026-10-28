@@ -12,9 +12,12 @@ from the answers recorded under ``tests/fixtures/get_data/``, on the main base o
   of faults: recorded for an unknown dataset (HTTP 404, ``unknown_dataset.json``, and
   ``DS_unknown_dataset.json`` on the Comext base), an unknown dimension (HTTP 400, id
   150, ``unknown_dimension.json``) and ``geo`` together with ``geoLevel`` (HTTP 400, id
-  400, ``geo_with_geo_level.json``). The Comext base answers a filter on a dimension the
-  dataset lacks with HTTP 413 and an array whose id is 413, ``EXTRACTION_TOO_BIG``,
-  having counted the query unfiltered (``DS-059358_unknown_dimension.json``).
+  400, ``geo_with_geo_level.json``).
+- ``{"error": [{"status": 413, "id": 413, "label": "EXTRACTION_TOO_BIG: ..."}]}``, the
+  same array at HTTP 413: recorded on the Comext base for a filter on a dimension the
+  dataset lacks, which it counts unfiltered and judges too large, "estimated 151971120
+  rows, max authorised is 5000000" (``DS-059358_unknown_dimension_too_big.json``), where
+  the main base answers fault 150 at HTTP 400.
 - ``{"error": {"status": "400", "label": "'geo' parameter and 'geoLevel' parameter ..."}}``,
   one fault as an object, its status as text and without an id: how the user guide
   documents the answer to ``geo`` with ``geoLevel``; the service answered that request

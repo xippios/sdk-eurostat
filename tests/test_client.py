@@ -285,17 +285,21 @@ def test_extraction_too_big_is_refused() -> None:
 def test_statistics_api_too_big_is_refused_on_the_comext_base() -> None:
     """Recorded on the Comext base: a filter on a dimension ``DS-059358`` lacks (``geo``)
     is counted unfiltered and answered with HTTP 413 and an ``error`` array whose id is
-    413 (``EXTRACTION_TOO_BIG``), not with the main base's fault 150 at HTTP 400. The
-    status rule refuses it as too large; the array's label is not read at 413."""
-    response = recorded("DS-059358_unknown_dimension")
+    413 (``EXTRACTION_TOO_BIG``), not with the main base's fault 150 at HTTP 400. It is
+    refused as too large, the array's fault described as at HTTP 400."""
+    response = recorded("DS-059358_unknown_dimension_too_big")
     assert response.status_code == 413
     assert '"label": "EXTRACTION_TOO_BIG' in response.text
     error = classify(response)
     assert isinstance(error, InvalidRequestError)
     assert str(error) == (
         f"Eurostat refused {COMEXT_WHERE}/statistics/1.0/data/DS-059358 as too large "
-        "(HTTP 413): narrow the query with fewer codes per dimension or a shorter period."
+        "(HTTP 413: fault 413: EXTRACTION_TOO_BIG: The requested extraction is too big, "
+        "estimated 151971120 rows, max authorised is 5000000, please change your filters "
+        "to reduce the extraction size): narrow the query with fewer codes per dimension or "
+        "a shorter period."
     )
+    assert_host_and_query_free(error)
 
 
 def test_unknown_ds_dataset_is_not_found() -> None:

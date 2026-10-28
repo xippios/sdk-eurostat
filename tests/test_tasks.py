@@ -514,15 +514,17 @@ def test_get_data_unknown_ds_dataset(replay_fixture: ReplayFixture) -> None:
 def test_get_data_ds_059358_unknown_dimension_is_too_large(replay_fixture: ReplayFixture) -> None:
     """The Comext base does not refuse a filter on a dimension the dataset lacks, as the
     main base does (fault 150 at HTTP 400): it counts the query unfiltered and refuses it
-    as too large, HTTP 413 with an ``error`` array, which the status rule maps."""
-    route = replay_fixture(GET_DATA, "DS-059358_unknown_dimension")
+    as too large, HTTP 413 with an ``error`` array, whose fault reaches the caller."""
+    route = replay_fixture(GET_DATA, "DS-059358_unknown_dimension_too_big")
     with pytest.raises(InvalidRequestError) as refused:
         tasks.get_data("DS-059358", {"geo": "AT"})
-    assert sent_urls(route) == [recorded_url("DS-059358_unknown_dimension")]
+    assert sent_urls(route) == [recorded_url("DS-059358_unknown_dimension_too_big")]
     assert str(refused.value) == (
         "Eurostat refused GET /eurostat/api/comext/dissemination/statistics/1.0/data/"
-        "DS-059358 as too large (HTTP 413): narrow the query with fewer codes per dimension "
-        "or a shorter period."
+        "DS-059358 as too large (HTTP 413: fault 413: EXTRACTION_TOO_BIG: The requested "
+        "extraction is too big, estimated 151971120 rows, max authorised is 5000000, please "
+        "change your filters to reduce the extraction size): narrow the query with fewer "
+        "codes per dimension or a shorter period."
     )
 
 
