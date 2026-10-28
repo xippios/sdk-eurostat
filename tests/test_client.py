@@ -30,7 +30,15 @@ from xippios.core import InvalidRequestError, NotFoundError
 from xippios.core.client import MemoryCache
 from xippios.core.testing import load_fixture, response_from_fixture
 
-from xippios.eurostat._client import BASE_URL, RATE_LIMIT, classify, config
+from xippios.eurostat._client import (
+    BASE_URL,
+    COMEXT_BASE_URL,
+    RATE_LIMIT,
+    SDMX_DATA_PATHS,
+    classify,
+    config,
+    url_for,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures" / "get_data"
 SDMX_FIXTURES = Path(__file__).parent / "fixtures" / "data_query"
@@ -119,6 +127,32 @@ def test_config() -> None:
     assert config.cache_max_bytes == 8 * 1024 * 1024, "core's bound, ADR-0019 decision 3"
     assert RATE_LIMIT.per_minute == 30
     assert RATE_LIMIT.capacity == 1
+
+
+def test_url_for_requests_a_ds_code_on_the_comext_base() -> None:
+    """Upstream's rule (prefixed-datasets.md): a "DS- prefixed dataset code" is served on
+    the Comext base, as an absolute URL the client sends as it is; every other code keeps
+    the path, which the client joins onto the main base as before."""
+    assert BASE_URL == "https://ec.europa.eu/eurostat/api/dissemination"
+    assert COMEXT_BASE_URL == "https://ec.europa.eu/eurostat/api/comext/dissemination"
+    prodcom = "/statistics/1.0/data/DS-059358"
+    assert url_for("DS-059358", prodcom) == (
+        "https://ec.europa.eu/eurostat/api/comext/dissemination/statistics/1.0/data/DS-059358"
+    )
+    trade = "/sdmx/2.1/data/DS-045409/M.AT.US.1201.1.?format=SDMX-CSV&compressed=true"
+    assert url_for("DS-045409", trade) == f"{COMEXT_BASE_URL}{trade}"
+    milk = "/statistics/1.0/data/apro_mk_cola"
+    assert url_for("apro_mk_cola", milk) == milk, "the main base's path, unchanged"
+    assert url_for("ds-059358", "/statistics/1.0/data/ds-059358") == (
+        "/statistics/1.0/data/ds-059358"
+    ), "the prefix as upstream writes it; the code is never folded"
+
+
+def test_sdmx_data_paths_are_both_bases() -> None:
+    assert SDMX_DATA_PATHS == (
+        "/eurostat/api/dissemination/sdmx/2.1/data/",
+        "/eurostat/api/comext/dissemination/sdmx/2.1/data/",
+    )
 
 
 def test_unknown_dataset_is_not_found() -> None:

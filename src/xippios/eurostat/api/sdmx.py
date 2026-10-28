@@ -1,7 +1,14 @@
 """The SDMX 2.1 API's operations: ``codeListQuery`` (one codelist) and ``dataQuery`` (data).
 
 Reference: ``docs/upstream/api/sdmx-rest.wadl``, resources under
-``dissemination/sdmx/2.1/``.
+``dissemination/sdmx/2.1/``. The same operations on the second base, for the ``DS-``
+datasets of Comext and Prodcom, are ``docs/upstream/api/comext/sdmx-rest.wadl``, the
+main one's but for its ``resources base`` (``comext/dissemination/sdmx/2.1/``):
+``data_query`` requests a ``DS-`` flow there, every other on the main base
+(``_client.url_for``;
+``docs/upstream/user-guide/api-detailed-guidelines/prefixed-datasets.md``), and
+``code_list_query`` takes the base as ``base_url``, since a codelist's id says nothing
+of the base that serves it.
 
 ``GET sdmx/2.1/codelist/{agencyID}/{resourceID}``: the resource
 ``codelist/{agencyID}/{resourceID}``, method ``GET`` with the id ``codeListQuery``, whose
@@ -60,7 +67,7 @@ from urllib.parse import quote
 import httpx
 from xippios.core import Downloaded, parse
 
-from xippios.eurostat._client import SOURCE, client
+from xippios.eurostat._client import BASE_URL, SOURCE, client, url_for
 from xippios.eurostat.models import Codelist
 
 __all__ = [
@@ -85,7 +92,7 @@ DATA_FORMAT = "SDMX-CSV"
 
 
 def codelist_path(agency_id: str, resource_id: str) -> str:
-    """The path of one codelist under the base URL, e.g. ``"sdmx/2.1/codelist/ESTAT/GEO"``.
+    """The path of one codelist under either base URL, e.g. ``"sdmx/2.1/codelist/ESTAT/GEO"``.
 
     A packaged codelist's ``endpoint``.
     """
@@ -109,7 +116,7 @@ class CodelistAnswer(NamedTuple):
 
 
 async def code_list_query(
-    agency_id: str, resource_id: str, *, lang: str | None = None
+    agency_id: str, resource_id: str, *, lang: str | None = None, base_url: str = BASE_URL
 ) -> CodelistAnswer:
     """Call ``codeListQuery``: the latest version of one codelist as JSON-stat.
 
@@ -118,6 +125,9 @@ async def code_list_query(
         resource_id: ``resourceID``, the codelist's id, e.g. ``"GEO"``.
         lang: ``lang``, the labels' language, e.g. ``"en"``; ``None`` leaves it out
             (upstream: ``en``).
+        base_url: The base that serves the codelist: ``_client.BASE_URL``, the default,
+            or ``_client.COMEXT_BASE_URL`` for a codelist of the Comext and Prodcom
+            datasets.
 
     Returns:
         The codelist, the decoded answer and when it was retrieved.
@@ -129,7 +139,9 @@ async def code_list_query(
     params: dict[str, str] = {"format": "JSON"}
     if lang is not None:
         params["lang"] = lang
-    answer = await client.get_answer(f"/{codelist_path(agency_id, resource_id)}", params=params)
+    answer = await client.get_answer(
+        f"{base_url}/{codelist_path(agency_id, resource_id)}", params=params
+    )
     codelist = parse(Codelist, answer.payload, source=SOURCE, endpoint=CODELIST_ENDPOINT)
     return CodelistAnswer(
         codelist=codelist, payload=answer.payload, retrieved_at=answer.retrieved_at
@@ -137,7 +149,7 @@ async def code_list_query(
 
 
 def data_path(flow_ref: str, key: str = "") -> str:
-    """The path of a data query under the base URL, its key segment as upstream takes it.
+    """The path of a data query under either base URL, its key segment as upstream takes it.
 
     E.g. ``"sdmx/2.1/data/apro_mk_cola/A...THS_T.AT"``: the key keeps its dots and plus
     signs, everything else in it percent-encoded; an empty key gives ``data/{flowRef}``
@@ -162,7 +174,8 @@ async def data_query(
 
     Args:
         flow_ref: ``flowRef`` (the guide's ``resourceID``), the dataset's code, e.g.
-            ``"apro_mk_cola"``.
+            ``"apro_mk_cola"``, or a Comext or Prodcom code, requested on the Comext
+            base, e.g. ``"DS-059358"``.
         dest: The file to write, in a directory that exists, e.g.
             ``tmp_path / "apro_mk_cola.csv.gz"``.
         key: ``key``, the dimension values in structure order, dot-separated, ``+``
@@ -193,4 +206,5 @@ async def data_query(
         params["lastNObservations"] = last_n_observations
     if compressed:
         params["compressed"] = "true"
-    return await client.download(f"/{data_path(flow_ref, key)}?{httpx.QueryParams(params)}", dest)
+    path = f"/{data_path(flow_ref, key)}?{httpx.QueryParams(params)}"
+    return await client.download(url_for(flow_ref, path), dest)
