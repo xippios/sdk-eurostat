@@ -1,0 +1,41 @@
+
+
+<ns0:application xsi:schemaLocation="http://wadl.dev.java.net/2009/02 wadl.xsd" xmlns:ns0="http://wadl.dev.java.net/2009/02" xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message" xmlns:types="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/types" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:common="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common">
+   <ns0:doc xmlns:ns1="http://jersey.java.net/" ns1:generatedBy="Jersey: 2.22.4-b241119.1111 2024-11-19 11:14:18"/>
+   <ns0:doc xmlns:ns2="http://jersey.java.net/" ns2:hint="This is full WADL including extended resources. To get simplified WADL with users resources only do not use the query parameter detail. Link: https://ec.europa.eu/eurostat/api/comext/dissemination/1.0/async/async.wadl"/>
+   <ns0:grammars>
+      <ns0:doc title="grammarDoc" xml:lang="en">The SDMXMessage.xsd is used to import all SDMXML types so as to be referenced in the WADL.The SDMXRestTypes.xsd defines various types used by the WADL's parameters e.g. key pattern, latest and all values.</ns0:doc>
+      <ns0:include href="/sdmx/2.1/xsd/SDMXMessage.xsd"/>
+      <ns0:include href="/sdmx/2.1/xsd/SDMXRestTypes.xsd"/>
+   </ns0:grammars>
+   <ns0:resources base="https://ec.europa.eu/eurostat/api/comext/">
+      <ns0:resource path="dissemination/1.0/async/">
+         <ns0:resource path="data/{key}">
+            <ns0:param name="key" style="template" type="types:KeyType"/>
+            <ns0:method id="getData" name="GET">
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="getData" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+            </ns0:method>
+         </ns0:resource>
+         <ns0:resource path="status/{key}">
+            <ns0:param name="key" style="template" type="types:KeyType"/>
+            <ns0:method id="getStatus" name="OPTIONS">
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+            </ns0:method>
+            <ns0:method id="getStatus" name="GET">
+               <ns0:response>
+                  <ns0:representation mediaType="*/*"/>
+               </ns0:response>
+            </ns0:method>
+         </ns0:resource>
+      </ns0:resource>
+   </ns0:resources>
+</ns0:application>
