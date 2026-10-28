@@ -65,7 +65,9 @@ tests/
   test_refresh_reference.py  the refresh script's readers on tests/fixtures/files/, and
                    its --only merge, offline
   test_parse.py    parse_sdmx_csv on the samples under tests/fixtures/files/sdmx-csv/
-  test_live.py     @pytest.mark.live smoke tests, one per task
+  test_live.py     @pytest.mark.live smoke tests, one per task and more for get_data
+                   (one per dataset, the Comext base's among them); a run sends fourteen
+                   requests, as its docstring counts
 docs/upstream/     documentation snapshot and FETCHED.md
 .github/workflows/ ci.yml (the required ci check, with the CHANGELOG and fixture-size steps),
                    publish.yml (the release train: tag, build, PyPI), live.yml (nightly live

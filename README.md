@@ -262,13 +262,20 @@ exactly tasks.__all__. -->
 | `getData` on DS-059359 (Comext base) | `get_total_production(product, reporters, since, until, indicators)`, Prodcom's total production of one product as observations | `eurostat_get_total_production` | alpha |
 | `dataQuery` (`sdmx/2.1/data/{flowRef}/{key}`), SDMX-CSV | `download_dataset(dataset, key, dest)`, a gzip-compressed SDMX-CSV file on disk | none: a bulk task, Python only, which the adapters skip | alpha |
 
-These ten tasks cover Eurostat's dissemination API on its two base URLs: the main one,
-`https://ec.europa.eu/eurostat/api/dissemination`, and
-`https://ec.europa.eu/eurostat/api/comext/dissemination`, where Eurostat serves the
-Comext and Prodcom datasets, whose codes start with `DS-`; the dataset's code chooses the
-base. Not covered: polling an asynchronous answer, which is refused with how to narrow
-the query; SDMX-ML and TSV; codelists other than the fifteen packaged ones, which
-`list_codes` refuses naming the closest.
+Five of these ten tasks choose the base URL by the dataset's code: `get_data`, the three
+slices and `download_dataset` request a dataset whose code starts with `DS-`, Eurostat's
+Comext and Prodcom datasets, on `https://ec.europa.eu/eurostat/api/comext/dissemination`,
+and every other on the main base URL, `https://ec.europa.eu/eurostat/api/dissemination`.
+The two production tasks, `get_sold_production` and `get_total_production`, always
+request the Comext base, which serves Prodcom's DS-059358 and DS-059359. `list_codes`
+lists fifteen packaged codelists, twelve of the main base and three of the Comext base,
+and `list_products` the Comext base's list of sold-production products,
+CXT_PRODCOM2_SOLD. `list_datasets` lists the main base's table of contents only, and
+does not list the Comext or Prodcom datasets: the Comext base answers
+`catalogue/toc/xml` with HTTP 404 (probed 2026-10-28), though its WADL lists it. Not
+covered: polling an asynchronous answer, which is refused with how to narrow the query;
+SDMX-ML and TSV; codelists other than the fifteen packaged ones, which `list_codes`
+refuses naming the closest.
 
 ## Upstream terms and attribution
 

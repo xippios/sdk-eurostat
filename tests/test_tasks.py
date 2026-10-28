@@ -289,8 +289,9 @@ def test_documented_shape_get_data_refuses_an_asynchronous_answer(
     respx_mock: respx.MockRouter,
 ) -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written: the asynchronous answer of api-statistics.md. The Statistics API's first
-    asynchronous answer seen is recorded and replaces this test (Johannes, 2026-10-27)."""
+    hand-written: the asynchronous answer of api-statistics.md. The Statistics API's
+    asynchronous answer will be recorded when first seen and replace this test (Johannes,
+    2026-10-27)."""
     documented = next(
         line.strip()
         for line in (GUIDE / "api-statistics.md").read_text(encoding="utf-8").splitlines()
@@ -514,17 +515,18 @@ def test_get_data_ds_059358_on_the_comext_base(replay_fixture: ReplayFixture) ->
 
 
 def test_get_data_unknown_ds_dataset(replay_fixture: ReplayFixture) -> None:
-    route = replay_fixture(GET_DATA, "DS_unknown_dataset")
+    route = replay_fixture(GET_DATA, "DS-000000_unknown_dataset")
     with pytest.raises(NotFoundError, match=r"DS-000000 \(DATA_FLOW:ALL,1\.0\) is not available"):
         tasks.get_data("DS-000000")
-    assert sent_urls(route) == [recorded_url("DS_unknown_dataset")]
-    assert recorded_url("DS_unknown_dataset").startswith(f"{COMEXT_STATISTICS}/DS-000000?")
+    assert sent_urls(route) == [recorded_url("DS-000000_unknown_dataset")]
+    assert recorded_url("DS-000000_unknown_dataset").startswith(f"{COMEXT_STATISTICS}/DS-000000?")
 
 
 def test_get_data_ds_059358_unknown_dimension_is_too_large(replay_fixture: ReplayFixture) -> None:
-    """The Comext base does not refuse a filter on a dimension the dataset lacks, as the
-    main base does (fault 150 at HTTP 400): it counts the query unfiltered and refuses it
-    as too large, HTTP 413 with an ``error`` array, whose fault reaches the caller."""
+    """The Comext base does not refuse a filter on a dimension the dataset lacks as the
+    main base does (fault 150 at HTTP 400), but as too large: HTTP 413 with an ``error``
+    array, whose fault reaches the caller. The estimate, 151,971,120 rows, is that of an
+    unfiltered query, so the unknown filter seems to be ignored."""
     route = replay_fixture(GET_DATA, "DS-059358_unknown_dimension_too_big")
     with pytest.raises(InvalidRequestError) as refused:
         tasks.get_data("DS-059358", {"geo": "AT"})
@@ -1525,15 +1527,25 @@ async def test_data_query_downloads_the_plain_answer(
 
 
 @pytest.mark.anyio
-async def test_code_list_query_takes_the_comext_base(replay_fixture: ReplayFixture) -> None:
-    """``base_url`` sends the codelist query to the Comext base. The recorded 404 of an
-    unknown ``DS-`` dataset is served at that URL: moved, not written by hand; its refusal
-    is ``classify``'s, as for any codelist query."""
-    url = f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/FREQ?format=JSON&lang=en"
-    route = replay_fixture(GET_DATA, "DS_unknown_dataset", url=url)
-    with pytest.raises(NotFoundError):
-        await api.sdmx.code_list_query("ESTAT", "FREQ", lang="en", base_url=COMEXT_BASE_URL)
-    assert sent_urls(route) == [url]
+async def test_code_list_query_takes_the_comext_base(respx_mock: respx.MockRouter) -> None:
+    """``base_url`` sends the codelist query to the Comext base: only the URL sent is
+    asserted. NOT RECORDED: the answer is the main base's STATINFO sample
+    (``tests/fixtures/files/codelist/statinfo.json``) served at the Comext base's codelist
+    path, an exchange upstream never had, so that the call completes."""
+    sample = (FIXTURES / "files" / "codelist" / "statinfo.json").read_bytes()
+    route = respx_mock.route(
+        method="GET",
+        host="ec.europa.eu",
+        path="/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/STATINFO",
+    ).mock(
+        return_value=httpx.Response(
+            200, headers={"content-type": "application/json"}, content=sample
+        )
+    )
+    await api.sdmx.code_list_query("ESTAT", "STATINFO", lang="en", base_url=COMEXT_BASE_URL)
+    assert sent_urls(route) == [
+        f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/STATINFO?format=JSON&lang=en"
+    ]
 
 
 def test_download_dataset_is_no_tool_and_no_route() -> None:

@@ -112,9 +112,10 @@ async def test_get_data_ds_059358() -> None:
     assert cube.size[-1] == 1, "the latest period"
     assert cube.dimension["reporter"].category.index == {"AT": 0}
     assert cube.dimension["product"].category.index == {"10411200": 0}
-    assert "indicators" in cube.id
+    assert {"reporter", "product", "indicators"} <= set(cube.id), (
+        "Prodcom's dimensions, which only the Comext base serves"
+    )
     assert result.meta.endpoint == "getData"
-    assert result.meta.request["dataset"].startswith("DS-"), "routed to the Comext base"
     assert result.meta.vintage is not None
     assert UPDATED.fullmatch(result.meta.vintage)
     assert result.meta.published_at is not None
