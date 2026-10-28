@@ -222,10 +222,10 @@ Comext and Prodcom datasets, on `https://ec.europa.eu/eurostat/api/comext/dissem
 and every other on the main base URL, `https://ec.europa.eu/eurostat/api/dissemination`.
 `list_datasets` and `list_codes` list the main base's table of contents and twelve
 codelists, and do not yet list the Comext or Prodcom datasets or their codes: the Comext
-base has no `catalogue/toc/xml`, and its codelists are not packaged yet. Not covered:
-polling an asynchronous answer, which is refused with how to narrow the query; SDMX-ML
-and TSV; codelists other than the twelve packaged ones, which `list_codes` refuses
-naming the closest.
+base answers `catalogue/toc/xml` with HTTP 404 (probed 2026-10-28), though its WADL lists
+it, and its codelists are not packaged yet. Not covered: polling an asynchronous answer,
+which is refused with how to narrow the query; SDMX-ML and TSV; codelists other than the
+twelve packaged ones, which `list_codes` refuses naming the closest.
 
 ## Upstream terms and attribution
 
