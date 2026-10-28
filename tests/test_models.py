@@ -1,8 +1,10 @@
 """``Cube`` against the recorded answers: every member kept, the cells read out right.
 
-The cubes are the recorded answers under ``tests/fixtures/get_data/``. Where a test needs
-a shape the service did not send (JSON-stat's dense ``value`` array, an incoherent
-cube), it derives it in memory from a recorded body and says so; no fixture is written.
+The cubes are the recorded answers under ``tests/fixtures/get_data/``, of the main base
+and of the Comext base (``DS-059358``, Prodcom, whose ``indicators`` dimension carries
+units and flags as text among its measures). Where a test needs a shape the service did
+not send (JSON-stat's dense ``value`` array, an incoherent cube), it derives it in memory
+from a recorded body and says so; no fixture is written.
 """
 
 import json
@@ -17,11 +19,14 @@ from xippios.core.testing import load_fixture
 from xippios.eurostat.models import Cube, Observation
 
 FIXTURES = Path(__file__).parent / "fixtures" / "get_data"
+PRODCOM = "DS-059358_AT_10411200_2022_2023"
 CUBES = [
     "apro_mk_cola_AT_2022_2023",
     "apro_cpnh1_AT_2022_2023",
     "ef_m_farmleg_AT_HLD_last_2",
     "unknown_code",
+    PRODCOM,
+    "DS-059358_unknown_code",
 ]
 
 
@@ -67,6 +72,32 @@ def test_cube_mirrors_json_stat() -> None:
     assert isinstance(milk.value["40"], float)
     assert milk.extension is not None
     assert milk.extension["status"] == {"label": {"|C": "|confidential"}}
+
+
+def test_cube_keeps_a_text_value_as_printed() -> None:
+    """DS-059358's ``value`` holds numbers and, where the indicator is a unit or a flag,
+    upstream's text: ``"KG"`` for QNTUNIT and ``":E"`` for SCQNTFLAG and SCVALFLAG.
+    Cell 12 of size [1, 1, 1, 23, 2] is QNTUNIT (position 6) in 2022; cell 43 SCQNTFLAG
+    (position 21) in 2023."""
+    prodcom = cube(PRODCOM)
+    sent = raw(PRODCOM)["value"]
+    assert isinstance(prodcom.value, dict)
+    assert prodcom.value == sent, "every value as upstream's JSON has it"
+    assert prodcom.value["12"] == "KG"
+    assert prodcom.value["43"] == ":E"
+    assert isinstance(prodcom.value["6"], int), "an integer stays an integer"
+    assert {type(value) for value in prodcom.value.values()} == {int, str}
+    by_codes = {(o.codes["indicators"], o.codes["time"]): o for o in prodcom.observations()}
+    unit = by_codes[("QNTUNIT", "2022")]
+    assert (unit.value, unit.status) == ("KG", None)
+    assert unit.labels["indicators"] == "Quantity unit"
+    flag = by_codes[("SCQNTFLAG", "2023")]
+    assert flag.value == ":E"
+    assert flag.labels["indicators"] == "Sub-contracted production quantity flag"
+    texts = [o for o in prodcom.observations() if isinstance(o.value, str)]
+    assert len(texts) == sum(isinstance(value, str) for value in sent.values()) == 4
+    dumped = unit.model_dump(mode="json")
+    assert dumped["value"] == "KG", "text in the adapters' JSON too"
 
 
 def test_empty_cube_has_no_status_member() -> None:

@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-10-28T13:36:37.357325Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/data/DS-059358/A.AT.10411200.?format=SDMX-CSV&startPeriod=2022&endPeriod=2023&compressed=true"
+  },
+  "response": {
+    "body": "H4sIAAAAAAAAAK2Uz0vDMBSA74L/w44KT/de0t+32Haj2LV1SZ23IVuFXeys9f830NGxaxLIJSF8fO8LJBNKrMp6B6WQatE2mVA5fA3dDwzduR/GboDz0B//DiOcvo+nw+fYD7+gik2+b/JtUWdQv8j9uyjb/P4ul0qoJJNP6Mfcjx7oGR+B4ZJwyYIFUYKoFwgQCgg9IqZ3+UfzVil9jTEIWMxCaw4HL+BI5hw9zuTDvdgLLYQuIC1EfhijIajYXAtREPPIM1W6krg+pIihBWmupJ2Qc+TWKC0V+kgUmb5dvauabZ3NtUyL33K4LWcu5YZj7uMkjpMyTrI4aaJHaavi0uR1bU/h5hSZOok7YazLyFSbrEqxnjCJ6Q8vU61yy/kHkFRquXcGAAA=",
+    "body_base64": true,
+    "headers": [
+      [
+        "date",
+        "Wed, 28 Oct 2026 13:36:34 GMT"
+      ],
+      [
+        "content-type",
+        "application/vnd.sdmx.data+csv;version=1.0.0"
+      ],
+      [
+        "content-disposition",
+        "attachment; filename=\"estat_ds-059358_filtered_en.csv.gz\""
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ]
+    ],
+    "status": 200
+  }
+}

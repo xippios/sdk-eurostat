@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-10-28T13:36:35.359883Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/data/DS-059358/A.AT.10411200.?format=SDMX-CSV&startPeriod=2022&endPeriod=2023"
+  },
+  "response": {
+    "body": "DATAFLOW,LAST UPDATE,freq,reporter,product,indicators,TIME_PERIOD,OBS_VALUE\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,EXPQNT,2022,62927\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,EXPQNT,2023,46301\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,EXPVAL,2022,349477\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,EXPVAL,2023,415790\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,IMPQNT,2022,1693847\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,IMPQNT,2023,1018207\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,IMPVAL,2022,16903303\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,IMPVAL,2023,17501181\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,OWNPRODQNT,2022,0\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,OWNPRODQNT,2023,0\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,OWNPRODVAL,2022,0\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,OWNPRODVAL,2023,0\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,PRODQNT,2022,0\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,PRODQNT,2023,0\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,PRODVAL,2022,0\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,PRODVAL,2023,0\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,QNTUNIT,2022,KG\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,QNTUNIT,2023,KG\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,SCPRODQNT,2023,0\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,SCPRODVAL,2023,0\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,SCQNTFLAG,2023,:E\r\nESTAT:DS-059358(1.0),20/10/26 11:00:00,A,AT,10411200,SCVALFLAG,2023,:E\r\n",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Wed, 28 Oct 2026 13:36:33 GMT"
+      ],
+      [
+        "content-type",
+        "application/vnd.sdmx.data+csv;version=1.0.0"
+      ],
+      [
+        "content-disposition",
+        "attachment; filename=\"estat_ds-059358_filtered_en.csv\""
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ]
+    ],
+    "status": 200
+  }
+}

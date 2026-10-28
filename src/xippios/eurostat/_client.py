@@ -126,8 +126,10 @@ def classify(response: httpx.Response) -> XippiosError | None:
       the service will treat asynchronously is answered with an XML envelope that queues
       it, status ``SUBMITTED`` (``asynchronous-api.md``, "Step 1: Initial request"), which
       this package does not poll (design round Q4); the guide names no HTTP status for it,
-      so any 2xx is read. Judged by the headers alone, since a download's body goes to
-      the file unread.
+      so any 2xx is read. Recorded on the Comext base for ``DS-045409``, the whole
+      monthly flow: HTTP 200, ``application/xml``, the SOAP envelope with ``SUBMITTED``
+      (``tests/fixtures/data_query/DS-045409_asynchronous.json``). Judged by the headers
+      alone, since a download's body goes to the file unread.
     - A ``warning`` whose status is 413 or whose label starts ``ASYNCHRONOUS_RESPONSE``,
       at any HTTP status: the service will treat the request asynchronously, which this
       package does not poll (design round Q4, 2026-10-27): ``InvalidRequestError`` saying
@@ -140,9 +142,15 @@ def classify(response: httpx.Response) -> XippiosError | None:
     - HTTP 400 with any other ``error`` member, an array or one object:
       ``InvalidRequestError`` with upstream's label (recorded for an unknown dimension,
       fault 150, and for ``geo`` with ``geoLevel``; the fault table's 140 alike).
-    - HTTP 413 otherwise, the SOAP fault ``EXTRACTION_TOO_BIG`` the user guide documents
-      for the SDMX APIs among them (an extraction over 5,000,000 cells):
-      ``InvalidRequestError`` naming how to narrow it.
+    - HTTP 413 otherwise: ``InvalidRequestError`` naming how to narrow the query, with the
+      ``faultstring`` of a SOAP fault where the body is one. Recorded on the Comext base:
+      the SOAP fault ``EXTRACTION_TOO_BIG`` the user guide documents for the SDMX APIs
+      (an extraction over 5,000,000 cells;
+      ``tests/fixtures/data_query/DS-045409_too_big_413.json``), and the Statistics API's
+      ``error`` array with id 413 and the same text, its answer to a filter on a
+      dimension the dataset lacks, which it counts unfiltered
+      (``tests/fixtures/get_data/DS-059358_unknown_dimension.json``); the array's label
+      is not read at 413.
 
     Everything else falls through to core's status mapping, a 5xx included, so that it
     is retried. An unknown code (``geo=XX``) is no error: the service answers HTTP 200

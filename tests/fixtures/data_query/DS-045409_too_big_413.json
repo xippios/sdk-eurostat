@@ -1,0 +1,37 @@
+{
+  "recorded_at": "2026-10-28T13:36:41.499146Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/data/DS-045409/M.AT+DE+FR+IT+NL.US...?format=SDMX-CSV&startPeriod=2023&endPeriod=2023&compressed=true"
+  },
+  "response": {
+    "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><S:Fault xmlns:S=\"http://schemas.xmlsoap.org/soap/envelope/\"><faultcode>413</faultcode><faultstring>EXTRACTION_TOO_BIG: The requested extraction is too big, estimated 13344840 rows, max authorised is 5000000, please change your filters to reduce the extraction size</faultstring></S:Fault>",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Wed, 28 Oct 2026 13:36:38 GMT"
+      ],
+      [
+        "content-type",
+        "application/xml"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ]
+    ],
+    "status": 413
+  }
+}

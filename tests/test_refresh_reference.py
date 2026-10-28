@@ -184,7 +184,7 @@ def test_samples_readme_keeps_the_rows_the_script_does_not_cut(
     assert committed.startswith(script.SAMPLES_README)
     rows = [line for line in committed.splitlines() if line.startswith("| `")]
     kept = [line for line in rows if line.startswith("| `sdmx-csv/")]
-    assert len(kept) == 2
+    assert len(kept) == len(list((SAMPLES / "sdmx-csv").iterdir())), "one row per sample"
     (tmp_path / "README.md").write_text(committed, encoding="utf-8")
     monkeypatch.setattr(script, "SAMPLES", tmp_path)
     toc_row = "| `toc/apro_mk.xml` | a new run's row |"
