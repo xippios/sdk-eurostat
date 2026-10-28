@@ -192,12 +192,14 @@ The list tasks' caps add the note that names ``search``. ``list_datasets`` keeps
 family's 200 rows or 64 KB: no agent needs the whole table of contents at once (over
 10,000 leaves, about 400 bytes each as compact JSON, so the bytes cut it at about 150),
 and a search narrows it to what it looks for. ``list_codes`` takes up to 1,000 rows within
-the family's 64 KB (ADR-0016 decision 4): a code is about 45 to 70 bytes, so a codelist
-comes whole up to the byte bound, eleven of the twelve of the main base packaged on
-2026-10-27 (UNIT's 773 codes are 57,670 bytes) and CXT_INDICATORS, and GEO's thousands
-and the PRODCOM lists' hundreds of long labels are cut with the note. ``list_products``
-takes the same cap, so a search for a NACE class (``"1041"``, 42 products of oils and
-fats) or a word comes whole.
+the family's 64 KB (ADR-0016 decision 4): a code of the main base's codelists is about 45
+to 70 bytes, so a codelist comes whole up to the byte bound, eleven of the twelve
+packaged on 2026-10-27 (UNIT's 773 codes are 57,670 bytes), and CXT_INDICATORS too; GEO's
+thousands and the two PRODCOM product lists, whose labels are long, are cut with the
+note (CXT_PRODCOM2_TOTAL's 822 codes at 652 rows on 2026-10-28). ``list_products`` takes
+the same cap, so a search for a NACE class (``"1041"``: its 42 products of oils and fats
+and 13 codes that hold the digits elsewhere, 55 rows on 2026-10-28) or a word comes
+whole.
 """
 
 
@@ -782,8 +784,9 @@ async def list_products_async(search: str | None = None) -> Result[list[Code]]:
 
     Args:
         search: Text to look for in the code or the English label, ignoring case, e.g.
-            ``"soya"``, ``"oilcake"``, ``"1041"`` (a NACE class), ``"ethyl alcohol"`` or
-            ``"fertilisers"``; ``None`` lists every product.
+            ``"soya"``, ``"oilcake"``, ``"ethyl alcohol"``, ``"fertilisers"`` or
+            ``"1041"`` (a NACE class, and the few codes that hold the digits elsewhere);
+            ``None`` lists every product.
     """
     info = params.list_info()[params.PRODCOM_SOLD.lower()]
     return _codelist_answer(info, search, {"search": search})

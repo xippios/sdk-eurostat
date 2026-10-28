@@ -1,9 +1,10 @@
 # Reference data for Eurostat dissemination API
 
-The lists `list_datasets` and `list_codes` answer from ship here as JSON, versioned with
-the package: the thirteen lists are packaged-list files (conventions §3, ADR-0022) that
-`xippios.core.PackagedList.load` reads through `params.py`, and `lists.json` beside them
-is a plain derived index, read with `load_json`:
+The lists `list_datasets`, `list_codes` and `list_products` answer from, and the
+production tasks check a product and an indicator against, ship here as JSON, versioned
+with the package: the sixteen lists are packaged-list files (conventions §3, ADR-0022)
+that `xippios.core.PackagedList.load` reads through `params.py`, and `lists.json` beside
+them is a plain derived index, read with `load_json`:
 
 ```python
 from xippios.core import PackagedList
@@ -17,14 +18,21 @@ geo.records[0]  # {"code": "EUR", "label": "Europe"}
   (`path`, their English titles joined with ` > `), `lastUpdate`, `lastModified`,
   `dataStart`, `dataEnd` and `values` as printed.
 - `<codelist>.json`, the codelist's id lower-cased: the codes and English labels of one
-  SDMX codelist, the latest version, in upstream's order; the twelve codelists of the
-  dimensions of apro_cpnh1, apro_mk_cola and ef_m_farmleg.
+  SDMX codelist, the latest version, in upstream's order, its `param` the dimension it
+  feeds (`params.CODELISTS`). Twelve come from the main base, the codelists of the
+  dimensions of apro_cpnh1, apro_mk_cola and ef_m_farmleg, each feeding the dimension
+  named as its id lower-cased; three from the Comext base,
+  `https://ec.europa.eu/eurostat/api/comext/dissemination`, the codelists of the Prodcom
+  datasets DS-059358 and DS-059359: `cxt_prodcom2_sold.json` and
+  `cxt_prodcom2_total.json`, their `product` codes (the second a part of the first), and
+  `cxt_indicators.json`, the `indicators` codes of both, which Comext's trade datasets
+  share.
 - `lists.json`: not a packaged list but a derived index, plain JSON read with
-  `load_json`: `fetched`, when the refresh run's last answer arrived, and `lists`, one
-  record per packaged list with upstream's release identifiers, the TOC's
+  `load_json`: `fetched`, the latest `fetched` among the packaged lists, and `lists`,
+  one record per packaged list with upstream's release identifiers, the TOC's
   `creationDate` and a codelist's `version` and `LAST_UPDATED`, which the list tasks
   read for `meta.vintage` and `meta.published_at`; a packaged-list file has no key for
-  them (ADR-0022, amendment 8; gap, row 111). It is derived from the thirteen answers
+  them (ADR-0022, amendment 8; gap, row 111). It is derived from the sixteen answers
   the packaged lists come from and names no upstream operation, so it has no origin and
   no row in the table below.
 
@@ -38,9 +46,11 @@ Each packaged-list file holds `{"param", "endpoint", "fetched", "records"}` and 
 optional `"note"`, upstream's records under upstream's field names, written by
 `/refresh-reference-data`'s script, `scripts/refresh_reference.py`, with
 `PackagedList.write`, never by hand, and read with `PackagedList.load`; the script
-rewrites the table below. One row per packaged list: Origin is the endpoint it was
-fetched from, none being rebuilt from a `docs/upstream/` file; Fetched is the UTC time of
-that fetch.
+rewrites the table below, a run with `--only` the rows of the lists it names and no
+other. One row per packaged list: Origin is the endpoint it was fetched from, the path
+on the main base and the full URL on the Comext base, as the file's `endpoint` records
+it, none being rebuilt from a `docs/upstream/` file; Fetched is the UTC time of that
+fetch.
 
 | File | Origin | Fetched |
 | --- | --- | --- |

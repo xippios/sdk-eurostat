@@ -35,6 +35,36 @@ All notable changes to this project are documented here. The format follows
   CN8, the first asynchronous answer and the first `EXTRACTION_TOO_BIG` fault recorded
   replace the tests on the user guide's documented bodies. One more live test, on
   `DS-059358`, checks nightly that the Comext base answers.
+- Prodcom production, the agricultural focus of this version, on the Comext base:
+  `get_sold_production(product, reporters=None, since=None, until=None,
+  indicators=None)` reads `DS-059358`, sold production, exports and imports, and
+  `get_total_production(product, reporters=None, since=None, until=None,
+  indicators=None)` reads `DS-059359`, total production, one product at a time. Each
+  sends one getData request, as the slices do, and returns the cube's observations in
+  cube order with `get_data`'s `meta`: `reporters` are sent as `reporter`, `since` and
+  `until` as `sinceTimePeriod` and `untilTimePeriod`, `indicators` as `indicators`. The
+  product is checked against the dataset's packaged product list and each indicator
+  against `CXT_INDICATORS` before sending, so a code they lack raises `UnknownCode`
+  naming the closest codes; a reporter is sent as given, and one the dataset lacks gives
+  an empty list. Over MCP each keeps 200 rows, with a note naming `reporters`,
+  `indicators` and `since`.
+- `list_products(search=None)`: the PRODCOM products of `DS-059358` from the packaged
+  `CXT_PRODCOM2_SOLD`, without a request, `meta.vintage` the codelist's version and
+  `meta.published_at` its last update, with Eurostat's zone. Its description names the
+  agricultural products an agent looks for, with their codes: oils and fats, oil-cakes,
+  ethanol, biodiesel, sugar, animal feed, meat, dairy, beverages and fertilisers. Over
+  MCP it takes up to 1,000 rows within 64 KB, with a note naming `search`.
+- Three codelists of the Comext base packaged, fetched on 2026-10-28:
+  `CXT_PRODCOM2_SOLD` (version 6.0, 4,788 codes), the products of `DS-059358`;
+  `CXT_PRODCOM2_TOTAL` (4.0, 822 codes, all of them in the first), the products of
+  `DS-059359`; and `CXT_INDICATORS` (49.0, 44 codes), the indicators of both.
+  `list_codes` serves them as it serves the twelve of the main base, and the packaged
+  file's `endpoint` is the codelist's full URL on the Comext base.
+- `scripts/refresh_reference.py --only <name> [<name> ...]` fetches the named lists
+  alone, each named by its id as upstream writes it or by its file, writes their files,
+  replaces their records in `lists.json` and their rows in `reference/README.md`, and
+  keeps every other list's; the index's `fetched` becomes the latest `fetched` among
+  all the packaged lists. Without `--only` the run is the whole refresh, as before.
 
 ### Changed
 
@@ -54,6 +84,10 @@ All notable changes to this project are documented here. The format follows
   and flags among its measures, which Eurostat prints as values (`"KG"` for `QNTUNIT`,
   `":E"` for `SCQNTFLAG`). `parse_sdmx_csv` no longer refuses an `OBS_VALUE` that is no
   number.
+- `params.CODELISTS` maps each packaged codelist's id to the base that serves it and the
+  dimension it feeds (`params.CodelistOrigin`), in place of a tuple of ids; iterating it
+  still gives the ids. `lists.json`'s `fetched` is the latest `fetched` among the
+  packaged lists, which a full refresh writes as before.
 
 ## [0.1.0] - 2026-10-28
 

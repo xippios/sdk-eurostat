@@ -39,13 +39,18 @@ src/xippios/eurostat/
                    parse_sdmx_csv for the SDMX-CSV file download_dataset writes
   mcp.py           xippios-eurostat-mcp entry point
   http.py          FastAPI router
-  params.py        packaged lists: PACKAGED_LISTS, packaged(), list_info() (lists.json),
-                   datasets() (the TOC), codes() (a codelist)
+  params.py        packaged lists: CODELISTS (each codelist's base and dimension),
+                   PACKAGED_LISTS, packaged(), list_info() (lists.json), datasets() (the
+                   TOC), codes() (a codelist)
   enums.py         StrEnums (IntEnums for integer ids) generated from the packaged lists;
                    never edited by hand
-  reference/       packaged code lists (CSV/JSON) plus README with provenance
+  reference/       packaged lists as JSON plus README with provenance: the TOC, twelve
+                   codelists of the main base and three of the Comext base
+                   (CXT_PRODCOM2_SOLD, CXT_PRODCOM2_TOTAL, CXT_INDICATORS), and the
+                   index lists.json
 scripts/
-  refresh_reference.py   fetches the packaged lists through api/ and regenerates enums.py
+  refresh_reference.py   fetches the packaged lists through api/, every one or those
+                         --only names, and regenerates enums.py
   refresh_upstream.py    writes docs/upstream/ and FETCHED.md (/refresh-upstream)
 tests/
   conftest.py      enables xippios.core.testing.plugin, which keeps the run offline
@@ -57,7 +62,8 @@ tests/
   test_client.py   classify against the recorded refusals and the documented ones
   test_models.py   Cube against the recorded answers
   test_tasks.py    per-task replay tests
-  test_refresh_reference.py  the refresh script's readers on tests/fixtures/files/
+  test_refresh_reference.py  the refresh script's readers on tests/fixtures/files/, and
+                   its --only merge, offline
   test_parse.py    parse_sdmx_csv on the samples under tests/fixtures/files/sdmx-csv/
   test_live.py     @pytest.mark.live smoke tests, one per task
 docs/upstream/     documentation snapshot and FETCHED.md
@@ -87,6 +93,21 @@ sharing a key never start together, and on demand from the Actions tab; pull req
 never run live tests. The API needs no key, so the workflow uses no secret.
 
 ## Eurostat dissemination API specifics
+
+The packaged codelists come from both bases: `params.CODELISTS` names each one's base and
+the dimension it feeds, the packaged file's `param`. The twelve of the main base keep the
+path they were fetched from as `endpoint` (`sdmx/2.1/codelist/ESTAT/GEO`); the three of
+the Comext base, the Prodcom datasets' `product` and `indicators` lists, the full URL
+(`https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_INDICATORS`),
+since the path alone names the main base's operation (Johannes, 2026-10-28; gap, row 111).
+`scripts/refresh_reference.py --only <name> [<name> ...]` refreshes the named lists and
+keeps every other list's file, `lists.json` record and provenance row; the index's
+`fetched` is the latest among all lists. The production tasks check a product against the
+dataset's own product list before sending: DS-059358's is CXT_PRODCOM2_SOLD, DS-059359's
+CXT_PRODCOM2_TOTAL, 822 of the first list's 4,788 codes (chiefly chemicals, fertilisers
+and metals) on 2026-10-28; each indicator is checked against CXT_INDICATORS, which
+Comext's trade datasets share. A reporter is sent unchecked: CXT_FREE_ISO is not
+packaged, and Eurostat answers a reporter the dataset lacks with an empty cube.
 
 Two kinds of fixture beyond the recorded `<wrapper>/<case>.json`:
 

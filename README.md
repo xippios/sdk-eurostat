@@ -99,6 +99,43 @@ refuses a `time` filter before sending, since it selects the periods itself, and
 Over MCP each slice keeps the family's cap, 200 rows or 64 KB, with a note of its own on
 how to see the rest.
 
+### Prodcom production
+
+```python
+from xippios.eurostat import get_sold_production, get_total_production, list_products
+
+soya = list_products(search="soya")  # the PRODCOM products, without a request
+soya.data[0]  # Code(code="10412100", label="Crude soya-bean oil and its fractions ...")
+oil = get_sold_production("10411200", reporters=["AT"], since="2022", until="2023")
+values = {(o.codes["indicators"], o.codes["time"]): o.value for o in oil.data}
+values["EXPVAL", "2023"], values["QNTUNIT", "2023"]  # 415790 (euro), "KG"
+oil.meta.request  # {"dataset": "DS-059358", "filters": {"reporter": ["AT"], ...}, ...}
+manure = get_total_production("20158000", reporters=["AT"], since="2022", until="2023")
+[(o.codes["indicators"], o.codes["time"], o.value) for o in manure.data][:2]
+# [("APRODQNT", "2022", 84470389), ("APRODQNT", "2023", 14769157)], in QNTUNIT "KG"
+```
+
+Eurostat's Prodcom statistics, production of manufactured goods, food and agricultural
+inputs among them, are served on the Comext base. `get_sold_production(product,
+reporters=None, since=None, until=None, indicators=None)` reads DS-059358, sold
+production, exports and imports, and `get_total_production(...)` DS-059359, total
+production, one product at a time: each sends one `get_data` request and returns the
+cube's observations in cube order with `get_data`'s `meta`. `reporters` are country codes
+(`["AT"]`), `since` and `until` years, and `indicators` the measures (`PRODVAL`,
+`PRODQNT` in `QNTUNIT`, `EXPVAL`, `EXPQNT`, `IMPVAL`, `IMPQNT` for DS-059358; `APRODQNT`
+in `QNTUNIT` for DS-059359), `None` for every one. A value is a number, or the text
+Eurostat prints for a unit or a flag (`"KG"`, `":E"`). The product is checked against the
+dataset's product list packaged with this version, and each indicator against
+CXT_INDICATORS, before sending: a code they lack raises `UnknownCode` naming the closest.
+A reporter is sent as given, and one the dataset lacks gives an empty list.
+`list_products(search=None)` lists DS-059358's products (CXT_PRODCOM2_SOLD), eight-digit
+codes that start with their NACE class (`1041` oils and fats, `2015` fertilisers);
+DS-059359 covers a few hundred of them, chiefly chemicals, fertilisers and metals, which
+`list_codes("cxt_prodcom2_total")` lists. Over MCP the production tasks keep the family's
+cap, 200 rows or 64 KB, with a note naming `reporters`, `indicators` and `since`, and
+`eurostat_list_products` takes up to 1,000 rows within 64 KB, with a note naming
+`search`.
+
 ### Datasets and codes
 
 ```python
@@ -126,16 +163,19 @@ listing in the tree, each with its code, type, English title, the folders above 
 period and its number of values as Eurostat prints them. `meta.vintage` is the table of
 contents' `creationDate` as printed and `meta.published_at` the same time, which
 Eurostat prints without a zone, so `meta.published_at_naive` is set.
-`list_codes(codelist, search=None)` reads one of twelve SDMX codelists
+`list_codes(codelist, search=None)` reads one of fifteen SDMX codelists
 (`sdmx/2.1/codelist/ESTAT/<ID>`, English labels): FREQ, GEO, UNIT, CROPS, STRUCPRO,
 MILKITEM, DAIRYPROD, STATINFO, LEG_FORM, FARMTYPE, SO_EUR and UAAREA, the codelists of
 the dimensions of apro_cpnh1, apro_mk_cola and ef_m_farmleg, named as the dimension is
-(`"geo"`, case-insensitive). `meta.vintage` is the codelist's version and
-`meta.published_at` its last update. Another name raises `UnknownCode` naming the
-closest packaged codelists. `search` keeps the records whose code or title (label)
-contains the text, ignoring case. Over MCP `eurostat_list_datasets` keeps the family's
-cap and `eurostat_list_codes` takes up to 1,000 codes within the family's 64 KB, so
-every packaged codelist but GEO comes whole; both notes name `search`.
+(`"geo"`, case-insensitive); and from the Comext base CXT_PRODCOM2_SOLD,
+CXT_PRODCOM2_TOTAL and CXT_INDICATORS, the `product` and `indicators` codes of the
+Prodcom datasets, whose `meta.endpoint` is the codelist's full URL there.
+`meta.vintage` is the codelist's version and `meta.published_at` its last update.
+Another name raises `UnknownCode` naming the closest packaged codelists. `search` keeps
+the records whose code or title (label) contains the text, ignoring case. Over MCP
+`eurostat_list_datasets` keeps the family's cap and `eurostat_list_codes` takes up to
+1,000 codes within the family's 64 KB, so every packaged codelist but GEO and the two
+PRODCOM product lists comes whole; both notes name `search`.
 
 ### Bulk download
 
@@ -213,15 +253,18 @@ exactly tasks.__all__. -->
 | `getData` with `lastTimePeriod=1` | `get_latest_period(dataset, filters)`, the observations of the most recent period | `eurostat_get_latest_period` | alpha |
 | `getData` with `time` | `get_cross_section(dataset, period, filters)`, the observations of one period | `eurostat_get_cross_section` | alpha |
 | `getTocXml` (`catalogue/toc/xml`), packaged | `list_datasets(search)`, the datasets and tables of the table of contents | `eurostat_list_datasets` | alpha |
-| `codeListQuery` (`sdmx/2.1/codelist/ESTAT/{resourceID}`), packaged | `list_codes(codelist, search)`, the codes of one of twelve codelists | `eurostat_list_codes` | alpha |
+| `codeListQuery` (`sdmx/2.1/codelist/ESTAT/{resourceID}`), packaged | `list_codes(codelist, search)`, the codes of one of fifteen codelists, three of them the Comext base's | `eurostat_list_codes` | alpha |
+| `codeListQuery` (`sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_SOLD`, Comext base), packaged | `list_products(search)`, the PRODCOM products of DS-059358 | `eurostat_list_products` | alpha |
+| `getData` on DS-059358 (Comext base) | `get_sold_production(product, reporters, since, until, indicators)`, Prodcom's sold production, exports and imports of one product as observations | `eurostat_get_sold_production` | alpha |
+| `getData` on DS-059359 (Comext base) | `get_total_production(product, reporters, since, until, indicators)`, Prodcom's total production of one product as observations | `eurostat_get_total_production` | alpha |
 | `dataQuery` (`sdmx/2.1/data/{flowRef}/{key}`), SDMX-CSV | `download_dataset(dataset, key, dest)`, a gzip-compressed SDMX-CSV file on disk | none: a bulk task, Python only, which the adapters skip | alpha |
 
-These seven tasks cover Eurostat's dissemination API on its two base URLs: the main one,
+These ten tasks cover Eurostat's dissemination API on its two base URLs: the main one,
 `https://ec.europa.eu/eurostat/api/dissemination`, and
 `https://ec.europa.eu/eurostat/api/comext/dissemination`, where Eurostat serves the
 Comext and Prodcom datasets, whose codes start with `DS-`; the dataset's code chooses the
 base. Not covered: polling an asynchronous answer, which is refused with how to narrow
-the query; SDMX-ML and TSV; codelists other than the twelve packaged ones, which
+the query; SDMX-ML and TSV; codelists other than the fifteen packaged ones, which
 `list_codes` refuses naming the closest.
 
 ## Upstream terms and attribution
