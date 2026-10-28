@@ -174,8 +174,9 @@ is checked against the lists packaged with this version before sending, the prod
 against CXT_NC, the reporters and partners against CXT_FREE_ISO, the flow against
 CXT_EU_FLUX and the indicators against CXT_INDICATORS: a code they lack raises
 `UnknownCode` naming the closest. DS-059341's product list is CXT_NC too, so a CN8 code
-passes the check for `get_trade_hs`, and DS-059341 answered one with HTTP 413
-`ASYNCHRONOUS_RESPONSE`, raised as `InvalidRequestError`: give it an HS code.
+passes the check for `get_trade_hs`, and DS-059341 answers one asynchronously (HTTP 413
+`ASYNCHRONOUS_RESPONSE`), which this package does not poll: `InvalidRequestError`; give it
+an HS code.
 `list_cn8(search=None)` and `list_hs(search=None)` list CXT_NC's codes by length, the
 eight-character ones and the two-, four- and six-character ones, without a request
 (`list_codes("cxt_nc")` lists them all, `TOTAL` with them); a code with letters in it

@@ -5,8 +5,10 @@
 The fixtures are ``tests/fixtures/get_data/<case>.json``, recorded on the main base on
 2026-10-27, and its ``DS-*`` cases, recorded on the Comext base on 2026-10-28 for the
 Prodcom datasets ``DS-059358`` and ``DS-059359``; each test sends exactly the recorded
-URL, parameter order included. The Statistics API's asynchronous answer is not recorded
-(``tests/test_client.py`` says why); its test serves the user guide's documented body.
+URL, parameter order included. The Statistics API's asynchronous answer was recorded on
+the Comext base on 2026-10-28, an ``error`` array at HTTP 413
+(``DS-059341_AT_DE_15071090_cn8_on_hs_flow``); the user guide's documented ``warning``,
+never seen, keeps a test that serves its documented body.
 The slices (``get_series``, ``get_latest_period``, ``get_cross_section``) each send one
 getData request, so their fixtures are getData answers too: ``*_series_*``,
 ``*_latest_*`` and ``*_cross_section_*``, plus two of ``get_data``'s whose URL a slice
@@ -305,8 +307,10 @@ def test_documented_shape_get_data_refuses_an_asynchronous_answer(
     respx_mock: respx.MockRouter,
 ) -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written: the asynchronous answer of api-statistics.md. The Statistics API's first
-    asynchronous answer seen is recorded and replaces this test (Johannes, 2026-10-27)."""
+    hand-written, and never seen: the asynchronous answer of api-statistics.md. The
+    Statistics API's asynchronous answer was recorded on 2026-10-28 as an ``error`` array
+    (``test_get_trade_hs_passes_a_cn8_code_which_ds_059341_answers_asynchronously``); this
+    test stays for the documented ``warning`` (gap row 83)."""
     documented = next(
         line.strip()
         for line in (GUIDE / "api-statistics.md").read_text(encoding="utf-8").splitlines()
@@ -2341,8 +2345,9 @@ def test_get_trade_hs_passes_a_cn8_code_which_ds_059341_answers_asynchronously(
 ) -> None:
     """Recorded on 2026-10-28: a CN8 code passes the check, since DS-059341's structure
     names CXT_NC for its product, and DS-059341, by HS2-4-6, answers it not with an empty
-    cube but with HTTP 413 and an ``error`` array labelled ``ASYNCHRONOUS_RESPONSE``;
-    ``classify`` maps it through its HTTP 413 branch to ``InvalidRequestError``."""
+    cube but asynchronously, HTTP 413 with an ``error`` array labelled
+    ``ASYNCHRONOUS_RESPONSE``, which the package does not poll: ``classify`` refuses it as
+    an asynchronous answer, never as too large."""
     route = replay_fixture(GET_DATA, CN8_ON_HS)
     with pytest.raises(InvalidRequestError) as refused:
         get_trade_hs(SOYA_OIL, **TRADE_SLICE)
@@ -2356,11 +2361,14 @@ def test_get_trade_hs_passes_a_cn8_code_which_ds_059341_answers_asynchronously(
     assert recorded.status == 413
     assert json.loads(recorded.body)["error"][0]["label"].startswith("ASYNCHRONOUS_RESPONSE")
     assert str(refused.value) == (
-        "Eurostat refused GET /eurostat/api/comext/dissemination/statistics/1.0/data/"
-        "DS-059341 as too large (HTTP 413: fault 413: ASYNCHRONOUS_RESPONSE. Your request "
-        "will be treated asynchronously. Please try again later.): narrow the query with "
-        "fewer codes per dimension or a shorter period."
+        "Eurostat will answer GET /eurostat/api/comext/dissemination/statistics/1.0/data/"
+        "DS-059341 asynchronously (ASYNCHRONOUS_RESPONSE. Your request will be treated "
+        "asynchronously. Please try again later.), and this package does not poll "
+        "asynchronous answers: the Statistics API prepares the answer meanwhile and does "
+        "not say when it is ready: send the same request again later, or narrow the query "
+        "with fewer codes per dimension or a shorter period."
     )
+    assert "too large" not in str(refused.value)
 
 
 @pytest.mark.parametrize(

@@ -80,9 +80,13 @@ All notable changes to this project are documented here. The format follows
   against `CXT_FREE_ISO`, the flow against `CXT_EU_FLUX` and indicators against
   `CXT_INDICATORS`, so a code they lack raises `UnknownCode` naming the closest codes,
   and a `freq` other than `A` or `M` raises `InvalidRequestError`. `DS-059341` takes
-  `CXT_NC` as its product list too, so a CN8 code passes the check there; it answered one
-  with HTTP 413 `ASYNCHRONOUS_RESPONSE` when recorded, which raises
-  `InvalidRequestError`. Over MCP each keeps 200 rows, with a note naming `partners`,
+  `CXT_NC` as its product list too, so a CN8 code passes the check there; it answers one
+  asynchronously, HTTP 413 with an `error` array labelled `ASYNCHRONOUS_RESPONSE`, the
+  Statistics API's asynchronous answer as recorded, which this package does not poll and
+  refuses with `InvalidRequestError`: send it again later, or give an HS code. The error
+  mapping refuses that shape by its label as it refuses the user guide's documented
+  `warning`, before its refusal of `EXTRACTION_TOO_BIG` as too large, which shares the
+  status and the id. Over MCP each keeps 200 rows, with a note naming `partners`,
   `indicators`, `since` and `freq`. Fixtures recorded on the Comext base for Austria's
   trade with Germany over 2023, monthly, in crude soya-bean oil (CN8 `15071090`) and
   soya-bean oil (HS `1507`), and that CN8 code on `DS-059341`.

@@ -47,9 +47,9 @@ product against CXT_NC, the two datasets' product list, each reporter and partne
 against CXT_FREE_ISO, the flow against CXT_EU_FLUX and each indicator against
 CXT_INDICATORS (``UnknownCode``), and ``freq`` against ``models.Freq``, ``A`` and ``M``
 (``InvalidRequestError``). DS-059341's product list is CXT_NC as DS-045409's is, so a CN8
-code passes the check there, and DS-059341 answered one with HTTP 413
-``ASYNCHRONOUS_RESPONSE`` when recorded on 2026-10-28, which ``get_data`` raises as
-``InvalidRequestError``.
+code passes the check there, and DS-059341 answers one asynchronously (HTTP 413,
+``ASYNCHRONOUS_RESPONSE``, recorded on 2026-10-28), which this package does not poll:
+``get_data`` raises ``InvalidRequestError`` saying to send it again later or narrow it.
 
 The list tasks, ``list_datasets``, ``list_codes``, ``list_products``, ``list_cn8`` and
 ``list_hs``, answer from the packaged lists (``params``) without a request, by ADR-0022
@@ -1410,10 +1410,11 @@ async def get_trade_hs_async(
     an HS chapter, heading or subheading, a two-, four- or six-digit code, which
     ``list_hs`` lists. The dataset's data structure names CXT_NC as its product list,
     which ``get_trade`` shares and which holds the eight-digit CN codes too, so a CN8 code
-    passes the package's check; DS-059341 answered one (``"15071090"``, recorded on
-    2026-10-28) not with an empty list but with HTTP 413 ``ASYNCHRONOUS_RESPONSE``, a
-    query it would treat asynchronously, which raises ``InvalidRequestError``: give the
-    HS heading or subheading instead (``"1507"``, ``"150710"``). Each observation
+    passes the package's check, and DS-059341 answers one (``"15071090"``, recorded on
+    2026-10-28) not with an empty list but asynchronously, HTTP 413
+    ``ASYNCHRONOUS_RESPONSE``, which this package does not poll: it raises
+    ``InvalidRequestError``; give an HS code instead (``"1507"``, ``"150710"``). Each
+    observation
     carries its code and label on every dimension (``freq``, ``reporter``, ``partner``,
     ``product``, ``flow``, ``indicators``, ``time``), its value and its status, in cube
     order: reporter by reporter, partner by partner, flow by flow, indicator by
@@ -1426,12 +1427,11 @@ async def get_trade_hs_async(
     ``UnknownCode`` naming the closest. A code they hold that the dataset lacks is
     Eurostat's to answer, as the CN8 code above was, and a product without trade in the
     periods asked for gives an empty list. ``freq`` other than ``"M"`` or ``"A"`` is
-    refused with ``InvalidRequestError``. ``meta`` is
-    ``get_data``'s: ``meta.request`` holds the dataset and the filters sent,
-    ``meta.published_at`` the dataset's last update with Eurostat's zone and
-    ``meta.vintage`` the same time as printed. Keep the slice small: a query Eurostat
-    would answer asynchronously or refuses as too large raises ``InvalidRequestError``
-    naming how to narrow it.
+    refused with ``InvalidRequestError``. ``meta`` is ``get_data``'s: ``meta.request``
+    holds the dataset and the filters sent, ``meta.published_at`` the dataset's last
+    update with Eurostat's zone and ``meta.vintage`` the same time as printed. Keep the
+    slice small: a query Eurostat would answer asynchronously or refuses as too large
+    raises ``InvalidRequestError`` naming how to narrow it.
 
     Args:
         product: One HS code, e.g. ``"1507"`` (soya-bean oil), ``"1201"`` (soya
