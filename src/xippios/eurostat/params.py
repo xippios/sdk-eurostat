@@ -1,9 +1,11 @@
-"""Packaged lists for Eurostat dissemination API (conventions §3, ADR-0022).
+"""The packaged reference lists, read from ``reference/`` without a call (conventions §3).
+
+``/refresh-reference-data`` writes them; ``PackagedList.load(PACKAGE, name)`` reads one.
 
 The table of contents and twelve codelists ship inside the package under ``reference/``
 so that ``list_datasets`` and ``list_codes`` need no request, with an index of their
 release identifiers beside them; ``scripts/refresh_reference.py`` writes the fourteen
-JSON files, never by hand. The thirteen lists are packaged-list files that
+JSON files, never by hand (ADR-0022). The thirteen lists are packaged-list files that
 ``PackagedList.load`` reads (``{"param", "endpoint", "fetched", "records"}`` and an
 optional ``note``); the index is plain JSON:
 

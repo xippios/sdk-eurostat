@@ -117,3 +117,4 @@ All notable changes to this project are documented here. The format follows
   (ADR-0019 decision 3); `getData` reads its answer with core 0.3.0's
   `AsyncClient.get_answer`, so `get_data`'s `meta.retrieved_at` on a cache hit is the
   time the answer was stored (conventions §4, ADR-0015 decision 5).
+- Adopted xippios-core 0.3.0, sdk-template v0.3.0 and conventions 1.21 (conventions §15).

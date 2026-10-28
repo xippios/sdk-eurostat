@@ -1,9 +1,7 @@
-"""Typed client, MCP tools and HTTP routes for Eurostat dissemination API.
+"""Public API: ``__version__`` and the task functions re-exported here (conventions §2).
 
-Distribution ``xippios-eurostat``. Public API: ``__version__`` and the task
-functions re-exported here; ``parse.parse_sdmx_csv`` reads the file the bulk task
-``download_dataset`` writes. Endpoint wrappers under ``api/`` and the configured client
-in ``_client`` are internal.
+Upstream: Eurostat dissemination API. ``parse.parse_sdmx_csv`` reads the file the bulk
+task ``download_dataset`` writes.
 """
 
 from xippios.eurostat._version import __version__

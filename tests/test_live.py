@@ -1,6 +1,7 @@
-"""Live smoke tests: skipped unless XIPPIOS_LIVE_TESTS=1 (conventions §10).
+"""Live smoke tests, one per task, skipped unless XIPPIOS_LIVE_TESTS=1 (conventions §10).
 
-Every task function gets one live smoke test here, next to the reachability check.
+``/add-endpoint`` adds them, next to the reachability check.
+
 ``get_data`` has one per dataset of the design round's question 6 (2026-10-27), each the
 small slice its fixture holds: ``apro_mk_cola`` (milk collection), ``apro_cpnh1`` (crop
 production) and ``ef_m_farmleg`` (farm indicators by legal status), Austria, two periods.
