@@ -836,11 +836,16 @@ def _labels(name: str) -> Mapping[str, str]:
     return MappingProxyType({code.code: code.label or code.code for code in params.codes(name)})
 
 
-def _check_code(param: str, value: str, codelist: str, reason: str) -> None:
+def _check_code(
+    param: str, value: str, codelist: str, reason: str, hint: str | None = None
+) -> None:
     """Refuse ``value`` when the packaged codelist ``codelist`` lacks it (conventions §5).
 
+    ``hint``, when given, explains the value in place of the closest codes, which are
+    then neither named nor kept.
+
     Raises:
-        UnknownCode: Naming the list, its fetch date and the closest codes.
+        UnknownCode: Naming the list, its fetch date and the closest codes, or the hint.
     """
     labels = _labels(codelist.lower())
     if value not in labels:
@@ -849,7 +854,8 @@ def _check_code(param: str, value: str, codelist: str, reason: str) -> None:
             value,
             list_name=codelist,
             fetched=params.packaged(codelist.lower()).fetched,
-            closest=closest(value, labels),
+            closest=() if hint else closest(value, labels),
+            hint=hint,
             reason=reason,
             source=SOURCE,
         )
@@ -885,20 +891,20 @@ async def _production(
 
     ``products`` is the id of the dataset's product codelist. Every code is checked
     before the request; a product the list lacks that the other Prodcom dataset's list
-    holds is refused naming the task that serves it. The filters go out in the order
-    reporter, product, indicators.
+    holds is refused naming the task that serves it, in place of the closest codes. The
+    filters go out in the order reporter, product, indicators.
     """
     listed = (
         "list_products lists them."
         if products == params.PRODCOM_SOLD
         else f'list_codes("{products.lower()}") lists them.'
     )
-    elsewhere = "".join(
-        f" {product} is a product of {dataset}: {task} serves it."
+    elsewhere = " ".join(
+        f"{product} is a product of {dataset}: {task} serves it."
         for codelist, (dataset, task) in PRODUCTION_DATASETS.items()
         if codelist != products and product in _labels(codelist.lower())
     )
-    _check_code("product", product, products, f"{UNKNOWN_PRODUCT} {listed}{elsewhere}")
+    _check_code("product", product, products, f"{UNKNOWN_PRODUCT} {listed}", elsewhere or None)
     filters: dict[str, str | list[str]] = {}
     if reporters is not None:
         filters["reporter"] = _listed("reporters", reporters, "every reporter")
@@ -939,10 +945,11 @@ async def get_sold_production_async(
     whole of CXT_INDICATORS, before any request: a code they lack raises
     ``UnknownCode`` naming the closest. CXT_INDICATORS holds the Comext trade datasets'
     indicators too, so one of them that this dataset lacks (``VALUE_IN_EUROS``, or
-    DS-059359's ``APRODQNT``) passes the check, and Eurostat answers it with an empty
-    cube: an empty list. A reporter is sent as given, and one the dataset lacks gives an
-    empty list. ``meta`` is ``get_data``'s: ``meta.request`` holds the dataset and the filters
-    sent, ``meta.published_at`` the dataset's last update with Eurostat's zone and
+    DS-059359's ``APRODQNT``) passes the check, and Eurostat answers such an indicator
+    with an empty cube, as recorded for PRODVAL on DS-059359: an empty list. A reporter
+    is sent as given, and one the dataset lacks gives an empty list. ``meta`` is
+    ``get_data``'s: ``meta.request`` holds the dataset and the filters sent,
+    ``meta.published_at`` the dataset's last update with Eurostat's zone and
     ``meta.vintage`` the same time as printed. A query Eurostat refuses or judges too
     large raises ``InvalidRequestError`` with its message.
 

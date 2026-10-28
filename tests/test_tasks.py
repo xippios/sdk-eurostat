@@ -1721,9 +1721,10 @@ def test_get_sold_production_sends_indicators_and_leaves_reporter_out(
 ) -> None:
     """NOT RECORDED: this request was never sent upstream. What is sent with indicators
     and without reporters: ``indicators`` once per code, after ``product``, and no
-    ``reporter``. The recorded answer of another request (``DS-059358_AT_10411200_2022_
-    2023``, every indicator for AT) is served at this URL, moved, not written by hand;
-    the answer is not checked, only the request and its record in ``meta.request``."""
+    ``reporter``. The recorded answer of another request
+    (``DS-059358_AT_10411200_2022_2023``, every indicator for AT) is served at this URL,
+    moved, not written by hand; the answer is not checked, only the request and its
+    record in ``meta.request``."""
     url = (
         f"{COMEXT_STATISTICS}/DS-059358?format=JSON&lang=EN&product=10411200"
         "&indicators=PRODVAL&indicators=QNTUNIT&sinceTimePeriod=2022"
@@ -1784,12 +1785,16 @@ def test_get_total_production_refuses_a_product_its_list_lacks(
     with pytest.raises(UnknownCode) as refused:
         get_total_production("10412100")
     assert refused.value.list_name == "CXT_PRODCOM2_TOTAL"
-    message = str(refused.value)
-    assert 'list_codes("cxt_prodcom2_total") lists them.' in message
-    assert (
+    assert refused.value.closest == (), "the hint replaces the other list's closest codes"
+    day = f"{fetched('cxt_prodcom2_total'):%Y-%m-%d}"
+    assert str(refused.value) == (
+        f"'10412100' is not a product in the packaged CXT_PRODCOM2_TOTAL list (fetched {day}). "
         "10412100 is a product of DS-059358 (sold production, exports and imports): "
-        "get_sold_production serves it."
-    ) in message
+        "get_sold_production serves it. A product the dataset lacks would give an empty "
+        "cube, so the package checks the product against its copy of the dataset's product "
+        'list before sending. list_codes("cxt_prodcom2_total") lists them. If upstream '
+        "added it since, the packaged list needs a refresh (/refresh-reference-data)."
+    )
     assert not respx_mock.calls
 
 
@@ -1802,10 +1807,13 @@ def test_get_sold_production_names_the_total_production_task_for_its_product(
     monkeypatch.setattr(tasks, "_labels", lambda name: {} if name == PRODUCTS else labels(name))
     with pytest.raises(UnknownCode) as refused:
         get_sold_production(FERTILISERS)
+    message = str(refused.value)
     assert (
-        f"{FERTILISERS} is a product of DS-059359 (total production): "
-        "get_total_production serves it."
-    ) in str(refused.value)
+        f"list (fetched {fetched(PRODUCTS):%Y-%m-%d}). {FERTILISERS} is a product of "
+        "DS-059359 (total production): get_total_production serves it. A product"
+    ) in message
+    assert "Did you mean" not in message
+    assert refused.value.closest == ()
     assert not respx_mock.calls
 
 
