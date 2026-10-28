@@ -125,9 +125,12 @@ cube's observations in cube order with `get_data`'s `meta`. `reporters` are coun
 `PRODQNT` in `QNTUNIT`, `EXPVAL`, `EXPQNT`, `IMPVAL`, `IMPQNT` for DS-059358; `APRODQNT`
 in `QNTUNIT` for DS-059359), `None` for every one. A value is a number, or the text
 Eurostat prints for a unit or a flag (`"KG"`, `":E"`). The product is checked against the
-dataset's product list packaged with this version, and each indicator against
-CXT_INDICATORS, before sending: a code they lack raises `UnknownCode` naming the closest.
-A reporter is sent as given, and one the dataset lacks gives an empty list.
+dataset's product list packaged with this version, and each indicator against the whole
+CXT_INDICATORS list, before sending: a code they lack raises `UnknownCode` naming the
+closest. CXT_INDICATORS also holds the indicators of the other dataset and of Comext's
+trade datasets, so one the dataset lacks (`PRODVAL` for DS-059359) passes the check and
+Eurostat answers it with an empty cube, an empty list. A reporter is sent as given, and
+one the dataset lacks gives an empty list.
 `list_products(search=None)` lists DS-059358's products (CXT_PRODCOM2_SOLD), eight-digit
 codes that start with their NACE class (`1041` oils and fats, `2015` fertilisers);
 DS-059359 covers a few hundred of them, chiefly chemicals, fertilisers and metals, which
