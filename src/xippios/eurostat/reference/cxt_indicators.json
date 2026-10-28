@@ -1,0 +1,183 @@
+{
+  "param": "indicators",
+  "endpoint": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_INDICATORS",
+  "fetched": "2026-10-28T14:25:04Z",
+  "records": [
+    {
+      "code": "APQNTBASE",
+      "label": "Actual production quantity rounding base"
+    },
+    {
+      "code": "APQNTFLAG",
+      "label": "Actual production quantity flag"
+    },
+    {
+      "code": "APRODQNT",
+      "label": "Actual production quantity"
+    },
+    {
+      "code": "EXPQNT",
+      "label": "Exports quantity"
+    },
+    {
+      "code": "EXPVAL",
+      "label": "Exports value, euro"
+    },
+    {
+      "code": "IMPQNT",
+      "label": "Imports quantity"
+    },
+    {
+      "code": "IMPVAL",
+      "label": "Imports value, euro"
+    },
+    {
+      "code": "OWNPRODQNT",
+      "label": "Production on own account quantity"
+    },
+    {
+      "code": "OWNPRODVAL",
+      "label": "Production on own account value, euro"
+    },
+    {
+      "code": "OWNQNTBASE",
+      "label": "Production on own account quantity rounding base"
+    },
+    {
+      "code": "OWNQNTFLAG",
+      "label": "Production on own account quantity flag"
+    },
+    {
+      "code": "OWNVALBASE",
+      "label": "Production on own account value rounding base"
+    },
+    {
+      "code": "OWNVALFLAG",
+      "label": "Production on own account value flag"
+    },
+    {
+      "code": "PQNTBASE",
+      "label": "Sold production quantity rounding base"
+    },
+    {
+      "code": "PQNTFLAG",
+      "label": "Sold production quantity flag"
+    },
+    {
+      "code": "PRODQNT",
+      "label": "Sold production quantity"
+    },
+    {
+      "code": "PRODVAL",
+      "label": "Sold production value, euro"
+    },
+    {
+      "code": "PVALBASE",
+      "label": "Sold production value rounding base"
+    },
+    {
+      "code": "PVALFLAG",
+      "label": "Sold production value flag"
+    },
+    {
+      "code": "QNTUNIT",
+      "label": "Quantity unit"
+    },
+    {
+      "code": "QUANTITY_100KG",
+      "label": "QUANTITY_100KG"
+    },
+    {
+      "code": "QUANTITY_IN_100KG",
+      "label": "QUANTITY_IN_100KG"
+    },
+    {
+      "code": "QUANTITY_IN_KG",
+      "label": "QUANTITY_IN_KG"
+    },
+    {
+      "code": "QUANTITY_IN_SUPPL_UNIT",
+      "label": "QUANTITY_IN_SUPPL_UNIT"
+    },
+    {
+      "code": "QUANTITY_IN_TONS",
+      "label": "QUANTITY_IN_TONS"
+    },
+    {
+      "code": "QUANTITY_KG",
+      "label": "QUANTITY_KG"
+    },
+    {
+      "code": "QUANTITY_TON",
+      "label": "QUANTITY_TON"
+    },
+    {
+      "code": "QUANTITY_TONS",
+      "label": "QUANTITY_TONS"
+    },
+    {
+      "code": "SCPRODQNT",
+      "label": "Sub-contracted production quantity"
+    },
+    {
+      "code": "SCPRODVAL",
+      "label": "Sub-contracted production value, euro"
+    },
+    {
+      "code": "SCQNTBASE",
+      "label": "Sub-contracted production quantity rounding base"
+    },
+    {
+      "code": "SCQNTFLAG",
+      "label": "Sub-contracted production quantity flag"
+    },
+    {
+      "code": "SCVALBASE",
+      "label": "Sub-contracted production value rounding base"
+    },
+    {
+      "code": "SCVALFLAG",
+      "label": "Sub-contracted production quantity flag"
+    },
+    {
+      "code": "SUPPLEMENTARY_QUANTITY",
+      "label": "SUPPLEMENTARY_QUANTITY"
+    },
+    {
+      "code": "SUPPL_QUANTITY",
+      "label": "SUPPL_QUANTITY"
+    },
+    {
+      "code": "SUPPL_UNIT",
+      "label": "SUPPL_UNIT"
+    },
+    {
+      "code": "SUP_QUANTITY",
+      "label": "SUP_QUANTITY"
+    },
+    {
+      "code": "VALUE_1000EURO",
+      "label": "VALUE_1000EURO"
+    },
+    {
+      "code": "VALUE_EUR",
+      "label": "VALUE_EUR"
+    },
+    {
+      "code": "VALUE_IN_EUR",
+      "label": "VALUE_IN_EUR"
+    },
+    {
+      "code": "VALUE_IN_EUROS",
+      "label": "VALUE_IN_EUROS"
+    },
+    {
+      "code": "VALUE_IN_NAC",
+      "label": "VALUE_IN_NAC"
+    },
+    {
+      "code": "VALUE_NAC",
+      "label": "VALUE_NAC"
+    }
+  ]
+}

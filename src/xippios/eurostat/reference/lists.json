@@ -1,5 +1,5 @@
 {
-  "fetched": "2026-10-27T19:55:36Z",
+  "fetched": "2026-10-28T14:25:04Z",
   "lists": [
     {
       "name": "toc",
@@ -130,6 +130,36 @@
       "LAST_UPDATED": "2025-04-28T23:00:00+0200",
       "creationDate": null,
       "count": 21
+    },
+    {
+      "name": "cxt_prodcom2_sold",
+      "kind": "codelist",
+      "id": "CXT_PRODCOM2_SOLD",
+      "label": "PRODCOM2_SOLD",
+      "version": "6.0",
+      "LAST_UPDATED": "2025-01-13T23:00:00+0100",
+      "creationDate": null,
+      "count": 4788
+    },
+    {
+      "name": "cxt_prodcom2_total",
+      "kind": "codelist",
+      "id": "CXT_PRODCOM2_TOTAL",
+      "label": "PRODCOM2_TOTAL",
+      "version": "4.0",
+      "LAST_UPDATED": "2025-01-13T23:00:00+0100",
+      "creationDate": null,
+      "count": 822
+    },
+    {
+      "name": "cxt_indicators",
+      "kind": "codelist",
+      "id": "CXT_INDICATORS",
+      "label": "INDICATORS",
+      "version": "49.0",
+      "LAST_UPDATED": "2026-10-19T11:00:00+0200",
+      "creationDate": null,
+      "count": 44
     }
   ]
 }

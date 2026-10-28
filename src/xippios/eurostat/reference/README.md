@@ -57,3 +57,6 @@ that fetch.
 | `farmtype.json` | `sdmx/2.1/codelist/ESTAT/FARMTYPE` | 2026-10-27T19:55:32Z |
 | `so_eur.json` | `sdmx/2.1/codelist/ESTAT/SO_EUR` | 2026-10-27T19:55:34Z |
 | `uaarea.json` | `sdmx/2.1/codelist/ESTAT/UAAREA` | 2026-10-27T19:55:36Z |
+| `cxt_prodcom2_sold.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_SOLD` | 2026-10-28T14:25:01Z |
+| `cxt_prodcom2_total.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_TOTAL` | 2026-10-28T14:25:02Z |
+| `cxt_indicators.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_INDICATORS` | 2026-10-28T14:25:04Z |

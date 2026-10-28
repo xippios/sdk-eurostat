@@ -1,0 +1,3295 @@
+{
+  "param": "product",
+  "endpoint": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_TOTAL",
+  "fetched": "2026-10-28T14:25:02Z",
+  "records": [
+    {
+      "code": "08111133",
+      "label": "Marble and travertine, crude or roughly trimmed"
+    },
+    {
+      "code": "08111136",
+      "label": "Marble and travertine merely cut into rectangular or square blocks or slabs"
+    },
+    {
+      "code": "08111150",
+      "label": "Ecaussine and other calcareous monumental or building stone of an apparent specific gravity >= 2,5"
+    },
+    {
+      "code": "08111220",
+      "label": "Quartzite (crude, roughly trimmed or merely cut)"
+    },
+    {
+      "code": "08111233",
+      "label": "Granite, crude or roughly trimmed"
+    },
+    {
+      "code": "08111236",
+      "label": "Granite merely cut into rectangular (including square) blocks or slabs"
+    },
+    {
+      "code": "08111250",
+      "label": "Sandstone"
+    },
+    {
+      "code": "08111260",
+      "label": "Other monumental or building stone"
+    },
+    {
+      "code": "08111261",
+      "label": "Porphyry (crude, roughly trimmed or merely cut)"
+    },
+    {
+      "code": "08111262",
+      "label": "Basalt (crude, roughly trimmed or merely cut)"
+    },
+    {
+      "code": "08111269",
+      "label": "Other monumental or building stone (excluding porphyry and basalt)"
+    },
+    {
+      "code": "08111290",
+      "label": "Porphyry, basalt, quartzites and other monumental or building stone, crude, roughly trimmed or merely cut (excluding calcareous monumental or building stone of a gravity >= 2,5, granite and sandstone)"
+    },
+    {
+      "code": "081112Z1",
+      "label": "Porphyry, basalt and other monumental or building stone"
+    },
+    {
+      "code": "08112030",
+      "label": "Gypsum and anhydrite"
+    },
+    {
+      "code": "08112050",
+      "label": "Limestone flux, limestone and other calcareous stone used for the manufacture of lime or cement (excluding crushed limestone aggregate and calcareous dimension stone)"
+    },
+    {
+      "code": "08113010",
+      "label": "Chalk"
+    },
+    {
+      "code": "08113030",
+      "label": "Dolomite, crude, roughly trimmed or merely cut into rectangular or square blocks or slabs (excluding calcined or sintered dolomite, agglomerated dolomite and broken or crushed dolomite for concrete aggregates, road metalling or railway or other ballast)"
+    },
+    {
+      "code": "08114000",
+      "label": "Slate, crude, roughly trimmed or merely cut into rectangular or square blocks or slabs"
+    },
+    {
+      "code": "08122140",
+      "label": "Kaolin, not calcined"
+    },
+    {
+      "code": "08122160",
+      "label": "Kaolinitic clays (ball and plastic clays)"
+    },
+    {
+      "code": "08122210",
+      "label": "Bentonite"
+    },
+    {
+      "code": "08122230",
+      "label": "Fireclay"
+    },
+    {
+      "code": "08122250",
+      "label": "Common clays and shales for construction use (excluding bentonite, fireclay, expanded clays, kaolin and kaolinic clays); andalusite, kyanite and sillimanite; mullite; chamotte or dinas earths"
+    },
+    {
+      "code": "08122255",
+      "label": "Other clays"
+    },
+    {
+      "code": "08122260",
+      "label": "Andalusite, kyanite and sillimanite"
+    },
+    {
+      "code": "08122270",
+      "label": "Mullite"
+    },
+    {
+      "code": "08122280",
+      "label": "Chamotte or dinas earths"
+    },
+    {
+      "code": "08911100",
+      "label": "Natural calcium phosphates; natural aluminium calcium phosphates and phosphatic chalk"
+    },
+    {
+      "code": "08911200",
+      "label": "Unroasted iron pyrites; crude or unrefined sulphur (including recovered sulphur)"
+    },
+    {
+      "code": "08911220",
+      "label": "Natural calcium phosphates; natural aluminium calcium phosphates and phosphatic chalk"
+    },
+    {
+      "code": "08911230",
+      "label": "Crude or unrefined sulphur (including recovered sulphur)"
+    },
+    {
+      "code": "08911900",
+      "label": "Other chemical and fertiliser minerals"
+    },
+    {
+      "code": "08911910",
+      "label": "Natural barium sulphate (barytes) and carbonate  (witherite)"
+    },
+    {
+      "code": "08911911",
+      "label": "Natural borates and concentrates thereof (not calcined), but not including borates separated from natural brine; natural boric acid containing not more than 85 % of H3BO3 calculated on the dry weight"
+    },
+    {
+      "code": "08911912",
+      "label": "Fluorspar"
+    },
+    {
+      "code": "08911913",
+      "label": "Kieserite, epsomite (natural magnesium sulphates)"
+    },
+    {
+      "code": "08911919",
+      "label": "Other mineral substances n.e.s. (excluding vermiculite, perlite and chlorites, unexpanded and kieserite, epsomite (natural magnesium sulphates))"
+    },
+    {
+      "code": "08931000",
+      "label": "Salt (including denatured salt but excluding salt suitable for human consumption) and pure sodium chloride, whether or not in aqueous solution or containing added anti-caking or free-flowing agents"
+    },
+    {
+      "code": "08991000",
+      "label": "Natural bitumen and natural asphalt; asphaltites and asphaltic rocks"
+    },
+    {
+      "code": "08992100",
+      "label": "Precious and semi-precious stones (excluding industrial diamonds), unworked or simply sawn or roughly shaped"
+    },
+    {
+      "code": "08992110",
+      "label": "Diamonds unworked or simply sawn or roughly shaped"
+    },
+    {
+      "code": "08992120",
+      "label": "Precious stones (other than diamonds) and semi-precious stones, unworked or simply sawn or roughly shaped"
+    },
+    {
+      "code": "08992200",
+      "label": "Industrial diamonds, unworked or simply sawn, cleaved or bruted; pumice stone; emery; natural corundum, natural garnet and other natural abrasives"
+    },
+    {
+      "code": "08992210",
+      "label": "Industrial diamonds. Unworked or simply sawn, cleaved or bruted, but not mounted or set"
+    },
+    {
+      "code": "08992220",
+      "label": "Pumice stone"
+    },
+    {
+      "code": "08992230",
+      "label": "Emery, natural corundum, natural garnet and other natural abrasives, whether or not heat-treated"
+    },
+    {
+      "code": "08992900",
+      "label": "Other minerals"
+    },
+    {
+      "code": "08992910",
+      "label": "Natural graphite"
+    },
+    {
+      "code": "08992913",
+      "label": "Natural magnesium carbonate (magnesite);"
+    },
+    {
+      "code": "08992914",
+      "label": "Dead-burned (sintered) magnesia"
+    },
+    {
+      "code": "08992915",
+      "label": "Fused magnesia and other magnesium oxide"
+    },
+    {
+      "code": "08992920",
+      "label": "Other minerals"
+    },
+    {
+      "code": "10843000",
+      "label": "Salt suitable for human consumption"
+    },
+    {
+      "code": "13101000",
+      "label": "Wool grease and fatty substances derived therefrom, including lanolin"
+    },
+    {
+      "code": "13102100",
+      "label": "Raw silk (not thrown)"
+    },
+    {
+      "code": "13102200",
+      "label": "Wool, degreased or carbonised, not carded or combed"
+    },
+    {
+      "code": "13102300",
+      "label": "Noils of wool or fine animal hair"
+    },
+    {
+      "code": "13102400",
+      "label": "Wool or animal hair, carded or combed (including wool tops)"
+    },
+    {
+      "code": "13102500",
+      "label": "Cotton, carded or combed"
+    },
+    {
+      "code": "13102600",
+      "label": "Jute and other textile fibres (except flax, true hemp and ramie), processed but not spun"
+    },
+    {
+      "code": "13102900",
+      "label": "Other vegetable textile fibres, processed but not spun"
+    },
+    {
+      "code": "13103100",
+      "label": "Synthetic staple fibres, carded, combed or otherwise processed for spinning"
+    },
+    {
+      "code": "13103200",
+      "label": "Artificial staple fibres, carded, combed or otherwise processed for spinning"
+    },
+    {
+      "code": "13104010",
+      "label": "Silk yarn, n.p.r.s. (excluding spun from silk waste)"
+    },
+    {
+      "code": "13104030",
+      "label": "Yarn spun from silk waste, n.p.r.s."
+    },
+    {
+      "code": "13104050",
+      "label": "Silk yarn and silk waste yarn, p.r.s.; silk-worm gut"
+    },
+    {
+      "code": "13105010",
+      "label": "Yarn of carded wool or fine animal hair, n.p.r.s."
+    },
+    {
+      "code": "13105030",
+      "label": "Yarn of combed wool or fine animal hair, n.p.r.s."
+    },
+    {
+      "code": "13105050",
+      "label": "Yarn of wool or fine animal hair, p.r.s."
+    },
+    {
+      "code": "13106132",
+      "label": "Yarn of uncombed cotton, n.p.r.s., for woven fabrics (excluding for carpets and floor coverings)"
+    },
+    {
+      "code": "13106133",
+      "label": "Yarn of uncombed cotton, n.p.r.s., for knitted fabrics and hosiery"
+    },
+    {
+      "code": "13106135",
+      "label": "Yarn of uncombed cotton, n.p.r.s., for other uses (including carpets and floor coverings)"
+    },
+    {
+      "code": "13106152",
+      "label": "Yarn of combed cotton, n.p.r.s., for woven fabrics (excluding for carpets and floor coverings)"
+    },
+    {
+      "code": "13106153",
+      "label": "Yarn of combed cotton, n.p.r.s., for knitted fabrics and hosiery"
+    },
+    {
+      "code": "13106155",
+      "label": "Yarn of combed cotton, n.p.r.s., for other uses (including carpets and floor coverings)"
+    },
+    {
+      "code": "13106160",
+      "label": "Cotton yarn, p.r.s. (excluding sewing thread)"
+    },
+    {
+      "code": "131061Z1",
+      "label": "Cotton yarn of uncombed fibres, n.p.r.s."
+    },
+    {
+      "code": "131061Z2",
+      "label": "Cotton yarn of combed fibres, n.p.r.s."
+    },
+    {
+      "code": "13106200",
+      "label": "Cotton sewing thread"
+    },
+    {
+      "code": "13107110",
+      "label": "Flax yarn, n.p.r.s."
+    },
+    {
+      "code": "13107120",
+      "label": "Flax yarn, p.r.s."
+    },
+    {
+      "code": "13107200",
+      "label": "Yarn of vegetable or bast fibres (excluding flax); paper yarn"
+    },
+    {
+      "code": "13108110",
+      "label": "Multiple or cabled synthetic filament yarn, n.p.r.s."
+    },
+    {
+      "code": "13108130",
+      "label": "Multiple or cabled yarn of artificial filaments, n.p.r.s. (excluding sewing thread)"
+    },
+    {
+      "code": "13108150",
+      "label": "Man-made filament yarn, p.r.s. (excluding sewing thread)"
+    },
+    {
+      "code": "13108210",
+      "label": "Yarn (other than sewing thread) containing >= 85 % by weight of synthetic staple fibres, n.p.r.s."
+    },
+    {
+      "code": "13108250",
+      "label": "Yarn (other than sewing thread) containing >= 85 % by weight of synthetic staple fibres, p.r.s."
+    },
+    {
+      "code": "13108320",
+      "label": "Yarn containing < 85 % by weight of polyester staple fibres (other than sewing thread), mixed with artificial fibres, n.p.r.s."
+    },
+    {
+      "code": "13108333",
+      "label": "Yarn containing < 85 % by weight of synthetic staple fibres (other than sewing thread) mixed with carded wool or fine animal hair, n.p.r.s."
+    },
+    {
+      "code": "13108336",
+      "label": "Yarn containing < 85 % by weight of synthetic staple fibres, mixed with combed wool or fine animal hair, n.p.r.s."
+    },
+    {
+      "code": "13108340",
+      "label": "Yarn containing < 85 % by weight of synthetic staple fibres (other than sewing thread), mixed with cotton, n.p.r.s."
+    },
+    {
+      "code": "13108380",
+      "label": "Other yarns, containing < 85 % by weight of synthetic staple fibres (other than sewing thread), n.p.r.s., n.e.c."
+    },
+    {
+      "code": "13108390",
+      "label": "Yarn containing < 85 % by weight of synthetic staple fibres (other than sewing thread), p.r.s."
+    },
+    {
+      "code": "131083Z0",
+      "label": "Yarn of synthetic staple fibres mixed with wool, n.p.r.s"
+    },
+    {
+      "code": "13108410",
+      "label": "Yarn (other than sewing thread) of artificial staple fibres, n.p.r.s."
+    },
+    {
+      "code": "13108430",
+      "label": "Yarn (other than sewing thread) of artificial staple fibres, p.r.s."
+    },
+    {
+      "code": "13108510",
+      "label": "Sewing thread of man-made filaments"
+    },
+    {
+      "code": "13108550",
+      "label": "Sewing thread of man-made staple fibres"
+    },
+    {
+      "code": "13201230",
+      "label": "Woven fabrics of carded wool or carded fine animal hair"
+    },
+    {
+      "code": "13201260",
+      "label": "Woven fabrics of combed wool or combed fine animal hair; woven fabrics of coarse animal hair"
+    },
+    {
+      "code": "13201330",
+      "label": "Woven fabrics of flax, containing >= 85 % by weight of flax"
+    },
+    {
+      "code": "13201360",
+      "label": "Woven fabrics of flax, containing < 85 % by weight of flax"
+    },
+    {
+      "code": "13201400",
+      "label": "Woven fabrics of jute or of other textile bast fibres (excluding flax, true hemp, ramie)"
+    },
+    {
+      "code": "13201900",
+      "label": "Woven fabrics of true hemp, ramie or other vegetable textile fibres (excluding flax, jute, other textile bast fibres); paper yarn"
+    },
+    {
+      "code": "13202014",
+      "label": "Woven fabrics of cotton, not of yarns of different colours, weighing <= 200 g/m², for clothing"
+    },
+    {
+      "code": "13202017",
+      "label": "Woven fabrics of cotton, not of yarns of different colours, weighing <= 200 g/m², for household linen or home furnishing textiles"
+    },
+    {
+      "code": "13202019",
+      "label": "Woven fabrics of cotton, not of yarns of different colours, weighing <= 200 g/m², for technical or industrial uses (excluding gauze, medical gauze)"
+    },
+    {
+      "code": "13202031",
+      "label": "Woven fabrics of cotton of yarns of different colours, weighing <= 200 g/m², for shirts and blouses"
+    },
+    {
+      "code": "13202042",
+      "label": "Woven fabrics of cotton, not of yarns of different colours, weighing > 200 g/m², for clothing"
+    },
+    {
+      "code": "13202044",
+      "label": "Woven fabrics of cotton, not of yarns of different colours, weighing > 200 g/m², for household linen or home furnishing textiles"
+    },
+    {
+      "code": "13202049",
+      "label": "Woven fabrics of cotton, not of yarns of different colours, weighing > 200 g/m², for technical or industrial uses"
+    },
+    {
+      "code": "13202072",
+      "label": "Woven fabrics of cotton of yarns of different colours, for other clothing"
+    },
+    {
+      "code": "13202074",
+      "label": "Woven fabrics of cotton of yarns of different colours, for household linen or home furnishing textiles"
+    },
+    {
+      "code": "13202079",
+      "label": "Woven fabrics of cotton of yarns of different colours, for technical or industrial uses"
+    },
+    {
+      "code": "132020Z1",
+      "label": "Cotton fabrics, <= 200 g/m² (excluding gauze and coloured yarns)"
+    },
+    {
+      "code": "132020Z2",
+      "label": "Cotton fabrics, > 200 g/m² (excluding coloured yarns)"
+    },
+    {
+      "code": "132020Z3",
+      "label": "Woven fabrics of cotton of yarns of different colours (excluding denim)"
+    },
+    {
+      "code": "13203150",
+      "label": "Woven fabrics of synthetic filament yarns (excluding those obtained from high tenacity yarn or strip and the like)"
+    },
+    {
+      "code": "13203170",
+      "label": "Woven fabrics of artificial filament yarns (excluding those obtained from high tenacity yarn)"
+    },
+    {
+      "code": "13203210",
+      "label": "Woven fabrics of synthetic staple fibres, containing 85 % or more by weight of synthetic staple fibres"
+    },
+    {
+      "code": "13203220",
+      "label": "Woven fabrics of synthetic staple fibres, containing less than 85 % by weight of such fibres, mixed mainly or solely with cotton (excluding fabrics of yarns of different colours)"
+    },
+    {
+      "code": "13203230",
+      "label": "Woven fabrics of synthetic staple fibres, containing less than 85 % by weight of such fibres, mixed mainly or solely with cotton, of yarns of different colours"
+    },
+    {
+      "code": "13203240",
+      "label": "Woven fabrics of synthetic staple fibres mixed mainly or solely with carded wool or fine animal hair"
+    },
+    {
+      "code": "13203250",
+      "label": "Woven fabrics of synthetic staple fibres mixed mainly or solely with combed wool or fine animal hair"
+    },
+    {
+      "code": "13203290",
+      "label": "Woven fabrics of synthetic staple fibres mixed other than with wool, fine animal hair or cotton"
+    },
+    {
+      "code": "13203330",
+      "label": "Woven fabrics of artificial staple fibres, not of yarns of different colours"
+    },
+    {
+      "code": "13204200",
+      "label": "Terry towelling and similar woven terry fabrics of cotton"
+    },
+    {
+      "code": "13204300",
+      "label": "Terry towelling and similar woven terry fabrics (excluding of cotton)"
+    },
+    {
+      "code": "13911100",
+      "label": "Pile fabrics, terry fabrics, knitted or crocheted"
+    },
+    {
+      "code": "13911910",
+      "label": "Knitted or crocheted fabrics (excluding pile fabrics)"
+    },
+    {
+      "code": "15112200",
+      "label": "Patent leather; patent laminated leather and metallised leather"
+    },
+    {
+      "code": "15113100",
+      "label": "Leather, of bovine animals, without hair, whole"
+    },
+    {
+      "code": "15113200",
+      "label": "Leather, of bovine animals, without hair, not whole"
+    },
+    {
+      "code": "15113300",
+      "label": "Leather, of equine animals, without hair"
+    },
+    {
+      "code": "15114130",
+      "label": "Sheep or lamb skin leather without wool on, tanned but not further prepared (excluding chamois leather)"
+    },
+    {
+      "code": "15114150",
+      "label": "Sheep or lamb skin leather without wool on, parchment-dressed or prepared after tanning (excluding chamois, patent, patent laminated leather and metallised leather)"
+    },
+    {
+      "code": "15114230",
+      "label": "Goat or kid skin leather without hair on; tanned or pre-tanned but not further prepared (excluding chamois leather)"
+    },
+    {
+      "code": "15114250",
+      "label": "Goat or kid skin leather without hair on, parchment-dressed or prepared after tanning (excluding chamois leather, patent leather, patent laminated leather and metallised leather)"
+    },
+    {
+      "code": "15114330",
+      "label": "Leather of swine without hair on, tanned but not further prepared"
+    },
+    {
+      "code": "15114350",
+      "label": "Leather of swine without hair on; parchment-dressed or prepared after tanning (excluding patent leather; patent laminated leather and metallised leather)"
+    },
+    {
+      "code": "15115100",
+      "label": "Leather of other animals, without hair on"
+    },
+    {
+      "code": "15115200",
+      "label": "Composition leather with a basis of leather or leather fibre, in slabs, sheets or strips"
+    },
+    {
+      "code": "17111100",
+      "label": "Chemical wood pulp, dissolving grades"
+    },
+    {
+      "code": "17111200",
+      "label": "Chemical wood pulp, soda or sulphate, other than dissolving grades"
+    },
+    {
+      "code": "17111300",
+      "label": "Chemical wood pulp, sulphite, other than dissolving grades"
+    },
+    {
+      "code": "17111400",
+      "label": "Mechanical wood pulp; semi-chemical wood pulp; pulps of fibrous cellulosic material other than wood"
+    },
+    {
+      "code": "19103000",
+      "label": "Pitch and pitch coke, obtained from coal tar or from other mineral tars"
+    },
+    {
+      "code": "20111120",
+      "label": "Argon"
+    },
+    {
+      "code": "20111130",
+      "label": "Rare gases (excluding argon)"
+    },
+    {
+      "code": "20111140",
+      "label": "Helium"
+    },
+    {
+      "code": "20111150",
+      "label": "Hydrogen"
+    },
+    {
+      "code": "20111160",
+      "label": "Nitrogen"
+    },
+    {
+      "code": "20111170",
+      "label": "Oxygen"
+    },
+    {
+      "code": "20111190",
+      "label": "Other rare gases (neon, krypton and xenon)"
+    },
+    {
+      "code": "20111230",
+      "label": "Carbon dioxide"
+    },
+    {
+      "code": "20111250",
+      "label": "Sulphur trioxide (sulphuric anhydride); diarsenic trioxide"
+    },
+    {
+      "code": "20111270",
+      "label": "Nitrogen oxides"
+    },
+    {
+      "code": "20111290",
+      "label": "Inorganic oxygen compounds of non metals (excluding sulphur trioxide (sulphuric anhydride); diarsenic trioxide, nitrogen oxides, silicon dioxide, sulphur dioxide, carbon dioxide)"
+    },
+    {
+      "code": "20111300",
+      "label": "Liquid air; compressed air"
+    },
+    {
+      "code": "20121130",
+      "label": "Zinc oxide; zinc peroxide"
+    },
+    {
+      "code": "20121150",
+      "label": "Titanium oxides"
+    },
+    {
+      "code": "20121200",
+      "label": "Chromium, manganese, lead and copper oxides and hydroxides"
+    },
+    {
+      "code": "20121210",
+      "label": "Manganese oxides. Manganese dioxide"
+    },
+    {
+      "code": "20121220",
+      "label": "Manganese oxides. Manganese oxide containing by weight 77 % or more of manganese"
+    },
+    {
+      "code": "20121230",
+      "label": "Manganese oxides. Manganese oxide containing by weight less than 77 % of manganese"
+    },
+    {
+      "code": "20121240",
+      "label": "Chromium, lead and copper oxides and hydroxides"
+    },
+    {
+      "code": "20121910",
+      "label": "Iron oxides and hydroxides; earth colours containing 70 % or more by weight of combined iron evaluated as Fe2O3"
+    },
+    {
+      "code": "20121930",
+      "label": "Cobalt oxides and hydroxides; commercial cobalt oxides"
+    },
+    {
+      "code": "20121950",
+      "label": "Lithium oxide and hydroxide; vanadium oxides and hydroxides; nickel oxides and hydroxides; germanium oxides and zirconium dioxide"
+    },
+    {
+      "code": "20121955",
+      "label": "Lithium oxide and hydroxide"
+    },
+    {
+      "code": "20121960",
+      "label": "Vanadium oxides and hydroxides"
+    },
+    {
+      "code": "20121965",
+      "label": "Nickel oxides and hydroxides"
+    },
+    {
+      "code": "20121970",
+      "label": "Germanium oxides and zirconium dioxide"
+    },
+    {
+      "code": "20121973",
+      "label": "Molybdenum oxides and hydroxides"
+    },
+    {
+      "code": "20121975",
+      "label": "Antimony oxides"
+    },
+    {
+      "code": "20121980",
+      "label": "Beryllium oxide and hydroxide"
+    },
+    {
+      "code": "20121981",
+      "label": "Tungsten oxides and hydroxides"
+    },
+    {
+      "code": "20121990",
+      "label": "Other inorganic bases; other metal oxides, hydroxides and peroxides, n.e.c."
+    },
+    {
+      "code": "20121995",
+      "label": "Other inorganic bases; other metal oxides, hydroxides and peroxides, n.e.c."
+    },
+    {
+      "code": "20121996",
+      "label": "Tin oxides and hydroxides"
+    },
+    {
+      "code": "20121997",
+      "label": "Other inorganic bases; other metal oxides, hydroxides and peroxides (excluding tin oxides and hydroxides), n.e.c."
+    },
+    {
+      "code": "201219Z0",
+      "label": "Other inorganic bases; other metal oxides, hydroxides and peroxides, n.e.c."
+    },
+    {
+      "code": "20122110",
+      "label": "Disperse dyes and preparations based thereon"
+    },
+    {
+      "code": "20122120",
+      "label": "Acid and mordant dyes and preparations based thereon"
+    },
+    {
+      "code": "20122130",
+      "label": "Basic dyes and preparations based thereon"
+    },
+    {
+      "code": "20122140",
+      "label": "Direct dyes and preparations based thereon"
+    },
+    {
+      "code": "20122150",
+      "label": "Other synthetic organic colouring matters"
+    },
+    {
+      "code": "20122160",
+      "label": "Synthetic organic products used as fluorescent brightening agents"
+    },
+    {
+      "code": "20122170",
+      "label": "Colour lakes; preparations based on colour lakes"
+    },
+    {
+      "code": "20122250",
+      "label": "Tanning extracts of vegetable origin; tannins and their salts, ethers, esters and other derivatives"
+    },
+    {
+      "code": "20122270",
+      "label": "Colouring matter of vegetable or animal origin and preparations based thereon (including dyeing extracts) (excluding animal black)"
+    },
+    {
+      "code": "20122330",
+      "label": "Synthetic organic tanning substances"
+    },
+    {
+      "code": "20122350",
+      "label": "Inorganic tanning substances; tanning preparations; enzymatic preparations for pre-tanning"
+    },
+    {
+      "code": "20122415",
+      "label": "Pigments and preparations based on titanium dioxide containing >= 80 % by weight of titanium dioxide"
+    },
+    {
+      "code": "20122419",
+      "label": "Pigments and preparations based on titanium dioxide (excluding those containing >= 80 % by weight of titanium dioxide)"
+    },
+    {
+      "code": "20122440",
+      "label": "Pigments and preparations based on chromium or cadmium compounds"
+    },
+    {
+      "code": "20122450",
+      "label": "Other colouring matter; pigments and preparations based on inorganic or mineral colouring matter; inorganic products of a kind used as luminophores"
+    },
+    {
+      "code": "20122470",
+      "label": "Other colouring matter, preparations and luminophores"
+    },
+    {
+      "code": "20132111",
+      "label": "Chlorine"
+    },
+    {
+      "code": "20132116",
+      "label": "Iodine; fluorine; bromine"
+    },
+    {
+      "code": "20132120",
+      "label": "Sulphur, sublimed or precipitated; colloidal sulphur"
+    },
+    {
+      "code": "20132130",
+      "label": "Carbon (carbon blacks and other forms of carbon, n.e.c.)"
+    },
+    {
+      "code": "20132140",
+      "label": "Boron; tellurium"
+    },
+    {
+      "code": "20132141",
+      "label": "Boron"
+    },
+    {
+      "code": "20132142",
+      "label": "Tellurium"
+    },
+    {
+      "code": "20132150",
+      "label": "Silicon"
+    },
+    {
+      "code": "20132160",
+      "label": "Silicon. Containing by weight not less than 99,99 % of silicon"
+    },
+    {
+      "code": "20132170",
+      "label": "Silicon. Other than containing by weight not less than 99,99 % of silicon"
+    },
+    {
+      "code": "20132180",
+      "label": "Phosphorus; arsenic; selenium"
+    },
+    {
+      "code": "20132181",
+      "label": "Phosphorus"
+    },
+    {
+      "code": "20132185",
+      "label": "Arsenic; selenium"
+    },
+    {
+      "code": "20132210",
+      "label": "Phosphorus oxychloride"
+    },
+    {
+      "code": "20132220",
+      "label": "Phosphorus trichloride"
+    },
+    {
+      "code": "20132230",
+      "label": "Phosphorus pentachloride"
+    },
+    {
+      "code": "20132235",
+      "label": "Chlorides and chloride oxides of phosphorus"
+    },
+    {
+      "code": "20132237",
+      "label": "Halides and halide-oxides of non-metals (excluding chlorides and chloride oxides of phosphorus)"
+    },
+    {
+      "code": "20132240",
+      "label": "Chlorides and chloride oxides of phosphorus (excl. phosphorus oxy-, tri- and pentachloride)"
+    },
+    {
+      "code": "20132260",
+      "label": "Sulphides of non-metals; commercial phosphorus trisulphide"
+    },
+    {
+      "code": "20132270",
+      "label": "Phosphorus sulphides, commercial phosphorus trisulphide"
+    },
+    {
+      "code": "20132280",
+      "label": "Sulphides of non-metals (excluding phosphorus sulphides; commercial phosphorus trisulphide)"
+    },
+    {
+      "code": "20132300",
+      "label": "Alkali or alkaline-earth metals; rare-earth metals, scandium and yttrium; mercury"
+    },
+    {
+      "code": "20132310",
+      "label": "Cerium, lanthanum, praseodymium, neodymium and samarium"
+    },
+    {
+      "code": "20132311",
+      "label": "Europium, gadolinium, terbium, dysprosium, holmium, erbium, thulium, ytterbium, lutetium and yttrium"
+    },
+    {
+      "code": "20132312",
+      "label": "Scandium metal"
+    },
+    {
+      "code": "20132319",
+      "label": "Alkali or alkaline-earth metals; rare-earth metals; mercury (excluding cerium, lanthanum, praseodymium, neodymium and samarium, europium, gadolinium, terbium, dysprosium, holmium, erbium, thulium, ytterbium, lutetium and yttrium and scandium metal)"
+    },
+    {
+      "code": "20132413",
+      "label": "Hydrogen chloride (hydrochloric acid)"
+    },
+    {
+      "code": "20132415",
+      "label": "Chlorosulphuric acid"
+    },
+    {
+      "code": "20132433",
+      "label": "Sulphuric acid"
+    },
+    {
+      "code": "20132434",
+      "label": "Sulphuric acid; oleum"
+    },
+    {
+      "code": "20132435",
+      "label": "Oleum"
+    },
+    {
+      "code": "20132453",
+      "label": "Diphosphorus pentaoxide"
+    },
+    {
+      "code": "20132455",
+      "label": "Phosphoric acid and polyphosphoric acids"
+    },
+    {
+      "code": "20132460",
+      "label": "Oxides of boron; boric acids; inorganic acids (excluding hydrogen fluoride)"
+    },
+    {
+      "code": "20132462",
+      "label": "Diboron trioxide"
+    },
+    {
+      "code": "20132465",
+      "label": "Oxides of boron and boric acids (excl. diboron trioxide)"
+    },
+    {
+      "code": "20132469",
+      "label": "Other inorganic acids and other inorganic oxygen compounds of non-metals (excluding hydrogen fluoride)"
+    },
+    {
+      "code": "20132473",
+      "label": "Hydrogen fluoride (hydrofluoric acid)"
+    },
+    {
+      "code": "20132475",
+      "label": "Silicon dioxide"
+    },
+    {
+      "code": "20132477",
+      "label": "Sulphur dioxide"
+    },
+    {
+      "code": "20132525",
+      "label": "Sodium hydroxide (caustic soda), solid"
+    },
+    {
+      "code": "20132527",
+      "label": "Sodium hydroxide in aqueous solution (soda lye or liquid soda)"
+    },
+    {
+      "code": "20132530",
+      "label": "Potassium hydroxide (caustic potash)"
+    },
+    {
+      "code": "20132535",
+      "label": "Potassium hydroxide (caustic potash), solid"
+    },
+    {
+      "code": "20132537",
+      "label": "Potassium hydroxide in an aqueous solution (potassium lye or liquid potassium)"
+    },
+    {
+      "code": "20132550",
+      "label": "Peroxides of sodium or potassium"
+    },
+    {
+      "code": "20132560",
+      "label": "Hydroxide and peroxide of magnesium; oxides, hydroxides and peroxides of strontium or barium"
+    },
+    {
+      "code": "20132563",
+      "label": "Hydroxide and peroxide of magnesium"
+    },
+    {
+      "code": "20132565",
+      "label": "Oxides, hydroxides and peroxides, of strontium or barium"
+    },
+    {
+      "code": "20132570",
+      "label": "Aluminium hydroxide"
+    },
+    {
+      "code": "20132580",
+      "label": "Hydrazine and hydroxylamine and their inorganic salts"
+    },
+    {
+      "code": "20133110",
+      "label": "Fluorides; fluorosilicates; fluoroaluminates and other complex fluorine salts"
+    },
+    {
+      "code": "20133115",
+      "label": "Fluorides; fluorosilicates; fluoroaluminates and other complex fluorine salts (Lithium hexafluorophosphate (1-), Lithium difluorophosphate, Lithium hexafluoroarsenate monohydrate, Lithium tetrafluoroborate)"
+    },
+    {
+      "code": "20133119",
+      "label": "Fluorides; fluorosilicates; fluoroaluminates and other complex fluorine salts (excl. sodium hexafluoroaluminate \"synthetic cryolite\"; hexafluorophosphate (1-), difluorophosphate, hexafluoroarsenate monohydrate and tetrafluoroborate of lithium; inorganic or organic compounds of mercury)"
+    },
+    {
+      "code": "20133130",
+      "label": "Chlorides (excluding ammonium chloride)"
+    },
+    {
+      "code": "20133131",
+      "label": "Magnesium chlorides"
+    },
+    {
+      "code": "20133132",
+      "label": "Nickel chlorides"
+    },
+    {
+      "code": "20133133",
+      "label": "Tin chlorides"
+    },
+    {
+      "code": "20133134",
+      "label": "Cobalt chlorides"
+    },
+    {
+      "code": "20133135",
+      "label": "Lithium chloride"
+    },
+    {
+      "code": "20133138",
+      "label": "Other chlorides (excluding lithium, ammonium, magnesium, nickel, tin and cobalt chloride) n.e.s."
+    },
+    {
+      "code": "20133139",
+      "label": "Other chlorides n.e.s."
+    },
+    {
+      "code": "20133150",
+      "label": "Chloride oxides and chloride hydroxides of copper and other metals"
+    },
+    {
+      "code": "20133170",
+      "label": "Bromides and bromide oxides; iodides and iodide oxides"
+    },
+    {
+      "code": "20133171",
+      "label": "Bromides and bromide oxides (excl. bromides of sodium or of potassium)"
+    },
+    {
+      "code": "20133172",
+      "label": "Lithium bromide"
+    },
+    {
+      "code": "20133173",
+      "label": "Bromides and bromide oxides (excl. bromides of sodium, of potassium and of lithium)"
+    },
+    {
+      "code": "20133179",
+      "label": "Bromides of sodium or of potassium; iodides and iodide oxides"
+    },
+    {
+      "code": "201331Z1",
+      "label": "Other chlorides n.e.s. (excluding ammonium, magnesium, nickel, tin and cobalt chloride)"
+    },
+    {
+      "code": "201331Z2",
+      "label": "Bromides and bromide oxides (excl. bromides of sodium or of potassium)"
+    },
+    {
+      "code": "20133230",
+      "label": "Hypochlorites; commercial calcium hypochlorite; chlorites; hypobromites"
+    },
+    {
+      "code": "20133250",
+      "label": "Chlorates and perchlorates; bromates and perbromates; iodates and periodates"
+    },
+    {
+      "code": "20133251",
+      "label": "Lithium perchlorate"
+    },
+    {
+      "code": "20133259",
+      "label": "Chlorates and perchlorates; bromates and perbromates; iodates and periodates (excluding lithium perchlorate)"
+    },
+    {
+      "code": "201332Z1",
+      "label": "Chlorates and perchlorates; bromates and perbromates; iodates and periodates"
+    },
+    {
+      "code": "20134110",
+      "label": "Sulphides; polysulphides, whether or not chemically defined; dithionites and sulphoxylates"
+    },
+    {
+      "code": "20134111",
+      "label": "Sulphides of calcium, of antimony or of iron"
+    },
+    {
+      "code": "20134120",
+      "label": "Sulphides; polysulphides, whether or not chemically defined; dithionites and sulphoxylates (excluding of calcium, antimony and iron)"
+    },
+    {
+      "code": "20134133",
+      "label": "Sulphites"
+    },
+    {
+      "code": "20134135",
+      "label": "Thiosulphates"
+    },
+    {
+      "code": "20134150",
+      "label": "Sulphates of aluminium"
+    },
+    {
+      "code": "20134151",
+      "label": "Sulphates of barium or aluminium"
+    },
+    {
+      "code": "20134155",
+      "label": "Sulphates of barium"
+    },
+    {
+      "code": "20134157",
+      "label": "Sulphates (excluding those of aluminium and barium)"
+    },
+    {
+      "code": "20134160",
+      "label": "Sulphates of magnesium"
+    },
+    {
+      "code": "20134161",
+      "label": "Sulphates of nickel"
+    },
+    {
+      "code": "20134162",
+      "label": "Sulphates of cobalt; of titanium"
+    },
+    {
+      "code": "20134165",
+      "label": "Sulphates (excluding those of aluminium, barium, magnesium, nickel, cobalt, titanium)"
+    },
+    {
+      "code": "20134173",
+      "label": "Alums"
+    },
+    {
+      "code": "20134175",
+      "label": "Peroxosulphates (persulphates)"
+    },
+    {
+      "code": "20134210",
+      "label": "Nitrates (excluding those of potassium)"
+    },
+    {
+      "code": "20134211",
+      "label": "Nitrates of barium; of beryllium; of cadmium; of cobalt; of nickel; of lead"
+    },
+    {
+      "code": "20134212",
+      "label": "Nitrates of copper and other (excluding those of potassium, of barium, of beryllium, of cadmium, of cobalt, of nickel, of lead)"
+    },
+    {
+      "code": "20134213",
+      "label": "Nitrates of barium; of beryllium; of cadmium;  of lead"
+    },
+    {
+      "code": "20134214",
+      "label": "Nitrate of cobalt"
+    },
+    {
+      "code": "20134215",
+      "label": "Nitrate of nickel"
+    },
+    {
+      "code": "20134220",
+      "label": "Phosphinates (hypophosphites) and phosphonates (phosphites)"
+    },
+    {
+      "code": "20134230",
+      "label": "Phosphates of mono- or di-sodium"
+    },
+    {
+      "code": "20134240",
+      "label": "Calcium hydrogenorthophosphate (dicalcium phosphate)"
+    },
+    {
+      "code": "20134270",
+      "label": "Sodium triphosphate (sodium tripolyphosphate)"
+    },
+    {
+      "code": "20134280",
+      "label": "Phosphates (excluding calcium hydrogenorthophosphate and mono- or disodium phosphate); polyphosphates (excluding sodium triphosphate)"
+    },
+    {
+      "code": "20134281",
+      "label": "Lithium iron phosphate"
+    },
+    {
+      "code": "20134289",
+      "label": "Phosphates (excluding calcium hydrogenorthophosphate and mono- or disodium phosphate, and lithium iron phosphate); polyphosphates (excluding sodium triphosphate)"
+    },
+    {
+      "code": "201342Z1",
+      "label": "Nitrates of barium; of beryllium; of cadmium; of cobalt; of nickel; of lead"
+    },
+    {
+      "code": "201342Z2",
+      "label": "Phosphates (excluding calcium hydrogenorthophosphate and mono- or disodium phosphate); polyphosphates (excluding sodium triphosphate)"
+    },
+    {
+      "code": "20134310",
+      "label": "Disodium carbonate"
+    },
+    {
+      "code": "20134320",
+      "label": "Sodium hydrogencarbonate (sodium bicarbonate)"
+    },
+    {
+      "code": "20134340",
+      "label": "Calcium carbonate"
+    },
+    {
+      "code": "20134350",
+      "label": "Lithium carbonates"
+    },
+    {
+      "code": "20134351",
+      "label": "Lithium carbonates with a minimum content of 99,5% of Li2CO3 or more"
+    },
+    {
+      "code": "20134352",
+      "label": "Lithium carbonates with a content of less than  99,5% of Li2CO3"
+    },
+    {
+      "code": "20134390",
+      "label": "Other carbonates"
+    },
+    {
+      "code": "20134395",
+      "label": "Other carbonates n.e.s."
+    },
+    {
+      "code": "20134396",
+      "label": "Cobalt carbonates"
+    },
+    {
+      "code": "20134399",
+      "label": "Other carbonates (excluding cobalt carbonates)"
+    },
+    {
+      "code": "201343Z1",
+      "label": "Lithium carbonates"
+    },
+    {
+      "code": "201343Z2",
+      "label": "Other carbonates n.e.s."
+    },
+    {
+      "code": "20135125",
+      "label": "Chromates and dichromates; peroxochromates"
+    },
+    {
+      "code": "20135270",
+      "label": "Compounds, inorganic or organic, of mercury, chemically defined as mercury (excluding amalgams)"
+    },
+    {
+      "code": "20135275",
+      "label": "Compounds, inorganic or organic, of mercury, not chemically defined (excluding amalgams)"
+    },
+    {
+      "code": "20136220",
+      "label": "Cyanides; cyanide oxides and complex cyanides"
+    },
+    {
+      "code": "20136230",
+      "label": "Borates; peroxoborates (perborates)"
+    },
+    {
+      "code": "20136240",
+      "label": "Silicates; commercial alkali metal silicates"
+    },
+    {
+      "code": "20136270",
+      "label": "Double or complex silicates"
+    },
+    {
+      "code": "20136280",
+      "label": "Salts of inorganic acids or peroxoacids (excluding azides and double or complex silicates)"
+    },
+    {
+      "code": "20136300",
+      "label": "Hydrogen peroxide"
+    },
+    {
+      "code": "20136410",
+      "label": "Carbides of silicon, whether or not chemically defined"
+    },
+    {
+      "code": "20136420",
+      "label": "Carbides of boron, whether or not chemically defined"
+    },
+    {
+      "code": "20136430",
+      "label": "Carbides of tungsten, whether or not chemically defined"
+    },
+    {
+      "code": "20136450",
+      "label": "Carbides whether or not chemically defined"
+    },
+    {
+      "code": "20136451",
+      "label": "Carbides of aluminium, of chromium, of molybdenum, of vanadium, of tantalum; of titanium, whether or not chemically defined"
+    },
+    {
+      "code": "20136480",
+      "label": "Phosphides (excluding ferrophosphorus), whether or not chemically defined; hydrides, nitrides, azides, silicides and borides, whether or not chemically defined, other than compounds which are also carbides of heading 20.13.64.50"
+    },
+    {
+      "code": "20136490",
+      "label": "Other carbides n.e.s."
+    },
+    {
+      "code": "20141120",
+      "label": "Saturated acyclic hydrocarbons"
+    },
+    {
+      "code": "20141130",
+      "label": "Ethylene"
+    },
+    {
+      "code": "20141140",
+      "label": "Propene (propylene)"
+    },
+    {
+      "code": "20141150",
+      "label": "Butene (butylene) and isomers thereof"
+    },
+    {
+      "code": "20141160",
+      "label": "Buta-1,3-diene and isoprene"
+    },
+    {
+      "code": "20141165",
+      "label": "Unsaturated acyclic hydrocarbons; buta-1.3-diene"
+    },
+    {
+      "code": "20141167",
+      "label": "Unsaturated acyclic hydrocarbons; Isoprene"
+    },
+    {
+      "code": "20141190",
+      "label": "Unsaturated acyclic hydrocarbons (excluding ethylene, propene, butene, buta-1,3-diene and isoprene)"
+    },
+    {
+      "code": "20141213",
+      "label": "Cyclohexane"
+    },
+    {
+      "code": "20141215",
+      "label": "Cyclanes; cyclenes and cycloterpenes (excluding cyclohexane)"
+    },
+    {
+      "code": "20141223",
+      "label": "Benzene"
+    },
+    {
+      "code": "20141225",
+      "label": "Toluene"
+    },
+    {
+      "code": "20141243",
+      "label": "o-Xylene"
+    },
+    {
+      "code": "20141245",
+      "label": "p-Xylene"
+    },
+    {
+      "code": "20141247",
+      "label": "m-Xylene and mixed xylene isomers"
+    },
+    {
+      "code": "20141250",
+      "label": "Styrene"
+    },
+    {
+      "code": "20141260",
+      "label": "Ethylbenzene"
+    },
+    {
+      "code": "20141270",
+      "label": "Cumene"
+    },
+    {
+      "code": "20141290",
+      "label": "Other cyclic hydrocarbons"
+    },
+    {
+      "code": "20141313",
+      "label": "Chloromethane (methyl chloride) and chloroethane (ethyl chloride)"
+    },
+    {
+      "code": "20141315",
+      "label": "Dichloromethane (methylene chloride)"
+    },
+    {
+      "code": "20141323",
+      "label": "Chloroform (trichloromethane)"
+    },
+    {
+      "code": "20141325",
+      "label": "Carbon tetrachloride"
+    },
+    {
+      "code": "20141353",
+      "label": "1,2-Dichloroethane (ethylene dichloride)"
+    },
+    {
+      "code": "20141357",
+      "label": "Saturated chlorinated derivatives of acyclic hydrocarbons, n.e.c."
+    },
+    {
+      "code": "20141371",
+      "label": "Vinyl chloride (chloroethylene)"
+    },
+    {
+      "code": "20141374",
+      "label": "Trichloroethylene; tetrachloroethylene (perchloroethylene)"
+    },
+    {
+      "code": "20141379",
+      "label": "Unsaturated chlorinated derivatives of acyclic hydrocarbons (excluding vinyl chloride, trichloroethylene, tetrachloroethylene)"
+    },
+    {
+      "code": "20141450",
+      "label": "Derivatives of hydrocarbons containing only sulpho groups; their salts and ethyl esters"
+    },
+    {
+      "code": "20141470",
+      "label": "Derivatives of hydrocarbons containing only nitro or only nitroso groups"
+    },
+    {
+      "code": "20141490",
+      "label": "Derivatives of hydrocarbons (excluding those containing only sulpho groups; their salts and ethyl esters, those containing only nitro or only nitroso groups)"
+    },
+    {
+      "code": "20142100",
+      "label": "Industrial fatty alcohols"
+    },
+    {
+      "code": "20142210",
+      "label": "Methanol (methyl alcohol)"
+    },
+    {
+      "code": "20142220",
+      "label": "Propan-1-ol (propyl alcohol) and propan-2-ol (isopropyl alcohol)"
+    },
+    {
+      "code": "20142230",
+      "label": "Butan-1-ol (n-butyl alcohol)"
+    },
+    {
+      "code": "20142240",
+      "label": "Butanols (excluding butan-1-ol (n-butyl alcohol))"
+    },
+    {
+      "code": "20142263",
+      "label": "Octanol (octyl alcohol) and isomers thereof"
+    },
+    {
+      "code": "20142265",
+      "label": "Lauryl alcohol; cetyl alcohol; stearyl alcohol and other saturated monohydric alcohols (excluding methyl, propyl and isopropyl, n-butyl, other butanols, octyl)"
+    },
+    {
+      "code": "20142270",
+      "label": "Unsaturated monohydric alcohols"
+    },
+    {
+      "code": "20142310",
+      "label": "Ethylene glycol (ethanediol)"
+    },
+    {
+      "code": "20142320",
+      "label": "Propylene glycol (propane-1,2-diol)"
+    },
+    {
+      "code": "20142333",
+      "label": "D-glucitol (sorbitol)"
+    },
+    {
+      "code": "20142337",
+      "label": "Diols and polyhydric alcohols (excluding ethylene glycol and propylene glycol, D-glucitol and tetramethylene glycol having a bio-based carbon content of 100 % by mass)"
+    },
+    {
+      "code": "20142338",
+      "label": "Butane-1,4-diol or tetramethylene glycol (1,4-butanediol) having a bio-based carbon content of 100 % by mass"
+    },
+    {
+      "code": "20142339",
+      "label": "Diols and polyhydric alcohols (excluding ethylene glycol and propylene glycol, D-glucitol)"
+    },
+    {
+      "code": "20142350",
+      "label": "Halogenated, sulphonated, nitrated or nitrosated derivatives of acyclic alcohols"
+    },
+    {
+      "code": "20142360",
+      "label": "Glycerol (including synthetic; excluding crude, waters and lyes)"
+    },
+    {
+      "code": "20142373",
+      "label": "Cyclanic, cyclenic or cycloterpenic alcohols and their halogenated, sulphonated, nitrated or nitrosated derivatives"
+    },
+    {
+      "code": "20142375",
+      "label": "Aromatic alcohols and their halogenated, sulphonated, nitrated or nitrosated derivatives"
+    },
+    {
+      "code": "20142410",
+      "label": "Monophenols"
+    },
+    {
+      "code": "20142433",
+      "label": "4,4-Isopropylidenediphenol (bisphenol A; diphenylolpropane) and its salts"
+    },
+    {
+      "code": "20142439",
+      "label": "Polyphenols (including salts; excluding 4,4 isopropylidenediphenol) and phenol-alcohols"
+    },
+    {
+      "code": "20142450",
+      "label": "Halogenated, sulphonated, nitrated or nitrosated derivatives of phenols or phenol-alcohols"
+    },
+    {
+      "code": "20143120",
+      "label": "Industrial stearic acid"
+    },
+    {
+      "code": "20143130",
+      "label": "Industrial oleic acid"
+    },
+    {
+      "code": "20143150",
+      "label": "Industrial tall oil fatty acids"
+    },
+    {
+      "code": "20143195",
+      "label": "Industrial monocarboxylic fatty acids distilled (excluding stearic, oleic tall oil)"
+    },
+    {
+      "code": "20143197",
+      "label": "Industrial monocarboxylic fatty acids (excluding stearic, oleic, tall oil, distilled)"
+    },
+    {
+      "code": "20143215",
+      "label": "Ethyl acetate"
+    },
+    {
+      "code": "20143219",
+      "label": "Esters of acetic acid (excluding ethyl acetate)"
+    },
+    {
+      "code": "20143220",
+      "label": "Mono-, di- or tri-chloroacetic acids; propionic, butanoic and pentanoic acids; their salts and esters"
+    },
+    {
+      "code": "20143230",
+      "label": "Palmitic acid, its salts and esters"
+    },
+    {
+      "code": "20143235",
+      "label": "Palmitic acid, stearic acid, their salts and esters"
+    },
+    {
+      "code": "20143240",
+      "label": "Stearic acid, its salts and esters"
+    },
+    {
+      "code": "20143250",
+      "label": "Formic acid, its salts and esters"
+    },
+    {
+      "code": "20143271",
+      "label": "Acetic acid"
+    },
+    {
+      "code": "20143277",
+      "label": "Acetic anhydride"
+    },
+    {
+      "code": "20143278",
+      "label": "Salts of acetic acid"
+    },
+    {
+      "code": "20143280",
+      "label": "Lauric acid and others; salts and esters"
+    },
+    {
+      "code": "20143310",
+      "label": "Acrylic acid and its salts and other monocarboxylic acid"
+    },
+    {
+      "code": "20143320",
+      "label": "Esters of acrylic acid"
+    },
+    {
+      "code": "20143330",
+      "label": "Methacrylic acid and its salts"
+    },
+    {
+      "code": "20143340",
+      "label": "Esters of methacrylic acid"
+    },
+    {
+      "code": "20143350",
+      "label": "Oleic, linoleic or linolenic acids; their salts and esters"
+    },
+    {
+      "code": "20143363",
+      "label": "Benzoic acid; its salts and esters"
+    },
+    {
+      "code": "20143365",
+      "label": "Benzoyl peroxide and benzoyl chloride"
+    },
+    {
+      "code": "20143367",
+      "label": "Phenylacetic acid; its salts and esters"
+    },
+    {
+      "code": "20143370",
+      "label": "Aromatic monocarboxylic acids, (anhydrides), halides, peroxides, peroxyacids, derivatives excluding benzoic acid, phenylacetic acids their salts/esters, benzoyl peroxide, benzoyl chloride"
+    },
+    {
+      "code": "20143381",
+      "label": "Oxalic, azelaic, malonic, other, cyclanic, cylenic or cycloterpenic polycarboxylic acids, salts (excluding butanedioic acid having a bio-based carbon content of 100 % by mass)"
+    },
+    {
+      "code": "20143382",
+      "label": "Ethane-1,2-dicarboxylic acid or butanedioic acid (succinic acid) having a bio-based carbon content of 100 % by mass"
+    },
+    {
+      "code": "20143383",
+      "label": "Oxalic, azelaic, malonic, other, cyclanic, cylenic or cycloterpenic polycarboxylic acids, salts"
+    },
+    {
+      "code": "20143385",
+      "label": "Adipic acid; its salts and esters"
+    },
+    {
+      "code": "20143387",
+      "label": "Maleic anhydride"
+    },
+    {
+      "code": "20143410",
+      "label": "Dibutyl and dioctyl orthophthalates"
+    },
+    {
+      "code": "20143420",
+      "label": "Other esters of orthophthalic acid"
+    },
+    {
+      "code": "20143430",
+      "label": "Phthalic anhydride; terephthalic acid and its salts"
+    },
+    {
+      "code": "20143440",
+      "label": "Aromatic polycarboxylic acids, their anhydrides, halides, peroxides, peroxyacids and their halogenated, sulphonated, nitrated or nitrosated derivatives (excluding esters of orthophthalic acid, phthalic anhydride, terephthalic acid and its salts)"
+    },
+    {
+      "code": "20143473",
+      "label": "Citric acid and its salts and esters"
+    },
+    {
+      "code": "20143475",
+      "label": "Carboxylic acid with alcohol, phenol, aldehyde or ketone functions"
+    },
+    {
+      "code": "201434Z1",
+      "label": "Esters of orthophthalic acid"
+    },
+    {
+      "code": "20144113",
+      "label": "Methylamine; di- or trimethylamine and their salts"
+    },
+    {
+      "code": "20144119",
+      "label": "Other acylic monoamines and their derivatives; salts thereof"
+    },
+    {
+      "code": "20144123",
+      "label": "Hexamethylenediamine and its salts; ethylenediamine and its salts"
+    },
+    {
+      "code": "20144129",
+      "label": "Other acyclic polyamines and their derivatives; salts thereof"
+    },
+    {
+      "code": "20144130",
+      "label": "Cyclanic, cyclenic or cycloterpenic mono- or polyamines, and their derivatives; salts thereof"
+    },
+    {
+      "code": "20144151",
+      "label": "Aniline and its salts (excluding derivatives)"
+    },
+    {
+      "code": "20144153",
+      "label": "Aniline derivatives and their salts"
+    },
+    {
+      "code": "20144159",
+      "label": "Other aromatic monoamines and their derivatives; salts thereof"
+    },
+    {
+      "code": "20144170",
+      "label": "Aromatic polyamines and their derivatives; salts thereof"
+    },
+    {
+      "code": "20144233",
+      "label": "Monoethanolamine and its salts"
+    },
+    {
+      "code": "20144235",
+      "label": "Diethanolamine and its salts"
+    },
+    {
+      "code": "20144237",
+      "label": "Triethanolamine and its salts"
+    },
+    {
+      "code": "20144238",
+      "label": "Amino-alcohols, their ethers and esters with only 1 oxygen function and their salts (excluding monoethanolamine and its salts, diethanolamine and its salts)"
+    },
+    {
+      "code": "20144239",
+      "label": "Amino-alcohols, their ethers and esters with only 1 oxygen function and their salts (excluding monoethanolamine and its salts, diethanolamine and its salts, triethanolamine and its salts)"
+    },
+    {
+      "code": "20144290",
+      "label": "Oxygen-function amino-compounds (excluding amino-alcohols, their esters and ethers and salts thereof, lysine and its salts and esters, glutamic acid its salts and esters)"
+    },
+    {
+      "code": "20144310",
+      "label": "Ureines and their derivatives; salts thereof"
+    },
+    {
+      "code": "20144320",
+      "label": "Saccharin and its salts"
+    },
+    {
+      "code": "20144330",
+      "label": "Imides and their derivatives, and salts thereof (excluding saccharin and its salts)"
+    },
+    {
+      "code": "20144340",
+      "label": "Imines and their derivatives; and salts thereof"
+    },
+    {
+      "code": "20144350",
+      "label": "Acrylonitrile"
+    },
+    {
+      "code": "20144360",
+      "label": "1-Cyanoguanidine (dicyandiamide)"
+    },
+    {
+      "code": "20144370",
+      "label": "Nitrile-function compounds (excluding acrylonitrile, 1-cyanoguanidine (dicyandiamide))"
+    },
+    {
+      "code": "20144420",
+      "label": "Diazo-, azo- or azoxy-compounds"
+    },
+    {
+      "code": "20144430",
+      "label": "Organic derivatives of hydrazine or of hydroxylamine"
+    },
+    {
+      "code": "20144450",
+      "label": "Isocyanates"
+    },
+    {
+      "code": "20144490",
+      "label": "Compounds with other nitrogen function (excluding isocyanates)"
+    },
+    {
+      "code": "20145133",
+      "label": "Thiocarbamates and dithiocarbamates; thiuram mono-, di- or tetrasulphides; methionine"
+    },
+    {
+      "code": "20145139",
+      "label": "Other organo-sulphur compounds"
+    },
+    {
+      "code": "20145150",
+      "label": "Organo-inorganic compounds (excluding organo-sulphur compounds)"
+    },
+    {
+      "code": "20145151",
+      "label": "Organo-inorganic compounds (excluding organo-sulphur compounds)"
+    },
+    {
+      "code": "20145210",
+      "label": "Heterocyclic compounds with oxygen only hetero-atom(s) (including coumarin; methylcoumarins and ethylcoumarins) (excluding other lactones)"
+    },
+    {
+      "code": "20145215",
+      "label": "Tetrahydrofuran, 2-Furaldehyde, Furfuryl alcohol, Tetrahydrofurfuryl alcohol and Piperonal"
+    },
+    {
+      "code": "20145225",
+      "label": "Heterocyclic compounds with oxygen only hetero-atom(s) (excluding other lactones)"
+    },
+    {
+      "code": "20145230",
+      "label": "Heterocyclic compounds with nitrogen only hetero-atom(s); containing an unfused imidazole ring (excluding hydantoin and its derivatives)"
+    },
+    {
+      "code": "20145260",
+      "label": "Melamine"
+    },
+    {
+      "code": "20145280",
+      "label": "Compounds containing in the structure an unfused pyridine ring or a quinoline or isoquinoline ring-system, not further fused; lactames; other heterocyclic compounds with nitrogen hetero-atom(s) only (excluding compounds containing in the structure an unfused pyrazole ring, an unfused imidazole ring, a pyrimidine ring, a piperazine ring or an unfused triazine ring)"
+    },
+    {
+      "code": "20145290",
+      "label": "Nucleic acids and other heterocyclic compounds - thiazole, benzothiazole, other cycles"
+    },
+    {
+      "code": "20145350",
+      "label": "Phosphoric esters; and their salts (including lactophosphates; their halogenated; sulphonated; nitrated or nitrosated derivatives)"
+    },
+    {
+      "code": "20145380",
+      "label": "Esters of other inorganic acids of non-metals (excluding esters of hydrogen halides) and their salts; their halogenated, sulphonated, nitrated or nitrosated derivatives"
+    },
+    {
+      "code": "20146111",
+      "label": "Methanal (formaldehyde)"
+    },
+    {
+      "code": "20146113",
+      "label": "Ethanal (acetaldehyde)"
+    },
+    {
+      "code": "20146115",
+      "label": "Butanal (butyraldehyde; normal isomer)"
+    },
+    {
+      "code": "20146119",
+      "label": "Acyclic aldehydes, without other oxygen function (excluding methanal (formaldehyde), ethanal (acetaldehyde), butanal (butyraldehyde; normal isomer))"
+    },
+    {
+      "code": "20146160",
+      "label": "Paraformaldehyde"
+    },
+    {
+      "code": "201461Z0",
+      "label": "Acyclic aldehydes without other oxygen function (excluding methanal, ethanal)"
+    },
+    {
+      "code": "20146211",
+      "label": "Acetone"
+    },
+    {
+      "code": "20146213",
+      "label": "Butanone (methyl ethyl ketone)"
+    },
+    {
+      "code": "20146215",
+      "label": "4-Methylpentan-2-one (methyl isobutyl ketone)"
+    },
+    {
+      "code": "20146219",
+      "label": "Acyclic ketones; without other oxygen function (excluding acetone, butanone (methyl ethyl ketone), 4-methylpentan-2-one (methyl isobutyl ketone))"
+    },
+    {
+      "code": "20146231",
+      "label": "Camphor; aromatic ketones without other oxygen function; ketone-alcohols; ketone-aldehydes; ketone-phenols and ketones with other oxygen function"
+    },
+    {
+      "code": "20146233",
+      "label": "Cyclohexanone and methylcyclohexanones"
+    },
+    {
+      "code": "20146235",
+      "label": "Ionones and methylionones"
+    },
+    {
+      "code": "20146239",
+      "label": "Cyclanic, cyclenic or cycloterpenic ketones without other oxygen function (excluding camphor, cyclohexanone and methylcyclohexanones, ionones and methylionones)"
+    },
+    {
+      "code": "20146260",
+      "label": "Quinones"
+    },
+    {
+      "code": "20146270",
+      "label": "Halogenated; sulphonated; nitrated or nitrosated derivatives of ketones and quinones"
+    },
+    {
+      "code": "201462Z0",
+      "label": "Aromatic ketones without other oxygen function; ketone-alcohols and ketone-aldehydes; ketone-phenols and ketones with other oxygen function; other cyclanic, cyclenic or cycloterpenic ketones without other oxygen function"
+    },
+    {
+      "code": "20146310",
+      "label": "Acyclic ethers and their halogenated, sulphonated, nitrated or nitrosated derivatives"
+    },
+    {
+      "code": "20146323",
+      "label": "Cyclanic, cyclenic or cycloterpenic ethers and their halogenated, sulphonated, nitrated or nitrosated derivatives"
+    },
+    {
+      "code": "20146325",
+      "label": "Aromatic ethers and their halogenated, sulphonated, nitrated or nitrosated derivatives"
+    },
+    {
+      "code": "20146333",
+      "label": "2,2-Oxydiethanol (diethylene glycol; digol)"
+    },
+    {
+      "code": "20146339",
+      "label": "Ether-alcohols and their halogenated, sulphonated, nitrated or nitrosated derivatives (excluding 2,2-Oxydiethanol)"
+    },
+    {
+      "code": "20146373",
+      "label": "Oxirane (ethylene oxide)"
+    },
+    {
+      "code": "20146375",
+      "label": "Methyloxirane (propylene oxide)"
+    },
+    {
+      "code": "20146379",
+      "label": "Epoxides, epoxyalcohols, -phenols, epoxyethers, with a 3-membered ring and their halogenated, sulphonated, nitrated/nitrosated derivatives excluding oxirane, methyloxirane (propylene oxide)"
+    },
+    {
+      "code": "20146380",
+      "label": "Acetals and hemiacetals and their halogenated; sulphonated; nitrated or nitrosated derivatives"
+    },
+    {
+      "code": "20146381",
+      "label": "Acetals and hemiacetals and their halogenated; sulphonated; nitrated or nitrosated derivatives"
+    },
+    {
+      "code": "20146430",
+      "label": "Other organic compounds, n.e.c."
+    },
+    {
+      "code": "20147170",
+      "label": "Wood tar; wood tar oils; wood creosote; wood naphtha; vegetable pitch; brewers’ pitch and similar preparations based on rosin, resin acids or on vegetable pitch"
+    },
+    {
+      "code": "20147320",
+      "label": "Benzol (benzene), toluol (toluene) and xylol (xylenes)"
+    },
+    {
+      "code": "20147340",
+      "label": "Naphthalene and other aromatic hydrocarbon mixtures (excluding benzene, toluene, xylene)"
+    },
+    {
+      "code": "20147360",
+      "label": "Phenols"
+    },
+    {
+      "code": "20147390",
+      "label": "Other oils and oil products, n.e.c."
+    },
+    {
+      "code": "20151050",
+      "label": "Nitric acid; sulphonitric acids"
+    },
+    {
+      "code": "20151075",
+      "label": "Anhydrous ammonia"
+    },
+    {
+      "code": "20151077",
+      "label": "Ammonia in aqueous solution"
+    },
+    {
+      "code": "20152030",
+      "label": "Ammonium chloride"
+    },
+    {
+      "code": "20152080",
+      "label": "Nitrites"
+    },
+    {
+      "code": "20153130",
+      "label": "Urea containing > 45 % by weight of nitrogen on the dry anhydrous product (excluding in tablets or similar forms or in packages of a weight of <= 10 kg)"
+    },
+    {
+      "code": "20153180",
+      "label": "Urea containing <= 45 % by weight of nitrogen on the dry anhydrous product (excluding in tablets or similar forms or in packages of a weight of <= 10 kg)"
+    },
+    {
+      "code": "20153200",
+      "label": "Ammonium sulphate (excluding in tablets or similar forms or in packages of a weight of <= 10 kg)"
+    },
+    {
+      "code": "20153300",
+      "label": "Ammonium nitrate (excluding in tablets or similar forms or in packages of a weight of <= 10 kg)"
+    },
+    {
+      "code": "20153400",
+      "label": "Double salts and mixtures of calcium nitrate and ammonium nitrate (excluding in tablets or similar forms or in packages of a weight of <= 10 kg)"
+    },
+    {
+      "code": "20153530",
+      "label": "Mixtures of ammonium nitrate with calcium carbonate, <= 28 % nitrogen by weight"
+    },
+    {
+      "code": "20153580",
+      "label": "Mixtures of ammonium nitrate with calcium carbonate, > 28 % nitrogen by weight"
+    },
+    {
+      "code": "20153600",
+      "label": "Mixtures of urea and ammonium nitrate in aqueous or ammoniacal solution (excluding in tablets or similar forms or in packages of a weight of <= 10 kg)"
+    },
+    {
+      "code": "20153930",
+      "label": "Double salts and mixtures of ammonium sulphate and ammonium nitrate (excluding in tablets or similar forms or in packages of a weight of <= 10 kg)"
+    },
+    {
+      "code": "20153960",
+      "label": "Mixtures of urea and ammonium nitrate in aqueous or ammoniacal solution (excluding in tablets or similar forms or in packages of a weight of <= 10 kg)"
+    },
+    {
+      "code": "20153990",
+      "label": "Mineral or chemical fertilisers, nitrogenous, n.e.c."
+    },
+    {
+      "code": "20154100",
+      "label": "Superphosphates (excluding potassic, in tablets or similar forms or in packages of a weight of <= 10 kg)"
+    },
+    {
+      "code": "20154900",
+      "label": "Mineral or chemical fertilisers, phosphatic n.e.c."
+    },
+    {
+      "code": "20155100",
+      "label": "Potassium chloride (excluding in tablets or similar forms or in packages of a weight of <= 10 kg)"
+    },
+    {
+      "code": "20155200",
+      "label": "Potassium sulphate (excluding in tablets or similar forms or in packages of a weight of <= 10 kg)"
+    },
+    {
+      "code": "20155900",
+      "label": "Mineral or chemical fertilisers, potassic, n.e.c."
+    },
+    {
+      "code": "20156000",
+      "label": "Sodium nitrate"
+    },
+    {
+      "code": "20157100",
+      "label": "Mineral or chemical fertilisers containing the three fertilising elements nitrogen, phosphorus and potassium (excluding those in tablets or similar forms, or in packages with a gross weight of <= 10 kg)"
+    },
+    {
+      "code": "20157130",
+      "label": "Fertilizers containing nitrogen, phosphorus and potassium, > 10% nitrogen"
+    },
+    {
+      "code": "20157180",
+      "label": "Fertilizers containing nitrogen, phosphorus and potassium, <= 10% nitrogen"
+    },
+    {
+      "code": "20157200",
+      "label": "Diammonium hydrogenorthophosphate (diammonium phosphate) (excluding in tablets or similar forms or in packages of a weight of <= 10 kg)"
+    },
+    {
+      "code": "20157300",
+      "label": "Ammonium dihydrogenorthophosphate (monoammonium phosphate)"
+    },
+    {
+      "code": "20157400",
+      "label": "Other mineral or chemical fertilisers containing the two fertilising elements nitrogen and phosphorus"
+    },
+    {
+      "code": "20157500",
+      "label": "Mineral or chemical fertilisers containing the two fertilising elements phosphorus and potassium"
+    },
+    {
+      "code": "20157600",
+      "label": "Nitrates of potassium"
+    },
+    {
+      "code": "20157930",
+      "label": "Fertilisers in tablets or similar forms or in packages of a gross weight of <= 10 kg)"
+    },
+    {
+      "code": "20157980",
+      "label": "Other fertilisers, n.e.c."
+    },
+    {
+      "code": "20158000",
+      "label": "Animal or vegetable fertilisers"
+    },
+    {
+      "code": "20161035",
+      "label": "Linear polyethylene having a specific gravity < 0,94, in primary forms"
+    },
+    {
+      "code": "20161039",
+      "label": "Polyethylene having a specific gravity < 0,94, in primary forms (excluding linear)"
+    },
+    {
+      "code": "20161050",
+      "label": "Polyethylene having a specific gravity of >= 0,94, in primary forms"
+    },
+    {
+      "code": "20161070",
+      "label": "Ethylene-vinyl acetate copolymers, in primary forms"
+    },
+    {
+      "code": "20161090",
+      "label": "Polymers of ethylene, in primary forms (excluding polyethylene, ethylene-vinyl acetate copolymers)"
+    },
+    {
+      "code": "20162035",
+      "label": "Expansible polystyrene, in primary forms"
+    },
+    {
+      "code": "20162039",
+      "label": "Polystyrene, in primary forms (excluding expansible polystyrene)"
+    },
+    {
+      "code": "20162050",
+      "label": "Styrene-acrylonitrile (SAN) copolymers, in primary forms"
+    },
+    {
+      "code": "20162070",
+      "label": "Acrylonitrile-butadiene-styrene (ABS) copolymers, in primary forms"
+    },
+    {
+      "code": "20162090",
+      "label": "Polymers of styrene, in primary forms (excluding polystyrene, styrene-acrylonitrile (SAN) copolymers, acrylonitrile-butadiene-styrene (ABS) copolymers)"
+    },
+    {
+      "code": "20163010",
+      "label": "Polyvinyl chloride, not mixed with any other substances, in primary forms"
+    },
+    {
+      "code": "20163023",
+      "label": "Non-plasticised polyvinyl chloride mixed with any other substance, in primary forms"
+    },
+    {
+      "code": "20163025",
+      "label": "Plasticised polyvinyl chloride mixed with any other substance, in primary forms"
+    },
+    {
+      "code": "20163040",
+      "label": "Vinyl chloride-vinyl acetate copolymers and other vinyl chloride copolymers, in primary forms"
+    },
+    {
+      "code": "20163060",
+      "label": "Fluoropolymers"
+    },
+    {
+      "code": "20163090",
+      "label": "Polymers of halogenated olefins, in primary forms, n.e.c."
+    },
+    {
+      "code": "20164013",
+      "label": "Polyacetals, in primary forms"
+    },
+    {
+      "code": "20164015",
+      "label": "Polyethylene glycols and other polyether alcohols, in primary forms"
+    },
+    {
+      "code": "20164020",
+      "label": "Polyethers, in primary forms (excluding polyacetals, polyether alcohols)"
+    },
+    {
+      "code": "20164030",
+      "label": "Epoxide resins, in primary forms"
+    },
+    {
+      "code": "20164040",
+      "label": "Polycarbonates, in primary forms"
+    },
+    {
+      "code": "20164050",
+      "label": "Alkyd resins, in primary forms"
+    },
+    {
+      "code": "20164062",
+      "label": "Polyethylene terephthalate in primary forms having a viscosity number of >= 78 ml/g"
+    },
+    {
+      "code": "20164064",
+      "label": "Other polyethylene terephthalate in primary forms"
+    },
+    {
+      "code": "20164070",
+      "label": "Unsaturated liquid polyesters, in primary forms (excluding polyacetals, polyethers, epoxide resins, polycarbonates, alkyd resins, polyethylene terephthalate)"
+    },
+    {
+      "code": "20164080",
+      "label": "Unsaturated polyesters, in primary forms (excluding liquid polyesters, polyacetals, polyethers, epoxide resins, polycarbonates, alkyd resins, polyethylene terephthalate)"
+    },
+    {
+      "code": "20164090",
+      "label": "Polyesters, in primary forms (excluding polyacetals, polyethers, epoxide resins, polycarbonates, alkyd resins, polyethylene terephthalate, other unsaturated polyesters)"
+    },
+    {
+      "code": "20165130",
+      "label": "Polypropylene, in primary forms"
+    },
+    {
+      "code": "20165150",
+      "label": "Polymers of propylene or of other olefins, in primary forms (excluding polypropylene)"
+    },
+    {
+      "code": "20165230",
+      "label": "Polymers of vinyl acetate, in aqueous dispersion, in primary forms"
+    },
+    {
+      "code": "20165250",
+      "label": "Polymers of vinyl acetate, in primary forms (excluding in aqueous dispersion)"
+    },
+    {
+      "code": "20165270",
+      "label": "Polymers of vinyl esters or other vinyl polymers, in primary forms (excluding vinyl acetate)"
+    },
+    {
+      "code": "20165350",
+      "label": "Polymethyl methacrylate, in primary forms"
+    },
+    {
+      "code": "20165390",
+      "label": "Acrylic polymers, in primary forms (excluding polymethyl methacrylate)"
+    },
+    {
+      "code": "20165450",
+      "label": "Polyamide -6, -11, -12, -6,6, -6,9, -6,10 or -6,12, in primary forms"
+    },
+    {
+      "code": "20165490",
+      "label": "Polyamides, in primary forms (excluding polyamide -6, -11, -12, -6,6, -6,9, -6,10 or -6,12)"
+    },
+    {
+      "code": "20165550",
+      "label": "Urea resins and thiourea resins, in primary forms"
+    },
+    {
+      "code": "20165570",
+      "label": "Melamine resins, in primary forms"
+    },
+    {
+      "code": "20165630",
+      "label": "Amino resins, in primary forms (excluding urea and thiourea resins, melamine resins)"
+    },
+    {
+      "code": "20165650",
+      "label": "Phenolic resins, in primary forms"
+    },
+    {
+      "code": "20165670",
+      "label": "Polyurethanes, in primary forms"
+    },
+    {
+      "code": "20165700",
+      "label": "Silicones, in primary forms"
+    },
+    {
+      "code": "20165920",
+      "label": "Petroleum resins, coumarone-indene resins, polyterpenes, polysulphides, polysulphones, etc., n.e.c., in primary forms"
+    },
+    {
+      "code": "20165940",
+      "label": "Cellulose and its chemical derivatives, n.e.c., in primary forms"
+    },
+    {
+      "code": "20165945",
+      "label": "Sodium carboxymethyl cellulose"
+    },
+    {
+      "code": "20165950",
+      "label": "Cellulose and its chemical derivatives, in primary forms, excluding sodium carboxymethyl cellulose and n.e.c."
+    },
+    {
+      "code": "20165955",
+      "label": "Natural polymers and modified natural polymers, not elsewhere specified or included, in primary forms . Alginic acid, its salts and esters"
+    },
+    {
+      "code": "20165960",
+      "label": "Natural and modified natural polymers, in primary forms (including alginic acid, hardened proteins, chemical derivatives of natural rubber)"
+    },
+    {
+      "code": "20165965",
+      "label": "Natural polymers and modified natural polymers, e.g. hardened proteins, chemical derivatives of natural rubber, n.e.s., in primary forms (excl. alginic acid and its salts and esters)"
+    },
+    {
+      "code": "20165970",
+      "label": "Ion-exchangers based on synthetic or natural polymers, in primary forms"
+    },
+    {
+      "code": "20171050",
+      "label": "Synthetic latex rubber"
+    },
+    {
+      "code": "20171090",
+      "label": "Synthetic rubber (excluding latex)"
+    },
+    {
+      "code": "20411000",
+      "label": "Glycerol (glycerine), crude; glycerol waters and glycerol lyes"
+    },
+    {
+      "code": "20412020",
+      "label": "Anionic organic surface-active agents (excluding soap)"
+    },
+    {
+      "code": "20412030",
+      "label": "Cationic organic surface-active agents (excluding soap)"
+    },
+    {
+      "code": "20412050",
+      "label": "Non-ionic organic surface-active agents (excluding soap)"
+    },
+    {
+      "code": "20412090",
+      "label": "Organic surface-active agents (excluding soap, anionic, cationic, non-ionic)"
+    },
+    {
+      "code": "20594159",
+      "label": "Lubricants having a bio-based carbon content of at least 25 % by mass and which are biodegradable at a level of at least 60 %"
+    },
+    {
+      "code": "20601110",
+      "label": "Aramids staple, not carded, combed or otherwise processed for spinning"
+    },
+    {
+      "code": "20601120",
+      "label": "Other polyamide tow and staple, not carded, combed or otherwise processed for spinning"
+    },
+    {
+      "code": "20601130",
+      "label": "Polyester tow and staple, not carded, combed or otherwise processed for spinning"
+    },
+    {
+      "code": "20601140",
+      "label": "Acrylic tow and staple, not carded, combed or otherwise processed for spinning"
+    },
+    {
+      "code": "20601150",
+      "label": "Polypropylene synthetic tow and staple not carded, combed or otherwise processed for spinning"
+    },
+    {
+      "code": "20601190",
+      "label": "Other synthetic tow and staple not carded, combed or otherwise processed for spinning"
+    },
+    {
+      "code": "21101030",
+      "label": "Salicylic acid and its salts"
+    },
+    {
+      "code": "21101050",
+      "label": "O-acetylsalicylic acid; its salts and esters"
+    },
+    {
+      "code": "21101070",
+      "label": "Esters of salicylic acid and their salts (excluding of O-acetylsalicylic acid)"
+    },
+    {
+      "code": "21102010",
+      "label": "Lysine and its esters, and salts thereof"
+    },
+    {
+      "code": "21102020",
+      "label": "Glutamic acid and its salts"
+    },
+    {
+      "code": "21102040",
+      "label": "Quaternary ammonium salts and hydroxides; lecithins and other phosphoaminolipids, whether or not chemically defined"
+    },
+    {
+      "code": "21102060",
+      "label": "Acyclic amides and their derivatives, and salts thereof (including acyclic carbamates)"
+    },
+    {
+      "code": "21102070",
+      "label": "Cyclic amides and their derivatives, and salts thereof (including cyclic carbamates) (excluding ureines and their derivatives, and salts thereof)"
+    },
+    {
+      "code": "21103110",
+      "label": "Lactones (excluding coumarin, methylcoumarins and ethylcoumarins)"
+    },
+    {
+      "code": "21103117",
+      "label": "Phenolphthalein; 1-Hydroxy-4-{1-(4-hydroxy-3-methoxycarbonyl-1-naphthyl)-3-oxo-1H,3H-benzo{de}isochromen-1-yl}-6-octadecyloxy-2-naphthoic acid; 3'-Chloro-6'-cyclohexylaminospiro{isobenzofuran-1(3H),9'-xanthen}-3-one; 6'-(N-Ethyl-p-toluidino)-2'-methylspiro{isobenzofuran-1(3H),9'-xanthen}-3-one; Methyl-6-docosyloxy-1-hydroxy-4-{1-(4-hydroxy-3-methyl-1-phenanthryl)-3-oxo-1H,3H-naphtho{1,8-cd}pyran-1-yl}naphthalene-2-carboxylate, gamma-Butyrolactone"
+    },
+    {
+      "code": "21103119",
+      "label": "Lactones (excluding phenolphthalein; 1-Hydroxy-4-{1-(4-hydroxy-3-methoxycarbonyl-1-naphthyl)-3-oxo-1H,3H-benzo{de}isochromen-1-yl}-6-octadecyloxy-2-naphthoic acid; 3’-Chloro-6’-cyclohexylaminospiro{isobenzofuran-1(3H),9’-xanthen}-3-one; 6’-(N-Ethyl-p-toluidino)-2’-methylspiro{isobenzofuran-1(3H),9’-xanthen}-3-one; Methyl-6-docosyloxy-1-hydroxy-4-{1-(4-hydroxy-3-methyl-1-phenanthryl)-3-oxo-1H,3H-naphtho{1,8-cd}pyran-1-yl}naphthalene-2-carboxyla, gamma-Butyrolactone, and inorganic or organic compounds of mercury)"
+    },
+    {
+      "code": "21103130",
+      "label": "Compounds containing an unfused pyrazole ring (whether or not hydrogenated) in the structure"
+    },
+    {
+      "code": "21103140",
+      "label": "Hydantoin and its derivatives"
+    },
+    {
+      "code": "21103155",
+      "label": "Malonylurea (barbituric acid) and its derivatives, and salts thereof"
+    },
+    {
+      "code": "21103159",
+      "label": "Compounds containing a pyrimidine ring (whether or not hydrogenated) or piperazine ring in the structure (excluding malonylurea (barbituric acid) and its derivatives)"
+    },
+    {
+      "code": "21103170",
+      "label": "Compounds containing an unfused triazine ring (whether or not hydrogenated) in the structure (excluding melamine)"
+    },
+    {
+      "code": "21103180",
+      "label": "Compounds containing a phenothiazine ring-system (whether or not hydrogenated); not further fused"
+    },
+    {
+      "code": "21103200",
+      "label": "Sulphonamides"
+    },
+    {
+      "code": "21104000",
+      "label": "Sugars, pure (excluding glucose, etc.); sugar ethers and salts, etc."
+    },
+    {
+      "code": "21105400",
+      "label": "Antibiotics"
+    },
+    {
+      "code": "22191000",
+      "label": "Reclaimed rubber in primary forms or in plates, sheets or strips"
+    },
+    {
+      "code": "23511100",
+      "label": "Cement clinker"
+    },
+    {
+      "code": "23523030",
+      "label": "Calcined and sintered dolomite, crude, roughly trimmed or merely cut into rectangular or square blocks or slabs"
+    },
+    {
+      "code": "23523050",
+      "label": "Agglomerated dolomite (including tarred dolomite)"
+    },
+    {
+      "code": "23523051",
+      "label": "Dolomite ramming mix"
+    },
+    {
+      "code": "23991940",
+      "label": "Calcined kaolin"
+    },
+    {
+      "code": "24106470",
+      "label": "Bars and rods of stainless steel, cold-formed or cold-finished and further worked, or hot-formed and further worked, n.e.s. (excluding forged products)"
+    },
+    {
+      "code": "24106660",
+      "label": "Bars and rods, of alloy steel, cold-formed or cold-finished (e.g. by cold-drawing), painted, coated, clad or further worked (excluding stainless steel)"
+    },
+    {
+      "code": "2410T110",
+      "label": "Pig iron"
+    },
+    {
+      "code": "2410T121",
+      "label": "Crude steel: non-alloy steel produced in electric furnaces"
+    },
+    {
+      "code": "2410T122",
+      "label": "Crude steel: non-alloy steel produced by other processes than in electric furnaces"
+    },
+    {
+      "code": "2410T131",
+      "label": "Crude steel: alloy steel other than stainless steel produced in electric furnaces"
+    },
+    {
+      "code": "2410T132",
+      "label": "Crude steel: alloy steel other than stainless steel produced by other processes than in electric furnaces"
+    },
+    {
+      "code": "2410T141",
+      "label": "Crude steel: stainless and heat resisting steel produced in electric furnaces"
+    },
+    {
+      "code": "2410T142",
+      "label": "Crude steel: stainless and heat resisting steel produced by other processes than in electric furnaces"
+    },
+    {
+      "code": "2410T211",
+      "label": "Hot-rolled flat products in coil (wide strip) of a width of 600 mm or more"
+    },
+    {
+      "code": "2410T212",
+      "label": "Hot-rolled flat products in coil of a width less than 600 mm"
+    },
+    {
+      "code": "2410T221",
+      "label": "Plate and sheet rolled in lengths in wide strip mills"
+    },
+    {
+      "code": "2410T222",
+      "label": "Plate, sheet and wide flat, hot-rolled in mills other than wide strip mills"
+    },
+    {
+      "code": "2410T231",
+      "label": "Hot-rolled wire rod"
+    },
+    {
+      "code": "2410T241",
+      "label": "Concrete reinforcing bars"
+    },
+    {
+      "code": "2410T242",
+      "label": "Other hot-rolled bars"
+    },
+    {
+      "code": "2410T243",
+      "label": "Hot-rolled and forged light sections of a web height of less than 80 mm and angles"
+    },
+    {
+      "code": "2410T244",
+      "label": "Heavy sections"
+    },
+    {
+      "code": "2410T251",
+      "label": "Sheet piling"
+    },
+    {
+      "code": "2410T252",
+      "label": "Railway material"
+    },
+    {
+      "code": "2410T260",
+      "label": "Welded sections"
+    },
+    {
+      "code": "2410T310",
+      "label": "Cold-rolled sheet, plate and strip and blackplate, >= 600 mm wide"
+    },
+    {
+      "code": "2410T320",
+      "label": "Electrical sheet and strip"
+    },
+    {
+      "code": "2410T330",
+      "label": "Tinplate, other tinned sheet and electrically chromium-coated steel (ECCS)"
+    },
+    {
+      "code": "2410T340",
+      "label": "Hot-dipped metal-coated sheet"
+    },
+    {
+      "code": "2410T350",
+      "label": "Electrolytically metal-coated sheet"
+    },
+    {
+      "code": "2410T360",
+      "label": "Organic-coated sheet"
+    },
+    {
+      "code": "24311010",
+      "label": "Bars and rods, of non-alloy free-cutting steel, not further worked than cold-formed or cold-finished (e.g. by cold-drawing)"
+    },
+    {
+      "code": "24311020",
+      "label": "Other bars and rods of iron or non-alloy steel, not further worked than cold-formed or cold-finished (e.g. by cold-drawing), containing by weight < 0,25 % of carbon, of square or other than rectangular cross-section (excluding those of free-cutting steel)"
+    },
+    {
+      "code": "24311030",
+      "label": "Other bars and rods of iron or non-alloy steel, not further worked than cold-formed or cold-finished (e.g. by cold-drawing), containing by weight < 0,25 % of carbon of rectangular ‘other than square’ cross-section (excluding those of free-cutting steel)"
+    },
+    {
+      "code": "24311040",
+      "label": "Other bars and rods of iron or non-alloy steel, cold-formed or cold-finished and further worked, or hot-formed and further worked, n.e.c. (excluding hot-rolled, hot-drawn or hot-extruded, not further worked than clad, and forged products)"
+    },
+    {
+      "code": "24311050",
+      "label": "Other bars and rods of iron or non-alloy steel, not further worked than cold-formed or cold-finished (e.g. by cold-drawing), containing by weight >= 0,25  % of carbon (excluding those of free-cutting steel)"
+    },
+    {
+      "code": "24311060",
+      "label": "Angles, shapes and sections, of iron or non-alloy steel, not further worked than cold-formed or cold-finished (e.g. by cold-drawing) (excluding profiled sheet)"
+    },
+    {
+      "code": "24312010",
+      "label": "Bars and rods, of high-speed steel, not further worked than cold-formed or cold-finished, even further worked, or hot-formed and further worked (excluding forged, semi-finished or flat-rolled products, hot-rolled bars and rods in irregularly wound coils); bars and rods, of silico-manganese steel, only cold-formed or cold-finished or hot-rolled, including further worked (excluding hot-rolled, hot-drawn or extruded, just clad, semi-finished products, flat-rolled products, hot-rolled bars and rods in irregularly wound coils)"
+    },
+    {
+      "code": "24312020",
+      "label": "Bars/rods, 0,9 % to 1,15 % of carbon, 0,5 % to 2 % of chromium and, if present <= 0,5 % of molybdenum, only cold-formed or cold-finished (e.g. by cold-drawing) (excluding semi-finished or flat-rolled products; hot-rolled bars or rods in irregularly wound coils)"
+    },
+    {
+      "code": "24312030",
+      "label": "Bars and rods of tool steel, only cold-formed or cold-finished (e.g. by cold-drawing) (excluding semi-finished products, flat-rolled products and hot-rolled bars and rods in irregularly wound coils)"
+    },
+    {
+      "code": "24312040",
+      "label": "Bars and rods, of alloy steel, not further worked than cold-formed or cold-finished (e.g. by cold-drawing) (excluding stainless steel, high-speed steel, silico-manganese steel, alloy bearing steel, tool steel)"
+    },
+    {
+      "code": "24312050",
+      "label": "Sections, of alloy steel other than stainless, cold-finished or cold-formed (e.g. by cold-drawing)"
+    },
+    {
+      "code": "24313000",
+      "label": "Cold-drawn bars and solid profiles of stainless steel"
+    },
+    {
+      "code": "24411030",
+      "label": "Silver, unwrought or in powder form (including plated with gold or platinum)"
+    },
+    {
+      "code": "24411050",
+      "label": "Silver, in semi-manufactured forms (including plated with gold or platinum) (excluding unwrought or in powder form)"
+    },
+    {
+      "code": "24412030",
+      "label": "Gold, unwrought or in powder form for non-monetary use (including plated with platinum)"
+    },
+    {
+      "code": "24412035",
+      "label": "Gold (including gold plated with platinum), in powder form"
+    },
+    {
+      "code": "24412040",
+      "label": "Gold (including gold plated with platinum), unwrought or in semi-manufactured forms"
+    },
+    {
+      "code": "24412050",
+      "label": "Gold, in semi-manufactured forms for non-monetary use (including plated with platinum) (excluding unwrought or in powder form)"
+    },
+    {
+      "code": "24412070",
+      "label": "Monetary gold (including gold plated with platinum)"
+    },
+    {
+      "code": "24413010",
+      "label": "Platinum. Unwrought or in powder form"
+    },
+    {
+      "code": "24413015",
+      "label": "Palladium. Unwrought or in powder form"
+    },
+    {
+      "code": "24413020",
+      "label": "Rhodium. Unwrought or in powder form"
+    },
+    {
+      "code": "24413025",
+      "label": "Iridium, osmium and ruthenium. Unwrought or in powder form"
+    },
+    {
+      "code": "24413030",
+      "label": "Platinum, palladium, rhodium, iridium, osmium and ruthenium, unwrought or in powder form"
+    },
+    {
+      "code": "24413040",
+      "label": "Platinum in bars, rods, wire and sections; plates; sheets and strips of a thickness, excluding any backing, exceeding 0,15 mm"
+    },
+    {
+      "code": "24413045",
+      "label": "Platinum in semi-manufactured forms"
+    },
+    {
+      "code": "24413050",
+      "label": "Platinum, palladium, rhodium, iridium, osmium and ruthenium, in semi-manufactured forms (excluding unwrought or in powder form)"
+    },
+    {
+      "code": "24413055",
+      "label": "Palladium in semi-manufactured forms"
+    },
+    {
+      "code": "24413060",
+      "label": "Rhodium in semi-manufactured forms"
+    },
+    {
+      "code": "24413065",
+      "label": "Iridium, osmium and ruthenium in semi-manufactured forms"
+    },
+    {
+      "code": "24414000",
+      "label": "Base metals or silver, clad with gold, semi-manufactured but not further worked"
+    },
+    {
+      "code": "24415030",
+      "label": "Base metals clad with silver, semi-manufactured but not further worked"
+    },
+    {
+      "code": "24415050",
+      "label": "Base metals, silver or gold, clad with platinum, semi-manufactured but not further worked"
+    },
+    {
+      "code": "24421130",
+      "label": "Unwrought non-alloy aluminium (excluding powders and flakes)"
+    },
+    {
+      "code": "24421153",
+      "label": "Unwrought aluminium alloys in primary form (excluding aluminium powders and flakes)"
+    },
+    {
+      "code": "24421154",
+      "label": "Unwrought aluminium alloys (excluding aluminium powders and flakes)"
+    },
+    {
+      "code": "24421155",
+      "label": "Unwrought aluminium alloys in secondary form (excluding aluminium powders and flakes)"
+    },
+    {
+      "code": "24421200",
+      "label": "Aluminium oxide (excluding artificial corundum)"
+    },
+    {
+      "code": "24422100",
+      "label": "Aluminium powders and flakes (excluding prepared powders or flakes for use as colours, paints or the like)"
+    },
+    {
+      "code": "24422230",
+      "label": "Aluminium bars, rods and profiles (excluding rods and profiles prepared for use in structures)"
+    },
+    {
+      "code": "24422250",
+      "label": "Aluminium alloy bars, rods, profiles and hollow profiles (excluding rods and profiles prepared for use in structures)"
+    },
+    {
+      "code": "24422330",
+      "label": "Non-alloy aluminium wire (excluding insulated electric wire and cable, twine and cordage reinforced with aluminium wire, stranded wire and cables)"
+    },
+    {
+      "code": "24422350",
+      "label": "Aluminium alloy wire (excluding insulated electric wire and cable, twine and cordage reinforced with aluminium wire, stranded wire and cables)"
+    },
+    {
+      "code": "24422430",
+      "label": "Aluminium plates, sheets and strips > 0,2 mm thick"
+    },
+    {
+      "code": "24422450",
+      "label": "Aluminium alloy plates, sheets and strips > 0,2 mm thick"
+    },
+    {
+      "code": "24422500",
+      "label": "Aluminium foil of a thickness (excluding any backing) <= 0,2 mm"
+    },
+    {
+      "code": "24422630",
+      "label": "Aluminium tubes and pipes (excluding hollow profiles, tube or pipe fittings, flexible tubing, tubes and pipes prepared for use in structures, machinery or vehicle parts, or the like)"
+    },
+    {
+      "code": "24422650",
+      "label": "Aluminium alloy tubes and pipes (excluding hollow profiles, tubes or pipe fittings, flexible tubing, tubes and pipes prepared for use in structures, machinery or vehicle parts, or the like)"
+    },
+    {
+      "code": "24422670",
+      "label": "Aluminium tube or pipe fittings (including couplings, elbows and sleeves) (excluding fittings with taps, cocks and valves, tube supports, bolts and nuts, clamps)"
+    },
+    {
+      "code": "24431130",
+      "label": "Refined unwrought lead (excluding lead powders or flakes)"
+    },
+    {
+      "code": "24431150",
+      "label": "Unwrought lead containing antimony (excluding lead powders or flakes)"
+    },
+    {
+      "code": "24431190",
+      "label": "Unwrought lead (excluding lead powders or flakes, unwrought lead containing antimony, refined)"
+    },
+    {
+      "code": "24431230",
+      "label": "Unwrought non-alloy zinc (excluding zinc dust, powders and flakes)"
+    },
+    {
+      "code": "24431250",
+      "label": "Unwrought zinc alloys (excluding zinc dust, powders and flakes)"
+    },
+    {
+      "code": "24431330",
+      "label": "Unwrought non-alloy tin (excluding tin powders and flakes)"
+    },
+    {
+      "code": "24431350",
+      "label": "Unwrought tin alloys (excluding tin powders and flakes)"
+    },
+    {
+      "code": "24432100",
+      "label": "Lead plates, sheets, strip and foil; lead powders and flakes (excluding lead powders or flakes prepared as colours; paints or the like, insulated electric strip)"
+    },
+    {
+      "code": "24432200",
+      "label": "Zinc dust, powders and flakes (excluding zinc dust powders or flakes prepared as colours, paints or the like, zinc pellets)"
+    },
+    {
+      "code": "24432300",
+      "label": "Zinc bars, rods, profiles, wire, plates, sheets, strip and foil"
+    },
+    {
+      "code": "24432400",
+      "label": "Tin bars, rods, profiles and wires"
+    },
+    {
+      "code": "24441100",
+      "label": "Copper mattes; cement copper (precipitated copper) (excluding copper powder)"
+    },
+    {
+      "code": "24441200",
+      "label": "Unrefined copper, copper anodes for electrolytic refining (including blister copper) (excluding electrocopper-plating, electroplating anodes)"
+    },
+    {
+      "code": "24441330",
+      "label": "Unwrought unalloyed refined copper (excluding rolled, extruded or forged sintered products)"
+    },
+    {
+      "code": "24441370",
+      "label": "Unwrought copper alloys (excluding rolled, extruded or forged sintered products); master alloys of copper (including alloys which are not usefully malleable) (excluding copper phosphide (phosphor copper) containing > 15 % by weight of phosphorous)"
+    },
+    {
+      "code": "24442100",
+      "label": "Copper powders and flakes excluding cement copper, powders/flake powders used in the preparation of paints such as bronzes/golds, (chemical compounds), refined copper shot"
+    },
+    {
+      "code": "24442200",
+      "label": "Copper and copper alloy bars, rods, profiles and hollow profiles (excluding bars and rods obtained by casting or sintering, copper wire rod in coils)"
+    },
+    {
+      "code": "24442330",
+      "label": "Copper wire, refined (transv. section > 6 mm), of copper alloy"
+    },
+    {
+      "code": "24442350",
+      "label": "Copper wire with cross-sectional dimension > 0,5 mm, <= 6 mm (excluding twine or cord reinforced with wire, stranded wire and cables)"
+    },
+    {
+      "code": "24442370",
+      "label": "Copper wire with cross-sectional dimension <= 0,5 mm (excluding twine or cord reinforced with wire, stranded wire and cables)"
+    },
+    {
+      "code": "24442400",
+      "label": "Copper and copper alloy plates, sheets and strip of a thickness > 0,15 mm (excluding expanded copper metal, insulated electric strip)"
+    },
+    {
+      "code": "24442500",
+      "label": "Copper foil, of a thickness (excluding any backing) <= 0,15 mm"
+    },
+    {
+      "code": "24442630",
+      "label": "Copper tubes and pipes"
+    },
+    {
+      "code": "24442650",
+      "label": "Copper and copper alloy tube/pipe fittings including couplings, elbows, sleeves, tees and joints excluding bolts and nuts used for assembling/fixing pipes/tubes, fittings with taps, cocks, valves"
+    },
+    {
+      "code": "24451100",
+      "label": "Nickel, unwrought"
+    },
+    {
+      "code": "24451110",
+      "label": "Nickel, not alloyed, unwrought"
+    },
+    {
+      "code": "24451120",
+      "label": "Unwrought nickel alloys"
+    },
+    {
+      "code": "24451200",
+      "label": "Nickel mattes, nickel oxide sinters and other intermediate products of nickel metallurgy (including impure nickel oxides, nickel speiss, impure ferro-nickel)"
+    },
+    {
+      "code": "24451210",
+      "label": "Nickel mattes"
+    },
+    {
+      "code": "24451220",
+      "label": "Nickel oxide sinters and other intermediate products of nickel metallurgy"
+    },
+    {
+      "code": "24452100",
+      "label": "Nickel powders and flakes (excluding nickel oxide sinters)"
+    },
+    {
+      "code": "24452200",
+      "label": "Nickel and nickel alloy bars, rods, profiles and wires (excluding prepared bars, rods or profiles for use in structures, insulated electric bars and wire, enamelled wire)"
+    },
+    {
+      "code": "24452300",
+      "label": "Nickel and nickel alloy plate, sheet, strip and foil (excluding expanded metal)"
+    },
+    {
+      "code": "24452400",
+      "label": "Nickel tubes, pipes and tube or pipe fittings"
+    },
+    {
+      "code": "24453013",
+      "label": "Tungsten (wolfram) and articles thereof (excluding waste and scrap), n.e.c."
+    },
+    {
+      "code": "24453014",
+      "label": "Tungsten powder and unwrought tungsten, incl. bars and rods obtained simply by sintering"
+    },
+    {
+      "code": "24453015",
+      "label": "Tungsten and articles thereof; bars and rods, other than those obtained simply by sintering, profiles, wire, plates, sheets, strip and foil"
+    },
+    {
+      "code": "24453017",
+      "label": "Molybdenum and articles thereof (excluding waste and scrap), n.e.c."
+    },
+    {
+      "code": "24453020",
+      "label": "Tantalum, unwrought, incl. bars and rods of tantalum obtained simply by sintering; tantalum powder"
+    },
+    {
+      "code": "24453021",
+      "label": "Tantalum and articles thereof. Bars and rods, other than those obtained simply by sintering, profiles, wire, plates, sheets, strip and foil"
+    },
+    {
+      "code": "24453022",
+      "label": "Other articles of tantalum (excluding waste and scrap), n.e.s."
+    },
+    {
+      "code": "24453023",
+      "label": "Tantalum and articles thereof (excluding waste and scrap), n.e.c."
+    },
+    {
+      "code": "24453024",
+      "label": "Unwrought magnesium, containing >= 99,8% by weight of magnesium"
+    },
+    {
+      "code": "24453025",
+      "label": "Magnesium and articles thereof (excluding waste and scrap), n.e.c."
+    },
+    {
+      "code": "24453026",
+      "label": "Unwrought magnesium, containing < 99,8% by weight of magnesium"
+    },
+    {
+      "code": "24453027",
+      "label": "Cobalt mattes and other intermediate products of cobalt metallurgy; cobalt and articles thereof (excluding waste and scrap), n.e.c."
+    },
+    {
+      "code": "24453028",
+      "label": "Other articles of magnesium (excluding waste and scrap), n.e.s."
+    },
+    {
+      "code": "24453030",
+      "label": "Bismuth and articles thereof, including waste and scrap, n.e.c.; cadmium and articles thereof (excluding waste and scrap), n.e.c."
+    },
+    {
+      "code": "24453031",
+      "label": "Unwrought bismuth; bismuth powders; (excluding waste and scrap)"
+    },
+    {
+      "code": "24453032",
+      "label": "Articles of bismuth, n.e.s. (excluding waste and scrap)"
+    },
+    {
+      "code": "24453033",
+      "label": "Cadmium and articles thereof (excluding waste and scrap), n.e.c."
+    },
+    {
+      "code": "24453034",
+      "label": "Unwrought cadmium; cadmium powders (excluding waste and scrap)"
+    },
+    {
+      "code": "24453035",
+      "label": "Cobalt mattes and other intermediate products of cobalt metallurgy; unwrought cobalt; powders (excl. cobalt waste and scrap)"
+    },
+    {
+      "code": "24453036",
+      "label": "Articles of cobalt, n.e.s."
+    },
+    {
+      "code": "24453037",
+      "label": "Other cadmium and articles thereof (excluding waste and scrap, cadmium powders and unwrought cadmium), n.e.c."
+    },
+    {
+      "code": "24453038",
+      "label": "Bismuth and articles thereof containing more than 99,99 % of bismuth, by weight (excluding waste and scrap)"
+    },
+    {
+      "code": "24453039",
+      "label": "Bismuth and articles thereof containing ? 99,99 % of bismuth, by weight (excluding waste and scrap)"
+    },
+    {
+      "code": "24453041",
+      "label": "Titanium, unwrought; powders"
+    },
+    {
+      "code": "24453042",
+      "label": "Titanium and articles thereof; bars and rods, profiles, wire, plates, sheets, strip and foil, tubes and pipes, other (excluding waste and scrap)"
+    },
+    {
+      "code": "24453043",
+      "label": "Titanium and articles thereof (excluding waste and scrap), n.e.c."
+    },
+    {
+      "code": "24453045",
+      "label": "Antimony. Unwrought antimony; powders"
+    },
+    {
+      "code": "24453046",
+      "label": "Antimony and articles thereof (excluding unwrought antimony; powders; waste and scrap)"
+    },
+    {
+      "code": "24453047",
+      "label": "Zirconium and articles thereof (excluding waste and scrap), n.e.c.; antimony and articles thereof (excluding waste and scrap), n.e.c."
+    },
+    {
+      "code": "24453048",
+      "label": "Zirconium and articles thereof (excluding waste and scrap), n.e.c."
+    },
+    {
+      "code": "24453049",
+      "label": "Unwrought zirconium; zirconium powders (excluding waste and scrap)"
+    },
+    {
+      "code": "24453050",
+      "label": "Other zirconium and articles thereof (excluding waste and scrap, zirconium powders and unwrought zirconium), n.e.c."
+    },
+    {
+      "code": "24453055",
+      "label": "Beryllium, chromium, germanium, vanadium, gallium, hafnium (‘celtium’), indium, niobium (‘columbium’), rhenium and thallium, and articles of these metals, n.e.c.; waste and scrap of these metals (excluding of beryllium, chromium and thallium)"
+    },
+    {
+      "code": "24453057",
+      "label": "Manganese and articles thereof, including waste and scrap, n.e.c.; cermets and articles thereof, including waste and scrap, n.e.c."
+    },
+    {
+      "code": "24453058",
+      "label": "Germanium and articles thereof (excluding waste and scrap, germanium powders and unwrought germanium), n.e.c."
+    },
+    {
+      "code": "24453059",
+      "label": "Unwrought niobium; niobium powders (excluding waste and scrap)"
+    },
+    {
+      "code": "24453060",
+      "label": "Unwrought beryllium; beryllium powders"
+    },
+    {
+      "code": "24453061",
+      "label": "Articles of beryllium, n.e.s. (excluding waste and scrap)"
+    },
+    {
+      "code": "24453062",
+      "label": "Unwrought hafnium \"celtium\"; hafnium powders;"
+    },
+    {
+      "code": "24453063",
+      "label": "Articles of hafnium \"celtium\" and germanium, n.e.s."
+    },
+    {
+      "code": "24453064",
+      "label": "Unwrought niobium \"columbium\" and rhenium; niobium \"columbium\" or rhenium powders"
+    },
+    {
+      "code": "24453065",
+      "label": "Articles of niobium \"columbium\" or rhenium, n.e.s."
+    },
+    {
+      "code": "24453066",
+      "label": "Niobium \"columbium\", rhenium, gallium, indium, vanadium and germanium waste and scrap (excl. ashes and residues containing these metals)"
+    },
+    {
+      "code": "24453067",
+      "label": "Niobium (columbium) and articles thereof (excluding waste and scrap, niobium powders and unrought niobium), n.e.c."
+    },
+    {
+      "code": "24453068",
+      "label": "Unwrought hafnium; hafnium powders (excluding waste and scrap)"
+    },
+    {
+      "code": "24453069",
+      "label": "Other hafnium and articles thereof (excluding waste and scrap. hafnium powders and unwrought hafnium), n.e.c."
+    },
+    {
+      "code": "24453070",
+      "label": "Unwrought indium; indium powders"
+    },
+    {
+      "code": "24453071",
+      "label": "Articles of gallium, indium and vanadium, n.e.s."
+    },
+    {
+      "code": "24453072",
+      "label": "Indium and articles thereof (other than unwrought, waste and scrap and powders) n.e.c."
+    },
+    {
+      "code": "24453073",
+      "label": "Unwrought gallium; gallium powders"
+    },
+    {
+      "code": "24453074",
+      "label": "Gallium and articles thereof (other than unwrought, waste and scrap and powders) n.e.c."
+    },
+    {
+      "code": "24453075",
+      "label": "Vanadium and articles thereof (other than unwrought, waste and scrap and powders) n.e.c."
+    },
+    {
+      "code": "24453076",
+      "label": "Unwrought vanadium; vanadium powders (excl. ash and residues containing vanadium)"
+    },
+    {
+      "code": "24453079",
+      "label": "Unwrought germanium; germanium powders"
+    },
+    {
+      "code": "24453082",
+      "label": "Chromium and thallium, and articles of these metals, n.e.c.; (excluding waste and scrap of these metals)"
+    },
+    {
+      "code": "24453085",
+      "label": "Manganese. Unwrought manganese; powders"
+    },
+    {
+      "code": "24453086",
+      "label": "Manganese waste and scrap (excl. ash and residues containing manganese)"
+    },
+    {
+      "code": "24453087",
+      "label": "Articles of manganese, n.e.s."
+    },
+    {
+      "code": "24453090",
+      "label": "Cermets and articles thereof, n.e.s.; waste and scrap of cermets (excl. ash and residues containing cermets)"
+    },
+    {
+      "code": "24453091",
+      "label": "Cermets unwrought"
+    },
+    {
+      "code": "24453092",
+      "label": "Cermets and articles thereof (excluding unwrought)"
+    },
+    {
+      "code": "24453093",
+      "label": "Chromium unwrought; powders"
+    },
+    {
+      "code": "24453094",
+      "label": "Chromium and articles thereof  (excluding unwrought and powders)"
+    },
+    {
+      "code": "24453095",
+      "label": "Thallium unwrought; powders"
+    },
+    {
+      "code": "24453096",
+      "label": "Thallium and articles thereof (excluding unwrought and powders)"
+    },
+    {
+      "code": "24453097",
+      "label": "Unwrought rhenium; rhenium powders (excluding waste and scrap)"
+    },
+    {
+      "code": "24453098",
+      "label": "Other rhenium and articles thereof (excluding waste and scrap, rhenium powders and unwrought rhenium), n.e.c."
+    },
+    {
+      "code": "244530Z1",
+      "label": "Articles of gallium, indium and vanadium (other than unwrought, waste and scrap and powders), n.e.s."
+    },
+    {
+      "code": "24512000",
+      "label": "Tubes, pipes and hollow profiles of cast iron excluding tubes, pipes, hollow profiles made into identifiable parts of articles, such as sections of central heating radiators and machinery parts"
+    },
+    {
+      "code": "24513030",
+      "label": "Tube or pipe fittings, of non-malleable cast iron"
+    },
+    {
+      "code": "24513050",
+      "label": "Tube or pipe fittings of malleable cast iron"
+    },
+    {
+      "code": "24513051",
+      "label": "Tube or pipe fittings of cast iron (excl. of non-malleable cast iron)"
+    },
+    {
+      "code": "24523000",
+      "label": "Tube or pipe fittings of cast steel"
+    },
+    {
+      "code": "24523010",
+      "label": "Cast tube or pipe fittings of steel"
+    },
+    {
+      "code": "25992960",
+      "label": "Other articles of tin, n.e.c."
+    },
+    {
+      "code": "25992963",
+      "label": "Tin plates, sheets and strip, of a thickness > 0,2 mm; tin foil (whether or not printed or backed with paper, paperboard, plastics or similar backing materials), of a thickness (excluding any backing) <= 0,2 mm; tin powders and flakes; tin tubes, pipes and tube or pipe fittings (for example, couplings, elbows, sleeves)"
+    },
+    {
+      "code": "25992971",
+      "label": "Zinc tubes, pipes and tube or pipe fittings (couplings, elbows, sleeves)"
+    },
+    {
+      "code": "25992972",
+      "label": "Articles of zinc, n.e.c."
+    },
+    {
+      "code": "25992974",
+      "label": "Other articles of lead, n.e.c."
+    },
+    {
+      "code": "25992975",
+      "label": "Lead tubes, pipes, and tube or pipe fittings (couplings, elbows, sleeves)"
+    },
+    {
+      "code": "25992976",
+      "label": "Lead bars, rods, profiles and wire (excluding coated rods, cast rods intended for rolling, drawing or for re-casting into shaped articles, bars and rods by sintering, insulated electric wire)"
+    },
+    {
+      "code": "38322100",
+      "label": "Secondary raw materials of platinum group metals"
+    },
+    {
+      "code": "38322110",
+      "label": "Secondary raw material of silver"
+    },
+    {
+      "code": "38322200",
+      "label": "Secondary raw materials of ferrous metals: iron"
+    },
+    {
+      "code": "38322300",
+      "label": "Secondary raw materials of copper"
+    },
+    {
+      "code": "38322400",
+      "label": "Secondary raw materials of nickel"
+    },
+    {
+      "code": "38322500",
+      "label": "Secondary raw materials of aluminium"
+    },
+    {
+      "code": "38322901",
+      "label": "Secondary raw materials of cobalt"
+    },
+    {
+      "code": "38322902",
+      "label": "Secondary raw materials of lithium"
+    },
+    {
+      "code": "38322903",
+      "label": "Secondary raw materials of rare earth metals"
+    },
+    {
+      "code": "38322910",
+      "label": "Secondary raw materials of other metals"
+    },
+    {
+      "code": "38322940",
+      "label": "Slag sands"
+    },
+    {
+      "code": "399900Z7",
+      "label": "Kaolin"
+    },
+    {
+      "code": "399900Z9",
+      "label": "Tube or pipe fittings of cast iron and cast steel"
+    },
+    {
+      "code": "399901Z0",
+      "label": "Bismuth and articles thereof; unwrought hafnium, hafnium powders; secondary raw materials of other metals (excluding of precious metals, iron, copper, nickel, aluminium, cobalt, lithium and rare earth metals)"
+    }
+  ]
+}
