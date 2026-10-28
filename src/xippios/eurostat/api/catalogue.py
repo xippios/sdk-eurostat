@@ -17,13 +17,13 @@ from xippios.core import Downloaded
 
 from xippios.eurostat._client import client
 
-__all__ = ["PATH", "getTocXml"]
+__all__ = ["PATH", "get_toc_xml"]
 
 PATH = "catalogue/toc/xml"
 """The operation's path under the base URL, the packaged TOC's ``endpoint``."""
 
 
-async def getTocXml(dest: str | os.PathLike[str]) -> Downloaded:
+async def get_toc_xml(dest: str | os.PathLike[str]) -> Downloaded:
     """Call ``getTocXml``: stream the table of contents' XML to ``dest``.
 
     Args:
