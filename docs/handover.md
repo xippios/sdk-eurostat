@@ -128,15 +128,14 @@ note each, `list_datasets` the family's cap with a note naming `search`, `list_c
 
 ## Next
 
-- The first PR of the next version, row 135 (family, for this repository; Johannes
-  2026-10-28, log 10:48): the four wrappers are named after their WADL ids in snake
-  case, `getData` to `get_data`, `getTocXml` to `get_toc_xml`, `codeListQuery` to
-  `code_list_query` and `dataQuery` to `data_query`, and both fixture directories move
-  to the wrappers' names, `tests/fixtures/getData/` to `tests/fixtures/get_data/` and
-  `tests/fixtures/dataQuery/` to `tests/fixtures/data_query/` (D95; conventions 1.22 §2
-  and §10, merged on sdk-core main on 2026-10-28, sdk-core#34); class `human` by
-  sdk-gates rule 3, since the move re-keys the audited `.secrets.baseline` entry
-  (row 124); no live call.
+- Done after 0.1.0, as the first PR of the next version (`chore/wrapper-names`; row 135,
+  D95; conventions 1.22 §2 and §10, sdk-core#34, 2026-10-28): the four wrappers named
+  after their WADL ids in snake case, `getData` to `get_data`, `getTocXml` to
+  `get_toc_xml`, `codeListQuery` to `code_list_query` and `dataQuery` to `data_query`,
+  and both fixture directories moved to the wrappers' names, `tests/fixtures/getData/`
+  to `tests/fixtures/get_data/` and `tests/fixtures/dataQuery/` to
+  `tests/fixtures/data_query/`; class `human` by sdk-gates rule 3, since the move
+  re-keys the audited `.secrets.baseline` entry (row 124); no live call.
 - The routine reference refresh after the release (`/refresh-reference-data`).
 - 0.2.0: Comext and Prodcom; polling the asynchronous answer if a consumer needs it.
 
