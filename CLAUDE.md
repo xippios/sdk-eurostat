@@ -1,10 +1,10 @@
 # sdk-eurostat — instructions for Claude Code
 
 `xippios-eurostat` wraps Eurostat dissemination API as a typed Python client, an MCP server
-and FastAPI routes, built on `xippios-core`. This file is the contract for every session
-that works here; the family rules it points to apply as well.
-
-@.claude/family.md
+and FastAPI routes, built on `xippios-core`. This file holds what an agent needs to work on
+the package: what it wraps, its layout, its commands and its code rules. The documents it
+follows, sdk-core's conventions among them, are listed under
+[`## Documents` in the README](README.md#documents); read them before you change a file.
 
 ## What this package wraps
 
@@ -17,7 +17,8 @@ that works here; the family rules it points to apply as well.
 | Rate limit | 30 requests per minute, burst 1; a self-imposed pace, upstream documents no rate in numbers (ADR-0010); the user guide states a fair-use rule without a number: past thresholds it does not give on concurrent requests, requests and extraction cost per day, 7 and 30 days, requests are answered asynchronously (`docs/upstream/user-guide/api-detailed-guidelines/asynchronous-api.md`, "Fair use of the service"); enforced client-side in `_client.py` |
 | Write tools | no, this package is read-only |
 
-The snapshot in `docs/upstream/` is the reference for names, parameters and semantics.
+The snapshot listed in `docs/upstream/FETCHED.md` is the reference for names, parameters and
+semantics; a wrapper is never written from memory of the API.
 
 ## Layout
 
@@ -29,9 +30,12 @@ src/xippios/eurostat/
   _client.py       the one configured AsyncClient (the two base URLs, url_for, rate
                    limit, cache) and classify, upstream's documented error shapes; no key
   errors.py        the Statistics API's fault model and its parsing, for classify
-  models.py        pydantic models mirroring upstream payloads (UpstreamModel)
-  api/             endpoint wrappers, one module per upstream service (statistics,
-                   catalogue, sdmx), one function per operation
+  models.py        pydantic models mirroring upstream payloads (UpstreamModel); by the
+                   family's precedent also an enumeration written by hand, for a value set
+                   upstream documents and no packaged list renders
+  api/             endpoint wrappers, one module per upstream service, named after it,
+                   since the API's operation ids repeat across its services: statistics,
+                   sdmx and catalogue, one function per operation (conventions §2)
   tasks.py         task functions; __all__ is what the adapters register, MCP_CAPS any
                    per-tool result caps, BULK_TASKS the Python-only tasks they skip
                    (download_dataset, download_trade)
@@ -53,6 +57,8 @@ scripts/
   refresh_reference.py   fetches the packaged lists through api/, every one or those
                          --only names, and regenerates enums.py
   refresh_upstream.py    writes docs/upstream/ and FETCHED.md (/refresh-upstream)
+  adr_index.py           writes docs/adr.md and docs/adr.json from the records in docs/adr/;
+                         --check fails while either is stale
 tests/
   conftest.py      enables xippios.core.testing.plugin, which keeps the run offline
   fixtures/        recorded responses, <wrapper>/<case>.json, never hand-written;
@@ -69,33 +75,113 @@ tests/
   test_live.py     @pytest.mark.live smoke tests, one per task and more for get_data
                    (one per dataset, the Comext base's among them); a run sends eighteen
                    requests, as its docstring counts
-docs/upstream/     documentation snapshot and FETCHED.md
-.github/workflows/ ci.yml (the required ci check, with the CHANGELOG and fixture-size steps),
+docs/
+  upstream/        documentation snapshot and FETCHED.md
+  adr/             this package's design decisions, one NNNN-<slug>.md record each, laid
+                   out in its README.md
+  adr.md           the index of the decisions, written by scripts/adr_index.py, never by hand
+  adr.json         the same index, for machines
+  reports/         dated reports, the evidence a decision cites, laid out in its README.md
+changelog/         the next release's changelog entries, one fragment per change, laid out
+                   in its README.md
+CHANGELOG.md       the releases, each section assembled from the fragments
+.github/workflows/ ci.yml (the required ci check, with the changelog and fixture-size steps),
                    publish.yml (the release train: tag, build, PyPI), live.yml (nightly live
-                   tests), gates.yml (the merge gates as jobs, off until GATES_CALLER is 1)
-.claude/family.md  the family rules, the template's, imported above
-.claude/commands/  add-endpoint, record-fixture, refresh-upstream, refresh-reference-data, release-prep,
-                   adopt-release
+                   tests), organization.yml (the organization's checks from xippios/.github:
+                   conventions, a review of a pull request against the documents the README
+                   lists, and adr-index, which runs scripts/adr_index.py --check)
+.claude/commands/  add-endpoint, record-fixture, refresh-upstream, refresh-reference-data, release-prep
 ```
 
-`src/xippios/` has **no** `__init__.py`: it is a PEP 420 namespace package shared with
-`xippios-core` and every other source package. The import path is `xippios.eurostat`
-(ADR-0006).
+The import path is `xippios.eurostat` (ADR-0006); `src/xippios/` is a namespace
+package.
+Where the API's operation ids repeat across its services, `api/` keeps one module per service
+instead, named after the service, and this Layout says so (conventions §2).
 
 ## Commands
 
 ```bash
-uv run pytest -m live --tb=short   # needs XIPPIOS_LIVE_TESTS=1
+uv sync --all-extras
+uv run pytest                      # offline, replays the fixtures
+uv run ruff check . && uv run ruff format --check .
+uv run mypy
+uv run pre-commit run --all-files
+python3 scripts/adr_index.py --check   # the index matches the records in docs/adr/
+uv run pytest -m live --tb=short --assert=plain   # needs XIPPIOS_LIVE_TESTS=1
 
 uv run xippios-eurostat-mcp   # stdio; add --http for streamable HTTP
 ```
 
-`.github/workflows/live.yml` runs `uv run pytest -m live --tb=short` with
-`XIPPIOS_LIVE_TESTS=1` nightly at 04:59 UTC, a time derived from the slug so that sources
-sharing a key never start together, and on demand from the Actions tab; pull requests
-never run live tests. The API needs no key, so the workflow uses no secret. A live run
-sends eighteen keyless requests, one per test (`tests/test_live.py`); the one for
-`list_cn8` and `list_hs` fetches the CXT_NC codelist, about 6 MB, once for both.
+`uv run pytest` is offline: core's plugin refuses the network and skips the rate limiter's
+waits in every test not marked `live` (conventions §10, ADR-0013). A test that asserts a
+limiter wait or a quota pause is marked `rate_limited`, one that must reach the network
+`network`.
+
+`.github/workflows/live.yml` runs the live tests nightly at 04:59 UTC, a time derived from
+the slug, and on demand; a pull request never runs them.
+Its `uv run pytest -m live --tb=short --assert=plain` step reads no secret: the API needs no
+key. A live run sends eighteen keyless requests, one per test (`tests/test_live.py`); the
+one for `list_cn8` and `list_hs` fetches the CXT_NC codelist, about 6 MB, once for both.
+Every live run takes `--tb=short --assert=plain`, since the log of `live.yml` is public:
+the first keeps a failing test's frame arguments out of it, a raw upstream payload among
+them, and the second the values a failed `assert` compares. A live test asserts on shapes
+and counts, never on a raw payload.
+
+## Code rules
+
+- Three layers (ADR-0001, conventions §2): endpoint wrappers in `api/`, task functions in
+  `tasks.py`, adapters in `mcp.py` and `http.py`. The adapters register `tasks.__all__` and
+  call only tasks, the tasks call only wrappers and reference data, and a wrapper returns
+  models.
+- Upstream's documented error shapes go into `classify` in `_client.py`, once, and an error
+  class of the package's own into `errors.py`; a wrapper never inspects a status code
+  (conventions §5, §6).
+- A change brings its tests, written before the code, and passes the offline checks above;
+  its changelog entry is a fragment under `changelog/`, one file holding its bullet, as
+  `changelog/README.md` lays it out (conventions §12). Commit subjects follow Conventional
+  Commits (conventions §13).
+- `ruff` leaves `docs/` and `.claude/` alone (`pyproject.toml`), so the upstream snapshot
+  keeps its bytes: never reformat it.
+- A convention that seems wrong is followed anyway and said in the pull request; changing
+  it is a change of sdk-core's `docs/conventions.md` with an ADR.
+
+## Never
+
+- Never hand-write a fixture, and never commit one without grepping it for key patterns
+  (conventions §10).
+- Never read or print `.envrc`, `.env`, or any variable ending in `_API_KEY`,
+  `_REFRESH_TOKEN` or `_SECRET`.
+- Never write a key, a token or another credential into a file or a commit.
+- Never put logic in `mcp.py` or `http.py`, and never add a route or a tool by hand: the
+  adapters register `tasks.__all__` (ADR-0001).
+- Never rename or re-map an upstream concept to another source's (ADR-0003).
+- Never return a documented personal identifier in a task's projection, echo one in
+  `meta.request`, or commit one in a fixture (ADR-0017).
+- Never edit `docs/upstream/` by hand: `/refresh-upstream` fetches it, and the pull request
+  shows its diff (conventions §3).
+- Never add `src/xippios/__init__.py`, nor an `__init__.py` at a level between it and the
+  package (ADR-0006).
+- Never push a tag by hand: a release's tag comes from `publish.yml` alone (conventions §12).
+
+## Template updates
+
+This repository is generated from sdk-template, at the tag `.copier-answers.yml` records. A
+template release reaches it in a pull request of its own, with
+`uvx --from 'copier>=9.19' copier update --defaults --vcs-ref=<tag>` (conventions §15): the
+update renders the template's files again and never overwrites the files this package
+fills, `__init__.py`, `_client.py`, `errors.py`, `models.py`, `api/`, `parse/`, `tasks.py`,
+`params.py`, `enums.py`, `reference/`, `scripts/refresh_reference.py`,
+`scripts/refresh_upstream.py`, `tests/test_tasks.py`, `tests/test_live.py`,
+`tests/fixtures/`, `docs/upstream/`, `docs/adr.md`, `docs/adr.json`, `README.md`,
+`CHANGELOG.md` and `CLAUDE.md`. sdk-template's
+[CHANGELOG](https://github.com/xippios/sdk-template/blob/main/CHANGELOG.md) says, per
+release, what to port into those by hand in the same pull request.
+
+## When something is unclear
+
+Prefer the smallest change that satisfies the documents the README lists, state the
+assumption in the pull request's description, and stop rather than guess at upstream
+semantics or the shape of the public API.
 
 ## Eurostat dissemination API specifics
 
