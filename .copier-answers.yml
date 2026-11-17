@@ -6,7 +6,7 @@ api_key_env: ''
 core_git_ref: ''
 core_version: 0.3.0
 gateway: none
-has_files: false
+has_files: true
 human: jdidaskalu
 import_path: eurostat
 live_secrets: '[]'
