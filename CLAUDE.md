@@ -16,6 +16,7 @@ follows, sdk-core's conventions among them, are listed under
 | Credentials | none; the API is open |
 | Rate limit | 30 requests per minute, burst 1; a self-imposed pace, upstream documents no rate in numbers (ADR-0010); the user guide states a fair-use rule without a number: past thresholds it does not give on concurrent requests, requests and extraction cost per day, 7 and 30 days, requests are answered asynchronously (`docs/upstream/user-guide/api-detailed-guidelines/asynchronous-api.md`, "Fair use of the service"); enforced client-side in `_client.py` |
 | Write tools | no, this package is read-only |
+| Files | parsed in `parse/`, one module per file kind: the SDMX-CSV 1.0 file that `download_dataset` and `download_trade` write gzip-compressed (`compressed=true`), the file kind `sdmx-csv`, read row by row by `parse/sdmx_csv.py` with the standard library's `gzip` and `csv` and core's `decode_csv`, the plain file too, as `api.sdmx.data_query` writes it without `compressed`; the parser tests read the samples under `tests/fixtures/files/`, these and the answers `scripts/refresh_reference.py` reads (`toc/`, `codelist/`), their provenance in its `README.md` (ADR-0020) |
 
 The snapshot listed in `docs/upstream/FETCHED.md` is the reference for names, parameters and
 semantics; a wrapper is never written from memory of the API.
@@ -61,8 +62,9 @@ scripts/
                          --check fails while either is stale
 tests/
   conftest.py      enables xippios.core.testing.plugin, which keeps the run offline
-  fixtures/        recorded responses, <wrapper>/<case>.json, never hand-written;
-                   files/<kind>/ the parser tests' samples, provenance in its README
+  fixtures/        recorded responses, <wrapper>/<case>.json, never hand-written
+  fixtures/files/  a sample of each file kind the parsers and the refresh script read,
+                   <kind>/<case>.*; README.md, their provenance
   test_family.py   core's family check, one line: namespace levels, py.typed, __version__,
                    the adapters serving exactly the tasks, task shapes and docstrings, the
                    README status table, the template tag, the core bound
