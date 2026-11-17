@@ -14,9 +14,9 @@ follows, sdk-core's conventions among them, are listed under
 | API base URL | `https://ec.europa.eu/eurostat/api/dissemination`, and `https://ec.europa.eu/eurostat/api/comext/dissemination` for the Comext and Prodcom datasets: a dataset or flow code that starts with `DS-` is requested on the Comext base, every other on the main one (`docs/upstream/user-guide/api-detailed-guidelines/prefixed-datasets.md`); one client serves both, `_client.url_for` applies the rule |
 | Documentation | https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-introduction, snapshotted in `docs/upstream/` |
 | Credentials | none; the API is open |
-| Rate limit | 30 requests per minute, burst 1; a self-imposed pace, upstream documents no rate in numbers (ADR-0010); the user guide states a fair-use rule without a number: past thresholds it does not give on concurrent requests, requests and extraction cost per day, 7 and 30 days, requests are answered asynchronously (`docs/upstream/user-guide/api-detailed-guidelines/asynchronous-api.md`, "Fair use of the service"); enforced client-side in `_client.py` |
+| Rate limit | 30 requests per minute, burst 1; a self-imposed pace, upstream documents no rate in numbers (sdk-core ADR-0010); the user guide states a fair-use rule without a number: past thresholds it does not give on concurrent requests, requests and extraction cost per day, 7 and 30 days, requests are answered asynchronously (`docs/upstream/user-guide/api-detailed-guidelines/asynchronous-api.md`, "Fair use of the service"); enforced client-side in `_client.py` |
 | Write tools | no, this package is read-only |
-| Files | parsed in `parse/`, one module per file kind: the SDMX-CSV 1.0 file that `download_dataset` and `download_trade` write gzip-compressed (`compressed=true`), the file kind `sdmx-csv`, read row by row by `parse/sdmx_csv.py` with the standard library's `gzip` and `csv` and core's `decode_csv`, the plain file too, as `api.sdmx.data_query` writes it without `compressed`; the parser tests read the samples under `tests/fixtures/files/`, these and the answers `scripts/refresh_reference.py` reads (`toc/`, `codelist/`), their provenance in its `README.md` (ADR-0020) |
+| Files | parsed in `parse/`, one module per file kind: the SDMX-CSV 1.0 file that `download_dataset` and `download_trade` write gzip-compressed (`compressed=true`), the file kind `sdmx-csv`, read row by row by `parse/sdmx_csv.py` with the standard library's `gzip` and `csv` and core's `decode_csv`, the plain file too, as `api.sdmx.data_query` writes it without `compressed`; the parser tests read the samples under `tests/fixtures/files/`, these and the answers `scripts/refresh_reference.py` reads (`toc/`, `codelist/`), their provenance in its `README.md` (sdk-core ADR-0020) |
 
 The snapshot listed in `docs/upstream/FETCHED.md` is the reference for names, parameters and
 semantics; a wrapper is never written from memory of the API.
@@ -40,7 +40,7 @@ src/xippios/eurostat/
   tasks.py         task functions; __all__ is what the adapters register, MCP_CAPS any
                    per-tool result caps, BULK_TASKS the Python-only tasks they skip
                    (download_dataset, download_trade)
-  parse/           file parsers, one module per file kind (ADR-0020): sdmx_csv.py,
+  parse/           file parsers, one module per file kind (sdk-core ADR-0020): sdmx_csv.py,
                    parse_sdmx_csv for the SDMX-CSV files download_dataset and
                    download_trade write
   mcp.py           xippios-eurostat-mcp entry point
@@ -95,8 +95,8 @@ CHANGELOG.md       the releases, each section assembled from the fragments
 .claude/commands/  add-endpoint, record-fixture, refresh-upstream, refresh-reference-data, release-prep
 ```
 
-The import path is `xippios.eurostat` (ADR-0006); `src/xippios/` is a namespace
-package.
+The import path is `xippios.eurostat` (sdk-core ADR-0006); `src/xippios/` is a
+namespace package.
 Where the API's operation ids repeat across its services, `api/` keeps one module per service
 instead, named after the service, and this Layout says so (conventions §2).
 
@@ -115,9 +115,9 @@ uv run xippios-eurostat-mcp   # stdio; add --http for streamable HTTP
 ```
 
 `uv run pytest` is offline: core's plugin refuses the network and skips the rate limiter's
-waits in every test not marked `live` (conventions §10, ADR-0013). A test that asserts a
-limiter wait or a quota pause is marked `rate_limited`, one that must reach the network
-`network`.
+waits in every test not marked `live` (conventions §10, sdk-core ADR-0013). A test that
+asserts a limiter wait or a quota pause is marked `rate_limited`, one that must reach the
+network `network`.
 
 `.github/workflows/live.yml` runs the live tests nightly at 04:59 UTC, a time derived from
 the slug, and on demand; a pull request never runs them.
@@ -131,17 +131,18 @@ and counts, never on a raw payload.
 
 ## Code rules
 
-- Three layers (ADR-0001, conventions §2): endpoint wrappers in `api/`, task functions in
-  `tasks.py`, adapters in `mcp.py` and `http.py`. The adapters register `tasks.__all__` and
-  call only tasks, the tasks call only wrappers and reference data, and a wrapper returns
-  models.
+- Three layers (sdk-core ADR-0001, conventions §2): endpoint wrappers in `api/`, task
+  functions in `tasks.py`, adapters in `mcp.py` and `http.py`. The adapters register
+  `tasks.__all__` and call only tasks, the tasks call only wrappers and reference data, and
+  a wrapper returns models.
 - Upstream's documented error shapes go into `classify` in `_client.py`, once, and an error
   class of the package's own into `errors.py`; a wrapper never inspects a status code
   (conventions §5, §6).
 - A change brings its tests, written before the code, and passes the offline checks above;
   its changelog entry is a fragment under `changelog/`, one file holding its bullet, as
   `changelog/README.md` lays it out (conventions §12). Commit subjects follow Conventional
-  Commits (conventions §13).
+  Commits (conventions §13): the rule binds a pull request's own commits, not the commit
+  that lands the pull request on `main`, whose subject GitHub writes.
 - `ruff` leaves `docs/` and `.claude/` alone (`pyproject.toml`), so the upstream snapshot
   keeps its bytes: never reformat it.
 - A convention that seems wrong is followed anyway and said in the pull request; changing
@@ -155,14 +156,14 @@ and counts, never on a raw payload.
   `_REFRESH_TOKEN` or `_SECRET`.
 - Never write a key, a token or another credential into a file or a commit.
 - Never put logic in `mcp.py` or `http.py`, and never add a route or a tool by hand: the
-  adapters register `tasks.__all__` (ADR-0001).
-- Never rename or re-map an upstream concept to another source's (ADR-0003).
+  adapters register `tasks.__all__` (sdk-core ADR-0001).
+- Never rename or re-map an upstream concept to another source's (sdk-core ADR-0003).
 - Never return a documented personal identifier in a task's projection, echo one in
-  `meta.request`, or commit one in a fixture (ADR-0017).
+  `meta.request`, or commit one in a fixture (sdk-core ADR-0017).
 - Never edit `docs/upstream/` by hand: `/refresh-upstream` fetches it, and the pull request
   shows its diff (conventions §3).
 - Never add `src/xippios/__init__.py`, nor an `__init__.py` at a level between it and the
-  package (ADR-0006).
+  package (sdk-core ADR-0006).
 - Never push a tag by hand: a release's tag comes from `publish.yml` alone (conventions §12).
 
 ## Template updates
@@ -248,4 +249,4 @@ hand: `toc/` and `codelist/` of the answers `scripts/refresh_reference.py` reads
 its `--samples` run from the answers it packaged; `sdmx-csv/` the response bodies of the
 recorded `tests/fixtures/data_query/` exchanges, byte for byte.
 `tests/fixtures/files/README.md` gives each one's release, URL, sha256 and fetch time
-(ADR-0020 decision 6).
+(sdk-core ADR-0020 decision 6).
