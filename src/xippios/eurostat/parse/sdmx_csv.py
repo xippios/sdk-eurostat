@@ -24,8 +24,9 @@ are then read through core's ``decode_csv`` (sdk-core ADR-0040 decision 2): a pl
 path, and a file that starts with gzip's magic bytes, as ``compressed=true`` answers, as
 the text stream the standard library's ``gzip`` opens on it (UTF-8, a byte order mark
 stripped, headers as printed), never as a decompressed copy on disk, which would write the
-whole file again before its first row could be read (Johannes, 2026-10-27; gap, row 125).
-Either way the rows are read lazily, never the whole file at once.
+whole file again before its first row could be read (the gzip branch of
+https://github.com/xippios/sdk-eurostat/pull/7). Either way the rows are read lazily,
+never the whole file at once.
 """
 
 import csv

@@ -16,17 +16,18 @@ the dataset does not serve) and the empty cube of an unknown reporter; under
 asynchronous answer (``DS-045409``, the whole monthly flow: HTTP 200,
 ``application/xml``, status ``SUBMITTED``) and the SOAP fault ``EXTRACTION_TOO_BIG`` at
 HTTP 413 (``DS-045409``, five reporters and one partner for a year). The two SDMX
-answers replace the tests that served the user guide's documented bodies (rows 59 and
-83). Not recorded, two kinds of tests serve answers the service was not seen to send:
+answers replace the tests that served the user guide's documented bodies (conventions
+§10). Not recorded, two kinds of tests serve answers the service was not seen to send:
 
 - ``test_documented_shape_*`` read a documented body verbatim from the snapshot's user
   guide at test time, so it is neither recorded nor hand-written: the Statistics API's
   asynchronous ``warning`` and the single-object ``error`` the guide shows for ``geo``
   with ``geoLevel`` (``api-statistics.md``). Four unfiltered requests to datasets of
   624,554 to 853,146 values answered synchronously on 2026-10-27, and probing stopped
-  there (Johannes, 2026-10-27); the Statistics API's asynchronous answer was recorded
-  on 2026-10-28 in another shape, the ``error`` array above, and the documented
-  ``warning``, never seen, keeps its test as the documented shape (gap row 83).
+  there (https://github.com/xippios/sdk-eurostat/pull/4); the Statistics API's
+  asynchronous answer was recorded on 2026-10-28 in another shape, the ``error`` array
+  above, and the documented ``warning``, never seen, keeps its test as the documented
+  shape (conventions §10).
 - ``test_fault_table_*`` compose a body from a row of the fault table
   (``api-statistics.md``), read at test time, in the recorded ``error`` array form: the
   guide documents the fault codes, not their bodies (faults 100, 140 and 150 at HTTP 400).
@@ -257,8 +258,8 @@ def test_documented_shape_asynchronous_answer_is_refused(status: int) -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
     hand-written, and never seen: the Statistics API's asynchronous answer was recorded on
     2026-10-28 as an ``error`` array instead (the test after this one), and this test
-    stays for the documented ``warning`` (gap row 83). The guide names no HTTP status for
-    it: both are read."""
+    stays for the documented ``warning`` (conventions §10). The guide names no HTTP status
+    for it: both are read."""
     assert ASYNCHRONOUS.startswith('{"warning":{"status":413, "label":"ASYNCHRONOUS_RESPONSE.')
     error = classify(answer(status, ASYNCHRONOUS))
     assert isinstance(error, InvalidRequestError)

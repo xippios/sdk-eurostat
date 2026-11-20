@@ -19,7 +19,8 @@ code of an SDMX codelist; both are what ``scripts/refresh_reference.py`` package
 list tasks return. ``Codelist`` mirrors the SDMX 2.1 API's codelist answer in JSON-stat
 (``sdmx/2.1/codelist/{agencyID}/{resourceID}?format=JSON``,
 ``docs/upstream/user-guide/api-detailed-guidelines/sdmx2-1/structure-queries.md``), which
-only the refresh script reads; the TOC's XML is parsed in that script alone (D44).
+only the refresh script reads; the TOC's XML is parsed in that script alone (decision D1
+of https://github.com/xippios/sdk-eurostat/pull/6).
 
 ``SdmxCsvRow`` is one row of an SDMX-CSV 1.0 file, the SDMX 2.1 API's
 ``format=SDMX-CSV`` answer that ``download_dataset`` writes to disk and

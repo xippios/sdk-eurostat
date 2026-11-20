@@ -471,7 +471,8 @@ def test_comext_codelists_are_packaged_with_their_url_and_dimension(
 ) -> None:
     """The six Comext codelists' files: ``endpoint`` the full URL on the Comext base,
     ``param`` the dimension the Statistics API takes, the first in the data structure's
-    order for CXT_FREE_ISO, which feeds ``partner`` too (Johannes, 2026-10-28)."""
+    order for CXT_FREE_ISO, which feeds ``partner`` too
+    (https://github.com/xippios/sdk-eurostat/pull/14)."""
     assert params.CODELISTS[resource_id] == params.CodelistOrigin(COMEXT_BASE_URL, param)
     packaged = PackagedList.load(params.PACKAGE, resource_id.lower())
     assert packaged.endpoint == f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/{resource_id}"

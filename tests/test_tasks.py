@@ -313,7 +313,7 @@ def test_documented_shape_get_data_refuses_an_asynchronous_answer(
     hand-written, and never seen: the asynchronous answer of api-statistics.md. The
     Statistics API's asynchronous answer was recorded on 2026-10-28 as an ``error`` array
     (``test_get_trade_hs_passes_a_cn8_code_which_ds_059341_answers_asynchronously``); this
-    test stays for the documented ``warning`` (gap row 83)."""
+    test stays for the documented ``warning`` (conventions §10)."""
     documented = next(
         line.strip()
         for line in (GUIDE / "api-statistics.md").read_text(encoding="utf-8").splitlines()
@@ -856,7 +856,8 @@ def test_get_cross_section_refuses_an_empty_period(
 
 
 def test_get_cross_section_unknown_code_is_an_empty_list(replay_fixture: ReplayFixture) -> None:
-    """The recorded empty cube of PR 4: the same URL, geo=XX and time=2023."""
+    """The empty cube https://github.com/xippios/sdk-eurostat/pull/4 recorded: the same URL,
+    geo=XX and time=2023."""
     case = "unknown_code"
     route = replay_fixture(GET_DATA, case)
     result = get_cross_section("apro_mk_cola", "2023", {"geo": "XX"})
@@ -1063,8 +1064,9 @@ def test_list_datasets_answers_the_whole_table_of_contents() -> None:
 
 
 def test_list_datasets_meta_is_the_packaged_answer() -> None:
-    """sdk-core ADR-0041 decision 1 and D4: the file's fetched, the operation, creationDate as
-    vintage and its naive time as published_at."""
+    """sdk-core ADR-0041 decision 1 and decision D4 of
+    https://github.com/xippios/sdk-eurostat/pull/6: the file's fetched, the operation,
+    creationDate as vintage and its naive time as published_at."""
     result = list_datasets()
     created = index_record("toc")["creationDate"]
     assert result.meta.source == "eurostat"
@@ -1517,8 +1519,9 @@ def test_download_dataset_refuses_an_asynchronous_answer(
     envelope that queues it (``asynchronous-api.md``, "Step 1: Initial request"), at HTTP
     200 with ``application/xml``. ``classify`` refuses it from the headers alone, before
     the body reaches a file, and a file at ``dest`` stays as it was; the recording replaces
-    the test of the user guide's documented body (gap row 83). It queued one extraction on
-    Eurostat's side that nobody fetches (Johannes, 2026-10-28)."""
+    the test of the user guide's documented body (conventions §10). It queued one
+    extraction on Eurostat's side that nobody fetches
+    (https://github.com/xippios/sdk-eurostat/pull/12)."""
     route = replay_fixture(DATA_QUERY, ASYNCHRONOUS_SDMX)
     dest = tmp_path / "trade.csv.gz"
     dest.write_bytes(b"an earlier download")
@@ -1542,7 +1545,7 @@ def test_download_dataset_refuses_an_extraction_too_big(
     """Recorded on the Comext base: the SOAP fault ``EXTRACTION_TOO_BIG`` at HTTP 413 for
     five reporters and one partner over every product, monthly, for a year; a download
     reads an error's body for the error's text. The recording replaces the test of the
-    user guide's documented body (rows 59 and 83)."""
+    user guide's documented body (conventions §10)."""
     route = replay_fixture(DATA_QUERY, TOO_BIG)
     key = "M.AT+DE+FR+IT+NL.US..."
     with pytest.raises(InvalidRequestError) as refused:
@@ -1738,8 +1741,9 @@ async def test_list_products_tool_answers_a_nace_class_whole() -> None:
 
 
 # The production tasks: one getData request each on the Comext base, through get_data,
-# so meta is get_data's. get_sold_production sends the request PR 3 recorded for
-# get_data; get_total_production's fixture was recorded with it on 2026-10-28.
+# so meta is get_data's. get_sold_production sends the request that
+# https://github.com/xippios/sdk-eurostat/pull/12 recorded for get_data;
+# get_total_production's fixture was recorded with it on 2026-10-28.
 
 TOTAL = "DS-059359_AT_20158000_2022_2023"
 FERTILISERS = "20158000"

@@ -205,7 +205,8 @@ path they were fetched from as `endpoint` (`sdmx/2.1/codelist/ESTAT/GEO`); the s
 Comext base, the Prodcom datasets' `product` and `indicators` lists and the trade
 datasets' `product`, `reporter` and `flow` lists, the full URL
 (`https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_INDICATORS`),
-since the path alone names the main base's operation (Johannes, 2026-10-28; gap, row 172).
+since the path alone names the main base's operation (conventions §4, as
+https://github.com/xippios/sdk-eurostat/pull/13 decided).
 CXT_FREE_ISO feeds `partner` too; its `param` is `reporter`, the first of the two in the
 data structures' order.
 `scripts/refresh_reference.py --only <name> [<name> ...]` refreshes the named lists and

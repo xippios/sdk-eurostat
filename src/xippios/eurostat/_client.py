@@ -129,11 +129,12 @@ def classify(response: httpx.Response) -> XippiosError | None:
 
     - A 2xx answer to an SDMX 2.1 data query (``sdmx/2.1/data/`` on either base) whose
       ``Content-Type`` is not SDMX-CSV's: ``InvalidRequestError`` naming how to narrow the
-      query (Johannes, 2026-10-27, B3). The package asks for SDMX-CSV only, and a request
-      the service will treat asynchronously is answered with an XML envelope that queues
-      it, status ``SUBMITTED`` (``asynchronous-api.md``, "Step 1: Initial request"), which
-      this package does not poll (design round Q4); the guide names no HTTP status for it,
-      so any 2xx is read. Recorded on the Comext base for ``DS-045409``, the whole
+      query (decision B3 of https://github.com/xippios/sdk-eurostat/pull/7). The package
+      asks for SDMX-CSV only, and a request the service will treat asynchronously is
+      answered with an XML envelope that queues it, status ``SUBMITTED``
+      (``asynchronous-api.md``, "Step 1: Initial request"), which this package does not
+      poll (https://github.com/xippios/sdk-eurostat/pull/12); the guide names no HTTP
+      status for it, so any 2xx is read. Recorded on the Comext base for ``DS-045409``, the whole
       monthly flow: HTTP 200, ``application/xml``, the SOAP envelope with ``SUBMITTED``
       (``tests/fixtures/data_query/DS-045409_asynchronous.json``). Judged by the headers
       alone, since a download's body goes to the file unread.
@@ -144,9 +145,10 @@ def classify(response: httpx.Response) -> XippiosError | None:
       at HTTP 413 with id 413, DS-059341's answer to a CN8 code the dataset does not serve
       (``tests/fixtures/get_data/DS-059341_AT_DE_15071090_cn8_on_hs_flow.json``). The
       service will treat the request asynchronously, which this package does not poll
-      (design round Q4, 2026-10-27): ``InvalidRequestError`` saying to send the request
-      again later, the Statistics API's own route, or to narrow it. Checked before the
-      HTTP 413 refusal below, which an ``EXTRACTION_TOO_BIG`` label takes.
+      (https://github.com/xippios/sdk-eurostat/pull/12): ``InvalidRequestError`` saying to
+      send the request again later, the Statistics API's own route, or to narrow it.
+      Checked before the HTTP 413 refusal below, which an ``EXTRACTION_TOO_BIG`` label
+      takes.
     - HTTP 404 with an ``error`` member: ``NotFoundError`` with upstream's label
       (recorded for an unknown dataset, fault 100).
     - HTTP 400 with an ``error`` member whose faults are all 100, "No results found: The
