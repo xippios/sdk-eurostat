@@ -150,7 +150,7 @@ def test_get_data_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
 def test_get_data_answers_a_repeated_request_from_the_cache(replay_fixture: ReplayFixture) -> None:
     """The same request twice is one request on the wire: the client's cache answers the
     second, whose ``meta.retrieved_at`` is the time the first answer was stored
-    (conventions §4; ADR-0015 decision 5), within the readings around the first call. The
+    (conventions §4; sdk-core ADR-0037 decision 5), within the readings around the first call. The
     testing plugin clears the cache around each test, so the first call is a miss."""
     case = "apro_mk_cola_AT_2022_2023"
     route = replay_fixture(GET_DATA, case)
@@ -296,7 +296,7 @@ def test_get_data_refuses_more_than_one_time_parameter(
 ) -> None:
     """api-statistics.md, "The Time parameter": "Using more than one Time parameter in the
     same query is not accepted. The only exception is using both sinceTimePeriod and
-    untilTimePeriod." Refused before any request (ADR-0007), so nothing is replayed."""
+    untilTimePeriod." Refused before any request (sdk-core ADR-0007), so nothing is replayed."""
     with pytest.raises(InvalidRequestError) as refused:
         tasks.get_data("apro_mk_cola", {"geo": "AT", **filters}, **times)
     assert str(refused.value) == (
@@ -353,7 +353,7 @@ def test_get_data_keeps_an_updated_without_zone_as_a_naive_published_at(
 ) -> None:
     """NOT RECORDED: the recorded cube with ``updated`` stripped of its zone in memory, a
     form never seen; ``published_at`` keeps it as printed, no zone invented, with
-    ``published_at_naive`` set, and the text stays the vintage (ADR-0022 rule 2)."""
+    ``published_at_naive`` set, and the text stays the vintage (sdk-core ADR-0041 decision 2)."""
     fixture = load_fixture(FIXTURES / GET_DATA / "apro_mk_cola_AT_2022_2023.json")
     body: dict[str, Any] = json.loads(fixture.response.body)
     body["updated"] = "2026-10-05T23:00:00"
@@ -430,8 +430,8 @@ with core's text for each: the argument and pydantic's message, never the input.
 async def test_get_data_tool_refuses_an_argument_its_schema_refuses(
     respx_mock: respx.MockRouter, arguments: dict[str, Any], message: str
 ) -> None:
-    """Core's argument middleware answers before the tool runs (ADR-0014, amendment
-    2026-10-27; conventions §8), in the family's error form."""
+    """Core's argument middleware answers before the tool runs (sdk-core ADR-0036, decision
+    12; conventions §8), in the family's error form."""
     text = await mcp_call_text(
         server, "eurostat_get_data", {"dataset": "apro_mk_cola", **arguments}
     )
@@ -457,7 +457,7 @@ def test_get_data_route_refuses_an_argument_its_schema_refuses(
 
 
 def test_get_data_route_end_to_end(replay_fixture: ReplayFixture) -> None:
-    """A mapping parameter makes the route a POST with a JSON body (ADR-0007)."""
+    """A mapping parameter makes the route a POST with a JSON body (sdk-core ADR-0007)."""
     case = "apro_mk_cola_AT_2022_2023"
     route = replay_fixture(GET_DATA, case)
     app = FastAPI()
@@ -990,7 +990,7 @@ async def test_get_cross_section_tool_end_to_end(replay_fixture: ReplayFixture) 
 
 
 def test_get_latest_period_route_end_to_end(replay_fixture: ReplayFixture) -> None:
-    """A mapping parameter makes the route a POST with a JSON body (ADR-0007)."""
+    """A mapping parameter makes the route a POST with a JSON body (sdk-core ADR-0007)."""
     case = "apro_mk_cola_latest_AT"
     route = replay_fixture(GET_DATA, case)
     app = FastAPI()
@@ -1012,7 +1012,7 @@ async def test_get_latest_period_tool_cuts_a_large_slice_with_its_note(
 ) -> None:
     """The latest period of ef_m_farmleg for one country, every other dimension open:
     1,810 observations, about 719 KB of rows, cut by MCP_CAPS' byte bound (the
-    family's 64 KB) with the task's own note (ADR-0016)."""
+    family's 64 KB) with the task's own note (sdk-core ADR-0038)."""
     case = "ef_m_farmleg_latest_AT_HLD"
     route = replay_fixture(GET_DATA, case)
     payload = await mcp_call(
@@ -1063,7 +1063,7 @@ def test_list_datasets_answers_the_whole_table_of_contents() -> None:
 
 
 def test_list_datasets_meta_is_the_packaged_answer() -> None:
-    """ADR-0022 rule 1 and D4: the file's fetched, the operation, creationDate as
+    """sdk-core ADR-0041 decision 1 and D4: the file's fetched, the operation, creationDate as
     vintage and its naive time as published_at."""
     result = list_datasets()
     created = index_record("toc")["creationDate"]
@@ -1278,7 +1278,7 @@ async def test_list_codes_tool_answers_the_refusal_as_text() -> None:
 
 
 def test_list_codes_route_end_to_end() -> None:
-    """Scalar parameters make the route a GET with query parameters (ADR-0007)."""
+    """Scalar parameters make the route a GET with query parameters (sdk-core ADR-0007)."""
     app = FastAPI()
     app.include_router(router)
     with TestClient(app) as http:
@@ -1349,7 +1349,9 @@ def test_download_dataset_apro_mk_cola(replay_fixture: ReplayFixture, tmp_path: 
         "format": "SDMX-CSV",
         "compressed": True,
     }
-    assert meta.request["key"] != REDACTED, "the SDMX series key is data (ADR-0019 decision 6)"
+    assert meta.request["key"] != REDACTED, (
+        "the SDMX series key is data (sdk-core ADR-0040 decision 6)"
+    )
     assert meta.total is None
 
 
@@ -1611,7 +1613,7 @@ BULK = ["download_dataset", "download_trade"]
 
 
 def test_bulk_tasks_are_no_tool_and_no_route() -> None:
-    """Bulk tasks: ``BULK_TASKS`` names them, so core's adapters skip them (ADR-0019
+    """Bulk tasks: ``BULK_TASKS`` names them, so core's adapters skip them (sdk-core ADR-0040
     decision 4); the family check (``tests/test_family.py``) serves ``tasks.__all__``
     minus them."""
     assert set(BULK) <= set(tasks.__all__)
@@ -1652,7 +1654,7 @@ EIGHT_CHARACTER_CODE = re.compile(r'``"?(\d{4}[0-9A-Z]{4})"?``')
 
 
 def test_list_products_answers_the_whole_packaged_list(respx_mock: respx.MockRouter) -> None:
-    """ADR-0022 rule 1: the file's fetched, the codelist's full URL on the Comext base,
+    """sdk-core ADR-0041 decision 1: the file's fetched, the codelist's full URL on the Comext base,
     its version as vintage and its LAST_UPDATED, zoned, as published_at."""
     result = list_products()
     raw = packaged_file(PRODUCTS)
@@ -2062,7 +2064,7 @@ async def test_get_sold_production_tool_answers_the_refusal_as_text() -> None:
 
 
 def test_get_sold_production_route_end_to_end(replay_fixture: ReplayFixture) -> None:
-    """A list parameter makes the route a POST with a JSON body (ADR-0007)."""
+    """A list parameter makes the route a POST with a JSON body (sdk-core ADR-0007)."""
     route = replay_fixture(GET_DATA, PRODCOM)
     app = FastAPI()
     app.include_router(router)
@@ -2101,7 +2103,7 @@ def nc_records(lengths: set[int]) -> list[dict[str, Any]]:
 def test_list_cn8_and_list_hs_answer_their_codes_of_cxt_nc(
     respx_mock: respx.MockRouter, task: Callable[..., Any], lengths: set[int]
 ) -> None:
-    """ADR-0022 rule 1: the file's fetched, the codelist's full URL on the Comext base,
+    """sdk-core ADR-0041 decision 1: the file's fetched, the codelist's full URL on the Comext base,
     its version as vintage and its LAST_UPDATED, zoned, as published_at."""
     result = task()
     raw = packaged_file(NC)
@@ -2534,7 +2536,7 @@ async def test_get_trade_tool_answers_the_refusal_as_text() -> None:
 
 
 def test_get_trade_route_end_to_end(replay_fixture: ReplayFixture) -> None:
-    """A list parameter makes the route a POST with a JSON body (ADR-0007)."""
+    """A list parameter makes the route a POST with a JSON body (sdk-core ADR-0007)."""
     route = replay_fixture(GET_DATA, TRADE)
     app = FastAPI()
     app.include_router(router)

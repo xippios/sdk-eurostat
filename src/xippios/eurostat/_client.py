@@ -7,17 +7,17 @@ Comext base's WADLs under ``docs/upstream/api/comext/`` are the main base's but 
 ``resources base``). The one client serves both: it is built on ``BASE_URL``, and
 ``url_for`` gives a wrapper the absolute URL on ``COMEXT_BASE_URL`` for a ``DS-`` code,
 which the client sends as it is. One pace, one cache and one ``classify`` therefore hold
-for both bases (conventions §6, ADR-0015), and the main base's requests and cache keys
+for both bases (conventions §6, sdk-core ADR-0037), and the main base's requests and cache keys
 are those of a client with one base.
 
 ``classify`` maps the Statistics API's documented refusals, and the SDMX 2.1 data API's
-answers that are no SDMX-CSV, onto the family's taxonomy once (ADR-0008); ``errors``
+answers that are no SDMX-CSV, onto the family's taxonomy once (sdk-core ADR-0031); ``errors``
 reads them. Both bases answer in the same shapes, recorded on each, though not always to
 the same request: a filter on a dimension the dataset lacks is fault 150 at HTTP 400 on
 the main base, and HTTP 413 as too large on the Comext base, whose estimate for
 DS-059358, 151,971,120 rows, is that of an unfiltered query, so the unknown filter seems
 to be ignored. Answers of HTTP 200 are cached in core's ``MemoryCache`` with its default
-lifetime of five minutes, up to core's ``cache_max_bytes`` of 8 MiB a body (ADR-0019
+lifetime of five minutes, up to core's ``cache_max_bytes`` of 8 MiB a body (sdk-core ADR-0040
 decision 3), so a larger cube is returned and fetched again the next time; a file
 streamed to disk with ``download`` never touches the cache.
 """
@@ -74,7 +74,7 @@ ENV_VARS: tuple[EnvVar, ...] = ()
 2026-11-18, point c): none, since the API is open. An ``EnvVar`` names a variable and reads
 none; a variable the source reads joins the list."""
 # A self-imposed pace: upstream documents no rate in numbers, only a fair-use rule
-# without one (ADR-0010 decision 1; asynchronous-api.md, "Fair use of the service").
+# without one (sdk-core ADR-0033 decision 1; asynchronous-api.md, "Fair use of the service").
 RATE_LIMIT = RateLimit(per_minute=30, burst=1)
 
 
@@ -109,8 +109,8 @@ def _not_sdmx_csv(response: httpx.Response) -> str | None:
     """The media type of a 2xx data query answer that is no SDMX-CSV, else ``None``.
 
     A data query on either base (``SDMX_DATA_PATHS``). Read from the request path and the
-    headers alone: a download hands ``classify`` no body (ADR-0019, amendment
-    2026-10-27).
+    headers alone: a download hands ``classify`` no body (sdk-core ADR-0040, decision
+    1).
     """
     if not response.is_success or not response.request.url.path.startswith(SDMX_DATA_PATHS):
         return None
@@ -119,7 +119,9 @@ def _not_sdmx_csv(response: httpx.Response) -> str | None:
 
 
 def classify(response: httpx.Response) -> XippiosError | None:
-    """The Statistics API's documented refusals and the SDMX data API's, mapped once (ADR-0008).
+    """The Statistics API's documented refusals and the SDMX data API's, mapped once.
+
+    Upstream's error shapes go here once (sdk-core ADR-0031).
 
     Both bases answer in the same shapes, so one mapping serves both; a message names
     the request by core's ``request_description``, its method and path, which tells the
@@ -221,7 +223,7 @@ config = ClientConfig(
 )
 
 # A source with a documented hourly or daily quota installs a QuotaPolicy of its own on
-# config (conventions §6, ADR-0015); core's README shows how.
+# config (conventions §6, sdk-core ADR-0037); core's README shows how.
 
 client = AsyncClient(config)
 

@@ -71,7 +71,7 @@ def recorded_sdmx(case: str) -> httpx.Response:
 
 def downloaded(case: str, content_type: str | None = None) -> httpx.Response:
     """The recorded SDMX exchange as a download hands it to ``classify``: its status and
-    headers, the body unread (ADR-0019, amendment 2026-10-27). ``content_type`` replaces
+    headers, the body unread (sdk-core ADR-0040, decision 1). ``content_type`` replaces
     the recorded ``Content-Type`` in memory, ``""`` removes it."""
     fixture = load_fixture(SDMX_FIXTURES / f"{case}.json")
     headers = [
@@ -131,7 +131,7 @@ def answer(
 
 def unread(status: int, body: str, content_type: str, url: str = SDMX_URL) -> httpx.Response:
     """NOT RECORDED: an answer whose body is not read, as a download hands it to
-    ``classify``: its status and headers only (ADR-0019, amendment 2026-10-27)."""
+    ``classify``: its status and headers only (sdk-core ADR-0040, decision 1)."""
     return httpx.Response(
         status,
         headers={"content-type": content_type},
@@ -149,7 +149,7 @@ def assert_host_and_query_free(error: Exception) -> None:
 def test_config() -> None:
     assert config.classify is classify
     assert isinstance(config.cache, MemoryCache), "core's backend, its default lifetime"
-    assert config.cache_max_bytes == 8 * 1024 * 1024, "core's bound, ADR-0019 decision 3"
+    assert config.cache_max_bytes == 8 * 1024 * 1024, "core's bound, sdk-core ADR-0040 decision 3"
     assert RATE_LIMIT.per_minute == 30
     assert RATE_LIMIT.capacity == 1
 

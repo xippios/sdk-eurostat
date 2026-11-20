@@ -13,14 +13,14 @@ observation, comma-separated, lines ending in CRLF::
 up to ``TIME_PERIOD``, then ``OBS_VALUE`` and the observation's attributes, which differ
 by dataset (``OBS_FLAG`` and ``CONF_STATUS`` in apro_mk_cola; ``OBS_FLAG``,
 ``LTAA_FLAG`` and ``LTAA`` in the guide's ENV_WAT_RES; none in Prodcom's DS-059358).
-Each row becomes a ``models.SdmxCsvRow`` with nothing renamed or computed (ADR-0020
+Each row becomes a ``models.SdmxCsvRow`` with nothing renamed or computed (sdk-core ADR-0020
 decision 2); ``OBS_VALUE`` is parsed as a ``Decimal`` where its text is a number and
 kept as printed where it is not, as Prodcom's units and flags are (``"KG"``, ``":E"``,
 ``docs/upstream/samples/DS-059358-sdmx-csv.csv``).
 
 The header row is read first, with the standard library's ``csv``, and checked before
 any row, so a file of another layout is refused even without rows. The rows of both files
-are then read through core's ``decode_csv`` (ADR-0019 decision 2): a plain file by its
+are then read through core's ``decode_csv`` (sdk-core ADR-0040 decision 2): a plain file by its
 path, and a file that starts with gzip's magic bytes, as ``compressed=true`` answers, as
 the text stream the standard library's ``gzip`` opens on it (UTF-8, a byte order mark
 stripped, headers as printed), never as a decompressed copy on disk, which would write the

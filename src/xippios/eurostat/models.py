@@ -10,7 +10,7 @@ list of dimensions (``id``, ``size``), each with its categories, Eurostat's code
 order (``dimension``), and one cell for every combination of codes; ``value`` and
 ``status`` hold the cells that have one, keyed by the cell's index. ``Observation`` is one
 cell read out of a cube with its codes and labels (``Cube.observations``); nothing in it
-is computed beyond that reading. No dataframe type (ADR-0002, ADR-0003).
+is computed beyond that reading. No dataframe type (sdk-core ADR-0002, sdk-core ADR-0028).
 
 The packaged lists have models of their own. ``Dataset`` is one leaf of the Catalogue
 API's table of contents (``catalogue/toc/xml``,
@@ -26,7 +26,7 @@ only the refresh script reads; the TOC's XML is parsed in that script alone (D44
 ``parse.parse_sdmx_csv`` reads (the user guide's ``sdmx2-1/data-query.md`` and the
 sample ``docs/upstream/samples/apro_mk_cola-sdmx-csv.csv``): one observation, its
 columns under their headers snake_cased, the dimensions and the other attributes kept
-by their column names (ADR-0020 decision 2).
+by their column names (sdk-core ADR-0020 decision 2).
 """
 
 import math

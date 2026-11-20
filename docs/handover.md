@@ -140,11 +140,11 @@ note naming `search`; `get_data` the default cap.
 - SDMX 3.0 and TSV: the Comext base's SDMX 3.0 WADL is in the snapshot and nothing reads
   it; TSV and SDMX-ML are never read (0.1.0's design round Q2, in the log's 2026-10-27
   lines and `git show v0.1.0:docs/handover.md`). No comparison across datasets or
-  sources (ADR-0003).
+  sources (sdk-core ADR-0028).
 
 ## Pace, cache, live budget
 
-- Pace: 30 requests per minute, burst 1, self-imposed (ADR-0010), one limiter for both
+- Pace: 30 requests per minute, burst 1, self-imposed (sdk-core ADR-0033), one limiter for both
   bases, since core builds one bucket per client (G5 Q1); Eurostat documents a fair-use
   rule without a number.
 - Cache: answers of HTTP 200 in core's `MemoryCache` at its defaults, five minutes, 256
@@ -290,7 +290,7 @@ Extended during 0.2.0, all open:
 
 | Row | Repository | Title |
 | --- | --- | --- |
-| 58 | sdk-core | gap: the family's first multi-dimensional answer, a JSON-stat cube stated under ADR-0003 (eurostat design round Q1) |
+| 58 | sdk-core | gap: the family's first multi-dimensional answer, a JSON-stat cube stated under sdk-core ADR-0028 (eurostat design round Q1) |
 | 62 | sdk-template | live.yml: actions by mutable tag and a checkout that persists credentials (from the sdk-eurostat scaffold review) |
 | 71 | sdk-template | PULL_REQUEST_TEMPLATE.md still names the organisation .github repository for the merge classes (renamed sdk-gates; from sdk-eurostat PR 2) |
 | 76 | sdk-core | gap: a publisher own conditions on modified text, such as Eurostat disclaimer on modifications (conventions §3 attribution; from sdk-eurostat PR 2 review) |
@@ -309,9 +309,9 @@ Extended during 0.2.0, all open:
 | 111 | sdk-core | gap: where a packaged list own release identifier lives (version, LAST_UPDATED, the TOC creationDate) when a packaged file holds the four keys and an optional note only (from sdk-eurostat PR 6) |
 | 112 | sdk-core | gap: a live parser test on a partial stream of a large upstream file, and a client read that can stop early (from sdk-eurostat PR 6) |
 | 120 | sdk-core | gap: the case of a list-task name argument where upstream folds case (sdk-eurostat list_codes("geo") answers the GEO codelist; from the sdk-eurostat PR 6 review) |
-| 124 | sdk-template | the secret scan flags a recorder body_base64 line as a high-entropy string: every binary fixture of ADR-0019 trips detect-secrets (from sdk-eurostat PR 8) |
+| 124 | sdk-template | the secret scan flags a recorder body_base64 line as a high-entropy string: every binary fixture of sdk-core ADR-0040 trips detect-secrets (from sdk-eurostat PR 8) |
 | 125 | sdk-core | decode_csv over an open text stream, or opening a gzip path itself (from sdk-eurostat PR 8) |
-| 126 | sdk-core | gap: conventions §2 and ADR-0020 decision 1 say parse_<kind>(path) -> list[Model]; a bulk file parser yields lazily (from sdk-eurostat PR 8) |
+| 126 | sdk-core | gap: conventions §2 and sdk-core ADR-0020 decision 1 say parse_<kind>(path) -> list[Model]; a bulk file parser yields lazily (from sdk-eurostat PR 8) |
 | 137 | sdk-core | gap: a first release (version unchanged at 0.1.0) is recognised by neither review-checklist item 13 nor sdk-gates merge-class rule 5, and the definition-of-done Docs item 7 (an entry under Unreleased) is untrue for every release PR (from the sdk-eurostat 0.1.0 release review) |
 
 Row 135, this package's own wrapper rename, reads done since 2026-10-28 20:31: it

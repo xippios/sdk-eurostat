@@ -3,7 +3,7 @@
 Eurostat's lists are packaged as tables, not as enums: the Catalogue API's table of
 contents (TOC) and the eighteen codelists in ``params.CODELISTS``, each too large for an
 enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
-``reference/<name>.json`` (conventions §3, ADR-0022):
+``reference/<name>.json`` (conventions §3, sdk-core ADR-0041):
 
 - ``toc.json``: the TOC, downloaded whole to a temporary file through
   ``api.catalogue.get_toc_xml`` (core's ``download``, which streams the body to disk; 23 MB
@@ -12,7 +12,7 @@ enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
   once read: every ``leaf``, datasets and tables alike, with its code, type, English
   title, the English titles of the folders above it joined with ``" > "`` (``path``),
   ``lastUpdate``, ``lastModified``, ``dataStart``, ``dataEnd`` and ``values`` as printed.
-  This script is the only code that parses XML (D44; ADR-0020 decision 3).
+  This script is the only code that parses XML (D44; sdk-core ADR-0020 decision 3).
 - ``<codelist>.json``: one codelist each, the latest version in JSON-stat through
   ``api.sdmx.code_list_query`` with English labels (Johannes, 2026-10-27, D1 and D2), its
   codes and labels in upstream's order, requested on the base ``params.CODELISTS`` names
@@ -27,7 +27,7 @@ enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
   lists, and ``lists``, one record per packaged list with what upstream gives each as
   its release (the TOC's ``creationDate``, a codelist's ``version`` and
   ``LAST_UPDATED``), since a packaged file holds its four keys and a ``note`` and
-  nothing else (ADR-0022, amendment 8; gap, row 111). It names no upstream operation:
+  nothing else (sdk-core ADR-0041, decision 5; gap, row 111). It names no upstream operation:
   it is derived from the nineteen answers.
 
 Each packaged file's ``fetched`` is the time its answer arrived, UTC to the second. The
@@ -51,7 +51,7 @@ packaged lists, the previous index's or this run's, whichever is later.
 request of its own: a folder of the TOC with two of its leaves and the folders above it
 under ``tests/fixtures/files/toc/``, and the STATINFO codelist whole under
 ``tests/fixtures/files/codelist/``, their provenance in ``tests/fixtures/files/README.md``
-(ADR-0020 decision 6, conventions §10). The TOC's cut parses the whole file again with
+(sdk-core ADR-0020 decision 6, conventions §10). The TOC's cut parses the whole file again with
 ``ElementTree.parse``, about 200 MB at its peak: fine for a one-off run, not for the
 plain refresh, which reads the file a megabyte at a time.
 
@@ -59,8 +59,8 @@ Value lists and lists of integer ids would become enums: a value list in ``LISTS
 ``StrEnum``, a list of ids and names in ``ID_LISTS``, through ``id_name_pairs``, an
 ``IntEnum`` (conventions §3), rendered into ``enums.py`` with one
 ``xippios.core.reference.render_enums`` call, ASCII-only, and formatted with
-``ruff format`` and ``ruff check --fix``, to be committed as formatted (ADR-0008,
-amendment 2026-10-27). Eurostat's lists are neither, so both mappings stay empty and
+``ruff format`` and ``ruff check --fix``, to be committed as formatted (sdk-core ADR-0031,
+decision 6). Eurostat's lists are neither, so both mappings stay empty and
 ``enums.py`` is an empty module. ``--render-only`` regenerates it from the packaged
 files alone, without a request: after a core release changes the renderer (conventions
 §15, item 6), it changes ``enums.py`` and nothing else.
@@ -364,7 +364,7 @@ def codelist_endpoint(resource_id: str) -> str:
     ``sdmx/2.1/codelist/ESTAT/GEO`` for a codelist of the main base, as packaged since
     0.1.0; ``https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/``
     ``ESTAT/CXT_PRODCOM2_SOLD`` for one of the Comext base, whose path alone would name
-    the main base's operation (ADR-0022 rule 1; Johannes, 2026-10-28; gap, row 172).
+    the main base's operation (sdk-core ADR-0041 decision 1; Johannes, 2026-10-28; gap, row 172).
 
     Raises:
         KeyError: ``params.CODELISTS`` does not name the codelist.
@@ -438,7 +438,7 @@ def cut_toc_sample(source: Path, downloaded: Downloaded, toc: Toc, dest: Path) -
 
     The elements kept are upstream's as parsed, written again by ``ElementTree`` under
     upstream's prefixes and indented by two spaces; every other branch and leaf is left
-    out. A comment after the declaration carries the provenance (ADR-0020 decision 6).
+    out. A comment after the declaration carries the provenance (sdk-core ADR-0020 decision 6).
     """
     ET.register_namespace("nt", NAVTREE)
     ET.register_namespace("xsi", XSI)
@@ -510,7 +510,7 @@ def write_codelist_sample(answer: api.sdmx.CodelistAnswer, dest: Path) -> Sample
 SAMPLES_README = """# Parser-test samples
 
 Small real samples of the answers the package and its refresh script read, under
-`<kind>/<case>.*`, never written by hand (ADR-0020 decision 6, conventions §10): `toc/`
+`<kind>/<case>.*`, never written by hand (sdk-core ADR-0020 decision 6, conventions §10): `toc/`
 and `codelist/` cut by `scripts/refresh_reference.py --samples` from the answers of its
 run, which rewrites their rows and keeps the others; `sdmx-csv/` the response bodies of
 the recorded `tests/fixtures/data_query/` exchanges, byte for byte, which
@@ -663,7 +663,7 @@ def render(
     A value list renders a ``StrEnum``, a list of ``(id, name)`` pairs an ``IntEnum``, each
     class docstring naming its list's date in ``fetched``. ``ruff format`` and
     ``ruff check --fix`` then choose the quotes, wrap what fits and sort ``__all__``; the
-    module is committed as formatted (ADR-0008, amendment 2026-10-27).
+    module is committed as formatted (sdk-core ADR-0031, decision 6).
     """
     ENUMS.write_text(render_enums(lists, fetched=fetched, generator=GENERATOR), encoding="utf-8")
     for command in (["format"], ["check", "--fix"]):

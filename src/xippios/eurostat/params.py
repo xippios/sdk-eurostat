@@ -6,7 +6,7 @@ The table of contents and eighteen codelists ship inside the package under ``ref
 so that ``list_datasets``, ``list_codes``, ``list_products``, ``list_cn8`` and ``list_hs``
 need no request, and the production and trade tasks check their codes before sending,
 with an index of their release identifiers beside them; ``scripts/refresh_reference.py``
-writes the twenty JSON files, never by hand (ADR-0022). The nineteen lists are
+writes the twenty JSON files, never by hand (sdk-core ADR-0041). The nineteen lists are
 packaged-list files that
 ``PackagedList.load`` reads (``{"param", "endpoint", "fetched", "records"}`` and an
 optional ``note``); the index is plain JSON:
@@ -21,11 +21,11 @@ optional ``note``); the index is plain JSON:
   from as ``endpoint`` (``sdmx/2.1/codelist/ESTAT/GEO``); the six of the Comext base
   the full URL (``https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/``
   ``codelist/ESTAT/CXT_PRODCOM2_SOLD``), since the path alone would name the main base's
-  operation (ADR-0022 rule 1; Johannes, 2026-10-28; gap, row 172).
+  operation (sdk-core ADR-0041 decision 1; Johannes, 2026-10-28; gap, row 172).
 - ``lists.json``: not a packaged list but the package's derived index, plain JSON read
   with ``load_json`` (``ListIndex``): the latest ``fetched`` among the packaged lists
   and one ``ListInfo`` record per packaged list, with the release identifiers upstream
-  gives each, which a packaged-list file has no key for (ADR-0022, amendment 8; gap, row
+  gives each, which a packaged-list file has no key for (sdk-core ADR-0041, decision 5; gap, row
   111): the TOC's ``creationDate``, a codelist's ``version`` and ``LAST_UPDATED``. It is
   derived from the nineteen answers the packaged lists come from and names no upstream
   operation. The list tasks read their ``vintage`` and ``published_at`` from it, and

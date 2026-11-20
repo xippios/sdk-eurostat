@@ -7,7 +7,7 @@ base; Prodcom's DS-059358 on the Comext base, whose ``OBS_VALUE`` is text where 
 indicator is a unit or a flag (``KG``, ``:E``) and which has no attribute column; and
 Comext trade's DS-045409 on the same base, monthly, with ``partner`` and ``flow`` among
 its dimensions and no attribute column either; ``tests/fixtures/files/README.md`` gives
-their provenance (ADR-0020 decision 6). The
+their provenance (sdk-core ADR-0020 decision 6). The
 tests assert the parser's shape against the sample's own text, read here with the
 standard library's ``csv``, never values or sizes typed into a test (conventions §10).
 ``test_documented_shape_*`` read the user guide's SDMX-CSV examples verbatim from the

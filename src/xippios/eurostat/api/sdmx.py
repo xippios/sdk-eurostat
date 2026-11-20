@@ -54,7 +54,7 @@ takes ``firstNObservations``, ``lastNObservations``, ``detail``, ``format``, ``l
   byte for byte (``tests/fixtures/data_query/``).
 
 The answer is a file, streamed to disk with core's ``download`` and never held in
-memory (ADR-0019); ``parse.sdmx_csv`` reads it. A large request is answered
+memory (sdk-core ADR-0040); ``parse.sdmx_csv`` reads it. A large request is answered
 asynchronously or refused with HTTP 413 (``asynchronous-api.md``), which
 ``_client.classify`` maps.
 """

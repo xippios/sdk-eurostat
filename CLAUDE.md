@@ -14,7 +14,7 @@ follows, sdk-core's conventions among them, are listed under
 | API base URL | `https://ec.europa.eu/eurostat/api/dissemination`, and `https://ec.europa.eu/eurostat/api/comext/dissemination` for the Comext and Prodcom datasets: a dataset or flow code that starts with `DS-` is requested on the Comext base, every other on the main one (`docs/upstream/user-guide/api-detailed-guidelines/prefixed-datasets.md`); one client serves both, `_client.url_for` applies the rule |
 | Documentation | https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-introduction, snapshotted in `docs/upstream/` |
 | Credentials | none; the API is open |
-| Rate limit | 30 requests per minute, burst 1; a self-imposed pace, upstream documents no rate in numbers (sdk-core ADR-0010); the user guide states a fair-use rule without a number: past thresholds it does not give on concurrent requests, requests and extraction cost per day, 7 and 30 days, requests are answered asynchronously (`docs/upstream/user-guide/api-detailed-guidelines/asynchronous-api.md`, "Fair use of the service"); enforced client-side in `_client.py` |
+| Rate limit | 30 requests per minute, burst 1; a self-imposed pace, upstream documents no rate in numbers (sdk-core ADR-0033); the user guide states a fair-use rule without a number: past thresholds it does not give on concurrent requests, requests and extraction cost per day, 7 and 30 days, requests are answered asynchronously (`docs/upstream/user-guide/api-detailed-guidelines/asynchronous-api.md`, "Fair use of the service"); enforced client-side in `_client.py` |
 | Write tools | no, this package is read-only |
 | Files | parsed in `parse/`, one module per file kind: the SDMX-CSV 1.0 file that `download_dataset` and `download_trade` write gzip-compressed (`compressed=true`), the file kind `sdmx-csv`, read row by row by `parse/sdmx_csv.py` with the standard library's `gzip` and `csv` and core's `decode_csv`, the plain file too, as `api.sdmx.data_query` writes it without `compressed`; the parser tests read the samples under `tests/fixtures/files/`, these and the answers `scripts/refresh_reference.py` reads (`toc/`, `codelist/`), their provenance in its `README.md` (sdk-core ADR-0020) |
 
@@ -115,7 +115,7 @@ uv run xippios-eurostat-mcp   # stdio; add --http for streamable HTTP
 ```
 
 `uv run pytest` is offline: core's plugin refuses the network and skips the rate limiter's
-waits in every test not marked `live` (conventions §10, sdk-core ADR-0013). A test that
+waits in every test not marked `live` (conventions §10, sdk-core ADR-0035). A test that
 asserts a limiter wait or a quota pause is marked `rate_limited`, one that must reach the
 network `network`.
 
@@ -157,7 +157,7 @@ and counts, never on a raw payload.
 - Never write a key, a token or another credential into a file or a commit.
 - Never put logic in `mcp.py` or `http.py`, and never add a route or a tool by hand: the
   adapters register `tasks.__all__` (sdk-core ADR-0001).
-- Never rename or re-map an upstream concept to another source's (sdk-core ADR-0003).
+- Never rename or re-map an upstream concept to another source's (sdk-core ADR-0028).
 - Never return a documented personal identifier in a task's projection, echo one in
   `meta.request`, or commit one in a fixture (sdk-core ADR-0017).
 - Never edit `docs/upstream/` by hand: `/refresh-upstream` fetches it, and the pull request

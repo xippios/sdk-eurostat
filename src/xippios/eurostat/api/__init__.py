@@ -1,7 +1,7 @@
 """Endpoint wrappers, layer 1: one async function per upstream operation (conventions §2).
 
 Each is named after its operation's WADL method id in snake case (conventions 1.22 §2;
-ADR-0003, amendment 2026-10-28): ``get_data`` for ``getData``, ``get_toc_xml`` for
+sdk-core ADR-0028, decision 2): ``get_data`` for ``getData``, ``get_toc_xml`` for
 ``getTocXml``, ``code_list_query`` for ``codeListQuery`` and ``data_query`` for
 ``dataQuery``. The verbatim id stays in the first line of the wrapper's docstring and in
 the endpoint constants ``ENDPOINT``, ``CODELIST_ENDPOINT`` and ``DATA_ENDPOINT``, which
