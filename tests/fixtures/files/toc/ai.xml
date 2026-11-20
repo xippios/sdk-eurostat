@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Cut by scripts/refresh_reference.py with its samples option from https://ec.europa.eu/eurostat/api/dissemination/catalogue/toc/xml, creationDate 20261120T1004, 23618396 bytes, sha256 a5b820a0410d1af83daac5058d17737d877cd2f3d491dfa8f688867f273b5c8b, fetched 2026-11-20T13:35:39Z: the folder ai with its leaves tai13 and the folders above it, every other branch and leaf left out. -->
+<nt:tree xmlns:nt="urn:eu.europa.ec.eurostat.navtree" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:eu.europa.ec.eurostat.navtree https://ec.europa.eu/eurostat/api/dissemination/catalogue/toc/TableOfContent.xsd" creationDate="20261120T1004">
+  <nt:branch>
+    <nt:title language="en">Cross cutting topics</nt:title>
+    <nt:title language="fr">Thèmes transversaux</nt:title>
+    <nt:title language="de">Querschnittsthemen</nt:title>
+    <nt:code>cc</nt:code>
+    <nt:children>
+      <nt:branch>
+        <nt:title language="en">Agri-environmental indicators</nt:title>
+        <nt:title language="fr">Indicateurs agroenvironnementaux</nt:title>
+        <nt:title language="de">Agrarumweltindikatoren</nt:title>
+        <nt:code>ai</nt:code>
+        <nt:children>
+          <nt:leaf type="table">
+            <nt:title language="en">Share of agricultural holdings by type of manure storage facilities</nt:title>
+            <nt:title language="fr">Part des exploitations agricoles par type d’installation de stockage du fumier</nt:title>
+            <nt:title language="de">Anteil der landwirtschaftlichen Betriebe nach Art der Dunglagerungsanlangen</nt:title>
+            <nt:code>tai13</nt:code>
+            <nt:lastUpdate>17.11.2026</nt:lastUpdate>
+            <nt:lastModified>17.11.2026</nt:lastModified>
+            <nt:dataStart>2010</nt:dataStart>
+            <nt:dataEnd>2020</nt:dataEnd>
+            <nt:values />
+            <nt:source language="en">Eurostat</nt:source>
+            <nt:source language="fr">Eurostat</nt:source>
+            <nt:source language="de">Eurostat</nt:source>
+            <nt:unit language="en" />
+            <nt:unit language="fr" />
+            <nt:unit language="de" />
+            <nt:shortDescription language="en">&lt;p&gt;Share of agricultural holdings by type of manure storage facilities (with cover - permeable and impermeable -, without cover, in heaps, in compost piles, in pits below animal confinement, in deep litter systems). Manure storage facilities are distinguished between solid manure and liquid manure/slurry. The same agricultural holding might have more than one type of manure storage facilities (MANSTO classes are not mutually exclusive). Information is based on censuses and sample surveys&lt;/p&gt;</nt:shortDescription>
+            <nt:shortDescription language="fr">&lt;p&gt;Part des exploitations agricoles par type d’installation de stockage du fumier (avec couverture - perméable et imperméable -, sans couverture, en tas, en tas de compost, dans des fosses situées sous les bâtiments d&amp;#39;élevage, dans des systèmes de litière profonde). Une distinction est établie entre les installations de stockage du fumier solide et celles du lisier. Une même exploitation agricole peut disposer de plusieurs types d’installations de stockage du fumier (les classes MANSTO - entreposage et application du fumier - ne sont pas mutuellement exclusives). L&amp;#39;information est basée sur des recensements et des enquêtes par sondage.&lt;/p&gt;</nt:shortDescription>
+            <nt:shortDescription language="de">&lt;p&gt;Anteil der landwirtschaftlichen Betriebe nach Art der Dunglangerungsanlagen (mit Abdeckung - durchlässig und undurchlässig -, ohne Abdeckung, in Haufen, in Komposthaufen, in Gruben unterhalb der Tierhaltung, in Tiefstreusystemen). Es wird zwischen Festmist und Gülle unterschieden. Ein und derselbe landwirtschaftliche Betrieb verfügt möglicherweise über mehr als eine Art von Dunglangerungsanlagen (MANSTO-Klassen schließen sich nicht gegenseitig aus). Die Informationen basieren auf Zählungen und Stichprobenerhebungen.&lt;/p&gt;</nt:shortDescription>
+            <nt:downloadLink format="tsv">https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/TAI13?format=tsv&amp;compressed=true</nt:downloadLink>
+          </nt:leaf>
+        </nt:children>
+      </nt:branch>
+    </nt:children>
+  </nt:branch>
+</nt:tree>

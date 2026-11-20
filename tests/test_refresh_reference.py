@@ -1,11 +1,12 @@
 """``scripts/refresh_reference.py`` on its samples, and the packaged files it wrote.
 
-The samples under ``tests/fixtures/files/`` were cut by the script's ``--samples`` run
-from the answers it packaged (``tests/fixtures/files/README.md`` names each one's
-release, URL, sha256 and fetch time): a folder of the table of contents with two of its
-leaves, one of them a dataset with a pre-defined table under it, and the STATINFO
-codelist whole. The tests assert the readers' shape, never values or sizes (conventions
-§10). Nothing here sends a request: the refresh's two operations, ``getTocXml`` and
+The samples under ``tests/fixtures/files/`` were cut by the script's ``--samples`` cutter
+from upstream's answers (``tests/fixtures/files/README.md`` names each one's release,
+URL, sha256 and fetch time): a folder of the table of contents with two of its leaves,
+one of them a dataset with a pre-defined table under it; from a later download, a folder
+with a pre-defined table that prints no number of values; and the STATINFO codelist
+whole. The tests assert the readers' shape, never values or sizes (conventions §10).
+Nothing here sends a request: the refresh's two operations, ``getTocXml`` and
 ``codeListQuery``, are replayed with ``respx`` serving those samples as the answers, and
 the live smoke tests in ``tests/test_live.py`` read upstream's current answers with the
 same functions. ``--only`` runs into a reference directory of the test's own, holding
@@ -19,6 +20,7 @@ import importlib.util
 import json
 import re
 import shutil
+import xml.etree.ElementTree as ET
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import ModuleType
@@ -28,16 +30,18 @@ import httpx
 import pytest
 import respx
 from xippios.core import PackagedList, XippiosError, parse
-from xippios.core.testing import sent_urls
+from xippios.core.testing import mcp_call, sent_urls
 
 from xippios.eurostat import params
 from xippios.eurostat._client import BASE_URL, COMEXT_BASE_URL, client
+from xippios.eurostat.mcp import server
 from xippios.eurostat.models import Code, Codelist, Dataset, LeafType
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "refresh_reference.py"
 SAMPLES = ROOT / "tests" / "fixtures" / "files"
 TOC_SAMPLE = SAMPLES / "toc" / "apro_mk.xml"
+TOC_SAMPLE_WITHOUT_VALUES = SAMPLES / "toc" / "ai.xml"
 CODELIST_SAMPLE = SAMPLES / "codelist" / "statinfo.json"
 REFERENCE = ROOT / "src" / "xippios" / "eurostat" / "reference"
 FETCHED = datetime(2026, 10, 27, 12, 0, 0, tzinfo=UTC)
@@ -89,6 +93,66 @@ def test_read_toc_reads_a_table_under_a_dataset_after_it() -> None:
             and table.path == f"{leaf.path}{script.PATH_SEPARATOR}{leaf.title}"
         )
         assert above.code != table.code
+
+
+def test_read_toc_reads_a_leaf_that_prints_no_number_of_values() -> None:
+    """A leaf whose ``values`` element is empty, as upstream printed a pre-defined table
+    on 2026-11-20, reads with ``values`` ``None`` and its other fields as printed
+    (https://github.com/xippios/sdk-eurostat/issues/72)."""
+    values = script._tag("values")
+    printed = [
+        leaf.findtext(script.CODE)
+        for leaf in ET.parse(TOC_SAMPLE_WITHOUT_VALUES).getroot().iter(script.LEAF)
+        if leaf.find(values) is not None and not leaf.findtext(values)
+    ]
+    assert printed, "the sample keeps a leaf whose values element is empty"
+    leaves: list[Dataset] = script.read_toc(TOC_SAMPLE_WITHOUT_VALUES).leaves
+    without = [leaf for leaf in leaves if leaf.values is None]
+    assert [leaf.code for leaf in without] == printed
+    for leaf in without:
+        assert leaf.title
+        assert leaf.path
+        assert re.fullmatch(r"\d{2}\.\d{2}\.\d{4}", leaf.last_update)
+        assert re.fullmatch(r"\d{2}\.\d{2}\.\d{4}", leaf.last_modified)
+
+
+def test_toc_list_writes_an_absent_number_of_values_as_null(tmp_path: Path) -> None:
+    """The packaged table keeps the leaf: ``values`` is written as ``null`` under its
+    upstream name and read back as ``None``."""
+    toc = script.read_toc(TOC_SAMPLE_WITHOUT_VALUES)
+    script.toc_list(toc, FETCHED).write(tmp_path / "toc.json")
+    written = json.loads((tmp_path / "toc.json").read_text(encoding="utf-8"))
+    nulls = [record for record in written["records"] if record["values"] is None]
+    assert [record["code"] for record in nulls] == [
+        leaf.code for leaf in toc.leaves if leaf.values is None
+    ]
+    assert nulls, "the sample's leaf without a number of values is packaged"
+    packaged = PackagedList.model_validate(written)
+    assert packaged.parse(Dataset, source="eurostat") == toc.leaves
+
+
+@pytest.mark.anyio
+async def test_list_datasets_tool_serves_an_absent_number_of_values_as_null(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``eurostat_list_datasets`` serves the leaf with every field, ``values`` ``null``.
+
+    NOT RECORDED as the tool reads it: the table is the one the script packages from the
+    sample, in place of the package's own, which holds no such leaf before its next
+    refresh."""
+    toc = script.read_toc(TOC_SAMPLE_WITHOUT_VALUES)
+    script.toc_list(toc, FETCHED).write(tmp_path / "toc.json")
+    packaged = PackagedList.model_validate_json((tmp_path / "toc.json").read_text(encoding="utf-8"))
+    leaves = packaged.parse(Dataset, source="eurostat")
+    monkeypatch.setattr(params, "datasets", lambda: list(leaves))
+    payload = await mcp_call(server, "eurostat_list_datasets", {})
+    assert "note" not in payload
+    served = [leaf for leaf in payload["data"] if leaf["values"] is None]
+    assert [leaf["code"] for leaf in served] == [
+        leaf.code for leaf in leaves if leaf.values is None
+    ]
+    assert served
+    assert all(set(leaf) == set(Dataset.model_fields) for leaf in served)
 
 
 def test_toc_parser_reads_a_stream_in_pieces() -> None:
@@ -168,14 +232,22 @@ def test_codelist_info_reads_the_release_identifiers() -> None:
 
 def test_samples_are_listed_with_their_provenance() -> None:
     readme = (SAMPLES / "README.md").read_text(encoding="utf-8")
-    for sample in (TOC_SAMPLE, CODELIST_SAMPLE):
+    for sample in (TOC_SAMPLE, TOC_SAMPLE_WITHOUT_VALUES, CODELIST_SAMPLE):
         assert f"| `{sample.relative_to(SAMPLES)}` |" in readme
         assert sample.stat().st_size < 256 * 1024
-    assert (
-        TOC_SAMPLE.read_text(encoding="utf-8")
-        .splitlines()[1]
-        .startswith("<!-- Cut by scripts/refresh_reference.py")
-    )
+    for sample in (TOC_SAMPLE, TOC_SAMPLE_WITHOUT_VALUES):
+        assert (
+            sample.read_text(encoding="utf-8")
+            .splitlines()[1]
+            .startswith("<!-- Cut by scripts/refresh_reference.py")
+        )
+
+
+def test_samples_option_cuts_every_toc_sample() -> None:
+    """Each sample under ``toc/`` is one that ``--samples`` cuts, so a run with it writes
+    its row again and never leaves a sample without one."""
+    cut = {f"{folder}.xml" for folder in script.TOC_SAMPLES}
+    assert cut == {path.name for path in (SAMPLES / "toc").iterdir()}
 
 
 def test_samples_readme_keeps_the_rows_the_script_does_not_cut(

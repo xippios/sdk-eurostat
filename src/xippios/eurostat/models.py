@@ -336,7 +336,8 @@ class Dataset(UpstreamModel):
             ``None`` where the TOC prints none. Upstream's ``dataStart``.
         data_end: The most recent period as printed, e.g. ``"2026-Q2"``; ``None`` where
             the TOC prints none. Upstream's ``dataEnd``.
-        values: The number of values the dataset holds, e.g. ``314789``.
+        values: The number of values the dataset holds, e.g. ``314789``; ``None`` where
+            the TOC prints none (``docs/upstream/OBSERVED.md``). Upstream's ``values``.
     """
 
     code: str
@@ -347,7 +348,7 @@ class Dataset(UpstreamModel):
     last_modified: str = Field(validation_alias="lastModified")
     data_start: str | None = Field(default=None, validation_alias="dataStart")
     data_end: str | None = Field(default=None, validation_alias="dataEnd")
-    values: int
+    values: int | None = None
 
 
 class Code(UpstreamModel):

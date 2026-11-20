@@ -714,7 +714,7 @@ async def list_datasets_async(search: str | None = None) -> Result[list[Dataset]
     ``"table"``), its English ``title``, the folders above it (``path``, their titles
     joined with ``" > "``), its last data update and structure change as Eurostat prints
     them, day first (``"02.10.2026"``), its first and last period and its number of
-    values.
+    values, each ``None`` where Eurostat prints none.
     ``search`` keeps the leaves whose code or title contains the text, ignoring case:
     give one, since the whole list is far more than one answer shows. A dataset's
     ``code`` is what ``get_data`` and the slices take as ``dataset``. ``meta.vintage`` is

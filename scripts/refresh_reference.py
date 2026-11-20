@@ -53,12 +53,13 @@ upstream writes it (``CXT_PRODCOM2_SOLD``) or by its file (``cxt_prodcom2_sold``
 as it was, and the index's ``fetched`` becomes the latest ``fetched`` among all the
 packaged lists, the previous index's or this run's, whichever is later.
 ``--samples`` also cuts the parser tests' samples from the same answers, without a
-request of its own: a folder of the TOC with two of its leaves and the folders above it
-under ``tests/fixtures/files/toc/``, and the STATINFO codelist whole under
-``tests/fixtures/files/codelist/``, their provenance in ``tests/fixtures/files/README.md``
-(sdk-core ADR-0020 decision 6, conventions §10). The TOC's cut parses the whole file again with
-``ElementTree.parse``, about 200 MB at its peak: fine for a one-off run, not for the
-plain refresh, which reads the file a megabyte at a time.
+request of its own: each folder of the TOC that ``TOC_SAMPLES`` names, with the leaves it
+names and the folders above it, under ``tests/fixtures/files/toc/``, and the STATINFO
+codelist whole under ``tests/fixtures/files/codelist/``, their provenance in
+``tests/fixtures/files/README.md`` (sdk-core ADR-0020 decision 6, conventions §10). Each
+TOC cut parses the whole file again with ``ElementTree.parse``, about 200 MB at its peak:
+fine for a one-off run, not for the plain refresh, which reads the file a megabyte at a
+time.
 
 Value lists and lists of integer ids would become enums: a value list in ``LISTS`` a
 ``StrEnum``, a list of ids and names in ``ID_LISTS``, through ``id_name_pairs``, an
@@ -130,12 +131,17 @@ TOC_PARAM = "datasetCode"
 LANG = "en"
 """The codelists' language: English labels, as the TOC's English titles."""
 
-SAMPLE_FOLDER = "apro_mk"
-"""The TOC folder the sample keeps: "Milk and milk products"."""
+TOC_SAMPLES: dict[str, tuple[str, ...]] = {
+    "apro_mk": ("apro_mk_cola", "apro_mk_farm"),
+    "ai": ("tai13",),
+}
+"""The TOC folders the samples keep, ``toc/<folder>.xml`` each, with the leaves each keeps.
 
-SAMPLE_LEAVES = ("apro_mk_cola", "apro_mk_farm")
-"""The leaves of ``SAMPLE_FOLDER`` the sample keeps: a dataset without tables under it
-and one with a pre-defined table under it."""
+"Milk and milk products" with a dataset without tables under it and one with a
+pre-defined table under it; "Agri-environmental indicators" with a pre-defined table
+whose number of values the TOC printed empty on 2026-11-20
+(https://github.com/xippios/sdk-eurostat/issues/72).
+"""
 
 SAMPLE_CODELIST = "STATINFO"
 """The codelist the sample keeps whole: 18 KB on 2026-10-27."""
@@ -440,8 +446,10 @@ class Sample(NamedTuple):
     row: str
 
 
-def cut_toc_sample(source: Path, downloaded: Downloaded, toc: Toc, dest: Path) -> Sample:
-    """Cut ``SAMPLE_FOLDER`` with ``SAMPLE_LEAVES`` and the folders above it out of the TOC.
+def cut_toc_sample(
+    source: Path, downloaded: Downloaded, toc: Toc, dest: Path, folder: str, leaves: Sequence[str]
+) -> Sample:
+    """Cut the TOC's ``folder`` with its ``leaves`` and the folders above it out of the TOC.
 
     The elements kept are upstream's as parsed, written again by ``ElementTree`` under
     upstream's prefixes and indented by two spaces; every other branch and leaf is left
@@ -451,14 +459,14 @@ def cut_toc_sample(source: Path, downloaded: Downloaded, toc: Toc, dest: Path) -
     ET.register_namespace("xsi", XSI)
     root = ET.parse(source).getroot()
     parents = {child: parent for parent in root.iter() for child in parent}
-    folder = next(branch for branch in root.iter(BRANCH) if branch.findtext(CODE) == SAMPLE_FOLDER)
-    children = folder.find(_tag("children"))
+    branch = next(branch for branch in root.iter(BRANCH) if branch.findtext(CODE) == folder)
+    children = branch.find(_tag("children"))
     if children is None:
-        raise ValueError(f"the folder {SAMPLE_FOLDER} has no children")
+        raise ValueError(f"the folder {folder} has no children")
     for leaf in list(children):
-        if leaf.findtext(CODE) not in SAMPLE_LEAVES:
+        if leaf.findtext(CODE) not in leaves:
             children.remove(leaf)
-    kept = folder
+    kept = branch
     while kept is not root:
         parent = parents[kept]
         for sibling in list(parent):
@@ -472,7 +480,7 @@ def cut_toc_sample(source: Path, downloaded: Downloaded, toc: Toc, dest: Path) -
         f"Cut by {GENERATOR} with its samples option from {url}, creationDate "
         f"{toc.creation_date}, "
         f"{size} bytes, sha256 {sha256}, fetched {_utc(downloaded.retrieved_at)}: the folder "
-        f"{SAMPLE_FOLDER} with its leaves {', '.join(SAMPLE_LEAVES)} and the folders above "
+        f"{folder} with its leaves {', '.join(leaves)} and the folders above "
         "it, every other branch and leaf left out."
     )
     if "--" in comment:
@@ -484,8 +492,8 @@ def cut_toc_sample(source: Path, downloaded: Downloaded, toc: Toc, dest: Path) -
     )
     row = (
         f"| `{dest.relative_to(SAMPLES)}` | `{toc.creation_date}` (creationDate) | {url} | "
-        f"{size} | `{sha256}` | {_utc(downloaded.retrieved_at)} | the folder `{SAMPLE_FOLDER}` "
-        f"with the leaves {', '.join(f'`{code}`' for code in SAMPLE_LEAVES)} and the folders "
+        f"{size} | `{sha256}` | {_utc(downloaded.retrieved_at)} | the folder `{folder}` "
+        f"with the leaves {', '.join(f'`{code}`' for code in leaves)} and the folders "
         "above it, written again by ElementTree |"
     )
     return Sample(dest, row)
@@ -723,10 +731,13 @@ async def fetch_all(work: Path, *, samples: bool, only: Sequence[str] | None = N
         written[params.TOC] = toc_list(toc, downloaded.retrieved_at)
         infos.append(toc_info(toc))
         if samples:
-            dest = SAMPLES / "toc" / f"{SAMPLE_FOLDER}.xml"
-            pending.append(
-                functools.partial(cut_toc_sample, downloaded.path, downloaded, toc, dest)
-            )
+            for folder, leaves in TOC_SAMPLES.items():
+                dest = SAMPLES / "toc" / f"{folder}.xml"
+                pending.append(
+                    functools.partial(
+                        cut_toc_sample, downloaded.path, downloaded, toc, dest, folder, leaves
+                    )
+                )
     for resource_id in params.CODELISTS:
         if only is not None and resource_id.lower() not in only:
             continue

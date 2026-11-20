@@ -213,9 +213,10 @@ is when the package fetched the list, `meta.endpoint` the operation it came from
 every dataset and pre-defined table of the navigation tree, over 10,000 leaves, one per
 listing in the tree, each with its code, type, English title, the folders above it
 (`path`, joined with `" > "`), its last update and structure change, its first and last
-period and its number of values as Eurostat prints them. `meta.vintage` is the table of
-contents' `creationDate` as printed and `meta.published_at` the same time, which
-Eurostat prints without a zone, so `meta.published_at_naive` is set.
+period and its number of values as Eurostat prints them, each `None` where it prints
+none. `meta.vintage` is the table of contents' `creationDate` as printed and
+`meta.published_at` the same time, which Eurostat prints without a zone, so
+`meta.published_at_naive` is set.
 `list_codes(codelist, search=None)` reads one of eighteen SDMX codelists
 (`sdmx/2.1/codelist/ESTAT/<ID>`, English labels): FREQ, GEO, UNIT, CROPS, STRUCPRO,
 MILKITEM, DAIRYPROD, STATINFO, LEG_FORM, FARMTYPE, SO_EUR and UAAREA, the codelists of
