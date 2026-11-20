@@ -57,8 +57,9 @@ The list tasks, ``list_datasets``, ``list_codes``, ``list_products``, ``list_cn8
 decision 1: ``meta.retrieved_at``
 is the list's ``fetched``, ``meta.endpoint`` the operation it was fetched from
 (``catalogue/toc/xml``, ``sdmx/2.1/codelist/ESTAT/<ID>``, or for a codelist of the
-Comext base its full URL), ``meta.total`` ``None``. Their release metadata (Johannes,
-2026-10-27, D4) comes from ``reference/lists.json``: for the table of contents
+Comext base its full URL), ``meta.total`` ``None``. Their release metadata (decision D4
+of https://github.com/xippios/sdk-eurostat/pull/6) comes from ``reference/lists.json``:
+for the table of contents
 ``meta.vintage`` is its ``creationDate`` as printed (``"20261028T1000"``) and
 ``meta.published_at`` the same time without a zone, ``published_at_naive`` set (sdk-core ADR-0041
 decision 2); for a codelist ``meta.vintage`` is its version (``"28.0"``) and

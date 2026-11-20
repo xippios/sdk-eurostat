@@ -2,9 +2,10 @@
 
 ``/add-endpoint`` adds them, next to the reachability check.
 
-``get_data`` has one per dataset of the design round's question 6 (2026-10-27), each the
-small slice its fixture holds: ``apro_mk_cola`` (milk collection), ``apro_cpnh1`` (crop
-production) and ``ef_m_farmleg`` (farm indicators by legal status), Austria, two periods.
+``get_data`` has one per dataset chosen when the package started
+(https://github.com/xippios/sdk-eurostat/pull/1), each the small slice its fixture holds:
+``apro_mk_cola`` (milk collection), ``apro_cpnh1`` (crop production) and
+``ef_m_farmleg`` (farm indicators by legal status), Austria, two periods.
 The slices have one each, on the slices their first fixtures hold: ``get_series`` and
 ``get_cross_section`` on ``apro_mk_cola``, ``get_latest_period`` on ``apro_cpnh1``.
 The list tasks answer from the packaged lists, so theirs check upstream's side: that the

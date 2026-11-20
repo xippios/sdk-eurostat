@@ -18,12 +18,13 @@ query takes ``format``, ``lang``, ``compressed``, ``detail``, ``completestub`` a
 ``format`` "JSON for JSON-stat" (supported for codelists and dataflows only) and ``lang``
 ``en``, ``fr`` or ``de`` "Used for JSON or TSV response format", ``en`` by default; the
 version, a path segment, is "latest" when left out. This wrapper sends ``format=JSON``
-always, since the package reads no SDMX-ML (D44; design round Q3, 2026-10-27), and
-leaves the version out, for the latest: the guide's other sentence, that a query
-without a version returns "all existing versions", is not what a JSON-stat answer does,
-which carries one version (``UNIT`` answered with 84.0 on 2026-10-27, newer than the
-82.0 and 75.0 that the data structures of apro_mk_cola and ef_m_farmleg name). The
-answer is one JSON-stat dimension (``models.Codelist``). Only
+always, since the package reads no SDMX-ML (decision D1 of
+https://github.com/xippios/sdk-eurostat/pull/6), and leaves the version out, for the
+latest: the guide's other sentence, that a query without a version returns "all existing
+versions", is not what a JSON-stat answer does, which carries one version (``UNIT``
+answered with 84.0 on 2026-10-27, newer than the 82.0 and 75.0 that the data structures
+of apro_mk_cola and ef_m_farmleg name). The answer is one JSON-stat dimension
+(``models.Codelist``). Only
 ``scripts/refresh_reference.py`` calls this operation; ``list_codes`` answers from the
 packaged codelists.
 
@@ -46,7 +47,7 @@ takes ``firstNObservations``, ``lastNObservations``, ``detail``, ``format``, ``l
   returned for each of the matching series, counting back from the most recent
   observation";
 - ``format`` ``SDMX-CSV`` is "SDMX-CSV 1.0 flat format", sent always, since the package
-  reads no SDMX-ML (D44; design round Q2, 2026-10-27);
+  reads no SDMX-ML (https://github.com/xippios/sdk-eurostat/pull/7);
 - ``compressed`` gives "responses in .gz compressed format": ``compressed=true``
   answered on 2026-10-27 with the same ``Content-Type``,
   ``application/vnd.sdmx.data+csv;version=1.0.0``, and a gzip file

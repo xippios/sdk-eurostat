@@ -2,8 +2,8 @@
 
 Eurostat's lists are packaged as tables, not as enums: the Catalogue API's table of
 contents (TOC) and the eighteen codelists in ``params.CODELISTS``, each too large for an
-enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
-``reference/<name>.json`` (conventions §3, sdk-core ADR-0041):
+enum (https://github.com/xippios/sdk-eurostat/pull/6), written with ``PackagedList.write``
+to ``reference/<name>.json`` (conventions §3, sdk-core ADR-0041):
 
 - ``toc.json``: the TOC, downloaded whole to a temporary file through
   ``api.catalogue.get_toc_xml`` (core's ``download``, which streams the body to disk; 23 MB
@@ -12,13 +12,17 @@ enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
   once read: every ``leaf``, datasets and tables alike, with its code, type, English
   title, the English titles of the folders above it joined with ``" > "`` (``path``),
   ``lastUpdate``, ``lastModified``, ``dataStart``, ``dataEnd`` and ``values`` as printed.
-  This script is the only code that parses XML (D44; sdk-core ADR-0020 decision 3).
+  This script is the only code that parses XML, so the package parses none at run time
+  (decision D1 of https://github.com/xippios/sdk-eurostat/pull/6; sdk-core ADR-0020
+  decision 3).
 - ``<codelist>.json``: one codelist each, the latest version in JSON-stat through
-  ``api.sdmx.code_list_query`` with English labels (Johannes, 2026-10-27, D1 and D2), its
-  codes and labels in upstream's order, requested on the base ``params.CODELISTS`` names
-  for it: twelve on the main base, six on the Comext base, the codelists of the Prodcom
-  datasets' ``product`` and ``indicators`` and of the trade datasets' ``product``,
-  ``reporter`` and ``partner``, and ``flow`` (Johannes, 2026-10-28). Its ``param`` is the
+  ``api.sdmx.code_list_query`` with English labels (decisions D1 and D2 of
+  https://github.com/xippios/sdk-eurostat/pull/6), its codes and labels in upstream's
+  order, requested on the base ``params.CODELISTS`` names for it: twelve on the main
+  base, six on the Comext base, the codelists of the Prodcom datasets' ``product`` and
+  ``indicators`` and of the trade datasets' ``product``, ``reporter`` and ``partner``, and
+  ``flow`` (https://github.com/xippios/sdk-eurostat/pull/13 and
+  https://github.com/xippios/sdk-eurostat/pull/14). Its ``param`` is the
   dimension ``params.CODELISTS`` names (``geo``, ``product``), and its ``endpoint`` the
   path it was fetched from on the main base (``sdmx/2.1/codelist/ESTAT/GEO``) and the
   full URL on the Comext base (``codelist_endpoint``).
@@ -27,8 +31,8 @@ enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
   lists, and ``lists``, one record per packaged list with what upstream gives each as
   its release (the TOC's ``creationDate``, a codelist's ``version`` and
   ``LAST_UPDATED``), since a packaged file holds its four keys and a ``note`` and
-  nothing else (sdk-core ADR-0041, decision 5; gap, row 111). It names no upstream operation:
-  it is derived from the nineteen answers.
+  nothing else (sdk-core ADR-0041, decision 5; https://github.com/xippios/sdk-core/issues/81).
+  It names no upstream operation: it is derived from the nineteen answers.
 
 Each packaged file's ``fetched`` is the time its answer arrived, UTC to the second. The
 provenance table of ``reference/README.md`` is rewritten from the packaged files. Run
@@ -366,7 +370,8 @@ def codelist_endpoint(resource_id: str) -> str:
     ``sdmx/2.1/codelist/ESTAT/GEO`` for a codelist of the main base, as packaged since
     0.1.0; ``https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/``
     ``ESTAT/CXT_PRODCOM2_SOLD`` for one of the Comext base, whose path alone would name
-    the main base's operation (sdk-core ADR-0041 decision 1; Johannes, 2026-10-28; gap, row 172).
+    the main base's operation (conventions §4, sdk-core ADR-0041 decision 1, as
+    https://github.com/xippios/sdk-eurostat/pull/13 decided).
 
     Raises:
         KeyError: ``params.CODELISTS`` does not name the codelist.

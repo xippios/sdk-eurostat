@@ -37,14 +37,15 @@ geo.records[0]  # {"code": "EUR", "label": "Europe"}
   one record per packaged list with upstream's release identifiers, the TOC's
   `creationDate` and a codelist's `version` and `LAST_UPDATED`, which the list tasks
   read for `meta.vintage` and `meta.published_at`; a packaged-list file has no key for
-  them (sdk-core ADR-0041, decision 5; gap, row 111). It is derived from the nineteen answers
-  the packaged lists come from and names no upstream operation, so it has no origin and
-  no row in the table below.
+  them (sdk-core ADR-0041, decision 5; https://github.com/xippios/sdk-core/issues/81). It
+  is derived from the nineteen answers the packaged lists come from and names no upstream
+  operation, so it has no origin and no row in the table below.
 
-The script, not the package, parses the TOC's XML, the only XML parsed anywhere (D44),
-and it reads the codelists as JSON-stat. A record's fields are upstream's (`lastUpdate`,
-`dataStart`), and `path`, `code` and `label` name what the package reads out of the
-tree's nesting and a codelist's `category`. No enum is generated from these lists, too
+The script, not the package, parses the TOC's XML, the only XML parsed anywhere, and it
+reads the codelists as JSON-stat (decision D1 of
+https://github.com/xippios/sdk-eurostat/pull/6). A record's fields are upstream's
+(`lastUpdate`, `dataStart`), and `path`, `code` and `label` name what the package reads
+out of the tree's nesting and a codelist's `category`. No enum is generated from these lists, too
 large for one; `enums.py` is the renderer's empty module.
 
 Each packaged-list file holds `{"param", "endpoint", "fetched", "records"}` and an

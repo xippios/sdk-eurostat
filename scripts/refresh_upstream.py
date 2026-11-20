@@ -178,7 +178,7 @@ WIKI_PAGES = (
     ("https://wikis.ec.europa.eu/x/-AD9B", "SDMX 2.1 and asynchronous answers"),
     ("https://wikis.ec.europa.eu/x/c4eBBg", "the TSV format"),
 )
-"""Confluence pages the briefing names, requested once each without credentials."""
+"""Eurostat's Confluence pages on these subjects, requested once each without credentials."""
 LOGIN_HOST = "webgate.ec.europa.eu"
 """EU Login, where an anonymous client is sent; never requested."""
 
@@ -205,23 +205,23 @@ NOT_REQUESTED = (
     ),
     (
         f"{GUIDE_BASE}api-detailed-guidelines/sdmx3-0",
-        "SDMX 3.0 is not wrapped (the design round of 2026-10-27, D44); the Comext base's "
-        "SDMX 3.0 WADL is kept as one of its five",
+        "SDMX 3.0 is not wrapped (https://github.com/xippios/sdk-eurostat/pull/11); the "
+        "Comext base's SDMX 3.0 WADL is kept as one of its five",
     ),
     (
         f"{GUIDE_BASE}api-detailed-guidelines/sdmx3-0/data-query",
-        "SDMX 3.0 is not wrapped (the design round of 2026-10-27, D44); the Comext base's "
-        "SDMX 3.0 WADL is kept as one of its five",
+        "SDMX 3.0 is not wrapped (https://github.com/xippios/sdk-eurostat/pull/11); the "
+        "Comext base's SDMX 3.0 WADL is kept as one of its five",
     ),
     (
         f"{GUIDE_BASE}api-detailed-guidelines/sdmx3-0/structure-queries",
-        "SDMX 3.0 is not wrapped (the design round of 2026-10-27, D44); the Comext base's "
-        "SDMX 3.0 WADL is kept as one of its five",
+        "SDMX 3.0 is not wrapped (https://github.com/xippios/sdk-eurostat/pull/11); the "
+        "Comext base's SDMX 3.0 WADL is kept as one of its five",
     ),
     (
         f"{API_BASE}sdmx/3.0/sdmx-rest.wadl",
-        "SDMX 3.0 is not wrapped (the design round of 2026-10-27, D44); the Comext base's "
-        "SDMX 3.0 WADL is kept as one of its five",
+        "SDMX 3.0 is not wrapped (https://github.com/xippios/sdk-eurostat/pull/11); the "
+        "Comext base's SDMX 3.0 WADL is kept as one of its five",
     ),
     (f"{GUIDE_BASE}api-detailed-guidelines/catalogue-api/rss", "the RSS feed is not used here"),
     (

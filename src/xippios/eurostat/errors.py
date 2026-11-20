@@ -32,15 +32,17 @@ from the answers recorded under ``tests/fixtures/get_data/``, on the main base o
 - ``{"warning": {"status": 413, "label": "ASYNCHRONOUS_RESPONSE. ..."}}``: the
   asynchronous answer as the user guide documents it, at an HTTP status the guide does
   not name; never seen. Four unfiltered requests on 2026-10-27 to datasets of 624,554 to
-  853,146 values all answered synchronously, and probing stopped there (Johannes,
-  2026-10-27); the answer recorded on 2026-10-28 came as the ``error`` array above. The
+  853,146 values all answered synchronously, and probing stopped there
+  (https://github.com/xippios/sdk-eurostat/pull/4); the answer recorded on 2026-10-28
+  came as the ``error`` array above. The
   SDMX API's asynchronous answer, an XML envelope, is recorded too (``_client.classify``).
 - ``<S:Fault>`` with ``<faultcode>413</faultcode>`` and a ``<faultstring>`` such as
   ``EXTRACTION_TOO_BIG: The requested extraction is too big, ...``: the SOAP fault the
   guide documents for an SDMX request over the maximum extraction, recorded on the
   Comext base for one (``tests/fixtures/data_query/DS-045409_too_big_413.json``); read
   in case the Statistics API sends it too. Only the ``faultstring`` text is taken, with
-  a regular expression on the body text: the package parses no XML at run time (D44).
+  a regular expression on the body text: the package parses no XML at run time
+  (https://github.com/xippios/sdk-eurostat/pull/4).
 
 The fault table's codes (``id``): 100 no results found (HTTP 400, "The result from the
 query is empty", or HTTP 404, "The requested resource is not available"), 140 syntax
