@@ -256,11 +256,11 @@ CITE_HEADING = "How to cite Eurostat products"
 CITE_SUBHEADING = "Datasets"
 
 SUBDIRS = ("user-guide", "api", "samples")
+"""The snapshot's subdirectories, which this script owns entirely."""
 OBSERVED = "OBSERVED.md"
 """The one file under ``docs/upstream/`` written by hand: what upstream does but never
 documents (conventions §3). The script neither writes nor checks it, and ``FETCHED.md``
 lists it in a row of its own where it exists."""
-"""The snapshot's subdirectories, which this script owns entirely."""
 
 TIMEOUT = 60.0
 PAUSE = 5.0

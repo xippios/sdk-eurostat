@@ -38,8 +38,9 @@ from the repository root, without a key (the API takes none)::
 
 Nineteen keyless requests: the TOC and eighteen codelists, paced by the package client.
 The client sends each request once, ``RetryPolicy(max_attempts=1)``, so a 5xx or a 429
-spends no second request of upstream's fair use: a run that fails writes nothing and is
-run again. After the fetches the script prints the requests it sent, a failed run's too,
+spends no second request of upstream's fair use: every list is fetched before the first
+file is written, a sample included, so a run that fails writes nothing and is run again.
+After the fetches the script prints the requests it sent, a failed run's too,
 and the quota left, which Eurostat reports in no header (``QUOTA_HEADER``).
 ``--only <name> [<name> ...]`` fetches the named lists alone, each named by its id as
 upstream writes it (``CXT_PRODCOM2_SOLD``) or by its file (``cxt_prodcom2_sold``,
@@ -67,6 +68,7 @@ files alone, without a request: after a core release changes the renderer (conve
 """
 
 import argparse
+import functools
 import hashlib
 import json
 import re
@@ -704,11 +706,12 @@ async def fetch_all(work: Path, *, samples: bool, only: Sequence[str] | None = N
 
     ``only``, file names from ``selected``, fetches those lists alone; ``None`` fetches
     every one. The TOC goes to ``work`` while it is read; nothing else touches the disk
-    here but the samples, when asked for.
+    here but the samples, when asked for, which are cut once every list is fetched, so a
+    failed request leaves none behind.
     """
     written: dict[str, PackagedList] = {}
     infos: list[ListInfo] = []
-    cut: list[Sample] = []
+    pending: list[Callable[[], Sample]] = []
     if only is None or params.TOC in only:
         downloaded = await fetch_toc(work / "toc.xml")
         toc = read_toc(downloaded.path)
@@ -716,7 +719,9 @@ async def fetch_all(work: Path, *, samples: bool, only: Sequence[str] | None = N
         infos.append(toc_info(toc))
         if samples:
             dest = SAMPLES / "toc" / f"{SAMPLE_FOLDER}.xml"
-            cut.append(cut_toc_sample(downloaded.path, downloaded, toc, dest))
+            pending.append(
+                functools.partial(cut_toc_sample, downloaded.path, downloaded, toc, dest)
+            )
     for resource_id in params.CODELISTS:
         if only is not None and resource_id.lower() not in only:
             continue
@@ -727,8 +732,8 @@ async def fetch_all(work: Path, *, samples: bool, only: Sequence[str] | None = N
         infos.append(codelist_info(answer.codelist))
         if samples and resource_id == SAMPLE_CODELIST:
             dest = SAMPLES / "codelist" / f"{resource_id.lower()}.json"
-            cut.append(write_codelist_sample(answer, dest))
-    return Fetched(written, infos, cut)
+            pending.append(functools.partial(write_codelist_sample, answer, dest))
+    return Fetched(written, infos, [cut() for cut in pending])
 
 
 def refresh(*, samples: bool = False, only: Sequence[str] | None = None) -> None:

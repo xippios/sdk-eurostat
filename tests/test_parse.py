@@ -321,8 +321,9 @@ def test_parse_sdmx_csv_refuses_a_header_only_file_of_another_layout(
 @pytest.mark.parametrize("packed", [False, True], ids=["plain", "gzip"])
 def test_parse_sdmx_csv_refuses_text_that_is_not_utf8(tmp_path: Path, packed: bool) -> None:
     """NOT RECORDED: the plain sample's rows repeated past 64 KiB, its last row with a byte
-    that is no UTF-8, in memory. The header reads, so the rows' reader refuses it: the
-    plain file's ``decode_csv``, the gzip file's standard library, worded alike."""
+    that is no UTF-8, in memory. The header reads, so the rows' reader refuses it: core's
+    ``decode_csv``, which reads the plain file by its path and the gzip file as its open
+    stream, naming the file alike."""
     header, rows = PLAIN.read_bytes().split(b"\r\n", 1)
     body = rows * (64 * 1024 // len(rows) + 1)
     last = body.rindex(b"ESTAT:")
