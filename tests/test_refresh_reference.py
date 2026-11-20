@@ -377,6 +377,33 @@ def test_refresh_sends_each_request_once_and_reports_the_count(
     assert client.config is configured
 
 
+def test_a_failed_samples_run_writes_no_sample(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    respx_mock: respx.MockRouter,
+) -> None:
+    """``--samples`` cuts its samples once every list is fetched: the TOC arrives, the
+    codelist after it fails, and neither the TOC's sample nor the README is written."""
+    respx_mock.get(f"{BASE_URL}/catalogue/toc/xml").mock(
+        return_value=httpx.Response(
+            200,
+            content=TOC_SAMPLE.read_bytes(),
+            headers={"Content-Type": "application/xml;charset=UTF-8"},
+        )
+    )
+    respx_mock.get(f"{BASE_URL}/sdmx/2.1/codelist/ESTAT/STATINFO").mock(
+        return_value=httpx.Response(503, text="Service Unavailable")
+    )
+    reference = copy_reference(tmp_path, monkeypatch)
+    samples = tmp_path / "files"
+    monkeypatch.setattr(script, "SAMPLES", samples)
+    monkeypatch.setattr(params, "CODELISTS", {"STATINFO": params.CODELISTS["STATINFO"]})
+    with pytest.raises(XippiosError):
+        script.main(["--samples"])
+    assert not samples.exists(), "no sample cut before the last fetch"
+    assert sorted(path.name for path in reference.iterdir()) == ["README.md", "lists.json"]
+
+
 def test_only_takes_an_id_or_a_file_name_in_the_index_order() -> None:
     assert script.selected(["CXT_INDICATORS", "cxt_prodcom2_sold", "toc"]) == [
         "toc",
