@@ -555,7 +555,8 @@ async def get_series_async(
         filters,
         arguments=(
             "format is always JSON, lang is an argument of get_series and since and until "
-            "select its periods; get_data takes the other time parameters and geo_level"
+            "select its periods; get_data takes the other time parameters and geo_level "
+            "(over MCP, the tool eurostat_get_data)"
         ),
         time_rule=(
             "get_series selects periods with since and until; filters pins every dimension but time"
@@ -615,11 +616,12 @@ async def get_latest_period_async(
         arguments=(
             "format is always JSON and lang is an argument of get_latest_period, which "
             "asks for the latest period itself; get_data takes the other time parameters "
-            "and geo_level"
+            "and geo_level (over MCP, the tool eurostat_get_data)"
         ),
         time_rule=(
             "get_latest_period asks for the latest period itself; leave time out of "
-            "filters, or ask get_cross_section for one period"
+            "filters, or ask get_cross_section for one period (over MCP, the tool "
+            "eurostat_get_cross_section)"
         ),
     )
     answer = await get_data_async(dataset, sent, lang=lang, last_time_period=1)
@@ -668,7 +670,8 @@ async def get_cross_section_async(
         filters,
         arguments=(
             "format is always JSON, lang is an argument of get_cross_section and period "
-            "selects its period; get_data takes the other time parameters and geo_level"
+            "selects its period; get_data takes the other time parameters and geo_level "
+            "(over MCP, the tool eurostat_get_data)"
         ),
         time_rule="get_cross_section takes its one period as period; leave time out of filters",
     )
@@ -744,7 +747,8 @@ UNPACKAGED_CODELIST = (
     "ef_m_farmleg, of the product and indicators dimensions of the Prodcom datasets "
     "DS-059358 and DS-059359, and of the product, reporter and partner, and flow dimensions "
     "of the Comext trade datasets DS-045409 and DS-059341, only; for any other dataset, "
-    "get_data's cube lists the codes it answers with on each dimension, with their labels."
+    "the cube of get_data (over MCP, the tool eurostat_get_data) lists the codes it "
+    "answers with on each dimension, with their labels."
 )
 """Why ``list_codes`` refuses a codelist the package does not carry."""
 
@@ -1004,7 +1008,7 @@ UNKNOWN_PRODUCT = (
 UNKNOWN_INDICATOR = (
     "The package checks each indicator against its copy of CXT_INDICATORS, the indicators "
     "of the Prodcom and Comext datasets, before sending; "
-    'list_codes("cxt_indicators") lists them.'
+    'list_codes("cxt_indicators") lists them (over MCP, the tool eurostat_list_codes).'
 )
 """Why a production or trade task refuses an indicator CXT_INDICATORS lacks (conventions §5).
 
@@ -1015,7 +1019,7 @@ in it that the dataset lacks passes, and Eurostat answers it with an empty cube
 UNKNOWN_COUNTRY = (
     "The package checks each reporter and partner against its copy of CXT_FREE_ISO, "
     "Comext's list of reporters and partners, before sending; "
-    'list_codes("cxt_free_iso") lists them.'
+    'list_codes("cxt_free_iso") lists them (over MCP, the tool eurostat_list_codes).'
 )
 """Why a production or trade task refuses a reporter or partner CXT_FREE_ISO lacks."""
 
@@ -1111,12 +1115,15 @@ async def _production(
     indicators.
     """
     listed = (
-        "list_products lists them."
+        "list_products lists them (over MCP, the tool eurostat_list_products)."
         if products == params.PRODCOM_SOLD
-        else f'list_codes("{products.lower()}") lists them.'
+        else (
+            f'list_codes("{products.lower()}") lists them (over MCP, the tool eurostat_list_codes).'
+        )
     )
     elsewhere = " ".join(
-        f"{product} is a product of {dataset}: {task} serves it."
+        f"{product} is a product of {dataset}: {task} serves it (over MCP, the tool "
+        f"{SOURCE}_{task})."
         for codelist, (dataset, task) in PRODUCTION_DATASETS.items()
         if codelist != products and product in _labels(codelist.lower())
     )
@@ -1269,13 +1276,14 @@ positions of ``download_trade``'s key."""
 
 UNKNOWN_TRADE_PRODUCT = (
     "The package checks the product against its copy of CXT_NC, the trade datasets' "
-    "product list, before sending; list_cn8 and list_hs list its codes."
+    "product list, before sending; list_cn8 and list_hs list its codes (over MCP, the "
+    "tools eurostat_list_cn8 and eurostat_list_hs)."
 )
 """Why a trade task refuses a product CXT_NC lacks (conventions §5)."""
 
 UNKNOWN_FLOW = (
     "The package checks the flow against its copy of CXT_EU_FLUX before sending; "
-    'list_codes("cxt_eu_flux") lists them.'
+    'list_codes("cxt_eu_flux") lists them (over MCP, the tool eurostat_list_codes).'
 )
 """Why a trade task refuses a flow CXT_EU_FLUX lacks (conventions §5)."""
 
@@ -1505,23 +1513,6 @@ DOT_SEGMENTS = frozenset({".", ".."})
 """Keys a URL resolves away as a path segment before sending."""
 
 
-def _target(dest: str | os.PathLike[str]) -> Path:
-    """``dest`` as a path, refused when it is a directory or its directory is missing.
-
-    Core's own text (``AsyncClient.download``), as the taxonomy's refusal, before any
-    request.
-
-    Raises:
-        InvalidRequestError: ``dest`` is a directory, or its directory does not exist.
-    """
-    target = Path(dest)
-    if target.is_dir():
-        raise InvalidRequestError("dest is a directory; name the file to write", source=SOURCE)
-    if not target.parent.is_dir():
-        raise InvalidRequestError("dest's directory does not exist; create it first", source=SOURCE)
-    return target
-
-
 async def _download(
     dataset: str,
     target: Path,
@@ -1648,7 +1639,7 @@ async def download_dataset_async(
     }
     return await _download(
         dataset,
-        _target(dest),
+        Path(dest),
         request,
         key=key,
         since=since,
@@ -1764,7 +1755,7 @@ async def download_trade_async(
         "format": api.sdmx.DATA_FORMAT,
         "compressed": True,
     }
-    return await _download(EU_TRADE, _target(dest), request, key=key, since=since, until=until)
+    return await _download(EU_TRADE, Path(dest), request, key=key, since=since, until=until)
 
 
 download_trade = sync(download_trade_async)

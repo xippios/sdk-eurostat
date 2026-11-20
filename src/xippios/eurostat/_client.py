@@ -26,10 +26,12 @@ import httpx
 from xippios.core import (
     AsyncClient,
     ClientConfig,
+    EnvVar,
     InvalidRequestError,
     NotFoundError,
     RateLimit,
     XippiosError,
+    request_description,
 )
 from xippios.core.client import MemoryCache
 
@@ -67,6 +69,10 @@ SDMX_CSV = "application/vnd.sdmx.data+csv"
 """The media type of an SDMX-CSV answer, plain or ``compressed=true`` (recorded
 2026-10-27; ``version=1.0.0`` as its parameter)."""
 API_KEY_ENV: str | None = None
+ENV_VARS: tuple[EnvVar, ...] = ()
+"""The variables the package reads, for a host (conventions §7; sdk-core ADR-0026, amendment
+2026-11-18, point c): none, since the API is open. An ``EnvVar`` names a variable and reads
+none; a variable the source reads joins the list."""
 # A self-imposed pace: upstream documents no rate in numbers, only a fair-use rule
 # without one (ADR-0010 decision 1; asynchronous-api.md, "Fair use of the service").
 RATE_LIMIT = RateLimit(per_minute=30, burst=1)
@@ -99,11 +105,6 @@ def url_for(code: str, path: str) -> str:
     return f"{COMEXT_BASE_URL}{path}" if code.startswith(COMEXT_PREFIX) else path
 
 
-def _where(response: httpx.Response) -> str:
-    """The request's method and path, never its host or query (conventions §5)."""
-    return f"{response.request.method} {response.request.url.path}"
-
-
 def _not_sdmx_csv(response: httpx.Response) -> str | None:
     """The media type of a 2xx data query answer that is no SDMX-CSV, else ``None``.
 
@@ -121,7 +122,8 @@ def classify(response: httpx.Response) -> XippiosError | None:
     """The Statistics API's documented refusals and the SDMX data API's, mapped once (ADR-0008).
 
     Both bases answer in the same shapes, so one mapping serves both; a message names
-    the request's path, which tells the bases apart, never its host.
+    the request by core's ``request_description``, its method and path, which tells the
+    bases apart, never its host or query (conventions §5).
 
     - A 2xx answer to an SDMX 2.1 data query (``sdmx/2.1/data/`` on either base) whose
       ``Content-Type`` is not SDMX-CSV's: ``InvalidRequestError`` naming how to narrow the
@@ -166,10 +168,11 @@ def classify(response: httpx.Response) -> XippiosError | None:
     is retried. An unknown code (``geo=XX``) is no error: the service answers HTTP 200
     with an empty cube (``tests/fixtures/get_data/unknown_code.json``).
     """
+    where = request_description(response)
     media = _not_sdmx_csv(response)
     if media is not None:
         return InvalidRequestError(
-            f"Eurostat answered {_where(response)} with {media}, not SDMX-CSV: a data "
+            f"Eurostat answered {where} with {media}, not SDMX-CSV: a data "
             "query the SDMX API will treat asynchronously is answered with an XML envelope "
             f"that queues it, and this package does not poll asynchronous answers: {NARROW_HINT}.",
             source=SOURCE,
@@ -181,7 +184,7 @@ def classify(response: httpx.Response) -> XippiosError | None:
         queued = asynchronous_fault(payload)
         if queued is not None:
             return InvalidRequestError(
-                f"Eurostat will answer {_where(response)} asynchronously "
+                f"Eurostat will answer {where} asynchronously "
                 f"({queued.label}), and this package does not poll asynchronous answers: "
                 f"{AGAIN_LATER}, or {NARROW_HINT}.",
                 source=SOURCE,
@@ -191,17 +194,17 @@ def classify(response: httpx.Response) -> XippiosError | None:
             described = "; ".join(fault.describe() for fault in faults)
             if status == 404 or all(fault.id == NO_RESULTS for fault in faults):
                 return NotFoundError(
-                    f"Eurostat answered {_where(response)} with HTTP {status} ({described}).",
+                    f"Eurostat answered {where} with HTTP {status} ({described}).",
                     source=SOURCE,
                 )
             return InvalidRequestError(
-                f"Eurostat refused the query {_where(response)} with HTTP 400 ({described}).",
+                f"Eurostat refused the query {where} with HTTP 400 ({described}).",
                 source=SOURCE,
             )
     if status == 413:
         fault = "; ".join(item.describe() for item in faults) or soap_faultstring(response)
         return InvalidRequestError(
-            f"Eurostat refused {_where(response)} as too large "
+            f"Eurostat refused {where} as too large "
             f"(HTTP 413{': ' + fault if fault else ''}): {NARROW_HINT}.",
             source=SOURCE,
         )
@@ -227,6 +230,7 @@ __all__ = [
     "BASE_URL",
     "COMEXT_BASE_URL",
     "COMEXT_PREFIX",
+    "ENV_VARS",
     "RATE_LIMIT",
     "SDMX_CSV",
     "SDMX_DATA_PATHS",

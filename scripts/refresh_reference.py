@@ -37,6 +37,10 @@ from the repository root, without a key (the API takes none)::
     uv run python scripts/refresh_reference.py
 
 Nineteen keyless requests: the TOC and eighteen codelists, paced by the package client.
+The client sends each request once, ``RetryPolicy(max_attempts=1)``, so a 5xx or a 429
+spends no second request of upstream's fair use: a run that fails writes nothing and is
+run again. After the fetches the script prints the requests it sent, a failed run's too,
+and the quota left, which Eurostat reports in no header (``QUOTA_HEADER``).
 ``--only <name> [<name> ...]`` fetches the named lists alone, each named by its id as
 upstream writes it (``CXT_PRODCOM2_SOLD``) or by its file (``cxt_prodcom2_sold``,
 ``toc``), one request each: it writes their files, replaces their records in
@@ -70,17 +74,19 @@ import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
-from collections.abc import Callable, Coroutine, Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Callable, Coroutine, Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, NamedTuple
 
-from xippios.core import Downloaded, PackagedList, UpstreamModel, sync
+import httpx
+from xippios.core import AsyncClient, Downloaded, PackagedList, RetryPolicy, UpstreamModel, sync
 from xippios.core.reference import id_name_pairs, render_enums
 
 from xippios.eurostat import api, params
-from xippios.eurostat._client import BASE_URL
+from xippios.eurostat._client import BASE_URL, client
 from xippios.eurostat.models import Codelist, Dataset
 from xippios.eurostat.params import ListInfo
 
@@ -90,6 +96,11 @@ REFERENCE = PACKAGE_DIR / "reference"
 ENUMS = PACKAGE_DIR / "enums.py"
 GENERATOR = "scripts/refresh_reference.py"
 SAMPLES = ROOT / "tests/fixtures/files"
+
+QUOTA_HEADER: str | None = None
+"""The response header in which upstream reports the requests left in its quota, as its
+documentation names it, or ``None`` where it reports none: the API documents a fair-use
+rule without a number (``asynchronous-api.md``) and no such header."""
 
 LISTS: dict[str, Callable[[], Coroutine[Any, Any, list[str]]]] = {}
 """Value lists, one ``StrEnum`` each: Eurostat's packaged lists are tables, none is one."""
@@ -126,6 +137,54 @@ SAMPLE_CODELIST = "STATINFO"
 SAMPLE_KINDS = ("toc", "codelist")
 """The sample kinds this script cuts; the README rows of any other kind are kept as they
 are (``sdmx-csv/``, the bodies of the recorded ``dataQuery`` exchanges)."""
+
+
+class Meter:
+    """What a run spent: the requests it sent and the quota left that upstream reported.
+
+    The client's ``observe`` hook, which core calls with every response from the wire. It
+    calls the hook the client had first, a quota policy's say (sdk-core ADR-0037), and keeps
+    the last count that upstream sent in ``QUOTA_HEADER``. A request is counted by its
+    response: with no retry each has one, but for one that fails in transport, whose error
+    ends the run.
+    """
+
+    def __init__(self, observe: Callable[[httpx.Response], None] | None) -> None:
+        self.sent = 0
+        self.left: int | None = None
+        self._observe = observe
+
+    def __call__(self, response: httpx.Response) -> None:
+        """Count ``response`` and keep the quota it reports, after the hook it replaces."""
+        if self._observe is not None:
+            self._observe(response)
+        self.sent += 1
+        value = response.headers.get(QUOTA_HEADER) if QUOTA_HEADER else None
+        if value is not None and value.isascii() and value.isdigit():
+            self.left = int(value)
+
+    def report(self) -> str:
+        """The requests sent and the quota left, as upstream last reported it, one line."""
+        left = "not reported" if self.left is None else f"{self.left} ({QUOTA_HEADER})"
+        return f"requests sent: {self.sent}; quota left: {left}"
+
+
+@contextmanager
+def metered(target: AsyncClient) -> Iterator[Meter]:
+    """``target`` for the block: one attempt per request, each counted, then the report.
+
+    ``RetryPolicy(max_attempts=1)`` keeps a 5xx or a 429 from spending a second request.
+    ``target``'s configuration is restored after the block, and the report is printed, a
+    failed run's too.
+    """
+    configured = target.config
+    meter = Meter(configured.observe)
+    target.config = replace(configured, retry=RetryPolicy(max_attempts=1), observe=meter)
+    try:
+        yield meter
+    finally:
+        target.config = configured
+        print(meter.report())  # noqa: T201
 
 
 def _tag(name: str) -> str:
@@ -682,7 +741,7 @@ def refresh(*, samples: bool = False, only: Sequence[str] | None = None) -> None
     chosen = None if only is None else selected(only)
     previous = None if chosen is None else read_index()
     REFERENCE.mkdir(exist_ok=True)
-    with tempfile.TemporaryDirectory() as work:
+    with tempfile.TemporaryDirectory() as work, metered(client):
         fetched = sync(fetch_all)(Path(work), samples=samples, only=chosen)
     for name, packaged in fetched.written.items():
         write(name, packaged)

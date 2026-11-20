@@ -192,8 +192,8 @@ async def data_query(
         complete.
 
     Raises:
-        ValueError: ``dest`` is a directory, or its directory does not exist; nothing is
-            sent.
+        InvalidRequestError: ``dest`` is a directory, or its directory does not exist;
+            core's ``download`` refuses it before anything is sent.
         XippiosError: The taxonomy error for a refusal, an asynchronous answer among
             them (``_client.classify``); ``dest`` is left untouched.
     """
