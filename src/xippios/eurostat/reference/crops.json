@@ -1,7 +1,7 @@
 {
   "param": "crops",
   "endpoint": "sdmx/2.1/codelist/ESTAT/CROPS",
-  "fetched": "2026-10-28T16:08:11Z",
+  "fetched": "2026-11-20T14:17:31Z",
   "records": [
     {
       "code": "CRP",
