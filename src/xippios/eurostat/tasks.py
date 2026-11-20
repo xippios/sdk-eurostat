@@ -806,7 +806,7 @@ async def list_codes_async(codelist: str, search: str | None = None) -> Result[l
     ``get_data("apro_mk_cola", {"geo": "AT"})``. ``search`` keeps the codes whose code or
     label contains the text, ignoring case. A codelist the package does not carry raises
     ``UnknownCode`` naming the closest it does. ``meta.vintage`` is the codelist's version
-    (``"28.0"``) and ``meta.published_at`` its last update, with Eurostat's zone, or
+    (``"28.1"``) and ``meta.published_at`` its last update, with Eurostat's zone, or
     ``None`` where the codelist names none (CXT_EU_FLUX); ``meta.retrieved_at`` is when
     the package's copy was fetched. A code Eurostat added since is missing until the
     package is refreshed.
