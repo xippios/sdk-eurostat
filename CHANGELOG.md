@@ -4,15 +4,86 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/) (pre-1.0: breaking changes bump the minor).
 
-## [Unreleased]
+## [0.3.0] - 2026-11-20
+
+### Added
+
+- `xippios.eurostat.mcp` exports `build()`, which returns the tool set of xippios-core's
+  package contract, `server`, built from it, and `ENV_VARS`, the variables the package
+  reads, none since the API is open, so a host serves the package as `xippios-eurostat-mcp`
+  does. (https://github.com/xippios/sdk-core/issues/245)
 
 ### Changed
 
+- The packaged reference data are those of 2026-11-20, and two lists changed records:
+  the table of contents that `list_datasets` reads, `creationDate` `20261120T1004`, holds
+  10,454 leaves, 75 more than on 2026-10-28 (424 added, 349 removed and 2,433 changed in
+  place, counted leaf by leaf at each code and folder path, the changes chiefly update
+  times, periods and numbers of values), and the GEO codelist, version 28.1, relabels 6 of its 4,292 codes, `KR` as
+  "Republic of Korea" among them. Nine codes are new to the table of contents, `tai13` and
+  `tec00108` among them, and one is gone, `agr_r_accts_h`. The other seventeen codelists
+  keep their records, CXT_INDICATORS under its new version 50.0.
+  (https://github.com/xippios/sdk-eurostat/issues/70)
+- The package's text cites each design decision by a public record, the pull request that
+  took it, a convention of sdk-core or an open sdk-core issue, where it named a person, a
+  date or a row that no reader could open. `docs/handover.md`, the hand-over of the 0.2.0
+  release, is removed: what it said of the package stands in the README, `CLAUDE.md` and
+  `src/xippios/eurostat/reference/README.md`.
+  (https://github.com/xippios/sdk-eurostat/issues/22)
+- A tool's error answer sets `isError` on its result beside the text
+  `error: <ErrorClass>: <message>`, so a client tells a refusal from data without reading
+  the text. (https://github.com/xippios/sdk-core/issues/168)
+- A refusal that names another task to call, or the list task of the known codes, names
+  that task's MCP tool too, as `list_codes("cxt_free_iso") lists them (over MCP, the tool
+  eurostat_list_codes).`, so an agent calls the tool it is told of. `download_dataset` and
+  `download_trade`, which have no tool, are named alone.
+  (https://github.com/xippios/sdk-core/issues/111)
+- A route answers an argument that its schema refuses, a `lang` outside `EN`, `FR` and `DE`
+  say, as problem details before the task runs: HTTP 422, the title `InvalidRequestError`
+  and the detail `<argument>: <message>`, where FastAPI's own 422 listed its error details
+  with the input. (https://github.com/xippios/sdk-core/issues/66)
+- Adopts sdk-template v0.4.0, from v0.3.4, with `core_version=0.4.0`. The package depends
+  on `xippios-core~=0.4.0`, its extras likewise, and follows conventions 1.28.
+  (https://github.com/xippios/sdk-template/releases/tag/v0.4.0,
+  https://github.com/xippios/sdk-eurostat/issues/67)
+- A refusal of a code the packaged list lacks ends with `If upstream added it since, the
+  packaged list is out of date.`, where it named the maintainers' `/refresh-reference-data`,
+  which an agent cannot run. (https://github.com/xippios/sdk-core/issues/111)
+- Adopts sdk-template v0.3.4, from v0.3.3, with conventions 1.27 and no new core minor: the
+  floor stays `xippios-core~=0.3.0`. The organization's checks of a pull request start on
+  its opening, a push, a reopening and an edit, no longer on a label. `CLAUDE.md` cites
+  sdk-core's decision records as `sdk-core ADR-NNNN`, and says that Conventional Commits
+  binds a pull request's own commits, not the commit that lands it on `main`.
+  (https://github.com/xippios/sdk-template/releases/tag/v0.3.4,
+  https://github.com/xippios/sdk-eurostat/issues/31)
+- Adopted sdk-template v0.3.3 and conventions 1.27 (conventions §15), with no new core
+  minor: the floor stays `xippios-core~=0.3.0`, since core 0.3.1 changed documents only.
+  The README lists the package's documents under `## Documents` and links its license by
+  URL, `CLAUDE.md` holds the rules that `.claude/family.md` carried, which leaves with
+  `/adopt-release`, and the answers record `has_files: true`, so `/add-endpoint` asks for
+  a sample of each file kind the package parses. Changelog entries are fragments under
+  `changelog/`, the package's own decisions go into `docs/adr/` with the index that
+  `scripts/adr_index.py` writes, and a pull request runs the organization's checks from
+  `organization.yml`, where `gates.yml` was. (https://github.com/xippios/sdk-eurostat/issues/20,
+  https://github.com/xippios/sdk-eurostat/issues/21,
+  https://github.com/xippios/sdk-eurostat/issues/29)
 - Adopted sdk-template v0.3.1 (conventions §15), with no new core minor: the floor stays
   `xippios-core~=0.3.0`. `.github/CODEOWNERS` is rendered from the template's answers and
   names the code owner of the paths whose changes need one; `.gitignore` leaves copier's
   `*.rej` and `*.orig` out; `.claude/family.md`, `/adopt-release`, `/release-prep` and the
   PR template no longer have a session merge a pull request.
+
+### Breaking
+
+- `Dataset.values`, the number of values of a leaf that `list_datasets` returns, may be
+  `None`, as `data_start` and `data_end` already may: the table of contents of 2026-11-20
+  prints it empty for a pre-defined table, which stopped the reference refresh. A caller
+  that reads it as an integer checks for `None` first.
+  (https://github.com/xippios/sdk-eurostat/issues/72)
+- A tool refuses an argument that it does not declare before it runs, whatever its value,
+  with `error: InvalidRequestError: <argument>: Not an argument of this tool` and the
+  arguments it takes, where the argument was dropped and the tool ran without it.
+  (https://github.com/xippios/sdk-core/issues/84)
 
 ## [0.2.0] - 2026-10-28
 
