@@ -29,7 +29,8 @@ src/xippios/eurostat/
   py.typed         PEP 561 marker; consumers' mypy --strict needs it
   _version.py      __version__ from distribution metadata
   _client.py       the one configured AsyncClient (the two base URLs, url_for, rate
-                   limit, cache) and classify, upstream's documented error shapes; no key
+                   limit, cache), ENV_VARS, empty since no key is read, and classify,
+                   upstream's documented error shapes
   errors.py        the Statistics API's fault model and its parsing, for classify
   models.py        pydantic models mirroring upstream payloads (UpstreamModel); by the
                    family's precedent also an enumeration written by hand, for a value set
@@ -43,7 +44,7 @@ src/xippios/eurostat/
   parse/           file parsers, one module per file kind (sdk-core ADR-0020): sdmx_csv.py,
                    parse_sdmx_csv for the SDMX-CSV files download_dataset and
                    download_trade write
-  mcp.py           xippios-eurostat-mcp entry point
+  mcp.py           xippios-eurostat-mcp entry point: build() the tool set, server
   http.py          FastAPI router
   params.py        packaged lists: CODELISTS (each codelist's base and dimension),
                    PACKAGED_LISTS, packaged(), list_info() (lists.json), datasets() (the
@@ -138,6 +139,15 @@ and counts, never on a raw payload.
 - Upstream's documented error shapes go into `classify` in `_client.py`, once, and an error
   class of the package's own into `errors.py`; a wrapper never inspects a status code
   (conventions §5, §6).
+- One limiter paces each host the package sends to (conventions §2, §6). A second base URL
+  on the host of the API base URL goes through the one `client` of `_client.py` by its
+  absolute URL, and `classify`'s path checks name both bases. An origin or mirror that the
+  publisher runs itself, where its canonical host refuses automated requests, takes that
+  host's pace through the same client, and `docs/upstream/` names both hosts; a mirror that
+  anyone else runs is never sent to. A host that a dependency sends to is reached through
+  the dependency's tasks alone. Any other host gets a client of its own in `_client.py`,
+  its base URL and its `RateLimit` beside the first's, and a row of its own in the table
+  under What this package wraps, with its pace and where the pace comes from.
 - A change brings its tests, written before the code, and passes the offline checks above;
   its changelog entry is a fragment under `changelog/`, one file holding its bullet, as
   `changelog/README.md` lays it out (conventions §12). Commit subjects follow Conventional
@@ -152,16 +162,17 @@ and counts, never on a raw payload.
 
 - Never hand-write a fixture, and never commit one without grepping it for key patterns
   (conventions §10).
-- Never read or print `.envrc`, `.env`, or any variable ending in `_API_KEY`,
-  `_REFRESH_TOKEN` or `_SECRET`.
+- Never read or print `.envrc`, `.env`, or any variable ending in `_API_KEY`, `_TOKEN`
+  or `_SECRET`.
 - Never write a key, a token or another credential into a file or a commit.
 - Never put logic in `mcp.py` or `http.py`, and never add a route or a tool by hand: the
   adapters register `tasks.__all__` (sdk-core ADR-0001).
 - Never rename or re-map an upstream concept to another source's (sdk-core ADR-0028).
 - Never return a documented personal identifier in a task's projection, echo one in
   `meta.request`, or commit one in a fixture (sdk-core ADR-0017).
-- Never edit `docs/upstream/` by hand: `/refresh-upstream` fetches it, and the pull request
-  shows its diff (conventions §3).
+- Never edit `docs/upstream/` by hand but `docs/upstream/OBSERVED.md`, the notes on what
+  upstream does but never documents: `/refresh-upstream` fetches the rest, and the pull
+  request shows its diff (conventions §3).
 - Never add `src/xippios/__init__.py`, nor an `__init__.py` at a level between it and the
   package (sdk-core ADR-0006).
 - Never push a tag by hand: a release's tag comes from `publish.yml` alone (conventions §12).
@@ -173,7 +184,7 @@ template release reaches it in a pull request of its own, with
 `uvx --from 'copier>=9.19' copier update --defaults --vcs-ref=<tag>` (conventions §15): the
 update renders the template's files again and never overwrites the files this package
 fills, `__init__.py`, `_client.py`, `errors.py`, `models.py`, `api/`, `parse/`, `tasks.py`,
-`params.py`, `enums.py`, `reference/`, `scripts/refresh_reference.py`,
+`tasks_write.py`, `params.py`, `enums.py`, `reference/`, `scripts/refresh_reference.py`,
 `scripts/refresh_upstream.py`, `tests/test_tasks.py`, `tests/test_live.py`,
 `tests/fixtures/`, `docs/upstream/`, `docs/adr.md`, `docs/adr.json`, `README.md`,
 `CHANGELOG.md` and `CLAUDE.md`. sdk-template's
