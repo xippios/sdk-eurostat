@@ -138,8 +138,8 @@ async def test_list_datasets_tool_serves_an_absent_number_of_values_as_null(
     """``eurostat_list_datasets`` serves the leaf with every field, ``values`` ``null``.
 
     NOT RECORDED as the tool reads it: the table is the one the script packages from the
-    sample, in place of the package's own, which holds no such leaf before its next
-    refresh."""
+    sample, in place of the package's own, so the test holds whatever leaves a refresh
+    packages."""
     toc = script.read_toc(TOC_SAMPLE_WITHOUT_VALUES)
     script.toc_list(toc, FETCHED).write(tmp_path / "toc.json")
     packaged = PackagedList.model_validate_json((tmp_path / "toc.json").read_text(encoding="utf-8"))

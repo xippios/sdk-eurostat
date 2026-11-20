@@ -1,7 +1,7 @@
 {
   "param": "geo",
   "endpoint": "sdmx/2.1/codelist/ESTAT/GEO",
-  "fetched": "2026-10-28T16:08:08Z",
+  "fetched": "2026-11-20T14:17:27Z",
   "records": [
     {
       "code": "EUR",
@@ -11213,7 +11213,7 @@
     },
     {
       "code": "CH_CAP",
-      "label": "Bern (Berne)"
+      "label": "Bern"
     },
     {
       "code": "CH_DEL",
@@ -15565,7 +15565,7 @@
     },
     {
       "code": "AME_X_N",
-      "label": "Caribbean, Central and South America"
+      "label": "Latin America and the Caribbean"
     },
     {
       "code": "AME_C_CRB",
@@ -15909,11 +15909,11 @@
     },
     {
       "code": "AME_X_N_OTH",
-      "label": "Other Caribbean, Central and South American countries"
+      "label": "Other Latin America and the Caribbean countries"
     },
     {
       "code": "AME_X_N_NSP",
-      "label": "Caribbean, Central and South American countries, not specified"
+      "label": "Latin America and the Caribbean countries, not specified"
     },
     {
       "code": "AME_OTH",
@@ -16029,7 +16029,7 @@
     },
     {
       "code": "KR",
-      "label": "South Korea"
+      "label": "Republic of Korea"
     },
     {
       "code": "KR_CAP",
@@ -16497,7 +16497,7 @@
     },
     {
       "code": "NR",
-      "label": "Nauru"
+      "label": "Naoero"
     },
     {
       "code": "MP",
