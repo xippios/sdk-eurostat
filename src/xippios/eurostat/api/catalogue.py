@@ -6,7 +6,7 @@ Reference: ``docs/upstream/api/catalogue.wadl``, resource ``toc/xml`` under
 ``docs/upstream/user-guide/api-detailed-guidelines/catalogue-api/toc.md``: every folder,
 dataset and table of Eurostat's navigation tree with its code, titles, last update and
 period coverage, multilingual. The file is large (23 MB on 2026-10-27), so it is
-streamed to disk with core's ``download`` (ADR-0019), never held in memory, and read by
+streamed to disk with core's ``download`` (sdk-core ADR-0040), never held in memory, and read by
 ``scripts/refresh_reference.py`` alone, the only code that parses XML (D44): no task
 calls this operation, the package answers ``list_datasets`` from its packaged copy.
 """

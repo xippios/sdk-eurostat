@@ -1,6 +1,6 @@
 """Eurostat's refusals on the Statistics API: the fault model and its parsing.
 
-``_client.classify`` maps them onto the family's taxonomy (conventions §5, ADR-0008); this
+``_client.classify`` maps them onto the family's taxonomy (conventions §5, sdk-core ADR-0031); this
 module only reads them. The shapes, from the user guide
 (``docs/upstream/user-guide/api-detailed-guidelines/api-statistics.md``, "Error messages
 returned in case of invalid queries", "The geoLevel parameter" and "Asynchronous response

@@ -1,7 +1,7 @@
 # Parser-test samples
 
 Small real samples of the answers the package and its refresh script read, under
-`<kind>/<case>.*`, never written by hand (ADR-0020 decision 6, conventions §10): `toc/`
+`<kind>/<case>.*`, never written by hand (sdk-core ADR-0020 decision 6, conventions §10): `toc/`
 and `codelist/` cut by `scripts/refresh_reference.py --samples` from the answers of its
 run, which rewrites their rows and keeps the others; `sdmx-csv/` the response bodies of
 the recorded `tests/fixtures/data_query/` exchanges, byte for byte, which

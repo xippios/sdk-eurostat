@@ -7,7 +7,7 @@ base; Prodcom's DS-059358 on the Comext base, whose ``OBS_VALUE`` is text where 
 indicator is a unit or a flag (``KG``, ``:E``) and which has no attribute column; and
 Comext trade's DS-045409 on the same base, monthly, with ``partner`` and ``flow`` among
 its dimensions and no attribute column either; ``tests/fixtures/files/README.md`` gives
-their provenance (ADR-0020 decision 6). The
+their provenance (sdk-core ADR-0020 decision 6). The
 tests assert the parser's shape against the sample's own text, read here with the
 standard library's ``csv``, never values or sizes typed into a test (conventions §10).
 ``test_documented_shape_*`` read the user guide's SDMX-CSV examples verbatim from the
@@ -27,10 +27,11 @@ from pathlib import Path
 
 import pytest
 from xippios.core import ValidationError
+from xippios.core.client import decode_csv
 from xippios.core.testing import load_fixture
 
 from xippios.eurostat.models import SdmxCsvRow
-from xippios.eurostat.parse import parse_sdmx_csv
+from xippios.eurostat.parse import parse_sdmx_csv, sdmx_csv
 
 TESTS = Path(__file__).parent
 FIXTURES = TESTS / "fixtures"
@@ -112,6 +113,27 @@ def test_parse_sdmx_csv_reads_every_row_as_printed(sample: Path) -> None:
 @pytest.mark.parametrize(("plain", "packed"), PAIRS, ids=["main", "comext", "comext-trade"])
 def test_parse_sdmx_csv_reads_gzip_and_plain_alike(plain: Path, packed: Path) -> None:
     assert list(parse_sdmx_csv(packed)) == list(parse_sdmx_csv(plain))
+
+
+@pytest.mark.parametrize("sample", [PLAIN, PACKED], ids=["plain", "gzip"])
+def test_parse_sdmx_csv_reads_the_rows_through_core(
+    sample: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Both files' rows come from core's ``decode_csv``: a plain file by its path, a gzip
+    file as the text stream the parser opens on it, never decompressed to disk."""
+    read: list[object] = []
+
+    def spy(data: object, **kwargs: object) -> object:
+        read.append(data)
+        return decode_csv(data, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(sdmx_csv, "decode_csv", spy)
+    assert len(list(parse_sdmx_csv(sample))) == len(text_of(sample).splitlines()) - 1
+    assert len(read) == 1
+    if sample == PLAIN:
+        assert read == [sample]
+    else:
+        assert isinstance(read[0], io.TextIOBase)
 
 
 @pytest.mark.parametrize("sample", [PRODCOM_PLAIN, PRODCOM_PACKED], ids=["plain", "gzip"])
@@ -299,8 +321,9 @@ def test_parse_sdmx_csv_refuses_a_header_only_file_of_another_layout(
 @pytest.mark.parametrize("packed", [False, True], ids=["plain", "gzip"])
 def test_parse_sdmx_csv_refuses_text_that_is_not_utf8(tmp_path: Path, packed: bool) -> None:
     """NOT RECORDED: the plain sample's rows repeated past 64 KiB, its last row with a byte
-    that is no UTF-8, in memory. The header reads, so the rows' reader refuses it: the
-    plain file's ``decode_csv``, the gzip file's standard library, worded alike."""
+    that is no UTF-8, in memory. The header reads, so the rows' reader refuses it: core's
+    ``decode_csv``, which reads the plain file by its path and the gzip file as its open
+    stream, naming the file alike."""
     header, rows = PLAIN.read_bytes().split(b"\r\n", 1)
     body = rows * (64 * 1024 // len(rows) + 1)
     last = body.rindex(b"ESTAT:")

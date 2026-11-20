@@ -3,7 +3,7 @@
 The lists `list_datasets`, `list_codes`, `list_products`, `list_cn8` and `list_hs` answer
 from, and the production and trade tasks check their codes against, ship here as JSON,
 versioned with the package: the nineteen lists are packaged-list files (conventions §3,
-ADR-0022) that `xippios.core.PackagedList.load` reads through `params.py`, and
+sdk-core ADR-0041) that `xippios.core.PackagedList.load` reads through `params.py`, and
 `lists.json` beside them is a plain derived index, read with `load_json`:
 
 ```python
@@ -37,7 +37,7 @@ geo.records[0]  # {"code": "EUR", "label": "Europe"}
   one record per packaged list with upstream's release identifiers, the TOC's
   `creationDate` and a codelist's `version` and `LAST_UPDATED`, which the list tasks
   read for `meta.vintage` and `meta.published_at`; a packaged-list file has no key for
-  them (ADR-0022, amendment 8; gap, row 111). It is derived from the nineteen answers
+  them (sdk-core ADR-0041, decision 5; gap, row 111). It is derived from the nineteen answers
   the packaged lists come from and names no upstream operation, so it has no origin and
   no row in the table below.
 

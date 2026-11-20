@@ -13,21 +13,19 @@ observation, comma-separated, lines ending in CRLF::
 up to ``TIME_PERIOD``, then ``OBS_VALUE`` and the observation's attributes, which differ
 by dataset (``OBS_FLAG`` and ``CONF_STATUS`` in apro_mk_cola; ``OBS_FLAG``,
 ``LTAA_FLAG`` and ``LTAA`` in the guide's ENV_WAT_RES; none in Prodcom's DS-059358).
-Each row becomes a ``models.SdmxCsvRow`` with nothing renamed or computed (ADR-0020
+Each row becomes a ``models.SdmxCsvRow`` with nothing renamed or computed (sdk-core ADR-0020
 decision 2); ``OBS_VALUE`` is parsed as a ``Decimal`` where its text is a number and
 kept as printed where it is not, as Prodcom's units and flags are (``"KG"``, ``":E"``,
 ``docs/upstream/samples/DS-059358-sdmx-csv.csv``).
 
 The header row is read first, with the standard library's ``csv``, and checked before
-any row, so a file of another layout is refused even without rows. The rows of a plain
-file are then read through core's ``decode_csv`` (ADR-0019 decision 2). A file that
-starts with gzip's magic bytes, as ``compressed=true`` answers, is opened with the
-standard library's ``gzip`` and read with its ``csv.DictReader`` as ``decode_csv`` reads
-a path (UTF-8, a byte order mark stripped, headers as printed), its errors worded alike,
-since ``decode_csv`` takes a path or a response, not an open stream: a decompressed copy
-on disk would write the whole file again before its first row could be read (Johannes,
-2026-10-27; gap, row 125). Either way the rows are read lazily, never the whole file at
-once.
+any row, so a file of another layout is refused even without rows. The rows of both files
+are then read through core's ``decode_csv`` (sdk-core ADR-0040 decision 2): a plain file by its
+path, and a file that starts with gzip's magic bytes, as ``compressed=true`` answers, as
+the text stream the standard library's ``gzip`` opens on it (UTF-8, a byte order mark
+stripped, headers as printed), never as a decompressed copy on disk, which would write the
+whole file again before its first row could be read (Johannes, 2026-10-27; gap, row 125).
+Either way the rows are read lazily, never the whole file at once.
 """
 
 import csv
@@ -100,9 +98,13 @@ def _header(path: Path, packed: bool) -> list[str] | None:
 
 
 def _gzip_records(path: Path) -> Iterator[dict[str, str]]:
-    """The rows of a gzip-compressed CSV file, as ``decode_csv`` gives a plain file's."""
+    """The rows of a gzip-compressed CSV file, read by ``decode_csv`` from its open stream.
+
+    ``_reading`` maps what the gzip stream raises, a cut or damaged file; ``decode_csv``
+    words the text's and the CSV's errors by the file's name, as for a plain file.
+    """
     with _reading(path), _text(path, packed=True) as text:
-        yield from csv.DictReader(text)
+        yield from decode_csv(text, source=SOURCE)
 
 
 class _Layout:

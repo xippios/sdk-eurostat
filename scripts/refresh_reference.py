@@ -3,7 +3,7 @@
 Eurostat's lists are packaged as tables, not as enums: the Catalogue API's table of
 contents (TOC) and the eighteen codelists in ``params.CODELISTS``, each too large for an
 enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
-``reference/<name>.json`` (conventions §3, ADR-0022):
+``reference/<name>.json`` (conventions §3, sdk-core ADR-0041):
 
 - ``toc.json``: the TOC, downloaded whole to a temporary file through
   ``api.catalogue.get_toc_xml`` (core's ``download``, which streams the body to disk; 23 MB
@@ -12,7 +12,7 @@ enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
   once read: every ``leaf``, datasets and tables alike, with its code, type, English
   title, the English titles of the folders above it joined with ``" > "`` (``path``),
   ``lastUpdate``, ``lastModified``, ``dataStart``, ``dataEnd`` and ``values`` as printed.
-  This script is the only code that parses XML (D44; ADR-0020 decision 3).
+  This script is the only code that parses XML (D44; sdk-core ADR-0020 decision 3).
 - ``<codelist>.json``: one codelist each, the latest version in JSON-stat through
   ``api.sdmx.code_list_query`` with English labels (Johannes, 2026-10-27, D1 and D2), its
   codes and labels in upstream's order, requested on the base ``params.CODELISTS`` names
@@ -27,7 +27,7 @@ enum (the design round of 2026-10-27), written with ``PackagedList.write`` to
   lists, and ``lists``, one record per packaged list with what upstream gives each as
   its release (the TOC's ``creationDate``, a codelist's ``version`` and
   ``LAST_UPDATED``), since a packaged file holds its four keys and a ``note`` and
-  nothing else (ADR-0022, amendment 8; gap, row 111). It names no upstream operation:
+  nothing else (sdk-core ADR-0041, decision 5; gap, row 111). It names no upstream operation:
   it is derived from the nineteen answers.
 
 Each packaged file's ``fetched`` is the time its answer arrived, UTC to the second. The
@@ -37,6 +37,11 @@ from the repository root, without a key (the API takes none)::
     uv run python scripts/refresh_reference.py
 
 Nineteen keyless requests: the TOC and eighteen codelists, paced by the package client.
+The client sends each request once, ``RetryPolicy(max_attempts=1)``, so a 5xx or a 429
+spends no second request of upstream's fair use: every list is fetched before the first
+file is written, a sample included, so a run that fails writes nothing and is run again.
+After the fetches the script prints the requests it sent, a failed run's too,
+and the quota left, which Eurostat reports in no header (``QUOTA_HEADER``).
 ``--only <name> [<name> ...]`` fetches the named lists alone, each named by its id as
 upstream writes it (``CXT_PRODCOM2_SOLD``) or by its file (``cxt_prodcom2_sold``,
 ``toc``), one request each: it writes their files, replaces their records in
@@ -47,7 +52,7 @@ packaged lists, the previous index's or this run's, whichever is later.
 request of its own: a folder of the TOC with two of its leaves and the folders above it
 under ``tests/fixtures/files/toc/``, and the STATINFO codelist whole under
 ``tests/fixtures/files/codelist/``, their provenance in ``tests/fixtures/files/README.md``
-(ADR-0020 decision 6, conventions §10). The TOC's cut parses the whole file again with
+(sdk-core ADR-0020 decision 6, conventions §10). The TOC's cut parses the whole file again with
 ``ElementTree.parse``, about 200 MB at its peak: fine for a one-off run, not for the
 plain refresh, which reads the file a megabyte at a time.
 
@@ -55,14 +60,15 @@ Value lists and lists of integer ids would become enums: a value list in ``LISTS
 ``StrEnum``, a list of ids and names in ``ID_LISTS``, through ``id_name_pairs``, an
 ``IntEnum`` (conventions §3), rendered into ``enums.py`` with one
 ``xippios.core.reference.render_enums`` call, ASCII-only, and formatted with
-``ruff format`` and ``ruff check --fix``, to be committed as formatted (ADR-0008,
-amendment 2026-10-27). Eurostat's lists are neither, so both mappings stay empty and
+``ruff format`` and ``ruff check --fix``, to be committed as formatted (sdk-core ADR-0031,
+decision 6). Eurostat's lists are neither, so both mappings stay empty and
 ``enums.py`` is an empty module. ``--render-only`` regenerates it from the packaged
 files alone, without a request: after a core release changes the renderer (conventions
 §15, item 6), it changes ``enums.py`` and nothing else.
 """
 
 import argparse
+import functools
 import hashlib
 import json
 import re
@@ -70,17 +76,19 @@ import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
-from collections.abc import Callable, Coroutine, Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Callable, Coroutine, Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, NamedTuple
 
-from xippios.core import Downloaded, PackagedList, UpstreamModel, sync
+import httpx
+from xippios.core import AsyncClient, Downloaded, PackagedList, RetryPolicy, UpstreamModel, sync
 from xippios.core.reference import id_name_pairs, render_enums
 
 from xippios.eurostat import api, params
-from xippios.eurostat._client import BASE_URL
+from xippios.eurostat._client import BASE_URL, client
 from xippios.eurostat.models import Codelist, Dataset
 from xippios.eurostat.params import ListInfo
 
@@ -90,6 +98,11 @@ REFERENCE = PACKAGE_DIR / "reference"
 ENUMS = PACKAGE_DIR / "enums.py"
 GENERATOR = "scripts/refresh_reference.py"
 SAMPLES = ROOT / "tests/fixtures/files"
+
+QUOTA_HEADER: str | None = None
+"""The response header in which upstream reports the requests left in its quota, as its
+documentation names it, or ``None`` where it reports none: the API documents a fair-use
+rule without a number (``asynchronous-api.md``) and no such header."""
 
 LISTS: dict[str, Callable[[], Coroutine[Any, Any, list[str]]]] = {}
 """Value lists, one ``StrEnum`` each: Eurostat's packaged lists are tables, none is one."""
@@ -126,6 +139,54 @@ SAMPLE_CODELIST = "STATINFO"
 SAMPLE_KINDS = ("toc", "codelist")
 """The sample kinds this script cuts; the README rows of any other kind are kept as they
 are (``sdmx-csv/``, the bodies of the recorded ``dataQuery`` exchanges)."""
+
+
+class Meter:
+    """What a run spent: the requests it sent and the quota left that upstream reported.
+
+    The client's ``observe`` hook, which core calls with every response from the wire. It
+    calls the hook the client had first, a quota policy's say (sdk-core ADR-0037), and keeps
+    the last count that upstream sent in ``QUOTA_HEADER``. A request is counted by its
+    response: with no retry each has one, but for one that fails in transport, whose error
+    ends the run.
+    """
+
+    def __init__(self, observe: Callable[[httpx.Response], None] | None) -> None:
+        self.sent = 0
+        self.left: int | None = None
+        self._observe = observe
+
+    def __call__(self, response: httpx.Response) -> None:
+        """Count ``response`` and keep the quota it reports, after the hook it replaces."""
+        if self._observe is not None:
+            self._observe(response)
+        self.sent += 1
+        value = response.headers.get(QUOTA_HEADER) if QUOTA_HEADER else None
+        if value is not None and value.isascii() and value.isdigit():
+            self.left = int(value)
+
+    def report(self) -> str:
+        """The requests sent and the quota left, as upstream last reported it, one line."""
+        left = "not reported" if self.left is None else f"{self.left} ({QUOTA_HEADER})"
+        return f"requests sent: {self.sent}; quota left: {left}"
+
+
+@contextmanager
+def metered(target: AsyncClient) -> Iterator[Meter]:
+    """``target`` for the block: one attempt per request, each counted, then the report.
+
+    ``RetryPolicy(max_attempts=1)`` keeps a 5xx or a 429 from spending a second request.
+    ``target``'s configuration is restored after the block, and the report is printed, a
+    failed run's too.
+    """
+    configured = target.config
+    meter = Meter(configured.observe)
+    target.config = replace(configured, retry=RetryPolicy(max_attempts=1), observe=meter)
+    try:
+        yield meter
+    finally:
+        target.config = configured
+        print(meter.report())  # noqa: T201
 
 
 def _tag(name: str) -> str:
@@ -305,7 +366,7 @@ def codelist_endpoint(resource_id: str) -> str:
     ``sdmx/2.1/codelist/ESTAT/GEO`` for a codelist of the main base, as packaged since
     0.1.0; ``https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/``
     ``ESTAT/CXT_PRODCOM2_SOLD`` for one of the Comext base, whose path alone would name
-    the main base's operation (ADR-0022 rule 1; Johannes, 2026-10-28; gap, row 172).
+    the main base's operation (sdk-core ADR-0041 decision 1; Johannes, 2026-10-28; gap, row 172).
 
     Raises:
         KeyError: ``params.CODELISTS`` does not name the codelist.
@@ -379,7 +440,7 @@ def cut_toc_sample(source: Path, downloaded: Downloaded, toc: Toc, dest: Path) -
 
     The elements kept are upstream's as parsed, written again by ``ElementTree`` under
     upstream's prefixes and indented by two spaces; every other branch and leaf is left
-    out. A comment after the declaration carries the provenance (ADR-0020 decision 6).
+    out. A comment after the declaration carries the provenance (sdk-core ADR-0020 decision 6).
     """
     ET.register_namespace("nt", NAVTREE)
     ET.register_namespace("xsi", XSI)
@@ -451,7 +512,7 @@ def write_codelist_sample(answer: api.sdmx.CodelistAnswer, dest: Path) -> Sample
 SAMPLES_README = """# Parser-test samples
 
 Small real samples of the answers the package and its refresh script read, under
-`<kind>/<case>.*`, never written by hand (ADR-0020 decision 6, conventions §10): `toc/`
+`<kind>/<case>.*`, never written by hand (sdk-core ADR-0020 decision 6, conventions §10): `toc/`
 and `codelist/` cut by `scripts/refresh_reference.py --samples` from the answers of its
 run, which rewrites their rows and keeps the others; `sdmx-csv/` the response bodies of
 the recorded `tests/fixtures/data_query/` exchanges, byte for byte, which
@@ -604,7 +665,7 @@ def render(
     A value list renders a ``StrEnum``, a list of ``(id, name)`` pairs an ``IntEnum``, each
     class docstring naming its list's date in ``fetched``. ``ruff format`` and
     ``ruff check --fix`` then choose the quotes, wrap what fits and sort ``__all__``; the
-    module is committed as formatted (ADR-0008, amendment 2026-10-27).
+    module is committed as formatted (sdk-core ADR-0031, decision 6).
     """
     ENUMS.write_text(render_enums(lists, fetched=fetched, generator=GENERATOR), encoding="utf-8")
     for command in (["format"], ["check", "--fix"]):
@@ -645,11 +706,12 @@ async def fetch_all(work: Path, *, samples: bool, only: Sequence[str] | None = N
 
     ``only``, file names from ``selected``, fetches those lists alone; ``None`` fetches
     every one. The TOC goes to ``work`` while it is read; nothing else touches the disk
-    here but the samples, when asked for.
+    here but the samples, when asked for, which are cut once every list is fetched, so a
+    failed request leaves none behind.
     """
     written: dict[str, PackagedList] = {}
     infos: list[ListInfo] = []
-    cut: list[Sample] = []
+    pending: list[Callable[[], Sample]] = []
     if only is None or params.TOC in only:
         downloaded = await fetch_toc(work / "toc.xml")
         toc = read_toc(downloaded.path)
@@ -657,7 +719,9 @@ async def fetch_all(work: Path, *, samples: bool, only: Sequence[str] | None = N
         infos.append(toc_info(toc))
         if samples:
             dest = SAMPLES / "toc" / f"{SAMPLE_FOLDER}.xml"
-            cut.append(cut_toc_sample(downloaded.path, downloaded, toc, dest))
+            pending.append(
+                functools.partial(cut_toc_sample, downloaded.path, downloaded, toc, dest)
+            )
     for resource_id in params.CODELISTS:
         if only is not None and resource_id.lower() not in only:
             continue
@@ -668,8 +732,8 @@ async def fetch_all(work: Path, *, samples: bool, only: Sequence[str] | None = N
         infos.append(codelist_info(answer.codelist))
         if samples and resource_id == SAMPLE_CODELIST:
             dest = SAMPLES / "codelist" / f"{resource_id.lower()}.json"
-            cut.append(write_codelist_sample(answer, dest))
-    return Fetched(written, infos, cut)
+            pending.append(functools.partial(write_codelist_sample, answer, dest))
+    return Fetched(written, infos, [cut() for cut in pending])
 
 
 def refresh(*, samples: bool = False, only: Sequence[str] | None = None) -> None:
@@ -682,7 +746,7 @@ def refresh(*, samples: bool = False, only: Sequence[str] | None = None) -> None
     chosen = None if only is None else selected(only)
     previous = None if chosen is None else read_index()
     REFERENCE.mkdir(exist_ok=True)
-    with tempfile.TemporaryDirectory() as work:
+    with tempfile.TemporaryDirectory() as work, metered(client):
         fetched = sync(fetch_all)(Path(work), samples=samples, only=chosen)
     for name, packaged in fetched.written.items():
         write(name, packaged)

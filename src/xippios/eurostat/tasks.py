@@ -11,18 +11,19 @@ so are their answers' shapes. Release metadata: ``meta.published_at`` is the cub
 ``updated``, the dataset's last update with its zone; ``meta.vintage`` is the same
 member as upstream printed it (``"2026-10-05T23:00:00+0200"``), Eurostat's only release
 identifier for a dataset (``docs/upstream/user-guide/api-introduction.md``: "there is no
-versioning or documentation of past versions of the data"; ADR-0022 decision 2). An
-``updated`` without a zone, never seen, goes into ``published_at`` as printed with
-``published_at_naive`` set, no zone invented (ADR-0022 rule 2). ``meta.endpoint`` is the
-operation's name, ``"getData"``; ``meta.request`` holds what was sent, a parameter left
-``None`` omitted; ``meta.total`` stays ``None``: the answer counts no records for the
-request (its ``OBS_COUNT`` annotation counts the whole dataset's, ADR-0012).
+versioning or documentation of past versions of the data"; sdk-core ADR-0041 decision
+2). An ``updated`` without a zone, never seen, goes into ``published_at`` as printed with
+``published_at_naive`` set, no zone invented (sdk-core ADR-0041 decision 2).
+``meta.endpoint`` is the operation's name, ``"getData"``; ``meta.request`` holds what
+was sent, a parameter left ``None`` omitted; ``meta.total`` stays ``None``: the answer
+counts no records for the request (its ``OBS_COUNT`` annotation counts the whole
+dataset's, sdk-core ADR-0034).
 
 The slices, ``get_series``, ``get_latest_period`` and ``get_cross_section``, each send one
 ``get_data`` request (``sinceTimePeriod`` and ``untilTimePeriod``, ``lastTimePeriod=1``,
 ``time=<period>``) and return the cube's observations as a list, with ``get_data``'s
 ``meta``: ``meta.request`` names what was sent, in ``get_data``'s terms. Nothing here
-compares datasets or sources (ADR-0003).
+compares datasets or sources (sdk-core ADR-0028).
 
 The production tasks, ``get_sold_production`` and ``get_total_production``, read
 Prodcom's two datasets on the Comext base, DS-059358 (sold production, exports and
@@ -52,15 +53,15 @@ code passes the check there, and DS-059341 answers one asynchronously (HTTP 413,
 ``get_data`` raises ``InvalidRequestError`` saying to send it again later or narrow it.
 
 The list tasks, ``list_datasets``, ``list_codes``, ``list_products``, ``list_cn8`` and
-``list_hs``, answer from the packaged lists (``params``) without a request, by ADR-0022
-rule 1: ``meta.retrieved_at``
+``list_hs``, answer from the packaged lists (``params``) without a request, by sdk-core ADR-0041
+decision 1: ``meta.retrieved_at``
 is the list's ``fetched``, ``meta.endpoint`` the operation it was fetched from
 (``catalogue/toc/xml``, ``sdmx/2.1/codelist/ESTAT/<ID>``, or for a codelist of the
 Comext base its full URL), ``meta.total`` ``None``. Their release metadata (Johannes,
 2026-10-27, D4) comes from ``reference/lists.json``: for the table of contents
 ``meta.vintage`` is its ``creationDate`` as printed (``"20261028T1000"``) and
-``meta.published_at`` the same time without a zone, ``published_at_naive`` set (ADR-0022
-rule 2); for a codelist ``meta.vintage`` is its version (``"28.0"``) and
+``meta.published_at`` the same time without a zone, ``published_at_naive`` set (sdk-core ADR-0041
+decision 2); for a codelist ``meta.vintage`` is its version (``"28.0"``) and
 ``meta.published_at`` its ``LAST_UPDATED`` annotation with the zone Eurostat prints, or
 ``None`` for a codelist without one (CXT_EU_FLUX). ``list_cn8`` and ``list_hs`` serve
 CXT_NC's codes by length: the eight-digit CN codes, and the two-, four- and six-digit HS
@@ -68,7 +69,7 @@ chapters, headings and subheadings.
 
 ``download_dataset`` and ``download_trade`` are the bulk tasks, named in ``BULK_TASKS``
 and so Python-only: the adapters skip them, no tool or route returns a file path
-(ADR-0019 decision 4). Each streams one SDMX 2.1 data query (``api.sdmx.data_query``) as
+(sdk-core ADR-0040 decision 4). Each streams one SDMX 2.1 data query (``api.sdmx.data_query``) as
 gzip-compressed SDMX-CSV to the file the caller names and returns
 ``Result[Downloaded]``; ``parse.parse_sdmx_csv`` reads the file. ``download_trade``
 builds DS-045409's series key from ``get_trade``'s arguments, checked as ``get_trade``
@@ -76,7 +77,7 @@ checks them, and refuses a call with neither ``product`` nor ``reporters``, sinc
 Eurostat serves no Comext trade dataset whole. Their release metadata comes from the file's first
 row, read through the parser: ``meta.vintage`` is ``LAST UPDATE`` as printed
 (``"05/10/26 23:00:00"``) and ``meta.published_at`` the same time without a zone,
-``published_at_naive`` set (ADR-0022 rule 2); ``meta.endpoint`` is ``"dataQuery"``.
+``published_at_naive`` set (sdk-core ADR-0041 decision 2); ``meta.endpoint`` is ``"dataQuery"``.
 """
 
 import functools
@@ -128,7 +129,7 @@ __all__ = [
 ]
 
 BULK_TASKS: frozenset[str] = frozenset({"download_dataset", "download_trade"})
-"""Tasks the adapters skip (ADR-0019 decision 4): ``download_dataset`` and
+"""Tasks the adapters skip (sdk-core ADR-0040 decision 4): ``download_dataset`` and
 ``download_trade``, which write a file and are Python-only. Core's ``build_server`` and
 ``router_from_tasks`` read it from this module and leave its names out, so ``mcp.py`` and
 ``http.py`` pass ``__all__`` whole."""
@@ -229,7 +230,7 @@ MCP_CAPS: Mapping[str, ResultCap] = {
         ),
     ),
 }
-"""MCP result caps of their own, by task function name (conventions §8, ADR-0016).
+"""MCP result caps of their own, by task function name (conventions §8, sdk-core ADR-0038).
 
 The slices serve lists of observations, 234 to 453 bytes each as compact JSON (UTF-8,
 as ``cap_result`` counts them) in the seven recorded slice answers, so the family's
@@ -258,7 +259,7 @@ The list tasks' caps add the note that names ``search``. ``list_datasets`` keeps
 family's 200 rows or 64 KB: no agent needs the whole table of contents at once (over
 10,000 leaves, about 400 bytes each as compact JSON, so the bytes cut it at about 150),
 and a search narrows it to what it looks for. ``list_codes`` takes up to 1,000 rows within
-the family's 64 KB (ADR-0016 decision 4): a code of the main base's codelists is about 45
+the family's 64 KB (sdk-core ADR-0038 decision 4): a code of the main base's codelists is about 45
 to 70 bytes, so a codelist comes whole up to the byte bound, eleven of the twelve
 packaged on 2026-10-28 (UNIT's 773 codes are 57,670 bytes), and CXT_INDICATORS too; GEO's
 thousands and the two PRODCOM product lists, whose labels are long, are cut with the
@@ -346,7 +347,7 @@ def _check_time_parameters(
     exception is using both sinceTimePeriod and untilTimePeriod." (api-statistics.md,
     "The Time parameter"). The Time parameters are a ``time`` or ``time_period`` filter,
     ``sinceTimePeriod``, ``untilTimePeriod`` and ``lastTimePeriod``; one alone, or exactly
-    since with until, passes. Refused before any request (ADR-0007).
+    since with until, passes. Refused before any request (sdk-core ADR-0007).
 
     Raises:
         InvalidRequestError: Two or more of them, other than since with until; the
@@ -555,7 +556,8 @@ async def get_series_async(
         filters,
         arguments=(
             "format is always JSON, lang is an argument of get_series and since and until "
-            "select its periods; get_data takes the other time parameters and geo_level"
+            "select its periods; get_data takes the other time parameters and geo_level "
+            "(over MCP, the tool eurostat_get_data)"
         ),
         time_rule=(
             "get_series selects periods with since and until; filters pins every dimension but time"
@@ -615,11 +617,12 @@ async def get_latest_period_async(
         arguments=(
             "format is always JSON and lang is an argument of get_latest_period, which "
             "asks for the latest period itself; get_data takes the other time parameters "
-            "and geo_level"
+            "and geo_level (over MCP, the tool eurostat_get_data)"
         ),
         time_rule=(
             "get_latest_period asks for the latest period itself; leave time out of "
-            "filters, or ask get_cross_section for one period"
+            "filters, or ask get_cross_section for one period (over MCP, the tool "
+            "eurostat_get_cross_section)"
         ),
     )
     answer = await get_data_async(dataset, sent, lang=lang, last_time_period=1)
@@ -668,7 +671,8 @@ async def get_cross_section_async(
         filters,
         arguments=(
             "format is always JSON, lang is an argument of get_cross_section and period "
-            "selects its period; get_data takes the other time parameters and geo_level"
+            "selects its period; get_data takes the other time parameters and geo_level "
+            "(over MCP, the tool eurostat_get_data)"
         ),
         time_rule="get_cross_section takes its one period as period; leave time out of filters",
     )
@@ -744,7 +748,8 @@ UNPACKAGED_CODELIST = (
     "ef_m_farmleg, of the product and indicators dimensions of the Prodcom datasets "
     "DS-059358 and DS-059359, and of the product, reporter and partner, and flow dimensions "
     "of the Comext trade datasets DS-045409 and DS-059341, only; for any other dataset, "
-    "get_data's cube lists the codes it answers with on each dimension, with their labels."
+    "the cube of get_data (over MCP, the tool eurostat_get_data) lists the codes it "
+    "answers with on each dimension, with their labels."
 )
 """Why ``list_codes`` refuses a codelist the package does not carry."""
 
@@ -758,7 +763,7 @@ def _codelist_answer(
     """The codes of the packaged codelist ``info`` names that ``search`` keeps, with meta.
 
     ``keep``, where given, keeps only the codes it returns ``True`` for, before
-    ``search``. ADR-0022 rule 1: the packaged file's ``meta``, its version as
+    ``search``. sdk-core ADR-0041 decision 1: the packaged file's ``meta``, its version as
     ``vintage`` and its ``LAST_UPDATED`` as ``published_at``, with the zone Eurostat
     prints; ``None`` when the codelist carries no ``LAST_UPDATED`` (CXT_EU_FLUX).
     """
@@ -1004,7 +1009,7 @@ UNKNOWN_PRODUCT = (
 UNKNOWN_INDICATOR = (
     "The package checks each indicator against its copy of CXT_INDICATORS, the indicators "
     "of the Prodcom and Comext datasets, before sending; "
-    'list_codes("cxt_indicators") lists them.'
+    'list_codes("cxt_indicators") lists them (over MCP, the tool eurostat_list_codes).'
 )
 """Why a production or trade task refuses an indicator CXT_INDICATORS lacks (conventions §5).
 
@@ -1015,7 +1020,7 @@ in it that the dataset lacks passes, and Eurostat answers it with an empty cube
 UNKNOWN_COUNTRY = (
     "The package checks each reporter and partner against its copy of CXT_FREE_ISO, "
     "Comext's list of reporters and partners, before sending; "
-    'list_codes("cxt_free_iso") lists them.'
+    'list_codes("cxt_free_iso") lists them (over MCP, the tool eurostat_list_codes).'
 )
 """Why a production or trade task refuses a reporter or partner CXT_FREE_ISO lacks."""
 
@@ -1111,12 +1116,15 @@ async def _production(
     indicators.
     """
     listed = (
-        "list_products lists them."
+        "list_products lists them (over MCP, the tool eurostat_list_products)."
         if products == params.PRODCOM_SOLD
-        else f'list_codes("{products.lower()}") lists them.'
+        else (
+            f'list_codes("{products.lower()}") lists them (over MCP, the tool eurostat_list_codes).'
+        )
     )
     elsewhere = " ".join(
-        f"{product} is a product of {dataset}: {task} serves it."
+        f"{product} is a product of {dataset}: {task} serves it (over MCP, the tool "
+        f"{SOURCE}_{task})."
         for codelist, (dataset, task) in PRODUCTION_DATASETS.items()
         if codelist != products and product in _labels(codelist.lower())
     )
@@ -1269,13 +1277,14 @@ positions of ``download_trade``'s key."""
 
 UNKNOWN_TRADE_PRODUCT = (
     "The package checks the product against its copy of CXT_NC, the trade datasets' "
-    "product list, before sending; list_cn8 and list_hs list its codes."
+    "product list, before sending; list_cn8 and list_hs list its codes (over MCP, the "
+    "tools eurostat_list_cn8 and eurostat_list_hs)."
 )
 """Why a trade task refuses a product CXT_NC lacks (conventions §5)."""
 
 UNKNOWN_FLOW = (
     "The package checks the flow against its copy of CXT_EU_FLUX before sending; "
-    'list_codes("cxt_eu_flux") lists them.'
+    'list_codes("cxt_eu_flux") lists them (over MCP, the tool eurostat_list_codes).'
 )
 """Why a trade task refuses a flow CXT_EU_FLUX lacks (conventions §5)."""
 
@@ -1505,23 +1514,6 @@ DOT_SEGMENTS = frozenset({".", ".."})
 """Keys a URL resolves away as a path segment before sending."""
 
 
-def _target(dest: str | os.PathLike[str]) -> Path:
-    """``dest`` as a path, refused when it is a directory or its directory is missing.
-
-    Core's own text (``AsyncClient.download``), as the taxonomy's refusal, before any
-    request.
-
-    Raises:
-        InvalidRequestError: ``dest`` is a directory, or its directory does not exist.
-    """
-    target = Path(dest)
-    if target.is_dir():
-        raise InvalidRequestError("dest is a directory; name the file to write", source=SOURCE)
-    if not target.parent.is_dir():
-        raise InvalidRequestError("dest's directory does not exist; create it first", source=SOURCE)
-    return target
-
-
 async def _download(
     dataset: str,
     target: Path,
@@ -1535,8 +1527,8 @@ async def _download(
     """Stream one SDMX-CSV data query, gzip-compressed, to ``target``, with its meta.
 
     The release is read from the file's first row through the parser: ``LAST UPDATE`` as
-    ``vintage`` and its naive time as ``published_at`` (ADR-0022 rule 2); ``request`` is
-    ``meta.request`` as given.
+    ``vintage`` and its naive time as ``published_at`` (sdk-core ADR-0041 decision 2);
+    ``request`` is ``meta.request`` as given.
 
     Raises:
         ValidationError: The first row's ``LAST UPDATE`` is not printed as
@@ -1648,7 +1640,7 @@ async def download_dataset_async(
     }
     return await _download(
         dataset,
-        _target(dest),
+        Path(dest),
         request,
         key=key,
         since=since,
@@ -1764,7 +1756,7 @@ async def download_trade_async(
         "format": api.sdmx.DATA_FORMAT,
         "compressed": True,
     }
-    return await _download(EU_TRADE, _target(dest), request, key=key, since=since, until=until)
+    return await _download(EU_TRADE, Path(dest), request, key=key, since=since, until=until)
 
 
 download_trade = sync(download_trade_async)

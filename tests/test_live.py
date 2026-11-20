@@ -13,7 +13,7 @@ the script's own functions; ``list_datasets``'s reads the start of the table of 
 only (its test says why), ``list_codes``'s fetches the STATINFO codelist.
 ``download_dataset``'s downloads the slice its fixture holds, apro_mk_cola for Austria in
 thousand tonnes, 2022 and 2023, to a temporary file and reads it with ``parse_sdmx_csv``,
-the live parser test of the file kind ``sdmx-csv`` (ADR-0020 decision 6).
+the live parser test of the file kind ``sdmx-csv`` (sdk-core ADR-0020 decision 6).
 ``get_data`` has one more on the Comext base, the smallest slice of the Prodcom dataset
 ``DS-059358`` (Austria, one product, the latest period), which is also the nightly's
 check that the Comext base answers. The production tasks have one each there, on the

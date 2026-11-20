@@ -150,7 +150,7 @@ def test_get_data_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
 def test_get_data_answers_a_repeated_request_from_the_cache(replay_fixture: ReplayFixture) -> None:
     """The same request twice is one request on the wire: the client's cache answers the
     second, whose ``meta.retrieved_at`` is the time the first answer was stored
-    (conventions §4; ADR-0015 decision 5), within the readings around the first call. The
+    (conventions §4; sdk-core ADR-0037 decision 5), within the readings around the first call. The
     testing plugin clears the cache around each test, so the first call is a miss."""
     case = "apro_mk_cola_AT_2022_2023"
     route = replay_fixture(GET_DATA, case)
@@ -296,7 +296,7 @@ def test_get_data_refuses_more_than_one_time_parameter(
 ) -> None:
     """api-statistics.md, "The Time parameter": "Using more than one Time parameter in the
     same query is not accepted. The only exception is using both sinceTimePeriod and
-    untilTimePeriod." Refused before any request (ADR-0007), so nothing is replayed."""
+    untilTimePeriod." Refused before any request (sdk-core ADR-0007), so nothing is replayed."""
     with pytest.raises(InvalidRequestError) as refused:
         tasks.get_data("apro_mk_cola", {"geo": "AT", **filters}, **times)
     assert str(refused.value) == (
@@ -353,7 +353,7 @@ def test_get_data_keeps_an_updated_without_zone_as_a_naive_published_at(
 ) -> None:
     """NOT RECORDED: the recorded cube with ``updated`` stripped of its zone in memory, a
     form never seen; ``published_at`` keeps it as printed, no zone invented, with
-    ``published_at_naive`` set, and the text stays the vintage (ADR-0022 rule 2)."""
+    ``published_at_naive`` set, and the text stays the vintage (sdk-core ADR-0041 decision 2)."""
     fixture = load_fixture(FIXTURES / GET_DATA / "apro_mk_cola_AT_2022_2023.json")
     body: dict[str, Any] = json.loads(fixture.response.body)
     body["updated"] = "2026-10-05T23:00:00"
@@ -430,8 +430,8 @@ with core's text for each: the argument and pydantic's message, never the input.
 async def test_get_data_tool_refuses_an_argument_its_schema_refuses(
     respx_mock: respx.MockRouter, arguments: dict[str, Any], message: str
 ) -> None:
-    """Core's argument middleware answers before the tool runs (ADR-0014, amendment
-    2026-10-27; conventions §8), in the family's error form."""
+    """Core's argument middleware answers before the tool runs (sdk-core ADR-0036, decision
+    12; conventions §8), in the family's error form."""
     text = await mcp_call_text(
         server, "eurostat_get_data", {"dataset": "apro_mk_cola", **arguments}
     )
@@ -443,20 +443,21 @@ async def test_get_data_tool_refuses_an_argument_its_schema_refuses(
 def test_get_data_route_refuses_an_argument_its_schema_refuses(
     respx_mock: respx.MockRouter, arguments: dict[str, Any], message: str
 ) -> None:
-    """FastAPI validates the body before the task runs and answers 422 naming the
-    argument; core installs no handler of its own for it."""
+    """Core answers before the task runs, as problem details (conventions §9): HTTP 422,
+    the title ``InvalidRequestError`` and the text the tool's test asserts, never the
+    input."""
     app = FastAPI()
     app.include_router(router)
     with TestClient(app) as http:
         answer = http.post("/eurostat/get_data", json={"dataset": "apro_mk_cola", **arguments})
     assert answer.status_code == 422
-    argument = message.split(":", 1)[0]
-    assert answer.json()["detail"][0]["loc"] == ["body", argument]
+    assert answer.json()["title"] == "InvalidRequestError"
+    assert answer.json()["detail"] == message
     assert not respx_mock.calls, "refused before any request"
 
 
 def test_get_data_route_end_to_end(replay_fixture: ReplayFixture) -> None:
-    """A mapping parameter makes the route a POST with a JSON body (ADR-0007)."""
+    """A mapping parameter makes the route a POST with a JSON body (sdk-core ADR-0007)."""
     case = "apro_mk_cola_AT_2022_2023"
     route = replay_fixture(GET_DATA, case)
     app = FastAPI()
@@ -909,6 +910,22 @@ def test_slices_refuse_a_parameter_as_a_filter(
         "not a dimension; format is always JSON"
     )
     assert f"lang is an argument of {name}" in str(refused.value)
+    assert str(refused.value).endswith(
+        "get_data takes the other time parameters and geo_level (over MCP, the tool "
+        "eurostat_get_data)"
+    ), "the task to call instead, with its tool"
+    assert not respx_mock.calls, "refused before any request"
+
+
+def test_get_latest_period_refuses_a_time_filter_naming_the_cross_section_tool(
+    respx_mock: respx.MockRouter,
+) -> None:
+    """The task to ask for one period instead is named with its MCP tool."""
+    with pytest.raises(InvalidRequestError) as refused:
+        get_latest_period("apro_mk_cola", {**MILK, "time": "2023"})
+    assert str(refused.value).endswith(
+        "or ask get_cross_section for one period (over MCP, the tool eurostat_get_cross_section)"
+    )
     assert not respx_mock.calls, "refused before any request"
 
 
@@ -973,7 +990,7 @@ async def test_get_cross_section_tool_end_to_end(replay_fixture: ReplayFixture) 
 
 
 def test_get_latest_period_route_end_to_end(replay_fixture: ReplayFixture) -> None:
-    """A mapping parameter makes the route a POST with a JSON body (ADR-0007)."""
+    """A mapping parameter makes the route a POST with a JSON body (sdk-core ADR-0007)."""
     case = "apro_mk_cola_latest_AT"
     route = replay_fixture(GET_DATA, case)
     app = FastAPI()
@@ -995,7 +1012,7 @@ async def test_get_latest_period_tool_cuts_a_large_slice_with_its_note(
 ) -> None:
     """The latest period of ef_m_farmleg for one country, every other dimension open:
     1,810 observations, about 719 KB of rows, cut by MCP_CAPS' byte bound (the
-    family's 64 KB) with the task's own note (ADR-0016)."""
+    family's 64 KB) with the task's own note (sdk-core ADR-0038)."""
     case = "ef_m_farmleg_latest_AT_HLD"
     route = replay_fixture(GET_DATA, case)
     payload = await mcp_call(
@@ -1046,7 +1063,7 @@ def test_list_datasets_answers_the_whole_table_of_contents() -> None:
 
 
 def test_list_datasets_meta_is_the_packaged_answer() -> None:
-    """ADR-0022 rule 1 and D4: the file's fetched, the operation, creationDate as
+    """sdk-core ADR-0041 decision 1 and D4: the file's fetched, the operation, creationDate as
     vintage and its naive time as published_at."""
     result = list_datasets()
     created = index_record("toc")["creationDate"]
@@ -1177,6 +1194,7 @@ def test_list_codes_refuses_an_unknown_codelist_naming_the_closest() -> None:
         "Did you mean GEO (Geopolitical entity (reporting))"
     )
     assert tasks.UNPACKAGED_CODELIST in message
+    assert "get_data (over MCP, the tool eurostat_get_data)" in message
 
 
 def test_list_codes_refuses_a_codelist_the_package_does_not_carry() -> None:
@@ -1260,7 +1278,7 @@ async def test_list_codes_tool_answers_the_refusal_as_text() -> None:
 
 
 def test_list_codes_route_end_to_end() -> None:
-    """Scalar parameters make the route a GET with query parameters (ADR-0007)."""
+    """Scalar parameters make the route a GET with query parameters (sdk-core ADR-0007)."""
     app = FastAPI()
     app.include_router(router)
     with TestClient(app) as http:
@@ -1331,7 +1349,9 @@ def test_download_dataset_apro_mk_cola(replay_fixture: ReplayFixture, tmp_path: 
         "format": "SDMX-CSV",
         "compressed": True,
     }
-    assert meta.request["key"] != REDACTED, "the SDMX series key is data (ADR-0019 decision 6)"
+    assert meta.request["key"] != REDACTED, (
+        "the SDMX series key is data (sdk-core ADR-0040 decision 6)"
+    )
     assert meta.total is None
 
 
@@ -1593,7 +1613,7 @@ BULK = ["download_dataset", "download_trade"]
 
 
 def test_bulk_tasks_are_no_tool_and_no_route() -> None:
-    """Bulk tasks: ``BULK_TASKS`` names them, so core's adapters skip them (ADR-0019
+    """Bulk tasks: ``BULK_TASKS`` names them, so core's adapters skip them (sdk-core ADR-0040
     decision 4); the family check (``tests/test_family.py``) serves ``tasks.__all__``
     minus them."""
     assert set(BULK) <= set(tasks.__all__)
@@ -1634,7 +1654,7 @@ EIGHT_CHARACTER_CODE = re.compile(r'``"?(\d{4}[0-9A-Z]{4})"?``')
 
 
 def test_list_products_answers_the_whole_packaged_list(respx_mock: respx.MockRouter) -> None:
-    """ADR-0022 rule 1: the file's fetched, the codelist's full URL on the Comext base,
+    """sdk-core ADR-0041 decision 1: the file's fetched, the codelist's full URL on the Comext base,
     its version as vintage and its LAST_UPDATED, zoned, as published_at."""
     result = list_products()
     raw = packaged_file(PRODUCTS)
@@ -1823,7 +1843,9 @@ def test_production_refuses_an_unknown_reporter_naming_the_closest(
     assert message.startswith(
         f"'XX' is not a reporter in the packaged CXT_FREE_ISO list (fetched {day})."
     )
-    assert 'list_codes("cxt_free_iso") lists them.' in message
+    assert (
+        'list_codes("cxt_free_iso") lists them (over MCP, the tool eurostat_list_codes).'
+    ) in message
     with pytest.raises(UnknownCode) as three:
         task(product, reporters=["AUT"])
     assert "AT" in {code for code, _ in three.value.closest}
@@ -1846,7 +1868,7 @@ def test_get_sold_production_refuses_an_unknown_product_naming_the_closest(
         "Did you mean "
     )
     assert "10411200 (Fats and oils and their fractions of fish or marine mammals" in message
-    assert "list_products lists them." in message
+    assert "list_products lists them (over MCP, the tool eurostat_list_products)." in message
     assert not respx_mock.calls, "refused before any request"
 
 
@@ -1855,7 +1877,7 @@ def test_get_total_production_refuses_a_product_its_list_lacks(
 ) -> None:
     """DS-059359's products are CXT_PRODCOM2_TOTAL's, a part of the sold list's: a sold
     product outside it, crude soya-bean oil, is refused before any request, naming
-    list_codes and the task that serves it."""
+    list_codes and the task that serves it, each with its MCP tool."""
     total = {record["code"] for record in packaged_file("cxt_prodcom2_total")["records"]}
     sold = {record["code"] for record in packaged_file(PRODUCTS)["records"]}
     assert "10412100" in sold - total
@@ -1867,10 +1889,11 @@ def test_get_total_production_refuses_a_product_its_list_lacks(
     assert str(refused.value) == (
         f"'10412100' is not a product in the packaged CXT_PRODCOM2_TOTAL list (fetched {day}). "
         "10412100 is a product of DS-059358 (sold production, exports and imports): "
-        "get_sold_production serves it. A product the dataset lacks would give an empty "
-        "cube, so the package checks the product against its copy of the dataset's product "
-        'list before sending. list_codes("cxt_prodcom2_total") lists them. If upstream '
-        "added it since, the packaged list needs a refresh (/refresh-reference-data)."
+        "get_sold_production serves it (over MCP, the tool eurostat_get_sold_production). "
+        "A product the dataset lacks would give an empty cube, so the package checks the "
+        "product against its copy of the dataset's product list before sending. "
+        'list_codes("cxt_prodcom2_total") lists them (over MCP, the tool '
+        "eurostat_list_codes). If upstream added it since, the packaged list is out of date."
     )
     assert not respx_mock.calls
 
@@ -1887,7 +1910,8 @@ def test_get_sold_production_names_the_total_production_task_for_its_product(
     message = str(refused.value)
     assert (
         f"list (fetched {fetched(PRODUCTS):%Y-%m-%d}). {FERTILISERS} is a product of "
-        "DS-059359 (total production): get_total_production serves it. A product"
+        "DS-059359 (total production): get_total_production serves it (over MCP, the tool "
+        "eurostat_get_total_production). A product"
     ) in message
     assert "Did you mean" not in message
     assert refused.value.closest == ()
@@ -1913,6 +1937,9 @@ def test_production_refuses_an_unknown_indicator(
     assert str(refused.value).startswith(
         "'PRODVALUE' is not an indicator in the packaged CXT_INDICATORS list"
     )
+    assert (
+        'list_codes("cxt_indicators") lists them (over MCP, the tool eurostat_list_codes).'
+    ) in str(refused.value)
     assert not respx_mock.calls
 
 
@@ -2037,7 +2064,7 @@ async def test_get_sold_production_tool_answers_the_refusal_as_text() -> None:
 
 
 def test_get_sold_production_route_end_to_end(replay_fixture: ReplayFixture) -> None:
-    """A list parameter makes the route a POST with a JSON body (ADR-0007)."""
+    """A list parameter makes the route a POST with a JSON body (sdk-core ADR-0007)."""
     route = replay_fixture(GET_DATA, PRODCOM)
     app = FastAPI()
     app.include_router(router)
@@ -2076,7 +2103,7 @@ def nc_records(lengths: set[int]) -> list[dict[str, Any]]:
 def test_list_cn8_and_list_hs_answer_their_codes_of_cxt_nc(
     respx_mock: respx.MockRouter, task: Callable[..., Any], lengths: set[int]
 ) -> None:
-    """ADR-0022 rule 1: the file's fetched, the codelist's full URL on the Comext base,
+    """sdk-core ADR-0041 decision 1: the file's fetched, the codelist's full URL on the Comext base,
     its version as vintage and its LAST_UPDATED, zoned, as published_at."""
     result = task()
     raw = packaged_file(NC)
@@ -2342,7 +2369,10 @@ def test_trade_tasks_refuse_an_unknown_product_naming_the_closest(
     assert message.startswith(
         f"'1507109' is not a product in the packaged CXT_NC list (fetched {day}). Did you mean "
     )
-    assert "list_cn8 and list_hs list its codes." in message
+    assert (
+        "list_cn8 and list_hs list its codes (over MCP, the tools eurostat_list_cn8 and "
+        "eurostat_list_hs)."
+    ) in message
     assert not respx_mock.calls, "refused before any request"
 
 
@@ -2372,6 +2402,9 @@ def test_trade_tasks_refuse_a_code_its_list_lacks(
     if near is not None:
         assert near in {code for code, _ in refused.value.closest}
     assert f"in the packaged {list_name} list" in str(refused.value)
+    assert (
+        f'list_codes("{list_name.lower()}") lists them (over MCP, the tool eurostat_list_codes).'
+    ) in str(refused.value), "the list task, with its tool"
     assert not respx_mock.calls
 
 
@@ -2503,7 +2536,7 @@ async def test_get_trade_tool_answers_the_refusal_as_text() -> None:
 
 
 def test_get_trade_route_end_to_end(replay_fixture: ReplayFixture) -> None:
-    """A list parameter makes the route a POST with a JSON body (ADR-0007)."""
+    """A list parameter makes the route a POST with a JSON body (sdk-core ADR-0007)."""
     route = replay_fixture(GET_DATA, TRADE)
     app = FastAPI()
     app.include_router(router)
