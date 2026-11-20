@@ -27,11 +27,11 @@ from typing import Any
 import httpx
 import pytest
 import respx
-from xippios.core import PackagedList, parse
+from xippios.core import PackagedList, XippiosError, parse
 from xippios.core.testing import sent_urls
 
 from xippios.eurostat import params
-from xippios.eurostat._client import BASE_URL, COMEXT_BASE_URL
+from xippios.eurostat._client import BASE_URL, COMEXT_BASE_URL, client
 from xippios.eurostat.models import Code, Codelist, Dataset, LeafType
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -353,6 +353,28 @@ def test_only_fetches_the_named_list_and_keeps_every_other(
             )
         else:
             assert row == rows_before[name], f"{name} kept as committed"
+
+
+def test_refresh_sends_each_request_once_and_reports_the_count(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    respx_mock: respx.MockRouter,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A 5xx spends no second request of upstream's fair use: the refresh sends each
+    request once, writes nothing when one fails and prints the requests it sent, a failed
+    run's too; the client's own configuration is back after the run."""
+    codelist_route = respx_mock.get(f"{BASE_URL}/sdmx/2.1/codelist/ESTAT/STATINFO").mock(
+        return_value=httpx.Response(503, text="Service Unavailable")
+    )
+    reference = copy_reference(tmp_path, monkeypatch)
+    configured = client.config
+    with pytest.raises(XippiosError):
+        script.main(["--only", "STATINFO"])
+    assert codelist_route.call_count == 1, "one attempt, no retry"
+    assert sorted(path.name for path in reference.iterdir()) == ["README.md", "lists.json"]
+    assert "requests sent: 1; quota left: not reported" in capsys.readouterr().out
+    assert client.config is configured
 
 
 def test_only_takes_an_id_or_a_file_name_in_the_index_order() -> None:

@@ -443,15 +443,16 @@ async def test_get_data_tool_refuses_an_argument_its_schema_refuses(
 def test_get_data_route_refuses_an_argument_its_schema_refuses(
     respx_mock: respx.MockRouter, arguments: dict[str, Any], message: str
 ) -> None:
-    """FastAPI validates the body before the task runs and answers 422 naming the
-    argument; core installs no handler of its own for it."""
+    """Core answers before the task runs, as problem details (conventions §9): HTTP 422,
+    the title ``InvalidRequestError`` and the text the tool's test asserts, never the
+    input."""
     app = FastAPI()
     app.include_router(router)
     with TestClient(app) as http:
         answer = http.post("/eurostat/get_data", json={"dataset": "apro_mk_cola", **arguments})
     assert answer.status_code == 422
-    argument = message.split(":", 1)[0]
-    assert answer.json()["detail"][0]["loc"] == ["body", argument]
+    assert answer.json()["title"] == "InvalidRequestError"
+    assert answer.json()["detail"] == message
     assert not respx_mock.calls, "refused before any request"
 
 
@@ -909,6 +910,22 @@ def test_slices_refuse_a_parameter_as_a_filter(
         "not a dimension; format is always JSON"
     )
     assert f"lang is an argument of {name}" in str(refused.value)
+    assert str(refused.value).endswith(
+        "get_data takes the other time parameters and geo_level (over MCP, the tool "
+        "eurostat_get_data)"
+    ), "the task to call instead, with its tool"
+    assert not respx_mock.calls, "refused before any request"
+
+
+def test_get_latest_period_refuses_a_time_filter_naming_the_cross_section_tool(
+    respx_mock: respx.MockRouter,
+) -> None:
+    """The task to ask for one period instead is named with its MCP tool."""
+    with pytest.raises(InvalidRequestError) as refused:
+        get_latest_period("apro_mk_cola", {**MILK, "time": "2023"})
+    assert str(refused.value).endswith(
+        "or ask get_cross_section for one period (over MCP, the tool eurostat_get_cross_section)"
+    )
     assert not respx_mock.calls, "refused before any request"
 
 
@@ -1177,6 +1194,7 @@ def test_list_codes_refuses_an_unknown_codelist_naming_the_closest() -> None:
         "Did you mean GEO (Geopolitical entity (reporting))"
     )
     assert tasks.UNPACKAGED_CODELIST in message
+    assert "get_data (over MCP, the tool eurostat_get_data)" in message
 
 
 def test_list_codes_refuses_a_codelist_the_package_does_not_carry() -> None:
@@ -1823,7 +1841,9 @@ def test_production_refuses_an_unknown_reporter_naming_the_closest(
     assert message.startswith(
         f"'XX' is not a reporter in the packaged CXT_FREE_ISO list (fetched {day})."
     )
-    assert 'list_codes("cxt_free_iso") lists them.' in message
+    assert (
+        'list_codes("cxt_free_iso") lists them (over MCP, the tool eurostat_list_codes).'
+    ) in message
     with pytest.raises(UnknownCode) as three:
         task(product, reporters=["AUT"])
     assert "AT" in {code for code, _ in three.value.closest}
@@ -1846,7 +1866,7 @@ def test_get_sold_production_refuses_an_unknown_product_naming_the_closest(
         "Did you mean "
     )
     assert "10411200 (Fats and oils and their fractions of fish or marine mammals" in message
-    assert "list_products lists them." in message
+    assert "list_products lists them (over MCP, the tool eurostat_list_products)." in message
     assert not respx_mock.calls, "refused before any request"
 
 
@@ -1855,7 +1875,7 @@ def test_get_total_production_refuses_a_product_its_list_lacks(
 ) -> None:
     """DS-059359's products are CXT_PRODCOM2_TOTAL's, a part of the sold list's: a sold
     product outside it, crude soya-bean oil, is refused before any request, naming
-    list_codes and the task that serves it."""
+    list_codes and the task that serves it, each with its MCP tool."""
     total = {record["code"] for record in packaged_file("cxt_prodcom2_total")["records"]}
     sold = {record["code"] for record in packaged_file(PRODUCTS)["records"]}
     assert "10412100" in sold - total
@@ -1867,10 +1887,11 @@ def test_get_total_production_refuses_a_product_its_list_lacks(
     assert str(refused.value) == (
         f"'10412100' is not a product in the packaged CXT_PRODCOM2_TOTAL list (fetched {day}). "
         "10412100 is a product of DS-059358 (sold production, exports and imports): "
-        "get_sold_production serves it. A product the dataset lacks would give an empty "
-        "cube, so the package checks the product against its copy of the dataset's product "
-        'list before sending. list_codes("cxt_prodcom2_total") lists them. If upstream '
-        "added it since, the packaged list needs a refresh (/refresh-reference-data)."
+        "get_sold_production serves it (over MCP, the tool eurostat_get_sold_production). "
+        "A product the dataset lacks would give an empty cube, so the package checks the "
+        "product against its copy of the dataset's product list before sending. "
+        'list_codes("cxt_prodcom2_total") lists them (over MCP, the tool '
+        "eurostat_list_codes). If upstream added it since, the packaged list is out of date."
     )
     assert not respx_mock.calls
 
@@ -1887,7 +1908,8 @@ def test_get_sold_production_names_the_total_production_task_for_its_product(
     message = str(refused.value)
     assert (
         f"list (fetched {fetched(PRODUCTS):%Y-%m-%d}). {FERTILISERS} is a product of "
-        "DS-059359 (total production): get_total_production serves it. A product"
+        "DS-059359 (total production): get_total_production serves it (over MCP, the tool "
+        "eurostat_get_total_production). A product"
     ) in message
     assert "Did you mean" not in message
     assert refused.value.closest == ()
@@ -1913,6 +1935,9 @@ def test_production_refuses_an_unknown_indicator(
     assert str(refused.value).startswith(
         "'PRODVALUE' is not an indicator in the packaged CXT_INDICATORS list"
     )
+    assert (
+        'list_codes("cxt_indicators") lists them (over MCP, the tool eurostat_list_codes).'
+    ) in str(refused.value)
     assert not respx_mock.calls
 
 
@@ -2342,7 +2367,10 @@ def test_trade_tasks_refuse_an_unknown_product_naming_the_closest(
     assert message.startswith(
         f"'1507109' is not a product in the packaged CXT_NC list (fetched {day}). Did you mean "
     )
-    assert "list_cn8 and list_hs list its codes." in message
+    assert (
+        "list_cn8 and list_hs list its codes (over MCP, the tools eurostat_list_cn8 and "
+        "eurostat_list_hs)."
+    ) in message
     assert not respx_mock.calls, "refused before any request"
 
 
@@ -2372,6 +2400,9 @@ def test_trade_tasks_refuse_a_code_its_list_lacks(
     if near is not None:
         assert near in {code for code, _ in refused.value.closest}
     assert f"in the packaged {list_name} list" in str(refused.value)
+    assert (
+        f'list_codes("{list_name.lower()}") lists them (over MCP, the tool eurostat_list_codes).'
+    ) in str(refused.value), "the list task, with its tool"
     assert not respx_mock.calls
 
 

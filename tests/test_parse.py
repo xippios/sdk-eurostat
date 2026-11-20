@@ -27,10 +27,11 @@ from pathlib import Path
 
 import pytest
 from xippios.core import ValidationError
+from xippios.core.client import decode_csv
 from xippios.core.testing import load_fixture
 
 from xippios.eurostat.models import SdmxCsvRow
-from xippios.eurostat.parse import parse_sdmx_csv
+from xippios.eurostat.parse import parse_sdmx_csv, sdmx_csv
 
 TESTS = Path(__file__).parent
 FIXTURES = TESTS / "fixtures"
@@ -112,6 +113,27 @@ def test_parse_sdmx_csv_reads_every_row_as_printed(sample: Path) -> None:
 @pytest.mark.parametrize(("plain", "packed"), PAIRS, ids=["main", "comext", "comext-trade"])
 def test_parse_sdmx_csv_reads_gzip_and_plain_alike(plain: Path, packed: Path) -> None:
     assert list(parse_sdmx_csv(packed)) == list(parse_sdmx_csv(plain))
+
+
+@pytest.mark.parametrize("sample", [PLAIN, PACKED], ids=["plain", "gzip"])
+def test_parse_sdmx_csv_reads_the_rows_through_core(
+    sample: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Both files' rows come from core's ``decode_csv``: a plain file by its path, a gzip
+    file as the text stream the parser opens on it, never decompressed to disk."""
+    read: list[object] = []
+
+    def spy(data: object, **kwargs: object) -> object:
+        read.append(data)
+        return decode_csv(data, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(sdmx_csv, "decode_csv", spy)
+    assert len(list(parse_sdmx_csv(sample))) == len(text_of(sample).splitlines()) - 1
+    assert len(read) == 1
+    if sample == PLAIN:
+        assert read == [sample]
+    else:
+        assert isinstance(read[0], io.TextIOBase)
 
 
 @pytest.mark.parametrize("sample", [PRODCOM_PLAIN, PRODCOM_PACKED], ids=["plain", "gzip"])

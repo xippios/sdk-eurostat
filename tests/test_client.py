@@ -44,6 +44,7 @@ from xippios.core.testing import load_fixture, response_from_fixture
 from xippios.eurostat._client import (
     BASE_URL,
     COMEXT_BASE_URL,
+    ENV_VARS,
     RATE_LIMIT,
     SDMX_DATA_PATHS,
     classify,
@@ -151,6 +152,11 @@ def test_config() -> None:
     assert config.cache_max_bytes == 8 * 1024 * 1024, "core's bound, ADR-0019 decision 3"
     assert RATE_LIMIT.per_minute == 30
     assert RATE_LIMIT.capacity == 1
+
+
+def test_env_vars_name_no_variable() -> None:
+    """The variables a host reads from the package contract: none, as the API is open."""
+    assert ENV_VARS == ()
 
 
 def test_url_for_requests_a_ds_code_on_the_comext_base() -> None:
