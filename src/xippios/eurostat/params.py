@@ -3,9 +3,8 @@
 ``/refresh-reference-data`` writes them; ``PackagedList.load(PACKAGE, name)`` reads one.
 
 The table of contents and eighteen codelists ship inside the package under ``reference/``
-so that ``list_datasets``, ``list_codes``, ``list_products``, ``list_cn8`` and ``list_hs``
-need no request, and the production and trade tasks check their codes before sending,
-with an index of their release identifiers beside them; ``scripts/refresh_reference.py``
+so that ``list_datasets`` and ``list_codes`` need no request, with an index of their
+release identifiers beside them; ``scripts/refresh_reference.py``
 writes the twenty JSON files, never by hand (sdk-core ADR-0041). The nineteen lists are
 packaged-list files that
 ``PackagedList.load`` reads (``{"param", "endpoint", "fetched", "records"}`` and an
@@ -117,7 +116,7 @@ DS-045409 6.6 and DS-059341 3.7, read 2026-10-28)."""
 TRADE_COUNTRIES = "CXT_FREE_ISO"
 """The reporters and partners of Comext's trade datasets DS-045409 and DS-059341: the
 codelist of their ``reporter`` and ``partner`` dimensions, countries and aggregates
-(``EU27_2020_EXTRA``); the production tasks check a Prodcom reporter against it too
+(``EU27_2020_EXTRA``); the Prodcom datasets' ``reporter`` takes its codes too
 (https://github.com/xippios/sdk-eurostat/pull/14)."""
 
 TRADE_FLOWS = "CXT_EU_FLUX"
