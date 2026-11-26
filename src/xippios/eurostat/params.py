@@ -33,7 +33,7 @@ optional ``note``); the index is plain JSON:
   ``list_codes`` the codelists it knows.
 
 No enum is generated from them (too large for one,
-https://github.com/xippios/sdk-eurostat/pull/6); ``enums.py`` holds none.
+https://github.com/xippios/sdk-eurostat/pull/6), so the package holds no ``enums.py``.
 ``reference/README.md`` carries the provenance of every file.
 """
 

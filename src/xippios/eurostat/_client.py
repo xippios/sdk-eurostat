@@ -17,9 +17,10 @@ the same request: a filter on a dimension the dataset lacks is fault 150 at HTTP
 the main base, and HTTP 413 as too large on the Comext base, whose estimate for
 DS-059358, 151,971,120 rows, is that of an unfiltered query, so the unknown filter seems
 to be ignored. Answers of HTTP 200 are cached in core's ``MemoryCache`` with its default
-lifetime of five minutes, up to core's ``cache_max_bytes`` of 8 MiB a body (sdk-core ADR-0040
-decision 3), so a larger cube is returned and fetched again the next time; a file
-streamed to disk with ``download`` never touches the cache.
+lifetime of five minutes for every path, up to core's ``cache_max_bytes`` of 8 MiB a body
+and 64 MiB of bodies in all, an expired answer dropped (sdk-core ADR-0040 decision 3), so a
+larger cube is returned and fetched again the next time; a file streamed to disk with
+``download`` never touches the cache.
 """
 
 import re

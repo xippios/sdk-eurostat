@@ -45,7 +45,7 @@ reads the codelists as JSON-stat (decision D1 of
 https://github.com/xippios/sdk-eurostat/pull/6). A record's fields are upstream's
 (`lastUpdate`, `dataStart`), and `path`, `code` and `label` name what the package reads
 out of the tree's nesting and a codelist's `category`. No enum is generated from these lists, too
-large for one; `enums.py` is the renderer's empty module.
+large for one, so the package holds no `enums.py`.
 
 Each packaged-list file holds `{"param", "endpoint", "fetched", "records"}` and an
 optional `"note"`, upstream's records under upstream's field names, written by
