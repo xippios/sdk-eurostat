@@ -22,6 +22,8 @@ decision 3), so a larger cube is returned and fetched again the next time; a fil
 streamed to disk with ``download`` never touches the cache.
 """
 
+import re
+
 import httpx
 from xippios.core import (
     AsyncClient,
@@ -29,6 +31,7 @@ from xippios.core import (
     EnvVar,
     InvalidRequestError,
     NotFoundError,
+    QueryTooLarge,
     RateLimit,
     XippiosError,
     request_description,
@@ -68,11 +71,21 @@ request path begins."""
 SDMX_CSV = "application/vnd.sdmx.data+csv"
 """The media type of an SDMX-CSV answer, plain or ``compressed=true`` (recorded
 2026-10-27; ``version=1.0.0`` as its parameter)."""
-API_KEY_ENV: str | None = None
 ENV_VARS: tuple[EnvVar, ...] = ()
 """The variables the package reads, for a host (conventions §7; sdk-core ADR-0026, amendment
 2026-11-18, point c): none, since the API is open. An ``EnvVar`` names a variable and reads
 none; a variable the source reads joins the list."""
+EXTRACTION_LIMIT = 5_000_000
+"""The most cells Eurostat extracts for one query it has not cached, "if above 5 000 000
+cells, a client request error is returned" (``asynchronous-api.md``): the limit of a
+``QueryTooLarge`` whose refusal states none, as each recorded one states it, "max
+authorised is 5000000"."""
+TOO_LARGE_NARROW = (
+    f"Eurostat estimates an extraction in cells and refuses one over its limit: {NARROW_HINT}."
+)
+"""What closes the refusal of a query too large, after core's count and limit."""
+_ESTIMATED = re.compile(r"estimated (\d+) rows")
+_AUTHORISED = re.compile(r"max authorised is (\d+)")
 # A self-imposed pace: upstream documents no rate in numbers, only a fair-use rule
 # without one (sdk-core ADR-0033 decision 1; asynchronous-api.md, "Fair use of the service").
 RATE_LIMIT = RateLimit(per_minute=30, burst=1)
@@ -118,6 +131,25 @@ def _not_sdmx_csv(response: httpx.Response) -> str | None:
     return None if media == SDMX_CSV else media or "no content type"
 
 
+def _too_large(response: httpx.Response, text: str) -> QueryTooLarge:
+    """Eurostat's refusal of an extraction as too large, as core's ``QueryTooLarge``.
+
+    The count and the limit are read from upstream's text where it states them, as each
+    recorded refusal does ("estimated 13344840 rows, max authorised is 5000000"); a text
+    without a count gives ``None``, and one without a limit the user guide's
+    ``EXTRACTION_LIMIT`` (conventions §5).
+    """
+    estimated = _ESTIMATED.search(text)
+    authorised = _AUTHORISED.search(text)
+    return QueryTooLarge(
+        int(estimated.group(1)) if estimated else None,
+        limit=int(authorised.group(1)) if authorised else EXTRACTION_LIMIT,
+        narrow=TOO_LARGE_NARROW,
+        request=request_description(response),
+        source=SOURCE,
+    )
+
+
 def classify(response: httpx.Response) -> XippiosError | None:
     """The Statistics API's documented refusals and the SDMX data API's, mapped once.
 
@@ -157,9 +189,10 @@ def classify(response: httpx.Response) -> XippiosError | None:
     - HTTP 400 with any other ``error`` member, an array or one object:
       ``InvalidRequestError`` with upstream's label (recorded for an unknown dimension,
       fault 150, and for ``geo`` with ``geoLevel``; the fault table's 140 alike).
-    - HTTP 413 otherwise: ``InvalidRequestError`` naming how to narrow the query, with
-      upstream's text: the faults of an ``error`` member, described as at HTTP 400, or
-      else the ``faultstring`` of a SOAP fault. Recorded on the Comext base: the
+    - HTTP 413 otherwise: core's ``QueryTooLarge`` (conventions §5), its count and its
+      limit read from upstream's text, the labels of an ``error`` member or else the
+      ``faultstring`` of a SOAP fault, and naming how to narrow the query. Recorded on the
+      Comext base: the
       Statistics API's ``error`` array with id 413, ``EXTRACTION_TOO_BIG``, its answer to
       a filter on a dimension the dataset lacks, whose estimate, 151,971,120 rows, is
       that of an unfiltered query, so the unknown filter seems to be ignored
@@ -206,12 +239,8 @@ def classify(response: httpx.Response) -> XippiosError | None:
                 source=SOURCE,
             )
     if status == 413:
-        fault = "; ".join(item.describe() for item in faults) or soap_faultstring(response)
-        return InvalidRequestError(
-            f"Eurostat refused {where} as too large "
-            f"(HTTP 413{': ' + fault if fault else ''}): {NARROW_HINT}.",
-            source=SOURCE,
-        )
+        text = "; ".join(item.label for item in faults) or soap_faultstring(response) or ""
+        return _too_large(response, text)
     return None
 
 
@@ -230,11 +259,11 @@ config = ClientConfig(
 client = AsyncClient(config)
 
 __all__ = [
-    "API_KEY_ENV",
     "BASE_URL",
     "COMEXT_BASE_URL",
     "COMEXT_PREFIX",
     "ENV_VARS",
+    "EXTRACTION_LIMIT",
     "RATE_LIMIT",
     "SDMX_CSV",
     "SDMX_DATA_PATHS",

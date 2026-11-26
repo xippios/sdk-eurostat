@@ -61,21 +61,18 @@ asynchronously or refused with HTTP 413 (``asynchronous-api.md``), which
 """
 
 import os
-from datetime import datetime
-from typing import Any, NamedTuple
 from urllib.parse import quote
 
-import httpx
-from xippios.core import Downloaded, parse
+from xippios.core import Downloaded
+from xippios.core.client import Answer
 
-from xippios.eurostat._client import BASE_URL, SOURCE, client, url_for
+from xippios.eurostat._client import BASE_URL, client, url_for
 from xippios.eurostat.models import Codelist
 
 __all__ = [
     "CODELIST_ENDPOINT",
     "DATA_ENDPOINT",
     "DATA_FORMAT",
-    "CodelistAnswer",
     "code_list_query",
     "codelist_path",
     "data_path",
@@ -100,25 +97,9 @@ def codelist_path(agency_id: str, resource_id: str) -> str:
     return f"sdmx/2.1/codelist/{quote(agency_id, safe='')}/{quote(resource_id, safe='')}"
 
 
-class CodelistAnswer(NamedTuple):
-    """What ``code_list_query`` returns.
-
-    Attributes:
-        codelist: The answer, parsed.
-        payload: The answer as decoded, every member kept, for the refresh script's
-            sample of it.
-        retrieved_at: When the answer was retrieved, timezone-aware UTC: on a cache hit
-            the time the entry was stored (``AsyncClient.get_answer``).
-    """
-
-    codelist: Codelist
-    payload: dict[str, Any]
-    retrieved_at: datetime
-
-
 async def code_list_query(
     agency_id: str, resource_id: str, *, lang: str | None = None, base_url: str = BASE_URL
-) -> CodelistAnswer:
+) -> Answer[Codelist]:
     """Call ``codeListQuery``: the latest version of one codelist as JSON-stat.
 
     Args:
@@ -131,7 +112,9 @@ async def code_list_query(
             datasets.
 
     Returns:
-        The codelist, the decoded answer and when it was retrieved.
+        Core's ``Answer``: the parsed ``Codelist`` as ``payload``, and ``retrieved_at``,
+        timezone-aware UTC, on a cache hit the time the entry was stored, else the time
+        the answer arrived.
 
     Raises:
         XippiosError: The taxonomy error for a refusal (an unknown codelist, say).
@@ -140,12 +123,11 @@ async def code_list_query(
     params: dict[str, str] = {"format": "JSON"}
     if lang is not None:
         params["lang"] = lang
-    answer = await client.get_answer(
-        f"{base_url}/{codelist_path(agency_id, resource_id)}", params=params
-    )
-    codelist = parse(Codelist, answer.payload, source=SOURCE, endpoint=CODELIST_ENDPOINT)
-    return CodelistAnswer(
-        codelist=codelist, payload=answer.payload, retrieved_at=answer.retrieved_at
+    return await client.get_answer(
+        f"{base_url}/{codelist_path(agency_id, resource_id)}",
+        params=params,
+        parse=Codelist,
+        endpoint=CODELIST_ENDPOINT,
     )
 
 
@@ -196,7 +178,8 @@ async def data_query(
         InvalidRequestError: ``dest`` is a directory, or its directory does not exist;
             core's ``download`` refuses it before anything is sent.
         XippiosError: The taxonomy error for a refusal, an asynchronous answer among
-            them (``_client.classify``); ``dest`` is left untouched.
+            them and ``QueryTooLarge`` for an extraction too big (``_client.classify``);
+            ``dest`` is left untouched.
     """
     params: dict[str, str | int] = {"format": DATA_FORMAT}
     if start_period is not None:
@@ -207,5 +190,6 @@ async def data_query(
         params["lastNObservations"] = last_n_observations
     if compressed:
         params["compressed"] = "true"
-    path = f"/{data_path(flow_ref, key)}?{httpx.QueryParams(params)}"
-    return await client.download(url_for(flow_ref, path), dest)
+    return await client.download(
+        url_for(flow_ref, f"/{data_path(flow_ref, key)}"), dest, params=params
+    )
