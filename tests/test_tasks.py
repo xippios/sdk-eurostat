@@ -22,6 +22,7 @@ slices, the production and trade tasks and the lists cut from one codelist left 
 codes and codelists.
 """
 
+import importlib.util
 import json
 import re
 from datetime import UTC, datetime, timedelta, timezone
@@ -39,10 +40,11 @@ from xippios.core import (
     Downloaded,
     InvalidRequestError,
     NotFoundError,
+    QueryTooLarge,
     UnknownCode,
     ValidationError,
 )
-from xippios.core.client import cache_key
+from xippios.core.client import Answer, cache_key
 from xippios.core.testing import (
     CLOCK_SLACK,
     REDACTED,
@@ -83,6 +85,8 @@ FIXTURES = Path(__file__).parent / "fixtures"
 GUIDE = Path(__file__).parents[1] / "docs" / "upstream" / "user-guide" / "api-detailed-guidelines"
 GET_DATA = "get_data"
 CEST = timezone(timedelta(hours=2))
+UNSENT = "Nothing was sent."
+"""The sentence of every refusal before a request (conventions §5)."""
 
 
 def recorded_url(case: str) -> str:
@@ -237,8 +241,9 @@ def test_get_data_takes_lang_as_a_plain_string(replay_fixture: ReplayFixture) ->
 def test_get_data_refuses_a_value_outside_the_enumeration(
     respx_mock: respx.MockRouter, argument: str, value: str
 ) -> None:
-    with pytest.raises(InvalidRequestError, match=f"{argument}={value!r} is not one of"):
+    with pytest.raises(InvalidRequestError, match=f"{argument}={value!r} is not one of") as refused:
         tasks.get_data("apro_mk_cola", {"geo": "AT"}, **{argument: cast(Any, value)})
+    assert str(refused.value).endswith(f"'. {UNSENT}")
     assert not respx_mock.calls, "refused before any request"
 
 
@@ -271,12 +276,13 @@ def test_get_data_refuses_more_than_one_time_parameter(
 ) -> None:
     """api-statistics.md, "The Time parameter": "Using more than one Time parameter in the
     same query is not accepted. The only exception is using both sinceTimePeriod and
-    untilTimePeriod." Refused before any request (sdk-core ADR-0007), so nothing is replayed."""
+    untilTimePeriod." Refused before any request (sdk-core ADR-0007), so nothing is replayed,
+    and the refusal says so (conventions §5)."""
     with pytest.raises(InvalidRequestError) as refused:
         tasks.get_data("apro_mk_cola", {"geo": "AT", **filters}, **times)
     assert str(refused.value) == (
         f"{named}: the Statistics API does not accept more than one time parameter in a "
-        "query; the one exception is since_time_period with until_time_period"
+        f"query; the one exception is since_time_period with until_time_period. {UNSENT}"
     )
     assert not respx_mock.calls, "refused before any request"
 
@@ -287,8 +293,8 @@ def test_documented_shape_get_data_refuses_an_asynchronous_answer(
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
     hand-written, and never seen: the asynchronous answer of api-statistics.md. The
     Statistics API's asynchronous answer was recorded on 2026-10-28 as an ``error`` array
-    (``test_get_trade_hs_passes_a_cn8_code_which_ds_059341_answers_asynchronously``); this
-    test stays for the documented ``warning`` (conventions §10)."""
+    (``tests/test_client.py``, ``test_statistics_api_asynchronous_answer_is_refused_as_recorded``);
+    this test stays for the documented ``warning`` (conventions §10, kind 1)."""
     documented = next(
         line.strip()
         for line in (GUIDE / "api-statistics.md").read_text(encoding="utf-8").splitlines()
@@ -312,14 +318,21 @@ def test_documented_shape_get_data_refuses_an_asynchronous_answer(
 def test_get_data_refuses_a_parameter_as_a_filter(
     respx_mock: respx.MockRouter, filters: dict[str, str]
 ) -> None:
-    with pytest.raises(InvalidRequestError, match="is a parameter of the Statistics API"):
+    with pytest.raises(
+        InvalidRequestError, match="is a parameter of the Statistics API"
+    ) as refused:
         tasks.get_data("apro_mk_cola", filters)
+    assert str(refused.value).endswith(f"are arguments of get_data. {UNSENT}")
     assert not respx_mock.calls, "refused before any request"
 
 
 def test_get_data_refuses_an_empty_list_of_codes(respx_mock: respx.MockRouter) -> None:
-    with pytest.raises(InvalidRequestError, match="lists no code"):
+    with pytest.raises(InvalidRequestError, match="lists no code") as refused:
         tasks.get_data("apro_mk_cola", {"geo": []})
+    assert str(refused.value) == (
+        "filters['geo'] lists no code: give one code or several, or leave the dimension out "
+        f"to get all of its codes. {UNSENT}"
+    )
     assert not respx_mock.calls
 
 
@@ -328,7 +341,8 @@ def test_get_data_keeps_an_updated_without_zone_as_a_naive_published_at(
 ) -> None:
     """NOT RECORDED: the recorded cube with ``updated`` stripped of its zone in memory, a
     form never seen; ``published_at`` keeps it as printed, no zone invented, with
-    ``published_at_naive`` set, and the text stays the vintage (sdk-core ADR-0041 decision 2)."""
+    ``published_at_naive`` set, and the text stays the vintage (sdk-core ADR-0041 decision 2;
+    conventions §10, kind 4)."""
     fixture = load_fixture(FIXTURES / GET_DATA / "apro_mk_cola_AT_2022_2023.json")
     body: dict[str, Any] = json.loads(fixture.response.body)
     body["updated"] = "2026-10-05T23:00:00"
@@ -369,10 +383,17 @@ async def test_get_data_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
 @pytest.mark.anyio
 async def test_get_data_tool_schema_lists_the_enumerations() -> None:
     """The MCP schema carries ``Lang`` and ``GeoLevel`` as enumerations of strings, so an
-    agent sees the valid values; the tool validates a string against them."""
+    agent sees the valid values; the tool validates a string against them. Each argument's
+    text under ``Args:`` stands in its property, and the tool's description stops before
+    ``Args:`` (sdk-core ADR-0063, decision 9)."""
     tools = {tool.name: tool for tool in await server.list_tools()}
     schema = tools["eurostat_get_data"].input_schema
-    assert schema["properties"]["lang"] == {"$ref": "#/$defs/Lang", "default": "EN"}
+    assert schema["properties"]["lang"] == {
+        "$ref": "#/$defs/Lang",
+        "default": "EN",
+        "description": 'Language of the labels: ``"EN"`` (the default), ``"FR"`` or ``"DE"``.',
+    }
+    assert "Language of the labels" not in (tools["eurostat_get_data"].description or "")
     assert schema["$defs"]["Lang"]["enum"] == ["EN", "FR", "DE"]
     assert schema["$defs"]["GeoLevel"]["enum"] == [
         "aggregate",
@@ -382,53 +403,6 @@ async def test_get_data_tool_schema_lists_the_enumerations() -> None:
         "nuts3",
         "city",
     ]
-
-
-SCHEMA_REFUSALS = [
-    ({"lang": "IT"}, "lang: Input should be 'EN', 'FR' or 'DE'"),
-    ({"lang": "en"}, "lang: Input should be 'EN', 'FR' or 'DE'"),
-    (
-        {"geo_level": "region"},
-        "geo_level: Input should be 'aggregate', 'country', 'nuts1', 'nuts2', 'nuts3' or 'city'",
-    ),
-    (
-        {"last_time_period": "two"},
-        "last_time_period: Input should be a valid integer, unable to parse string as an integer",
-    ),
-]
-"""Arguments the tool's schema refuses (the StrEnums ``Lang`` and ``GeoLevel``, an int),
-with core's text for each: the argument and pydantic's message, never the input."""
-
-
-@pytest.mark.anyio
-@pytest.mark.parametrize(("arguments", "message"), SCHEMA_REFUSALS)
-async def test_get_data_tool_refuses_an_argument_its_schema_refuses(
-    respx_mock: respx.MockRouter, arguments: dict[str, Any], message: str
-) -> None:
-    """Core's argument middleware answers before the tool runs (sdk-core ADR-0036, decision
-    12; conventions §8), in the family's error form."""
-    text = await mcp_call_text(
-        server, "eurostat_get_data", {"dataset": "apro_mk_cola", **arguments}
-    )
-    assert text == f"error: InvalidRequestError: {message}"
-    assert not respx_mock.calls, "refused before any request"
-
-
-@pytest.mark.parametrize(("arguments", "message"), SCHEMA_REFUSALS)
-def test_get_data_route_refuses_an_argument_its_schema_refuses(
-    respx_mock: respx.MockRouter, arguments: dict[str, Any], message: str
-) -> None:
-    """Core answers before the task runs, as problem details (conventions §9): HTTP 422,
-    the title ``InvalidRequestError`` and the text the tool's test asserts, never the
-    input."""
-    app = FastAPI()
-    app.include_router(router)
-    with TestClient(app) as http:
-        answer = http.post("/eurostat/get_data", json={"dataset": "apro_mk_cola", **arguments})
-    assert answer.status_code == 422
-    assert answer.json()["title"] == "InvalidRequestError"
-    assert answer.json()["detail"] == message
-    assert not respx_mock.calls, "refused before any request"
 
 
 def test_get_data_route_end_to_end(replay_fixture: ReplayFixture) -> None:
@@ -524,16 +498,17 @@ def test_get_data_ds_059358_unknown_dimension_is_too_large(replay_fixture: Repla
     """The Comext base does not refuse a filter on a dimension the dataset lacks as the
     main base does (fault 150 at HTTP 400), but as too large: HTTP 413 with an ``error``
     array, whose fault reaches the caller. The estimate, 151,971,120 rows, is that of an
-    unfiltered query, so the unknown filter seems to be ignored."""
+    unfiltered query, so the unknown filter seems to be ignored. It is core's
+    ``QueryTooLarge`` (conventions §5)."""
     route = replay_fixture(GET_DATA, "DS-059358_unknown_dimension_too_big")
-    with pytest.raises(InvalidRequestError) as refused:
+    with pytest.raises(QueryTooLarge) as refused:
         tasks.get_data("DS-059358", {"geo": "AT"})
     assert sent_urls(route) == [recorded_url("DS-059358_unknown_dimension_too_big")]
+    assert (refused.value.count, refused.value.limit) == (151_971_120, 5_000_000)
     assert str(refused.value) == (
-        "Eurostat refused GET /eurostat/api/comext/dissemination/statistics/1.0/data/"
-        "DS-059358 as too large (HTTP 413: fault 413: EXTRACTION_TOO_BIG: The requested "
-        "extraction is too big, estimated 151971120 rows, max authorised is 5000000, please "
-        "change your filters to reduce the extraction size): narrow the query with fewer "
+        "GET /eurostat/api/comext/dissemination/statistics/1.0/data/DS-059358 would return "
+        "151,971,120 records; upstream serves at most 5,000,000 per call. Eurostat estimates "
+        "an extraction in cells and refuses one over its limit: narrow the query with fewer "
         "codes per dimension or a shorter period."
     )
 
@@ -738,7 +713,7 @@ def test_list_codes_refuses_an_unknown_codelist_naming_the_closest() -> None:
     message = str(refused.value)
     day = f"{fetched('lists'):%Y-%m-%d}"
     assert message.startswith(
-        f"'goe' is not a codelist in the packaged codelist list (fetched {day}). "
+        f"'goe' is not a codelist in the packaged codelist list (fetched {day}). {UNSENT} "
         "Did you mean GEO (Geopolitical entity (reporting))"
     )
     assert tasks.UNPACKAGED_CODELIST in message
@@ -766,12 +741,38 @@ async def test_list_datasets_tool_cuts_the_whole_list_with_its_note() -> None:
     shown = len(payload["data"])
     total = index_record("toc")["count"]
     assert 0 < shown <= cap.max_rows
+    assert cap.paged, "a packaged table: a continuation sends upstream no request"
     assert payload["note"] == (
         f"showing {shown} of {total} rows (cap: {cap.max_rows} rows or {cap.max_bytes} bytes); "
-        "pass search, a word of the title or a part of the code (milk, apro_mk), to see the rest"
+        "pass search, a word of the title or a part of the code (milk, apro_mk), to see the "
+        f"rest; continue with offset={shown}"
     )
     assert payload["meta"]["vintage"] == index_record("toc")["creationDate"]
     assert payload["meta"]["published_at_naive"] is True
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ("tool", "arguments", "record"),
+    [
+        ("eurostat_list_datasets", {}, "toc"),
+        ("eurostat_list_codes", {"codelist": "geo"}, "geo"),
+    ],
+)
+async def test_a_list_tool_continues_at_its_offset_without_a_request(
+    respx_mock: respx.MockRouter, tool: str, arguments: dict[str, Any], record: str
+) -> None:
+    """Both list tools answer from packaged tables, so their caps are paged (sdk-core
+    ADR-0047): the note of a cut answer names the ``offset`` to continue with, and the
+    next page runs the task again and sends nothing."""
+    first = await mcp_call(server, tool, arguments)
+    shown = len(first["data"])
+    second = await mcp_call(server, tool, {**arguments, "offset": shown})
+    total = index_record(record)["count"]
+    assert second["note"].startswith(f"showing rows {shown + 1} to ")
+    assert f" of {total}" in second["note"]
+    assert second["data"][0] != first["data"][0]
+    assert not respx_mock.calls, "a continuation sends upstream no request"
 
 
 @pytest.mark.anyio
@@ -801,9 +802,11 @@ async def test_list_codes_tool_cuts_geo_with_its_note() -> None:
     shown = len(payload["data"])
     total = index_record("geo")["count"]
     assert 0 < shown <= cap.max_rows < total
+    assert cap.paged, "a packaged table: a continuation sends upstream no request"
     assert payload["note"] == (
         f"showing {shown} of {total} rows (cap: {cap.max_rows} rows or {cap.max_bytes} bytes); "
-        "pass search, a part of the code or of the label (AT, austria), to see the rest"
+        "pass search, a part of the code or of the label (AT, austria), to see the rest; "
+        f"continue with offset={shown}"
     )
     assert payload["meta"]["vintage"] == index_record("geo")["version"]
 
@@ -968,7 +971,8 @@ def test_download_dataset_without_a_key_downloads_the_whole_dataset(
     replay_fixture: ReplayFixture, tmp_path: Path
 ) -> None:
     """The recorded answer served at the URL without a key segment (``data/{flowRef}``):
-    moved, not written by hand. ``key`` is recorded as the empty string sent."""
+    moved, not written by hand, for a test that asserts only what was sent (conventions
+    §10, kind 3). ``key`` is recorded as the empty string sent."""
     url = f"{DATA_URL}/apro_mk_cola?format=SDMX-CSV&compressed=true"
     route = replay_fixture(DATA_QUERY, MILK_SLICE_GZ, url=url)
     result = download_dataset("apro_mk_cola", dest=tmp_path / "all.csv.gz")
@@ -984,8 +988,9 @@ def test_download_dataset_without_a_key_downloads_the_whole_dataset(
 def test_download_dataset_sends_last_n_observations_and_quotes_the_key(
     replay_fixture: ReplayFixture, tmp_path: Path
 ) -> None:
-    """The recorded answer moved to the URL of another request: ``+`` and the dots stay in
-    the key, ``lastNObservations`` follows ``format``."""
+    """The recorded answer moved to the URL of another request, for a test that asserts
+    only what was sent (conventions §10, kind 3): ``+`` and the dots stay in the key,
+    ``lastNObservations`` follows ``format``."""
     key = "A.PRD.D1110D.THS_T.AT+DE"
     url = f"{DATA_URL}/apro_mk_cola/{key}?format=SDMX-CSV&lastNObservations=2&compressed=true"
     route = replay_fixture(DATA_QUERY, MILK_SLICE_GZ, url=url)
@@ -998,7 +1003,8 @@ def test_download_dataset_answers_an_empty_file_without_a_release(
     respx_mock: respx.MockRouter, tmp_path: Path
 ) -> None:
     """NOT RECORDED: the recorded plain answer cut to its header line in memory, served
-    with its recorded headers: a file without a row has no ``LAST UPDATE`` to read."""
+    with its recorded headers: a file without a row has no ``LAST UPDATE`` to read
+    (conventions §10, kind 4)."""
     recorded = recorded_data(MILK_SLICE)
     header = recorded.response.content.split(b"\r\n", 1)[0] + b"\r\n"
     respx_mock.route(method="GET", host="ec.europa.eu").mock(
@@ -1015,8 +1021,8 @@ def test_download_dataset_refuses_a_last_update_it_cannot_read(
     respx_mock: respx.MockRouter, tmp_path: Path
 ) -> None:
     """NOT RECORDED: the recorded plain answer with its LAST UPDATE printed year first in
-    memory, served with its recorded headers. The file is written and stays at ``dest``;
-    the message names the form expected, never the text."""
+    memory, served with its recorded headers (conventions §10, kind 4). The file is written
+    and stays at ``dest``; the message names the form expected, never the text."""
     recorded = recorded_data(MILK_SLICE)
     body = recorded.response.content.replace(b"05/10/26 23:00:00", b"2026-10-05 23:00:00")
     respx_mock.route(method="GET", host="ec.europa.eu").mock(
@@ -1036,21 +1042,23 @@ def test_download_dataset_refuses_a_last_update_it_cannot_read(
 def test_download_dataset_refuses_a_dot_segment_key(
     respx_mock: respx.MockRouter, tmp_path: Path, key: str
 ) -> None:
-    with pytest.raises(InvalidRequestError, match='pass key="" for every code'):
+    with pytest.raises(InvalidRequestError, match='pass key="" for every code') as refused:
         download_dataset("apro_mk_cola", key, dest=tmp_path / "f.csv.gz")
+    assert str(refused.value).endswith(f'pass key="" for every code of every dimension. {UNSENT}')
     assert not respx_mock.calls, "refused before any request"
 
 
 def test_download_dataset_refuses_a_directory_or_a_missing_one(
     respx_mock: respx.MockRouter, tmp_path: Path
 ) -> None:
-    """Core's own text (``AsyncClient.download``), as the taxonomy's refusal."""
+    """Core's own text (``check_dest``, which ``AsyncClient.download`` calls), as the
+    taxonomy's refusal, saying that nothing was sent (conventions §5)."""
     with pytest.raises(InvalidRequestError) as directory:
         download_dataset("apro_mk_cola", MILK_KEY, dest=tmp_path)
-    assert str(directory.value) == "dest is a directory; name the file to write"
+    assert str(directory.value) == f"dest is a directory; name the file to write. {UNSENT}"
     with pytest.raises(InvalidRequestError) as missing:
         download_dataset("apro_mk_cola", MILK_KEY, dest=tmp_path / "no" / "f.csv.gz")
-    assert str(missing.value) == "dest's directory does not exist; create it first"
+    assert str(missing.value) == f"dest's directory does not exist; create it first. {UNSENT}"
     assert not respx_mock.calls, "refused before any request"
 
 
@@ -1090,23 +1098,24 @@ def test_download_dataset_refuses_an_extraction_too_big(
 ) -> None:
     """Recorded on the Comext base: the SOAP fault ``EXTRACTION_TOO_BIG`` at HTTP 413 for
     five reporters and one partner over every product, monthly, for a year; a download
-    reads an error's body for the error's text. The recording replaces the test of the
-    user guide's documented body (conventions §10)."""
+    reads an error's body for the error's text, and it is core's ``QueryTooLarge``
+    (conventions §5). The recording replaces the test of the user guide's documented body
+    (conventions §10)."""
     route = replay_fixture(DATA_QUERY, TOO_BIG)
     key = "M.AT+DE+FR+IT+NL.US..."
-    with pytest.raises(InvalidRequestError) as refused:
+    with pytest.raises(QueryTooLarge) as refused:
         download_dataset("DS-045409", key, since="2023", until="2023", dest=tmp_path / "t.csv.gz")
     assert sent_urls(route) == [recorded_data(TOO_BIG).request.url]
     assert recorded_data(TOO_BIG).request.url == (
         f"{COMEXT_DATA_URL}/DS-045409/{key}?format=SDMX-CSV&startPeriod=2023&endPeriod=2023"
         "&compressed=true"
     ), "the plus signs and dots of the key as sent"
-    text = str(refused.value)
-    assert text.startswith(
-        f"Eurostat refused GET /eurostat/api/comext/dissemination/sdmx/2.1/data/DS-045409/{key} "
-        "as too large (HTTP 413: EXTRACTION_TOO_BIG: The requested extraction is too big"
+    assert str(refused.value) == (
+        f"GET /eurostat/api/comext/dissemination/sdmx/2.1/data/DS-045409/{key} would return "
+        "13,344,840 records; upstream serves at most 5,000,000 per call. Eurostat estimates an "
+        "extraction in cells and refuses one over its limit: narrow the query with fewer codes "
+        "per dimension or a shorter period."
     )
-    assert text.endswith("narrow the query with fewer codes per dimension or a shorter period.")
     assert leftovers(tmp_path) == []
 
 
@@ -1141,7 +1150,9 @@ async def test_code_list_query_takes_the_comext_base(respx_mock: respx.MockRoute
     """``base_url`` sends the codelist query to the Comext base: only the URL sent is
     asserted. NOT RECORDED: the answer is the main base's STATINFO sample
     (``tests/fixtures/files/codelist/statinfo.json``) served at the Comext base's codelist
-    path, an exchange upstream never had, so that the call completes."""
+    path, an exchange upstream never had, so that the call completes, for a test that
+    asserts only what was sent (conventions §10, kind 3). The wrapper answers core's
+    ``Answer`` of the parsed codelist."""
     sample = (FIXTURES / "files" / "codelist" / "statinfo.json").read_bytes()
     route = respx_mock.route(
         method="GET",
@@ -1152,7 +1163,11 @@ async def test_code_list_query_takes_the_comext_base(respx_mock: respx.MockRoute
             200, headers={"content-type": "application/json"}, content=sample
         )
     )
-    await api.sdmx.code_list_query("ESTAT", "STATINFO", lang="en", base_url=COMEXT_BASE_URL)
+    answer = await api.sdmx.code_list_query(
+        "ESTAT", "STATINFO", lang="en", base_url=COMEXT_BASE_URL
+    )
+    assert isinstance(answer, Answer)
+    assert isinstance(answer.payload, models.Codelist)
     assert sent_urls(route) == [
         f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/STATINFO?format=JSON&lang=en"
     ]
@@ -1215,3 +1230,41 @@ async def test_bulk_tasks_are_no_mcp_tool(
     with pytest.raises(AssertionError, match=f"Unknown tool: eurostat_{name}"):
         await mcp_call(server, f"eurostat_{name}", arguments)
     assert not respx_mock.calls
+
+
+@pytest.mark.anyio
+async def test_get_data_wrapper_answers_the_cube_with_its_printed_update(
+    replay_fixture: ReplayFixture,
+) -> None:
+    """``api.statistics.get_data`` answers core's ``Answer``: the cube with its ``updated`` as
+    Eurostat printed it, which ``meta.vintage`` holds, and when it was retrieved."""
+    case = "apro_mk_cola_AT_2022_2023"
+    replay_fixture(GET_DATA, case)
+    answer = await api.statistics.get_data(
+        "apro_mk_cola", lang=Lang.EN, filters={"geo": "AT", "time": ["2022", "2023"]}
+    )
+    assert isinstance(answer, Answer)
+    assert isinstance(answer.payload, api.statistics.PrintedCube)
+    assert isinstance(answer.payload.cube, Cube)
+    assert answer.payload.updated == recorded_updated(case)
+    assert answer.retrieved_at.tzinfo is not None
+
+
+def test_the_api_keeps_no_pair_of_its_own() -> None:
+    """Core's ``Answer`` takes the place of the wrappers' own pairs (conventions §15)."""
+    assert not hasattr(api.statistics, "DataAnswer")
+    assert not hasattr(api.sdmx, "CodelistAnswer")
+
+
+def test_the_server_takes_its_instructions_from_the_tasks_module() -> None:
+    """The rendered ``mcp.py`` holds no line of the package: core builds the server from
+    ``tasks.py``, its ``MCP_INSTRUCTIONS`` among what it declares (sdk-core ADR-0063,
+    decision 7)."""
+    assert server.instructions == tasks.MCP_INSTRUCTIONS
+    assert tasks.MCP_INSTRUCTIONS.startswith("Eurostat dissemination API via xippios.")
+
+
+def test_the_package_holds_no_empty_stub() -> None:
+    """``enums.py`` held the scaffold's ``__all__ = []`` and no enum, since every packaged
+    list is a table, and leaves (https://github.com/xippios/sdk-template/issues/300)."""
+    assert importlib.util.find_spec("xippios.eurostat.enums") is None
