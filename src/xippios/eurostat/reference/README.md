@@ -1,8 +1,7 @@
 # Reference data for Eurostat dissemination API
 
-The lists `list_datasets`, `list_codes`, `list_products`, `list_cn8` and `list_hs` answer
-from, and the production and trade tasks check their codes against, ship here as JSON,
-versioned with the package: the nineteen lists are packaged-list files (conventions §3,
+The lists that `list_datasets` and `list_codes` answer from ship here as JSON, versioned
+with the package: the nineteen lists are packaged-list files (conventions §3,
 sdk-core ADR-0041) that `xippios.core.PackagedList.load` reads through `params.py`, and
 `lists.json` beside them is a plain derived index, read with `load_json`:
 
