@@ -1,16 +1,12 @@
-# /// script
-# requires-python = ">=3.12"
-# dependencies = []
-#
-# [tool.uv]
-# exclude-newer = "2026-10-27T00:00:00Z"
-# ///
 """Refresh the upstream documentation snapshot in ``docs/upstream/`` (``/refresh-upstream``).
 
 Eurostat documents its dissemination API in the user guide "Data access via API"
 (https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/), a set of
 server-rendered pages, and describes the services in WADL files and one OpenAPI document
-served beside them. This script writes:
+served beside them. The script declares its snapshot, ``SNAPSHOT``, to core's frame,
+``xippios.core.refresh``, which fetches every page, checks the attribution, writes the files
+and ``FETCHED.md`` and compares with ``--check`` (sdk-core ADR-0062; conventions §3). The
+snapshot keeps:
 
 - ``user-guide/<page path>.md``: each user-guide page in ``GUIDE_PAGES``, converted to
   Markdown with the standard library's ``html.parser``: the page title (its ``h1``) and
@@ -19,69 +15,79 @@ served beside them. This script writes:
   cells or a nested table stays HTML (conventions §3); links and images are absolute.
 - ``api/<file>``: the WADL files and the OpenAPI document in ``DOCUMENTS``, verbatim; those
   of the second base, ``COMEXT_BASE``, which serves the ``DS-`` datasets of Comext and
-  Prodcom, under ``api/comext/``. The service generates its WADL files per request, with
-  sibling elements in an order that changes between requests; a WADL answer whose lines,
-  each with the lines enclosing it by indentation, are those of the file already here
-  leaves the file as it is (the namespace prefixes a line declares for itself, which the
-  service numbers in document order, are masked for the comparison).
+  Prodcom, under ``api/comext/``.
 - ``samples/<file>``: small answers, verbatim, two for each dataset in ``SAMPLES``, one
   dataset of each base: the Statistics API's JSON-stat answer and the SDMX 2.1 API's
   SDMX-CSV answer, structural samples of the formats (test fixtures are recorded
-  separately, never here).
-- ``FETCHED.md``: regenerated entirely: what was fetched, when, its size and sha256, the
-  pages and other resources not fetched and why, and the attribution quoted from Eurostat's
-  copyright notice.
+  separately, never here);
 
-Two Confluence pages (``WIKI_PAGES``) are requested once each without credentials; they
-redirect an anonymous client to EU Login, and the script records that and stops
-following there. The copyright notice is fetched for its licence and reuse lines, its
-exceptions to commercial reuse, its clause on modified reuse and its citation wording,
-which ``FETCHED.md`` quotes beside the snapshot's own disclaimer; the page itself is not
-kept.
+and records Eurostat's copyright notice, the page that states the terms the attribution
+quotes, as a row without a file, and the two Confluence pages of ``WIKI_PAGES`` under ``Not
+fetched``.
 
-Everything is fetched before anything is written, one request at a time after a pause
-of ``PAUSE`` seconds, each URL retried at most once: after a network error or a 5xx, and
-after a 429, which waits as long as the answer asks (at least ``RETRY_PAUSE``, at most
-``MAX_QUOTA_WAIT``). The website reports its remaining request budget in
-``X-Rate-Limit-Remaining``, which the log shows. Files under the snapshot's
-subdirectories that the run does not produce are removed; nothing else under
-``docs/upstream/`` is touched. ``Fetched`` is the UTC time of the run in ISO 8601 with an
-explicit ``Z``, taken once at the start (conventions §3). The pages carry a per-request
-token in their HTML, which the Markdown drops, so the same upstream gives the same files
-and ``FETCHED.md`` differs between runs only in ``Fetched``. No key exists or is read.
-Run from the repository root::
+Every request goes through ``CLIENT``, a client of Eurostat's website on core's
+``AsyncClient`` that sends no credential, one request at a time, ``PAUSE`` seconds apart.
+After a 429 its retry policy gives the frame's one retry the wait the website names in
+``X-Rate-Limit-Retry-After-Seconds`` or ``Retry-After``, ``QUOTA_PAUSE`` where it names
+none, and stops the run where it asks for more than ``MAX_QUOTA_WAIT``; ``observe`` logs
+the request budget the website reports in ``X-Rate-Limit-Remaining``.
 
-    uv run scripts/refresh_upstream.py
+The script's own code is its hooks. ``reduce`` converts a user-guide page to Markdown and
+keeps a WADL file as recorded where the service sent the same elements in another order,
+which ``canonical`` reads in a form with the order fixed. ``note`` checks each page the
+script recognises and writes its row's note, a Confluence page's redirect to EU Login
+among them. ``sections`` checks the samples against each other and against the data-query
+page's statement of the key's order, with every row read, and writes no section of its
+own. A page that changed in a way the script does not know stops the run before anything is
+written. The frame stops, too, on a copyright, a licence or terms of use that
+``ATTRIBUTION`` does not record, on every page it reads but the samples and the copyright
+notice, which is the terms and must print each statement recorded from it. No key exists
+or is read. Run from the repository root::
+
+    uv run scripts/refresh_upstream.py              # fetch, then write the snapshot
+    uv run scripts/refresh_upstream.py --check      # fetch and compare; write nothing
+
+``--check`` exits 1 when a file differs from what upstream serves now, a WADL file compared
+in the form with its order fixed, or when ``FETCHED.md`` would change in more than its rows'
+measures.
 """
 
-import argparse
 import csv
-import hashlib
 import html
-import http.client
 import io
-import json
 import re
 import textwrap
-import time
-import tomllib
-import urllib.error
-import urllib.request
 from collections import Counter
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from email.message import Message
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import IO, Any
+from typing import Any
 from urllib.parse import urljoin, urlsplit
 
+import httpx
+from xippios.core import AsyncClient, ClientConfig, RateLimitError, RetryPolicy, parse_retry_after
+from xippios.core.refresh import (
+    NotFetched,
+    Page,
+    Response,
+    Row,
+    Section,
+    Snapshot,
+    Statement,
+    changed,
+    decode,
+    parse_json,
+    run,
+)
+
+from xippios.eurostat._client import SOURCE
+from xippios.eurostat._version import __version__
+
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_OUT = ROOT / "docs/upstream"
-COMMAND = "uv run scripts/refresh_upstream.py"
-VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
-USER_AGENT = f"xippios-eurostat/{VERSION} (+https://github.com/xippios)"
-"""The package's own version, read from ``pyproject.toml``, so the name never goes stale."""
+OUT = ROOT / "docs" / "upstream"
+"""The snapshot's directory, where ``reduce`` reads a WADL file as recorded."""
 
 GUIDE_BASE = "https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/"
 GUIDE_PAGES = (
@@ -155,20 +161,66 @@ DOCUMENTS = (
 )
 """Upstream documents kept verbatim: snapshot path, URL, note."""
 
+
+@dataclass(frozen=True)
+class Sample:
+    """One dataset the snapshot samples twice, once from each API, for 2022 and 2023.
+
+    Attributes:
+        base: The dataset's base URL, ``API_BASE`` or ``COMEXT_BASE``.
+        dataset: The dataset's code.
+        filters: The JSON-stat query's filters.
+        key: The SDMX 2.1 data query's series key.
+    """
+
+    base: str
+    dataset: str
+    filters: str
+    key: str
+
+    @property
+    def stat_url(self) -> str:
+        """The Statistics API's JSON-stat query."""
+        return f"{self.base}statistics/1.0/data/{self.dataset}?format=JSON&lang=EN&{self.filters}"
+
+    @property
+    def sdmx_url(self) -> str:
+        """The SDMX 2.1 API's SDMX-CSV query."""
+        return (
+            f"{self.base}sdmx/2.1/data/{self.dataset}/{self.key}"
+            "?format=SDMX-CSV&startPeriod=2022&endPeriod=2023"
+        )
+
+    @property
+    def stat_file(self) -> str:
+        """The JSON-stat sample's file under ``docs/upstream/``."""
+        return f"samples/{self.dataset}-json-stat.json"
+
+    @property
+    def sdmx_file(self) -> str:
+        """The SDMX-CSV sample's file under ``docs/upstream/``."""
+        return f"samples/{self.dataset}-sdmx-csv.csv"
+
+    @property
+    def where(self) -> str:
+        """The clause that names the Comext base, empty for the main base."""
+        return "" if self.base == API_BASE else " on the Comext base"
+
+
 SAMPLES = (
-    (API_BASE, "apro_mk_cola", "geo=AT&time=2022&time=2023", "A...THS_T.AT"),
-    (
+    Sample(API_BASE, "apro_mk_cola", "geo=AT&time=2022&time=2023", "A...THS_T.AT"),
+    Sample(
         COMEXT_BASE,
         "DS-059358",
         "reporter=AT&product=10411200&sinceTimePeriod=2022&untilTimePeriod=2023",
         "A.AT.10411200.",
     ),
 )
-"""Datasets sampled twice each, from the Statistics API as ``samples/<dataset>-json-stat.json``
-and from the SDMX 2.1 API as ``samples/<dataset>-sdmx-csv.csv``: base, dataset, the
-JSON-stat query's filters and the SDMX key, for 2022 and 2023. ``apro_mk_cola`` is a dataset
-of the main base, ``DS-059358`` (Prodcom: sold production, exports and imports) one of the
-Comext base."""
+"""The sampled datasets: ``apro_mk_cola`` of the main base, ``DS-059358`` (Prodcom: sold
+production, exports and imports) of the Comext base."""
+_SAMPLE_FILES = {
+    file: sample for sample in SAMPLES for file in (sample.stat_file, sample.sdmx_file)
+}
 KEY_ORDER_PAGE = "api-detailed-guidelines/sdmx2-1/data-query"
 KEY_ORDER_SENTENCE = "The key parameter defines values of the dimensions in the order of structure."
 """The data-query page's statement of the key's positions, checked to be there."""
@@ -179,6 +231,8 @@ WIKI_PAGES = (
     ("https://wikis.ec.europa.eu/x/c4eBBg", "the TSV format"),
 )
 """Eurostat's Confluence pages on these subjects, requested once each without credentials."""
+WIKI_STATUS = 302
+"""What each Confluence page answers an anonymous client: a redirect to ``LOGIN_HOST``."""
 LOGIN_HOST = "webgate.ec.europa.eu"
 """EU Login, where an anonymous client is sent; never requested."""
 
@@ -236,49 +290,104 @@ NOT_REQUESTED = (
 specification among them) that are deliberately not requested, with the reason."""
 
 COPYRIGHT_URL = "https://ec.europa.eu/eurostat/web/main/help/copyright-notice"
-LICENCE_START = "The copyright for the editorial content of this website"
-REUSE_START = "Reuse of statistical data"
-EXCEPTIONS_START = (
-    "The following Eurostat data and documents may not be reused for commercial purposes"
-)
-EXCEPTIONS_ITEMS = (
-    "Data identified as belonging to sources other than Eurostat",
-    "Data for countries other than",
-    "Trade data originating from Liechtenstein and Switzerland",
-    "Trade data originating from Austria",
-)
-"""The notice's exceptions to commercial reuse that must be quoted; their absence stops the run."""
-MODIFICATION_START = (
-    "When reuse involves translations of publications or modifications to the data or text"
-)
-"""The notice's clause on modified reuse, which the Markdown conversion is."""
-CITE_HEADING = "How to cite Eurostat products"
-CITE_SUBHEADING = "Datasets"
+"""Eurostat's copyright notice: the terms of the website's content, read for ``ATTRIBUTION``
+and kept as no file."""
 
-SUBDIRS = ("user-guide", "api", "samples")
-"""The snapshot's subdirectories, which this script owns entirely."""
-OBSERVED = "OBSERVED.md"
-"""The one file under ``docs/upstream/`` written by hand: what upstream does but never
-documents (conventions §3). The script neither writes nor checks it, and ``FETCHED.md``
-lists it in a row of its own where it exists."""
-
-TIMEOUT = 60.0
 PAUSE = 5.0
 """Seconds before every request; requests never run in parallel. The website reports a
 small request budget in ``X-Rate-Limit-Remaining`` that a series of requests a few seconds
 apart drains (429 "Quota Exhausted"); five seconds apart, a run seldom meets a 429, and the
 one retry covers it."""
 RETRY_PAUSE = 10.0
-"""Seconds before the one retry after a network error or a 5xx."""
+"""The shortest wait before the one retry, the frame's own ``RETRY_PAUSE`` too."""
 QUOTA_PAUSE = 60.0
-"""Seconds before the one retry after a 429 that names no wait of its own; a 429 that
-names one is retried after it, but never sooner than ``RETRY_PAUSE``."""
+"""Seconds before the one retry after a 429 that names no wait of its own."""
 MAX_QUOTA_WAIT = 900.0
 """The longest wait for a 429 the script accepts; a longer one stops the run."""
+QUOTA_WAIT_HEADERS = ("X-Rate-Limit-Retry-After-Seconds", "Retry-After")
+"""The headers of a 429 that name the wait, the website's own first."""
+REMAINING_HEADER = "X-Rate-Limit-Remaining"
+"""The header in which the website reports the requests left in its budget."""
 MIN_PAGE_CHARS = 400
 """A converted page shorter than this has lost its content; the run stops."""
 TOKEN_MARKERS = ("p_auth", "authToken")
 """Per-request values of the site's HTML that must never reach a snapshot file."""
+
+
+def _log(message: str) -> None:
+    print(message, flush=True)  # noqa: T201
+
+
+# --- the website's client ---------------------------------------------------------------
+
+
+def quota_wait(headers: Mapping[str, str]) -> float:
+    """The wait a 429 names, in seconds: ``QUOTA_PAUSE`` where it names none.
+
+    ``X-Rate-Limit-Retry-After-Seconds``, the website's own header, is read first, then
+    ``Retry-After``, in seconds or as an HTTP date. The frame waits no less than
+    ``RETRY_PAUSE`` before its one retry, and the client's retry policy gives no retry for a
+    wait past ``MAX_QUOTA_WAIT``, which stops the run (sdk-core ADR-0062, decision 4).
+    """
+    for name in QUOTA_WAIT_HEADERS:
+        value = headers.get(name)
+        if value is None:
+            continue
+        if name == "Retry-After":
+            wait = parse_retry_after(value)
+        else:
+            wait = float(value.strip()) if value.strip().isdigit() else None
+        if wait is not None:
+            return wait
+    return QUOTA_PAUSE
+
+
+def classify(response: httpx.Response) -> RateLimitError | None:
+    """A 429 as the ``RateLimitError`` whose ``retry_after`` the frame waits; else nothing.
+
+    The frame asks the client's ``classify`` for the wait of a 429 alone, and gives no retry
+    for any other error it names (sdk-core ADR-0062, decision 4), so every other answer is
+    the frame's to judge.
+    """
+    if response.status_code != 429:
+        return None
+    remaining = response.headers.get(REMAINING_HEADER)
+    budget = f", {REMAINING_HEADER} {remaining}" if remaining is not None else ""
+    return RateLimitError(
+        f"HTTP 429 {response.reason_phrase}{budget}",
+        retry_after=quota_wait(response.headers),
+        source=SOURCE,
+    )
+
+
+def observe(response: httpx.Response) -> None:
+    """Log the request budget the website reports, where it reports one."""
+    remaining = response.headers.get(REMAINING_HEADER)
+    if remaining is not None:
+        _log(f"  {response.request.url}: {REMAINING_HEADER} {remaining}")
+
+
+CLIENT = AsyncClient(
+    ClientConfig(
+        source=SOURCE,
+        version=__version__,
+        base_url="https://ec.europa.eu",
+        retry=RetryPolicy(
+            max_attempts=2, backoff_base=RETRY_PAUSE, backoff_max=MAX_QUOTA_WAIT, jitter=False
+        ),
+        classify=classify,
+        observe=observe,
+    )
+)
+"""The client of Eurostat's website that every request of the snapshot goes through: no
+credential, no cache, and the frame's pause for its pace. Its retry policy gives the one
+retry after a 429 the wait ``quota_wait`` reads, at least ``RETRY_PAUSE`` and at most
+``MAX_QUOTA_WAIT``, and it names itself ``xippios-eurostat/<version>`` as the package's
+client does."""
+
+
+# --- HTML to Markdown -------------------------------------------------------------------
+
 
 _VOID = frozenset(
     (
@@ -370,173 +479,11 @@ _SPACE = re.compile(r"[ \t\n\r\f]+")
 _MODIFIED = re.compile(r"LAST-MODIFIED-DATE:\s*(\d{10,13})")
 _TAG_LIKE = re.compile(r"<(?=[A-Za-z/!?])")
 _INLINE_ESCAPE = re.compile(r"([\\*`])")
-_SENTENCE = re.compile(r"(.+?\.)(?:\s|$)")
 _CODE_OPEN, _CODE_CLOSE = "\x01", "\x02"
 """Code spans are marked while a line is built, so that adjacent ones merge into one."""
 _CODE_SPAN = re.compile(f"{_CODE_OPEN}(.*?){_CODE_CLOSE}", re.DOTALL)
 _BREAK = "\x00"
 _LOCAL_PREFIX = re.compile(rb"xmlns:([A-Za-z_][\w.-]*)=")
-
-
-def _log(message: str) -> None:
-    print(message, flush=True)  # noqa: T201
-
-
-# --- HTTP -------------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class Response:
-    """One GET as served: the final status and body, and the redirects on the way."""
-
-    url: str
-    status: int
-    body: bytes
-    content_type: str | None
-    location: str | None
-    redirects: tuple[tuple[int, str], ...]
-
-
-class _RetryableError(Exception):
-    """A network error, a 5xx or a 429: worth one more attempt after ``wait`` seconds."""
-
-    def __init__(self, message: str, wait: float) -> None:
-        super().__init__(message)
-        self.wait = wait
-
-
-class _SameHostRedirects(urllib.request.HTTPRedirectHandler):
-    """Follow redirects within the requested host only, remembering each hop.
-
-    A redirect to another host is not followed: urllib then raises it as an
-    ``HTTPError`` carrying the 3xx status and its ``Location``.
-    """
-
-    def __init__(self, host: str) -> None:
-        super().__init__()
-        self.host = host
-        self.hops: list[tuple[int, str]] = []
-
-    def redirect_request(
-        self,
-        req: urllib.request.Request,
-        fp: IO[bytes],
-        code: int,
-        msg: str,
-        headers: http.client.HTTPMessage,
-        newurl: str,
-    ) -> urllib.request.Request | None:
-        """Follow ``newurl`` when it stays on the requested host; stop otherwise."""
-        if urlsplit(newurl).hostname != self.host:
-            return None
-        self.hops.append((code, newurl))
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
-
-
-class _Counter:
-    """Every request sent on the wire, redirect hops and retries included."""
-
-    sent = 0
-
-
-def _quota_wait(headers: Message) -> tuple[float, str]:
-    """The wait a 429 names, at least ``RETRY_PAUSE``, and the header that named it."""
-    for name in ("Retry-After", "X-Rate-Limit-Retry-After-Seconds"):
-        value = headers.get(name)
-        if value is not None and value.strip().isdigit():
-            return max(float(value.strip()), RETRY_PAUSE), f"{name}: {value.strip()}"
-    return QUOTA_PAUSE, "no wait named"
-
-
-def _rate_note(headers: Message) -> str:
-    remaining = headers.get("X-Rate-Limit-Remaining")
-    return f", X-Rate-Limit-Remaining {remaining}" if remaining is not None else ""
-
-
-def _unexpected(url: str, expect: str, got: str) -> SystemExit:
-    return SystemExit(
-        f"GET {url}: expected {expect}, got {got}.\nLook at the URL by hand and update "
-        "scripts/refresh_upstream.py. Nothing was written."
-    )
-
-
-def _get(url: str, expect_redirect: bool) -> Response:
-    host = urlsplit(url).hostname or ""
-    redirects = _SameHostRedirects(host)
-    opener = urllib.request.build_opener(redirects)
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    _Counter.sent += 1
-    try:
-        with opener.open(request, timeout=TIMEOUT) as response:
-            body: bytes = response.read()
-            status: int = response.status
-            headers: Message = response.headers
-    except urllib.error.HTTPError as error:
-        _Counter.sent += len(redirects.hops)
-        status, headers = error.code, error.headers
-        if status == 429:
-            wait, named = _quota_wait(headers)
-            message = f"HTTP 429 {error.reason} ({named}){_rate_note(headers)}"
-            raise _RetryableError(message, wait) from None
-        if status >= 500:
-            raise _RetryableError(f"HTTP {status} {error.reason}", RETRY_PAUSE) from None
-        if not (expect_redirect and 300 <= status < 400):
-            raise _unexpected(url, "HTTP 200", f"HTTP {status} {error.reason}") from None
-        body = error.read()
-    except (http.client.HTTPException, OSError) as error:  # URLError is an OSError
-        _Counter.sent += len(redirects.hops)
-        raise _RetryableError(str(error), RETRY_PAUSE) from None
-    else:
-        _Counter.sent += len(redirects.hops)
-        if expect_redirect:
-            raise _unexpected(url, f"a redirect to {LOGIN_HOST}", f"HTTP {status}")
-    encoding = headers.get("Content-Encoding", "identity").strip().lower()
-    if encoding != "identity":
-        raise SystemExit(f"GET {url}: unexpected Content-Encoding {encoding!r}")
-    _log(
-        f"  {url}: HTTP {status}"
-        + "".join(f", {code} to {target}" for code, target in redirects.hops)
-        + f", {len(body)} bytes ({headers.get_content_type()}){_rate_note(headers)}"
-    )
-    return Response(
-        url,
-        status,
-        body,
-        headers.get_content_type() if headers.get("Content-Type") else None,
-        headers.get("Location"),
-        tuple(redirects.hops),
-    )
-
-
-def fetch(url: str, *, expect_redirect: bool = False) -> Response:
-    """GET ``url`` after a polite pause; retry once after a network error, a 5xx or a 429."""
-    time.sleep(PAUSE)
-    try:
-        return _get(url, expect_redirect)
-    except _RetryableError as error:
-        if error.wait > MAX_QUOTA_WAIT:
-            raise SystemExit(
-                f"GET {url}: {error}; the answer asks for a wait of {error.wait:.0f} s, more "
-                f"than {MAX_QUOTA_WAIT:.0f} s. Run again later. Nothing was written."
-            ) from None
-        _log(f"  {url}: {error}; retrying once in {error.wait:.0f} s")
-        time.sleep(error.wait)
-        try:
-            return _get(url, expect_redirect)
-        except _RetryableError as again:
-            raise SystemExit(
-                f"GET {url}: {again} (after one retry). Nothing was written."
-            ) from None
-
-
-def _text(response: Response) -> str:
-    try:
-        return response.body.decode("utf-8")
-    except UnicodeDecodeError as error:
-        raise SystemExit(f"GET {response.url}: body is not UTF-8 ({error})") from None
-
-
-# --- HTML to Markdown -------------------------------------------------------------------
 
 
 @dataclass
@@ -685,7 +632,7 @@ def _raw_text(element: Element, br: str = "\n") -> str:
 
 
 @dataclass
-class Page:
+class Converted:
     """A converted page: its title, Markdown blocks and what the conversion found."""
 
     title: str
@@ -1021,94 +968,45 @@ class _Markdown:
 def _main_region(root: Element, url: str) -> Element:
     main = root.find(lambda e: e.attrs.get("id") == "main-content")
     if main is None:
-        raise SystemExit(f"GET {url}: no element with id main-content. Nothing was written.")
+        raise changed(url, "there is no element with id main-content")
     return main
 
 
-def convert(text: str, url: str) -> Page:
+def convert(text: str, url: str) -> Converted:
     """Convert one user-guide page: its ``h1`` as the title, its main region as the body."""
     root = parse_html(text)
     heading = root.find(lambda e: e.tag == "h1")
     title = _squash(_Markdown(url).inline_children(heading)).replace("\n", " ") if heading else ""
     if not title:
-        raise SystemExit(f"GET {url}: no h1 title. Nothing was written.")
+        raise changed(url, "there is no h1 title")
     main = _main_region(root, url)
     renderer = _Markdown(url)
     blocks = [block for block in renderer.blocks(main) if block.strip()]
     modified = sorted(
         {int(match[:10]) for comment in main.comments() for match in _MODIFIED.findall(comment)}
     )
-    page = Page(title, blocks, renderer.html_tables, modified)
+    page = Converted(title, blocks, renderer.html_tables, modified)
     markdown = page.markdown
     leaked = [marker for marker in TOKEN_MARKERS if marker in markdown]
     if leaked:
-        raise SystemExit(
-            f"GET {url}: per-request values {leaked} in the Markdown. Nothing was written."
-        )
+        raise changed(url, f"the Markdown holds the per-request values {leaked}")
     if len(markdown) < MIN_PAGE_CHARS:
-        raise SystemExit(
-            f"GET {url}: only {len(markdown)} characters of Markdown; the page's layout may "
-            "have changed. Look at it by hand and update scripts/refresh_upstream.py. "
-            "Nothing was written."
+        raise changed(
+            url,
+            f"only {len(markdown)} characters of Markdown, so the page's layout may have changed",
         )
     return page
 
 
-# --- What is captured -------------------------------------------------------------------
+def guide_markdown(page: Page, response: Response) -> Converted:
+    """A user-guide page converted, once its answer is HTML."""
+    media = (response.content_type or "").split(";", 1)[0].strip().lower()
+    if media != "text/html":
+        raise changed(page.url, f"it answers {media or 'no content type'}, not text/html")
+    return convert(decode(response), page.url)
 
 
-@dataclass(frozen=True)
-class Row:
-    """One file of the snapshot and its ``FETCHED.md`` row."""
-
-    path: str
-    url: str
-    content: bytes
-    note: str
-
-
-@dataclass(frozen=True)
-class Missing:
-    """One page recorded without a file: its URL, status and the reason."""
-
-    url: str
-    status: str
-    reason: str
-
-
-@dataclass(frozen=True)
-class Attribution:
-    """The lines ``FETCHED.md`` quotes from Eurostat's copyright notice."""
-
-    licence: str
-    reuse: str
-    exceptions: str
-    modification: str
-    citation: list[str]
-
-
-def _date(epoch: int) -> str:
-    return datetime.fromtimestamp(epoch, UTC).strftime("%Y-%m-%d")
-
-
-def guide_page(path: str) -> tuple[Row, Page]:
-    """Fetch and convert one user-guide page."""
-    url = GUIDE_BASE + path
-    response = fetch(url)
-    if response.content_type != "text/html":
-        raise _unexpected(url, "text/html", str(response.content_type))
-    page = convert(_text(response), url)
-    note = "converted from HTML"
-    if page.html_tables:
-        plural = "s" if page.html_tables > 1 else ""
-        note += (
-            f"; {page.html_tables} table{plural} with merged cells or a nested table kept as HTML"
-        )
-    if page.modified:
-        note += f"; its content items were last modified {_date(page.modified[-1])} (UTC)"
-    content = page.markdown.encode("utf-8")
-    _log(f"  user-guide/{path}.md: {len(content)} bytes, {len(page.blocks)} blocks")
-    return Row(f"user-guide/{path}.md", url, content, note), page
+# --- a WADL file in another order -------------------------------------------------------
 
 
 def _masked(line: bytes) -> bytes:
@@ -1143,405 +1041,431 @@ def _placed_lines(text: bytes) -> Counter[tuple[tuple[bytes, ...], bytes]]:
     return placed
 
 
-def document(out: Path, path: str, url: str, note: str) -> Row:
-    """Fetch one upstream document, kept verbatim.
+def _is_wadl(page: Page) -> bool:
+    return (page.file or "").endswith(".wadl")
 
-    The service generates its WADL files per request and orders sibling elements
-    differently from one request to the next. A WADL answer whose lines, each with the
-    lines enclosing it, are those of the file already in the snapshot leaves that file as
-    it is, so a refresh shows real changes only. Other documents compare byte for byte.
+
+def canonical(page: Page, content: bytes) -> bytes:
+    """A WADL file in a form with the order of its sibling elements fixed; any other as is.
+
+    The service generates its WADL files per request and orders sibling elements differently
+    from one request to the next. The form lists each line with the lines that enclose it by
+    indentation, sorted, the namespace prefixes a line declares for itself masked, so two
+    answers that differ only in that order read the same, and a line moved under another
+    parent does not (sdk-core ADR-0062, decision 5).
     """
-    body = fetch(url).body
-    if not body.strip():
-        raise _unexpected(url, "a document", "an empty body")
-    existing = out / path
-    if path.endswith(".wadl") and existing.is_file():
-        kept = existing.read_bytes()
-        if kept != body and _placed_lines(kept) == _placed_lines(body):
-            _log(f"  {path}: the same elements in another order; the file is kept as it is")
-            body = kept
-    return Row(path, url, body, f"verbatim; {note}")
+    if not _is_wadl(page):
+        return content
+    placed = _placed_lines(content)
+    lines = (b"\x00".join((*parents, line)) for parents, line in sorted(placed.elements()))
+    return b"\n".join(lines)
 
 
-def _no_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    keys = [key for key, _ in pairs]
-    if len(set(keys)) != len(keys):
-        raise ValueError(f"duplicate keys in {keys}")
-    return dict(pairs)
+def kept_as_recorded(page: Page, recorded: bytes | None, body: bytes) -> bytes:
+    """``recorded`` where ``body`` holds its lines in another order alone, else ``body``.
+
+    So a refresh shows a WADL file's real changes only; a document that is no WADL, or one
+    without a recorded file, is written as fetched.
+    """
+    if (
+        recorded is not None
+        and recorded != body
+        and canonical(page, recorded) == canonical(page, body)
+    ):
+        _log(f"  {page.file}: the same elements in another order; the file is kept as recorded")
+        return recorded
+    return body
 
 
-def samples(key_order: str) -> list[Row]:
-    """Fetch the samples; check the dimension order and that the CSV rows lie in the key."""
-    found: list[Row] = []
-    for base, dataset, filters, sdmx_key in SAMPLES:
-        stat_url = f"{base}statistics/1.0/data/{dataset}?format=JSON&lang=EN&{filters}"
-        sdmx_url = (
-            f"{base}sdmx/2.1/data/{dataset}/{sdmx_key}"
-            "?format=SDMX-CSV&startPeriod=2022&endPeriod=2023"
+# --- the pages' checks and notes ---------------------------------------------------------
+
+
+def _date(epoch: int) -> str:
+    return datetime.fromtimestamp(epoch, UTC).strftime("%Y-%m-%d")
+
+
+def guide_note(converted: Converted) -> str:
+    """A user-guide page's note: the conversion, its tables kept as HTML, its last change."""
+    note = (
+        "converted from HTML; the page's HTML carries a per-request token, which the Markdown "
+        "drops, so the row records no size or sha256 of its body"
+    )
+    if converted.html_tables:
+        plural = "s" if converted.html_tables > 1 else ""
+        note += (
+            f"; {converted.html_tables} table{plural} with merged cells or a nested table "
+            "kept as HTML"
         )
-        where = "" if base == API_BASE else " on the Comext base"
-        stat = fetch(stat_url)
-        try:
-            cube = json.loads(stat.body, object_pairs_hook=_no_duplicates)
-        except ValueError as error:
-            raise SystemExit(f"GET {stat_url}: not usable JSON ({error})") from None
-        if not isinstance(cube, dict) or cube.get("class") != "dataset" or "id" not in cube:
-            raise SystemExit(f"GET {stat_url}: not a JSON-stat dataset (no class or id)")
-        ids = [str(name) for name in cube["id"]]
-        dimensions = [name for name in ids if name != "time"]
-        stat_note = (
-            f"verbatim; a JSON-stat {cube.get('version', '(no version)')} dataset "
-            f"(specification: {JSON_STAT_SPEC}, cited, not snapshotted) with the dimensions "
-            f"{', '.join(f'`{name}`' for name in ids)}; a structural sample of the Statistics "
-            f"API's answer{where}, not a test fixture"
-        )
+    if converted.modified:
+        note += f"; its content items were last modified {_date(converted.modified[-1])} (UTC)"
+    return note
 
-        sdmx = fetch(sdmx_url)
-        rows = list(csv.reader(io.StringIO(_text(sdmx))))
-        if len(rows) < 2:
-            raise SystemExit(f"GET {sdmx_url}: no data rows")
-        header = rows[0]
-        if "TIME_PERIOD" not in header or len(header) < 3:
-            raise SystemExit(f"GET {sdmx_url}: no TIME_PERIOD column in {header}")
-        columns = header[2 : header.index("TIME_PERIOD")]
-        key = sdmx_key.split(".")
-        if columns != dimensions or len(key) != len(dimensions):
-            raise SystemExit(
-                f"The SDMX-CSV dimension columns {columns}, the JSON-stat dimensions "
-                f"{dimensions} and the key {sdmx_key} do not line up. Look at both by hand."
-            )
-        for row in rows[1:]:
-            values = dict(zip(header, row, strict=True))
-            wrong = [
-                name
-                for name, code in zip(dimensions, key, strict=True)
-                if code and values[name] != code
-            ]
-            if wrong:
-                raise SystemExit(f"GET {sdmx_url}: a row outside the key in {wrong}: {row}")
-        order = ".".join(dimensions)
-        sdmx_note = (
-            f"verbatim; SDMX-CSV with the columns {', '.join(f'`{name}`' for name in header)}; "
-            f"the key `{sdmx_key}` follows the dimension order {order}, as the CSV header and "
-            f"the JSON-stat sample's `id` list it, and `user-guide/{KEY_ORDER_PAGE}.md` states "
-            f'"{key_order}"; a structural sample of the SDMX 2.1 API\'s answer{where}, not a '
-            "test fixture"
+
+def _names(names: Sequence[str]) -> str:
+    return ", ".join(f"`{name}`" for name in names)
+
+
+def _cube(sample: Sample, response: Response) -> dict[str, Any]:
+    """The JSON-stat sample's dataset; one without its ``class`` or its ``id`` stops."""
+    cube = parse_json(response)
+    if not isinstance(cube, dict) or cube.get("class") != "dataset" or "id" not in cube:
+        raise changed(sample.stat_url, "not a JSON-stat dataset (no class or id)")
+    return cube
+
+
+def _ids(cube: Mapping[str, Any]) -> list[str]:
+    """The dataset's dimensions in order, ``time`` included."""
+    return [str(name) for name in cube["id"]]
+
+
+def _csv_rows(sample: Sample, response: Response) -> list[list[str]]:
+    """The SDMX-CSV sample's rows, its header first; one without data or periods stops."""
+    rows = list(csv.reader(io.StringIO(decode(response))))
+    if len(rows) < 2:
+        raise changed(sample.sdmx_url, "there are no data rows")
+    header = rows[0]
+    if "TIME_PERIOD" not in header or len(header) < 3:
+        raise changed(sample.sdmx_url, f"there is no TIME_PERIOD column in {header}")
+    return rows
+
+
+def stat_note(sample: Sample, response: Response) -> str:
+    """The JSON-stat sample's note: its version and its dimensions."""
+    cube = _cube(sample, response)
+    version = cube.get("version", "(no version)")
+    return (
+        f"a JSON-stat {version} dataset (specification: {JSON_STAT_SPEC}, cited, not "
+        f"snapshotted) with the dimensions {_names(_ids(cube))}; the Statistics API's "
+        f"answer{sample.where}"
+    )
+
+
+def sdmx_note(sample: Sample, response: Response) -> str:
+    """The SDMX-CSV sample's note: its columns and the order its key follows."""
+    header = _csv_rows(sample, response)[0]
+    order = ".".join(header[2 : header.index("TIME_PERIOD")])
+    return (
+        f"SDMX-CSV with the columns {_names(header)}; the key `{sample.key}` follows the "
+        f"dimension order {order}, as the CSV header and the JSON-stat sample's `id` list "
+        f'it, and `user-guide/{KEY_ORDER_PAGE}.md` states "{KEY_ORDER_SENTENCE}"; the SDMX '
+        f"2.1 API's answer{sample.where}"
+    )
+
+
+def check_samples(sample: Sample, stat: Response, sdmx: Response) -> None:
+    """Stop where a dataset's two samples and its key do not line up.
+
+    The SDMX-CSV's dimension columns follow the order of the JSON-stat ``id`` without
+    ``time``, the key has one position per dimension, and every SDMX-CSV row lies inside
+    the key.
+    """
+    dimensions = [name for name in _ids(_cube(sample, stat)) if name != "time"]
+    rows = _csv_rows(sample, sdmx)
+    header = rows[0]
+    columns = header[2 : header.index("TIME_PERIOD")]
+    key = sample.key.split(".")
+    if columns != dimensions or len(key) != len(dimensions):
+        raise changed(
+            sample.sdmx_url,
+            f"the SDMX-CSV dimension columns {columns}, the JSON-stat dimensions {dimensions} "
+            f"and the key {sample.key} do not line up",
         )
-        found += [
-            Row(f"samples/{dataset}-json-stat.json", stat_url, stat.body, stat_note),
-            Row(f"samples/{dataset}-sdmx-csv.csv", sdmx_url, sdmx.body, sdmx_note),
+    for row in rows[1:]:
+        values = dict(zip(header, row, strict=True))
+        wrong = [
+            name
+            for name, code in zip(dimensions, key, strict=True)
+            if code and values[name] != code
         ]
-    return found
+        if wrong:
+            raise changed(sample.sdmx_url, f"a row lies outside the key in {wrong}: {row}")
 
 
-def wiki_page(url: str, subject: str) -> Missing:
-    """Request a Confluence page once without credentials; record where it sends us."""
-    response = fetch(url, expect_redirect=True)
-    target = urlsplit(urljoin(url, response.location or "")).hostname
+def check_key_order(content: bytes) -> None:
+    """Stop where the data-query page no longer states the key's order in a block of its own."""
+    blocks = content.decode("utf-8").split("\n\n")
+    if not any(_plain(block.strip()) == KEY_ORDER_SENTENCE for block in blocks):
+        raise changed(
+            GUIDE_BASE + KEY_ORDER_PAGE,
+            f"it no longer states {KEY_ORDER_SENTENCE!r}, which the samples' key order needs",
+        )
+
+
+def wiki_note(row: Row) -> str:
+    """Check that a Confluence page sent the anonymous client to EU Login, and keep its note.
+
+    The frame records the redirect to another host and follows none; a redirect anywhere
+    but ``LOGIN_HOST`` stops the run, since the note says that the page asks for a login.
+    """
+    hops = row.response.redirects
+    target = urlsplit(hops[-1][1]).hostname if hops else None
     if target != LOGIN_HOST:
-        raise _unexpected(url, f"a redirect to {LOGIN_HOST}", f"a redirect to {target}")
-    hops = "".join(
-        f"{code} within {urlsplit(hop).hostname}, then " for code, hop in response.redirects
-    )
-    return Missing(
-        url,
-        f"{hops}{response.status} to {target}",
-        f"{subject}; EU Login is required, so the page is not fetched (no credentials are "
-        "sent and no browser is imitated); the public user-guide pages above are the "
-        "snapshot's statement of the subject",
-    )
+        where = f"a redirect to {target}" if target else "no redirect"
+        raise changed(row.page.url, f"it answers with {where}, not one to {LOGIN_HOST}")
+    return row.note
 
 
-def _lines(page: Page) -> list[str]:
-    """Every line of the page's blocks, without list and quote markers."""
-    found: list[str] = []
-    for block in page.blocks:
-        for line in block.split("\n"):
-            text = re.sub(r"^\s*(?:[-*>]|\d+\.)\s+", "", line).strip()
-            if text:
-                found.append(text)
-    return found
+# --- the hooks -------------------------------------------------------------------------
 
 
-def _changed(what: str) -> SystemExit:
-    return SystemExit(
-        f"{COPYRIGHT_URL}: {what}. The copyright notice changed: read it by hand and update "
-        "scripts/refresh_upstream.py. Nothing was written."
-    )
+def reduce(page: Page, response: Response) -> bytes:
+    """The content of a page's file.
 
-
-def _exceptions(page: Page) -> str:
-    """The notice's list item on data excluded from commercial reuse, its sub-list included.
-
-    The item and its nested lines are kept as converted, list markers and all, one level
-    of indentation removed.
+    A user-guide page as Markdown; a WADL file as recorded where only the order of its
+    elements moved; every other file, the OpenAPI document and the samples, as fetched. An
+    empty document stops the run.
     """
-    for block in page.blocks:
-        lines = block.split("\n")
-        starts = [i for i, line in enumerate(lines) if line.startswith(f"- {EXCEPTIONS_START}")]
-        if not starts:
-            continue
-        start = starts[0]
-        end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("- ")), None)
-        nested = [line.removeprefix("  ") for line in lines[start + 1 : end]]
-        present = {re.sub(r"^\s*- ", "", line) for line in nested}
-        missing = [
-            item for item in EXCEPTIONS_ITEMS if not any(p.startswith(item) for p in present)
-        ]
-        if missing:
-            raise _changed(f"the exceptions to commercial reuse no longer name {missing}")
-        return "\n".join([lines[start].removeprefix("- "), *nested]).strip("\n")
-    raise _changed(f"no list item starting {EXCEPTIONS_START!r}")
+    if (page.file or "").startswith("user-guide/"):
+        return guide_markdown(page, response).markdown.encode("utf-8")
+    if page.sample:
+        return response.body
+    if not response.body.strip():
+        raise changed(page.url, "it answers an empty body, not a document")
+    if _is_wadl(page) and page.file is not None:
+        recorded = OUT / page.file
+        kept = recorded.read_bytes() if recorded.is_file() else None
+        return kept_as_recorded(page, kept, response.body)
+    return response.body
 
 
-def attribution() -> Attribution:
-    """Fetch Eurostat's copyright notice and take the lines ``FETCHED.md`` quotes."""
-    page = convert(_text(fetch(COPYRIGHT_URL)), COPYRIGHT_URL)
-    lines = _lines(page)
+def note(row: Row) -> str:
+    """Check the page a row was read from and write the row's note.
 
-    def sentence(prefix: str) -> str:
-        found = [line for line in lines if line.startswith(prefix)]
-        match = _SENTENCE.match(found[0]) if len(found) == 1 else None
-        if match is None:
-            raise _changed(f"expected one sentence starting {prefix!r}, found {len(found)} lines")
-        return match.group(1)
-
-    def line(prefix: str) -> str:
-        found = [line for line in lines if line.startswith(prefix)]
-        if len(found) != 1:
-            raise _changed(f"expected one line starting {prefix!r}, found {len(found)}")
-        return found[0]
-
-    def heading(text: str, after: int) -> int:
-        for index in range(after + 1, len(lines)):
-            if lines[index].startswith("#") and lines[index].lstrip("# ") == text:
-                return index
-        raise _changed(f"no heading {text!r}")
-
-    cite = heading(CITE_HEADING, -1)
-    datasets = heading(CITE_SUBHEADING, cite)
-    end = next((i for i in range(datasets + 1, len(lines)) if lines[i].startswith("#")), len(lines))
-    citation = [*lines[cite + 1 : datasets], CITE_SUBHEADING, *lines[datasets + 1 : end]]
-    if not any(line.startswith("Source:") for line in lines[datasets + 1 : end]):
-        raise _changed(f"no 'Source:' line under {CITE_SUBHEADING!r}")
-    return Attribution(
-        sentence(LICENCE_START),
-        sentence(REUSE_START),
-        _exceptions(page),
-        line(MODIFICATION_START),
-        citation,
-    )
-
-
-# --- FETCHED.md ---------------------------------------------------------------------------
-
-
-def _paragraph(*sentences: str) -> list[str]:
-    text = " ".join(sentences)
-    wrapped = textwrap.fill(text, width=88, break_long_words=False, break_on_hyphens=False)
-    return [*wrapped.splitlines(), ""]
-
-
-def _quote(paragraphs: list[str]) -> list[str]:
-    """One blockquote, its paragraphs separated by an empty quoted line."""
-    lines: list[str] = []
-    for paragraph in paragraphs:
-        if lines:
-            lines.append(">")
-        lines += [f"> {line}".rstrip() for line in paragraph.split("\n")]
-    return [*lines, ""]
-
-
-def _cell(value: str) -> str:
-    return value.replace("|", r"\|").replace("\n", " ")
-
-
-def render_fetched(
-    rows: list[Row],
-    missing: list[Missing],
-    quoted: Attribution,
-    fetched: str,
-    observed: bool = False,
-) -> str:
-    """The whole of ``FETCHED.md``; ``observed`` whether ``docs/upstream/`` holds ``OBSERVED``."""
-    hand = (
-        (
-            f"Nothing here was edited by hand but `{OBSERVED}`, the notes on what upstream",
-            "does but never documents, which the script neither writes nor checks.",
-        )
-        if observed
-        else ("Nothing here was edited by hand.",)
-    )
-    lines = [
-        "# Upstream documentation snapshot \N{EM DASH} Eurostat dissemination API",
-        "",
-        *_paragraph(
-            "Source of truth for every endpoint wrapper (sdk-core ADR-0028). The files in this",
-            "directory are written by `scripts/refresh_upstream.py` (`/refresh-upstream`)",
-            "from the pages and documents in the tables below and refreshed deliberately by",
-            "PR, so that changes show up as diffs. This file is generated by the same script.",
-            *hand,
-        ),
-        "## Attribution",
-        "",
-        *_paragraph(f"Eurostat's copyright notice, {COPYRIGHT_URL}, as fetched in this run:"),
-        *_quote([quoted.licence, quoted.reuse]),
-        *_paragraph('The same notice, under "Exceptions", on commercial reuse:'),
-        *_quote([quoted.exceptions]),
-        *_paragraph(
-            "The user-guide pages are the website's editorial content, reproduced here as",
-            "this package's reference (sdk-core ADR-0028) with the source acknowledged in each row",
-            "below. Changes made: each page is converted from HTML to Markdown, keeping its",
-            "title, headings, paragraphs, lists, tables, code and links and dropping the",
-            "site's navigation, header, footer, scripts and styles; tables with merged cells",
-            "or a nested table are kept as simplified HTML. The WADL files, the OpenAPI",
-            "document and the samples are kept verbatim. A publisher's objection is met",
-            "by replacing the text with a summary that keeps the names and semantics the",
-            "wrappers rely on.",
-        ),
-        *_paragraph('The same notice, under "Exceptions", on modified reuse:'),
-        *_quote([quoted.modification]),
-        *_paragraph(
-            "The Markdown pages under `user-guide/` are this package's conversion of",
-            "Eurostat's pages, with the changes made stated in the paragraph above; Eurostat",
-            "is not responsible for this reproduction or for any difference from the pages",
-            "it serves.",
-        ),
-        *_paragraph(f'The same notice, under "{CITE_HEADING}":'),
-        *_quote(quoted.citation),
-        "## How this is captured",
-        "",
-        *_paragraph(
-            f'The user guide "Data access via API" ({GUIDE_BASE}) is a set of',
-            "server-rendered pages. Each page in the first table is converted to Markdown",
-            "with the standard library's `html.parser`: the page's `h1` becomes the title and",
-            'the page\'s main region (`id="main-content"`) the body, including the code',
-            "snippets and notes the site places beside the articles. Links and images are",
-            "made absolute. The pages' HTML carries a per-request token, which the Markdown",
-            "drops, so a page's Bytes and sha256 are those of the Markdown file; for every",
-            "other file they are those of the body as fetched, which is the file.",
-        ),
-        *_paragraph(
-            f"The WADL files and the OpenAPI document come from {API_BASE}, those under",
-            f"`api/comext/` from {COMEXT_BASE}, the second base, which serves the `DS-`",
-            "datasets of Comext and Prodcom. The service",
-            "generates its WADL files per request and orders sibling elements (`resource`,",
-            "`method`) differently from one request to the next. A WADL answer whose lines,",
-            "each taken with the lines that enclose it by indentation, are exactly those of",
-            "the file already here leaves the file as it is, so a diff shows changes only,",
-            "a line moved under another parent included; the namespace prefixes a line",
-            "declares for itself (`ns3`, `ns4`, numbered by the service in document order)",
-            "are masked for that comparison. The OpenAPI document is compared byte for",
-            "byte. The samples",
-            "are answers for one dataset of each base",
-            f"({', '.join(f'`{dataset}`' for _, dataset, _, _ in SAMPLES)}), one country and",
-            "two periods, each the Statistics API's JSON-stat and the SDMX 2.1 API's SDMX-CSV;",
-            "the script checks for each that the SDMX-CSV's dimension columns follow the order",
-            "of the JSON-stat `id`, that the key has one position per dimension, and that",
-            "every SDMX-CSV row lies inside the key. JSON-stat 2.0 is a third-party",
-            f"specification ({JSON_STAT_SPEC}): cited, not snapshotted.",
-        ),
-        *_paragraph(
-            "The second table lists the pages and other resources that were requested",
-            "without a file, or deliberately not requested, with the status they answered",
-            "or the reason.",
-        ),
-        *_paragraph(
-            "`Fetched` is the UTC time of the run in ISO 8601 with an explicit `Z`, taken once",
-            "at its start and the same in every row (conventions §3). Requests go one at a",
-            f"time, {PAUSE:.0f} seconds apart, identified as `{USER_AGENT}`; no API key exists,",
-            "and none is sent or read.",
-        ),
-        "## Files",
-        "",
-        "| File | URL | Fetched | Bytes | sha256 | Note |",
-        "| --- | --- | --- | --- | --- | --- |",
-    ]
-    for row in rows:
-        cells = [
-            row.path,
-            row.url,
-            fetched,
-            str(len(row.content)),
-            hashlib.sha256(row.content).hexdigest(),
-            row.note,
-        ]
-        lines.append("| " + " | ".join(_cell(cell) for cell in cells) + " |")
-    if observed:
-        hand_row = "written by hand: what upstream does but never documents; not fetched or checked"
-        lines.append(f"| {OBSERVED} | - | - | - | - | {hand_row} |")
-    lines += [
-        "",
-        "## Not fetched",
-        "",
-        "| URL | Status | Reason |",
-        "| --- | --- | --- |",
-    ]
-    for item in missing:
-        lines.append(f"| {_cell(item.url)} | {_cell(item.status)} | {_cell(item.reason)} |")
-    lines += ["", f"Regenerate: `{COMMAND}`"]
-    return "\n".join(lines) + "\n"
-
-
-def write_snapshot(out: Path, rows: list[Row], fetched_md: str) -> None:
-    """Write the files and ``FETCHED.md``; remove files the run no longer produces.
-
-    Only files under ``SUBDIRS`` are removed, and directories left empty there.
+    A page that changed in a way the script does not know stops the run with ``changed``,
+    before anything is written.
     """
-    if out.exists() and any(out.iterdir()) and not (out / "FETCHED.md").is_file():
-        raise SystemExit(f"{out} is neither empty nor a snapshot (no FETCHED.md); not writing")
-    files = {row.path: row.content for row in rows}
-    for subdir in SUBDIRS:
-        directory = out / subdir
-        if not directory.is_dir():
-            continue
-        for path in sorted(directory.rglob("*"), reverse=True):
-            relative = path.relative_to(out).as_posix()
-            if path.is_file() and relative not in files:
-                path.unlink()
-                _log(f"  removed {relative}: no longer produced")
-            elif path.is_dir() and not any(path.iterdir()):
-                path.rmdir()
-    for name, content in files.items():
-        target = out / name
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(content)
-    (out / "FETCHED.md").write_bytes(fetched_md.encode("utf-8"))
+    page, response = row.page, row.response
+    if page.url in _WIKI_URLS:
+        return wiki_note(row)
+    if (page.file or "").startswith("user-guide/"):
+        return guide_note(guide_markdown(page, response))
+    sample = _SAMPLE_FILES.get(page.file or "")
+    if sample is not None and page.file == sample.stat_file:
+        return stat_note(sample, response)
+    if sample is not None:
+        return sdmx_note(sample, response)
+    return row.note
 
 
-def main() -> None:
-    """Fetch every page and document, then write the snapshot."""
-    parser = argparse.ArgumentParser(description="Refresh docs/upstream/ from Eurostat.")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="snapshot directory")
-    out: Path = parser.parse_args().out
-    fetched = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+def sections(rows: Sequence[Row]) -> Sequence[Section]:
+    """Check the samples against each other and the data-query page, with every row read.
 
-    _log(f"Run {fetched}. User guide: {GUIDE_BASE}")
-    rows: list[Row] = []
-    pages: dict[str, Page] = {}
-    for path in GUIDE_PAGES:
-        row, page = guide_page(path)
-        rows.append(row)
-        pages[path] = page
-    if not any(_plain(block) == KEY_ORDER_SENTENCE for block in pages[KEY_ORDER_PAGE].blocks):
+    The checks of one page against another (sdk-core ADR-0062): they write no section of
+    their own, ``()``, and stop the run with ``changed`` before anything is written. A run
+    without one of the rows stops too, since a check that cannot run must not read as one
+    that passed.
+    """
+    by_file = {row.page.file: row for row in rows if row.page.file}
+    needed = [f"user-guide/{KEY_ORDER_PAGE}.md"]
+    needed += [file for sample in SAMPLES for file in (sample.stat_file, sample.sdmx_file)]
+    missing = [file for file in needed if file not in by_file]
+    if missing:
         raise SystemExit(
-            f"user-guide/{KEY_ORDER_PAGE}.md no longer states {KEY_ORDER_SENTENCE!r}; the "
-            "sample's key order needs a look by hand. Nothing was written."
+            f"The samples are checked against each other and against user-guide/"
+            f"{KEY_ORDER_PAGE}.md, and this run read no row of {', '.join(missing)}: declare "
+            "them all. Nothing was written."
         )
-    _log(f"Documents: {API_BASE}, {COMEXT_BASE}")
-    rows += [document(out, *entry) for entry in DOCUMENTS]
-    _log("Samples")
-    rows += samples(KEY_ORDER_SENTENCE)
-    _log("Confluence pages (not fetched past the login redirect)")
-    missing = [wiki_page(url, subject) for url, subject in WIKI_PAGES]
-    missing += [Missing(url, "not requested", reason) for url, reason in NOT_REQUESTED]
-    _log(f"Copyright notice: {COPYRIGHT_URL}")
-    quoted = attribution()
+    check_key_order(by_file[f"user-guide/{KEY_ORDER_PAGE}.md"].content or b"")
+    for sample in SAMPLES:
+        stat, sdmx = by_file[sample.stat_file], by_file[sample.sdmx_file]
+        check_samples(sample, stat.response, sdmx.response)
+    return ()
 
-    observed = (out / OBSERVED).is_file()
-    write_snapshot(out, rows, render_fetched(rows, missing, quoted, fetched, observed))
-    _log(f"Wrote {len(rows)} files and FETCHED.md under {out}; {_Counter.sent} requests sent")
 
+# --- the declaration -------------------------------------------------------------------
+
+_LICENCE = "the notice's licence of the website's editorial content"
+_REUSE = "the notice's reuse of the statistical data"
+_EXCEPTION = "under Exceptions, the data and documents that may not be reused commercially"
+_MODIFIED_REUSE = (
+    "under Exceptions, the notice's clause on modified reuse, which the conversion of the "
+    "user-guide pages is: How this is captured states the changes and the disclaimer"
+)
+_CITATION = "under How to cite Eurostat products, Datasets: the citation the notice asks for"
+ATTRIBUTION = (
+    Statement(
+        "The copyright for the editorial content of this website, which is owned by the EU, "
+        "is licensed under the Creative Commons Attribution 4.0 International licence.",
+        COPYRIGHT_URL,
+        where=_LICENCE,
+    ),
+    Statement(
+        "Reuse of statistical data, metadata, publications, and other dissemination tools "
+        "published on this website for commercial or non-commercial purposes is authorised "
+        "provided the source is acknowledged.",
+        COPYRIGHT_URL,
+        where=_REUSE,
+    ),
+    Statement(
+        "The following Eurostat data and documents may not be reused for commercial "
+        "purposes, but non-commercial reuse is possible without restriction:",
+        COPYRIGHT_URL,
+        where=_EXCEPTION,
+    ),
+    Statement(
+        "Data identified as belonging to sources other than Eurostat.",
+        COPYRIGHT_URL,
+        where=_EXCEPTION,
+    ),
+    Statement(
+        "Publications or documents where the copyright belongs partly or fully to other "
+        "organisations, for example concerning co-publications between Eurostat and other "
+        "publishers.",
+        COPYRIGHT_URL,
+        where=_EXCEPTION,
+    ),
+    Statement("Data for countries other than:", COPYRIGHT_URL, where=_EXCEPTION),
+    Statement("Member States of the European Union (EU)", COPYRIGHT_URL, where=_EXCEPTION),
+    Statement(
+        "Member States of the European Free Trade Association (EFTA)",
+        COPYRIGHT_URL,
+        where=_EXCEPTION,
+    ),
+    Statement("official EU acceding and candidate countries.", COPYRIGHT_URL, where=_EXCEPTION),
+    Statement(
+        "Trade data originating from Liechtenstein and Switzerland (as declaring countries), "
+        "from 1995 onwards, and concerning the following commodity classifications: HS, SITC, "
+        "BEC, NSTR and national commodity classifications.",
+        COPYRIGHT_URL,
+        where=_EXCEPTION,
+    ),
+    Statement(
+        "Trade data originating from Austria (as a declaring country) for a level of detail "
+        "of the Combined Nomenclature of 8 digits",
+        COPYRIGHT_URL,
+        where=_EXCEPTION,
+    ),
+    Statement(
+        "When reuse involves translations of publications or modifications to the data or "
+        "text, this must be stated clearly to the end user of the information. A disclaimer "
+        "regarding the non-responsibility of Eurostat shall be included.",
+        COPYRIGHT_URL,
+        where=_MODIFIED_REUSE,
+    ),
+    Statement(
+        "Source: [digital object identifier (DOI) number of the Eurostat dataset], [access date]",
+        COPYRIGHT_URL,
+        where=_CITATION,
+    ),
+    Statement(
+        "Source: [Eurostat dataset datacode link], [access date]",
+        COPYRIGHT_URL,
+        where=f"{_CITATION} for a customised version of a dataset",
+    ),
+)
+"""Every copyright line, licence or terms of use the pages state, as printed: all in
+Eurostat's copyright notice, the terms themselves, which must print each of them on every
+run."""
+
+CAPTURE = "\n\n".join(
+    (
+        f'The user guide "Data access via API" ({GUIDE_BASE}) is a set of server-rendered '
+        "pages. Each page under `user-guide/` is converted to Markdown with the standard "
+        "library's `html.parser`: the page's `h1` becomes the title and the page's main "
+        'region (`id="main-content"`) the body, including the code snippets and notes the '
+        "site places beside the articles; links and images are made absolute, and a table "
+        "with merged cells or a nested table is kept as simplified HTML. The site's "
+        "navigation, header, footer, scripts and styles are dropped. The pages' HTML carries "
+        "a per-request token, which the Markdown drops, so a page's row records no size or "
+        "sha256, and its file's diff shows a change.",
+        "The user-guide pages are the website's editorial content, reproduced here as this "
+        "package's reference with the source acknowledged in each row below; Eurostat's "
+        "copyright notice asks that a modification be stated and that a disclaimer of "
+        "Eurostat's responsibility be included. Changes made: each page is converted from "
+        "HTML to Markdown, as the paragraph above says; the WADL files, the OpenAPI document "
+        "and the samples are kept verbatim. The Markdown pages under `user-guide/` are this "
+        "package's conversion of Eurostat's pages; Eurostat is not responsible for this "
+        "reproduction or for any difference from the pages it serves. The copyright notice "
+        "is read for the statements under Attribution, which it must print on every run, and "
+        "is kept as no file.",
+        f"The WADL files and the OpenAPI document come from {API_BASE}, those under "
+        f"`api/comext/` from {COMEXT_BASE}, the second base, which serves the `DS-` datasets "
+        "of Comext and Prodcom. The service generates its WADL files per request and orders "
+        "sibling elements (`resource`, `method`) differently from one request to the next. A "
+        "WADL answer whose lines, each taken with the lines that enclose it by indentation, "
+        "are exactly those of the file already here leaves the file as it is, so a diff "
+        "shows changes only, a line moved under another parent included; the namespace "
+        "prefixes a line declares for itself (`ns3`, `ns4`, numbered by the service in "
+        "document order) are masked for that comparison, and `--check` compares a WADL file "
+        "in that form. The OpenAPI document is compared byte for byte.",
+        "The samples are answers for one dataset of each base ("
+        + ", ".join(f"`{sample.dataset}`" for sample in SAMPLES)
+        + "), one country and two periods, each the Statistics API's JSON-stat and the SDMX "
+        "2.1 API's SDMX-CSV; the script checks for each that the SDMX-CSV's dimension columns "
+        "follow the order of the JSON-stat `id`, that the key has one position per "
+        "dimension, that every SDMX-CSV row lies inside the key, and that the data-query "
+        "page states the key's order. JSON-stat 2.0 is a third-party specification "
+        f"({JSON_STAT_SPEC}): cited, not snapshotted.",
+        "The two Confluence pages under Not fetched are requested once each without "
+        f"credentials; each sends an anonymous client to EU Login, {LOGIN_HOST}, which is "
+        "recorded and not followed, and a redirect anywhere else stops the run. After a 429 "
+        "the one retry waits as long as the website asks in "
+        "`X-Rate-Limit-Retry-After-Seconds` or `Retry-After`, "
+        f"{QUOTA_PAUSE:g} s where it names no wait, and a wait over {MAX_QUOTA_WAIT:g} s stops "
+        "the run.",
+    )
+)
+"""``FETCHED.md``'s "How this is captured": what is converted, cut or left out, and why."""
+
+_WIKI_REASON = (
+    "; EU Login is required, so the page is not fetched (no credentials are sent and no "
+    "browser is imitated); the public user-guide pages above are the snapshot's statement of "
+    "the subject"
+)
+_WIKI_URLS = frozenset(url for url, _ in WIKI_PAGES)
+
+SNAPSHOT = Snapshot(
+    name="Eurostat dissemination API",
+    slug=SOURCE,
+    pages=(
+        *(
+            Page(url, status=WIKI_STATUS, note=f"{subject}{_WIKI_REASON}")
+            for url, subject in WIKI_PAGES
+        ),
+        *(
+            Page(
+                GUIDE_BASE + path,
+                f"user-guide/{path}.md",
+                stable=False,
+                note="converted from HTML",
+            )
+            for path in GUIDE_PAGES
+        ),
+        *(Page(url, file, note=f"verbatim; {note}") for file, url, note in DOCUMENTS),
+        *(
+            page
+            for sample in SAMPLES
+            for page in (
+                Page(sample.stat_url, sample.stat_file, sample=True),
+                Page(sample.sdmx_url, sample.sdmx_file, sample=True),
+            )
+        ),
+        Page(
+            COPYRIGHT_URL,
+            stable=False,
+            terms=True,
+            note="Eurostat's copyright notice, the terms of the website's content: read for "
+            "the statements under Attribution, which it must print on every run, and kept as "
+            "no file; its HTML carries a per-request token, so the row records no size or "
+            "sha256",
+        ),
+    ),
+    attribution=ATTRIBUTION,
+    not_fetched=tuple(NotFetched(url, reason) for url, reason in NOT_REQUESTED),
+    capture=CAPTURE,
+    out=OUT,
+    pause=PAUSE,
+    reduce=reduce,
+    canonical=canonical,
+    note=note,
+    sections=sections,
+    client=CLIENT,
+)
+"""The snapshot: the two Confluence pages first, recorded under Not fetched, so that a run
+that stops on their redirect has sent one request, not the whole run's; then the user-guide
+pages, the documents and the samples in the order of ``FETCHED.md``'s rows, and the copyright
+notice, whose statements the attribution quotes. 35 requests where no page redirects on its
+host and none is retried."""
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(run(SNAPSHOT))
