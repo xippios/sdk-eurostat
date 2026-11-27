@@ -1,0 +1,41 @@
+{
+  "recorded_at": "2026-10-28T15:21:31.850636Z",
+  "request": {
+    "body": null,
+    "body_base64": false,
+    "content_type": null,
+    "method": "GET",
+    "url": "https://ec.europa.eu/eurostat/api/comext/dissemination/statistics/1.0/data/DS-059359?format=JSON&lang=EN&reporter=AT&product=20158000&indicators=PRODVAL&sinceTimePeriod=2022&untilTimePeriod=2023"
+  },
+  "response": {
+    "body": "{\"version\":\"2.0\",\"class\":\"dataset\",\"label\":\"Total production\",\"source\":\"ESTAT\",\"updated\":\"2026-10-20T11:00:00+0200\",\"value\":{},\"id\":[\"freq\",\"reporter\",\"product\",\"indicators\",\"time\"],\"size\":[1,1,1,0,2],\"dimension\":{\"freq\":{\"label\":\"Frequency\",\"category\":{\"index\":{\"A\":0},\"label\":{\"A\":\"Annual\"}}},\"reporter\":{\"label\":\"REPORTER\",\"category\":{\"index\":{\"AT\":0},\"label\":{\"AT\":\"Austria\"}}},\"product\":{\"label\":\"PRODUCT\",\"category\":{\"index\":{\"20158000\":0},\"label\":{\"20158000\":\"Animal or vegetable fertilisers\"}}},\"indicators\":{\"label\":\"INDICATORS\",\"category\":{\"index\":{},\"label\":{}}},\"time\":{\"label\":\"TIME_PERIOD\",\"category\":{\"index\":{\"2022\":0,\"2023\":1},\"label\":{\"2022\":\"2022\",\"2023\":\"2023\"}}}},\"extension\":{\"lang\":\"EN\",\"id\":\"DS-059359\",\"agencyId\":\"ESTAT\",\"version\":\"1.0\",\"datastructure\":{\"id\":\"DS-059359\",\"agencyId\":\"ESTAT\",\"version\":\"2.7\"},\"annotation\":[{\"type\":\"DISSEMINATION_EXPLANATORY_LINK\",\"href\":\"https://ec.europa.eu/eurostat/documents/120432/19597181/Guide+rapide+pour+acceder+aux+donnees+PRODCOM+DS-059359.pdf/45ff2f70-2ebc-33bf-cf6c-3dae160adf85?t=1758811389297\"},{\"type\":\"DISSEMINATION_EXPLANATORY_LINK\",\"href\":\"https://ec.europa.eu/eurostat/documents/120432/19597181/Schnellanleitung+f%C3%BCr+den+Zugriff+auf+j%C3%A4hrliche+Daten+zur+PRODCOM+-+DS059359.pdf/da473ff4-92a8-1cc2-7ed8-ce0a8aaffd9c?t=1758811390540\"},{\"type\":\"DISSEMINATION_EXPLANATORY_LINK\",\"href\":\"https://ec.europa.eu/eurostat/documents/120432/19597181/Quick+guide+on+accessing+PRODCOM+data+DS-059359.pdf/81375d8e-97f7-0976-f18c-1e5dd32150a5?t=1758811390009\",\"text\":\"Important notice\"},{\"type\":\"DISSEMINATION_OBJECT_TYPE\",\"title\":\"DATASET\"},{\"type\":\"DISSEMINATION_TIMESTAMP_DATA\",\"date\":\"2026-10-20T11:00:00+0200\"},{\"type\":\"DISSEMINATION_TIMESTAMP_GLOBAL\",\"date\":\"2026-10-20T11:00:00+0200\"},{\"type\":\"DISSEMINATION_TIMESTAMP_PLANNED\",\"date\":\"2026-10-20T11:00:00+0200\"},{\"type\":\"ESMS_HTML\",\"title\":\"Explanatory texts (metadata)\",\"href\":\"https://ec.europa.eu/eurostat/cache/metadata/en/prom_esms.htm\"},{\"type\":\"UPDATE_DATA\",\"date\":\"2026-10-20T11:00:00+0200\"},{\"type\":\"UPDATE_STRUCTURE\",\"date\":\"2026-10-20T11:00:00+0200\"}],\"positions-with-no-data\":{\"freq\":[0],\"reporter\":[0],\"product\":[0],\"indicators\":[],\"time\":[0,1]}}}",
+    "body_base64": false,
+    "headers": [
+      [
+        "date",
+        "Wed, 28 Oct 2026 15:21:31 GMT"
+      ],
+      [
+        "content-type",
+        "application/json"
+      ],
+      [
+        "access-control-allow-headers",
+        "Content-Type, Accept, X-Requested-With"
+      ],
+      [
+        "access-control-allow-methods",
+        "GET"
+      ],
+      [
+        "access-control-allow-origin",
+        "*"
+      ],
+      [
+        "set-cookie",
+        "REDACTED"
+      ]
+    ],
+    "status": 200
+  }
+}

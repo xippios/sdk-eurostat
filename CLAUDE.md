@@ -88,7 +88,11 @@ files (`--only statinfo`) and keeps every other list's file, `lists.json` record
 provenance row; the index's `fetched` is the latest among all lists. No task checks a code
 against a packaged list before sending: a code no list holds (`XX`) is sent, and Eurostat
 answered it with an empty cube (`DS-059358_unknown_code`), as it answers a code that
-matches nothing on the main base (`unknown_code`).
+matches nothing on the main base (`unknown_code`). What Eurostat answers a code that a
+list holds and the dataset lacks is its own, as recorded on 2026-10-28: an empty cube for
+an indicator DS-059359 lacks, `PRODVAL` with the reporter `AT` and the product `20158000`,
+which CXT_INDICATORS, CXT_FREE_ISO and CXT_PRODCOM2_TOTAL hold
+(`DS-059359_AT_20158000_indicator_not_in_dataset`).
 
 Comext's trade datasets DS-045409 (EU trade since 1988 by HS2-4-6 and CN8) and DS-059341
 (international trade of EU and non-EU countries since 2002 by HS2-4-6) name the same
