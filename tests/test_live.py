@@ -31,7 +31,7 @@ the latest.
 import importlib.util
 import re
 from collections.abc import Awaitable, Callable
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -117,20 +117,22 @@ def _check(result: Result[Cube], *, periods: int) -> None:
 
 
 async def test_get_data_apro_mk_cola() -> None:
-    result = await tasks.get_data_async("apro_mk_cola", {"geo": "AT", "time": ["2022", "2023"]})
+    result = await tasks.get_data_async(
+        "apro_mk_cola", filters={"geo": "AT", "time": ["2022", "2023"]}
+    )
     _check(result, periods=2)
 
 
 async def test_get_data_apro_cpnh1() -> None:
     result = await tasks.get_data_async(
-        "apro_cpnh1", {"geo": "AT"}, since_time_period="2022", until_time_period="2023"
+        "apro_cpnh1", filters={"geo": "AT"}, since_time_period="2022", until_time_period="2023"
     )
     _check(result, periods=2)
 
 
 async def test_get_data_ef_m_farmleg() -> None:
     result = await tasks.get_data_async(
-        "ef_m_farmleg", {"geo": "AT", "unit": "HLD"}, last_time_period=2
+        "ef_m_farmleg", filters={"geo": "AT", "unit": "HLD"}, last_time_period=2
     )
     _check(result, periods=2)
 
@@ -139,7 +141,7 @@ async def test_get_data_ds_059358() -> None:
     """Prodcom's DS-059358 on the Comext base: Austria, product 10411200 (fats and oils of
     fish or marine mammals, NACE 10.41), the latest period."""
     result = await tasks.get_data_async(
-        "DS-059358", {"reporter": "AT", "product": "10411200"}, last_time_period=1
+        "DS-059358", filters={"reporter": "AT", "product": "10411200"}, last_time_period=1
     )
     cube = result.data
     assert cube.class_ == "dataset"
@@ -161,7 +163,7 @@ async def test_get_data_ds_059358() -> None:
 async def test_download_dataset_apro_mk_cola(tmp_path: Path) -> None:
     dest = tmp_path / "milk.csv.gz"
     result = await tasks.download_dataset_async(
-        "apro_mk_cola", "A...THS_T.AT", since="2022", until="2023", dest=dest
+        "apro_mk_cola", "A...THS_T.AT", start_period="2022", end_period="2023", dest=dest
     )
     assert result.data.path == dest
     assert result.data.bytes == dest.stat().st_size
@@ -177,9 +179,10 @@ async def test_download_dataset_apro_mk_cola(tmp_path: Path) -> None:
     assert {row.dimensions["geo"] for row in rows} == {"AT"}
     assert {row.time_period for row in rows} <= {"2022", "2023"}
     assert result.meta.endpoint == "dataQuery"
-    assert result.meta.vintage == rows[0].last_update
+    assert result.meta.vintage is not None
     assert LAST_UPDATE.fullmatch(result.meta.vintage)
     assert result.meta.published_at is not None
+    assert result.meta.published_at == rows[0].last_update
     assert result.meta.published_at.tzinfo is None
     assert result.meta.published_at_naive is True
     assert result.meta.request["key"] == "A...THS_T.AT"
@@ -217,6 +220,7 @@ async def test_list_datasets_upstream_toc_still_reads() -> None:
     assert first.code
     assert first.title
     assert first.path
+    assert isinstance(first.last_update, date), "printed day first, read into a date"
     result = await tasks.list_datasets_async(search="apro_mk_cola")
     assert result.data
     assert result.meta.published_at_naive is True

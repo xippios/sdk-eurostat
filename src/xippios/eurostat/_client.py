@@ -203,8 +203,10 @@ def classify(response: httpx.Response) -> XippiosError | None:
       ``tests/fixtures/data_query/DS-045409_too_big_413.json``).
 
     Everything else falls through to core's status mapping, a 5xx included, so that it
-    is retried. An unknown code (``geo=XX``) is no error: the service answers HTTP 200
-    with an empty cube (``tests/fixtures/get_data/unknown_code.json``).
+    is retried. An unknown code (``geo=XX``) is no error here: the service answers HTTP 200
+    with an empty cube (``tests/fixtures/get_data/unknown_code.json``), and ``get_data``
+    refuses the code before sending where one packaged codelist feeds its dimension, and a
+    cube without a cell after the request.
     """
     where = request_description(response)
     media = _not_sdmx_csv(response)

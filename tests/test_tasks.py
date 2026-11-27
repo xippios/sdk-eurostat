@@ -23,9 +23,10 @@ codes and codelists.
 """
 
 import importlib.util
+import inspect
 import json
 import re
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast
@@ -103,7 +104,7 @@ def test_get_data_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
     case = "apro_mk_cola_AT_2022_2023"
     route = replay_fixture(GET_DATA, case)
     before = datetime.now(UTC)
-    result = tasks.get_data("apro_mk_cola", {"geo": "AT", "time": ["2022", "2023"]})
+    result = tasks.get_data("apro_mk_cola", filters={"geo": "AT", "time": ["2022", "2023"]})
     after = datetime.now(UTC)
     assert sent_urls(route) == [recorded_url(case)]
     assert isinstance(result.data, Cube)
@@ -117,10 +118,11 @@ def test_get_data_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
     assert result.meta.published_at_naive is False, "a zoned updated is no naive time"
     assert result.meta.vintage == "2026-10-05T23:00:00+0200" == recorded_updated(case)
     assert result.meta.request == {
-        "dataset": "apro_mk_cola",
+        "dataset_code": "apro_mk_cola",
         "filters": {"geo": "AT", "time": ["2022", "2023"]},
         "lang": "EN",
     }
+    assert result.meta.names == {"geo": {"AT": label("geo", "AT")}}, "time names no code"
     assert result.meta.total is None
     assert result.meta.tenant is None
     assert_time_between(result.meta.retrieved_at, before, after)
@@ -135,9 +137,9 @@ def test_get_data_answers_a_repeated_request_from_the_cache(replay_fixture: Repl
     route = replay_fixture(GET_DATA, case)
     filters = {"geo": "AT", "time": ["2022", "2023"]}
     before = datetime.now(UTC)
-    first = tasks.get_data("apro_mk_cola", filters)
+    first = tasks.get_data("apro_mk_cola", filters=filters)
     after = datetime.now(UTC)
-    second = tasks.get_data("apro_mk_cola", filters)
+    second = tasks.get_data("apro_mk_cola", filters=filters)
     assert sent_urls(route) == [recorded_url(case)], "one request on the wire"
     assert config.cache is not None
     entry = config.cache.get(cache_key("GET", httpx.URL(recorded_url(case))))
@@ -156,7 +158,7 @@ def test_get_data_apro_cpnh1_since_until(replay_fixture: ReplayFixture) -> None:
     case = "apro_cpnh1_AT_2022_2023"
     route = replay_fixture(GET_DATA, case)
     result = tasks.get_data(
-        "apro_cpnh1", {"geo": "AT"}, since_time_period="2022", until_time_period="2023"
+        "apro_cpnh1", filters={"geo": "AT"}, since_time_period="2022", until_time_period="2023"
     )
     assert sent_urls(route) == [recorded_url(case)]
     assert result.data.id == ["freq", "crops", "strucpro", "geo", "time"]
@@ -164,7 +166,7 @@ def test_get_data_apro_cpnh1_since_until(replay_fixture: ReplayFixture) -> None:
     assert result.meta.published_at == datetime(2026, 9, 28, 23, 0, tzinfo=CEST)
     assert result.meta.vintage == "2026-09-28T23:00:00+0200" == recorded_updated(case)
     assert result.meta.request == {
-        "dataset": "apro_cpnh1",
+        "dataset_code": "apro_cpnh1",
         "filters": {"geo": "AT"},
         "lang": "EN",
         "since_time_period": "2022",
@@ -175,7 +177,9 @@ def test_get_data_apro_cpnh1_since_until(replay_fixture: ReplayFixture) -> None:
 def test_get_data_ef_m_farmleg_last_periods(replay_fixture: ReplayFixture) -> None:
     case = "ef_m_farmleg_AT_HLD_last_2"
     route = replay_fixture(GET_DATA, case)
-    result = tasks.get_data("ef_m_farmleg", {"geo": "AT", "unit": "HLD"}, last_time_period=2)
+    result = tasks.get_data(
+        "ef_m_farmleg", filters={"geo": "AT", "unit": "HLD"}, last_time_period=2
+    )
     assert sent_urls(route) == [recorded_url(case)]
     assert result.data.id[-2:] == ["geo", "time"]
     assert result.data.dimension["unit"].category.label == {"HLD": "Holding"}
@@ -183,23 +187,199 @@ def test_get_data_ef_m_farmleg_last_periods(replay_fixture: ReplayFixture) -> No
     assert result.meta.published_at == datetime(2026, 6, 17, 23, 0, tzinfo=CEST)
     assert result.meta.vintage == "2026-06-17T23:00:00+0200" == recorded_updated(case)
     assert result.meta.request == {
-        "dataset": "ef_m_farmleg",
+        "dataset_code": "ef_m_farmleg",
         "filters": {"geo": "AT", "unit": "HLD"},
         "lang": "EN",
         "last_time_period": 2,
     }
+    assert result.meta.names == {
+        "geo": {"AT": label("geo", "AT")},
+        "unit": {"HLD": label("unit", "HLD")},
+    }
 
 
-def test_get_data_unknown_code_is_an_empty_cube(replay_fixture: ReplayFixture) -> None:
-    case = "unknown_code"
+def label(codelist: str, code: str) -> str:
+    """The label of ``code`` in the packaged ``codelist``, as its file holds it."""
+    return str(
+        next(
+            record["label"]
+            for record in packaged_file(codelist)["records"]
+            if record["code"] == code
+        )
+    )
+
+
+def test_get_data_refuses_a_code_its_codelist_lacks_before_sending(
+    respx_mock: respx.MockRouter,
+) -> None:
+    """The call of the recorded empty cube ``unknown_code`` (``geo=XX``, 2026-10-27): GEO,
+    the one packaged codelist that feeds the main base's ``geo``, lacks ``XX``, so the call
+    is refused before its request by core's check of a packaged list, saying that nothing
+    was sent (conventions §5; the maintainer's decision of 2026-11-27 on
+    https://github.com/xippios/sdk-eurostat/issues/82). The recording stays the evidence of
+    what Eurostat answers such a code."""
+    assert "&geo=XX&time=2023" in recorded_url("unknown_code")
+    with pytest.raises(UnknownCode) as refused:
+        get_data("apro_mk_cola", filters={"geo": "XX", "time": "2023"})
+    assert (refused.value.param, refused.value.value, refused.value.list_name) == (
+        "geo",
+        "XX",
+        "GEO",
+    )
+    message = str(refused.value)
+    assert message.startswith(
+        f"'XX' is not a geo in the packaged GEO list (fetched {fetched('geo'):%Y-%m-%d}). {UNSENT} "
+    )
+    assert tasks.UNKNOWN_FILTER_CODE in message
+    assert not respx_mock.calls, "refused before any request"
+
+
+def test_get_data_ds_059358_refuses_a_reporter_its_codelist_lacks(
+    respx_mock: respx.MockRouter,
+) -> None:
+    """The call of the recorded empty cube ``DS-059358_unknown_code`` (``reporter=XX``,
+    2026-10-28): on the Comext base CXT_FREE_ISO is the one packaged codelist that feeds
+    ``reporter``, so ``XX`` is refused before the request, and ``product``, which three
+    codelists feed, is not checked."""
+    assert "&reporter=XX&product=10411200&" in recorded_url("DS-059358_unknown_code")
+    with pytest.raises(UnknownCode) as refused:
+        get_data(
+            "DS-059358",
+            filters={"reporter": "XX", "product": "10411200"},
+            since_time_period="2022",
+            until_time_period="2023",
+        )
+    assert str(refused.value).startswith(
+        "'XX' is not a reporter in the packaged CXT_FREE_ISO list (fetched "
+        f"{fetched('cxt_free_iso'):%Y-%m-%d}). {UNSENT} "
+    )
+    assert not respx_mock.calls, "refused before any request"
+
+
+@pytest.mark.parametrize(
+    ("filters", "refused"),
+    [
+        ({"geo": ["AT", "XX"]}, ("geo", "XX")),
+        ({"geo": "XX", "unit": "NO_SUCH_UNIT"}, ("geo", "XX")),
+        ({"unit": "NO_SUCH_UNIT", "geo": "XX"}, ("unit", "NO_SUCH_UNIT")),
+        ({"time": "2023", "MILKITEM": "NO_SUCH_ITEM"}, ("MILKITEM", "NO_SUCH_ITEM")),
+    ],
+    ids=["a-list", "geo-first", "unit-first", "a-key-in-capitals"],
+)
+def test_get_data_refuses_the_first_code_that_a_codelist_lacks(
+    respx_mock: respx.MockRouter, filters: dict[str, Any], refused: tuple[str, str]
+) -> None:
+    """One refusal names the first problem it finds, in the caller's order: the first key
+    whose code its codelist lacks, and in a list its first such code (sdk-core ADR-0061,
+    decision 7). A dimension code is compared without case, as the Statistics API takes it
+    ("DIMENSION_CODE and VALUE are case-insensitive", api-statistics.md), and named as the
+    caller wrote it."""
+    with pytest.raises(UnknownCode) as error:
+        get_data("apro_mk_cola", filters=filters)
+    assert (error.value.param, error.value.value) == refused
+    assert not respx_mock.calls, "refused before any request"
+
+
+def test_get_data_sends_a_checked_code_as_given(replay_fixture: ReplayFixture) -> None:
+    """A code is compared with its codelist without case, as the Statistics API compares it,
+    and sent, recorded in ``meta.request`` and named in ``meta.names`` as the caller gave it
+    (conventions §5; sdk-core ADR-0067, decision 2). NOT RECORDED: the recorded answer to
+    ``geo=AT`` served at the URL of ``GEO=at``, which Eurostat answers alike, since
+    "DIMENSION_CODE and VALUE are case-insensitive" (api-statistics.md) (conventions §10,
+    kind 3)."""
+    url = recorded_url("apro_mk_cola_AT_2022_2023").replace("&geo=AT&", "&GEO=at&")
+    route = replay_fixture(GET_DATA, "apro_mk_cola_AT_2022_2023", url=url)
+    result = get_data("apro_mk_cola", filters={"GEO": "at", "time": ["2022", "2023"]})
+    assert sent_urls(route) == [url]
+    assert result.meta.request["filters"] == {"GEO": "at", "time": ["2022", "2023"]}
+    assert result.meta.names == {"GEO": {"at": label("geo", "AT")}}
+
+
+def test_get_data_checks_the_dimensions_that_one_codelist_of_its_base_feeds() -> None:
+    """The keys checked before the request, by the base that serves the dataset: the twelve
+    codelists of the main base, one for each of its dimensions, and of the Comext base
+    ``reporter``, ``flow`` and ``indicators``. ``product``, which CXT_PRODCOM2_SOLD,
+    CXT_PRODCOM2_TOTAL and CXT_NC feed, and ``partner``, the ``param`` of no packaged list,
+    go unchecked, and so does a key of one base on a dataset of the other, ``freq`` on a
+    ``DS-`` dataset among them, whose CXT_FREQ is not packaged (conventions §5: "A code
+    sent under a coding system the packaged list does not hold goes unchecked")."""
+    main = {
+        origin.param: codelist
+        for codelist, origin in params.CODELISTS.items()
+        if origin.base_url == BASE_URL
+    }
+    assert len(main) == 12
+    checked = tasks.CHECKED_FILTERS
+    assert checked == {
+        BASE_URL: main,
+        COMEXT_BASE_URL: {
+            "indicators": "CXT_INDICATORS",
+            "reporter": "CXT_FREE_ISO",
+            "flow": "CXT_EU_FLUX",
+        },
+    }
+
+
+def test_get_data_sends_a_product_unchecked(replay_fixture: ReplayFixture) -> None:
+    """``product`` is the ``param`` of three packaged codelists, so its code is sent
+    unchecked, and a cube without a cell answers it with ``NotFoundError``, after the
+    request. NOT RECORDED: the recorded empty cube of ``DS-059358_unknown_code`` served at
+    the URL of an unlisted product with the reporter AT, which Eurostat answers alike, since
+    it answers a code that matches nothing with an empty cube, as that recording holds for
+    ``reporter=XX`` (conventions §10, kind 3)."""
+    url = recorded_url("DS-059358_unknown_code").replace(
+        "&reporter=XX&product=10411200&", "&reporter=AT&product=NO_SUCH_PRODUCT&"
+    )
+    route = replay_fixture(GET_DATA, "DS-059358_unknown_code", url=url)
+    with pytest.raises(NotFoundError) as refused:
+        get_data(
+            "DS-059358",
+            filters={"reporter": "AT", "product": "NO_SUCH_PRODUCT"},
+            since_time_period="2022",
+            until_time_period="2023",
+        )
+    assert sent_urls(route) == [url]
+    assert not isinstance(refused.value, InvalidRequestError)
+
+
+def test_get_data_answers_a_cube_without_a_cell_with_not_found(
+    replay_fixture: ReplayFixture,
+) -> None:
+    """Recorded on the Comext base on 2026-10-28: DS-059359 for the reporter AT, the product
+    20158000 and the indicator PRODVAL, codes that CXT_FREE_ISO, CXT_PRODCOM2_TOTAL and
+    CXT_INDICATORS hold, answered with a cube that holds no cell, size 0 on ``indicators``,
+    since DS-059359 serves no PRODVAL. The check passes the codes, and a task of one record
+    answers no data with ``NotFoundError``, which names the dataset and the filters sent
+    (sdk-core ADR-0061, decision 6; conventions §5; the maintainer's decision of 2026-11-27
+    on https://github.com/xippios/sdk-eurostat/issues/82)."""
+    case = "DS-059359_AT_20158000_indicator_not_in_dataset"
     route = replay_fixture(GET_DATA, case)
-    result = get_data("apro_mk_cola", {"geo": "XX", "time": "2023"})
+    with pytest.raises(NotFoundError) as refused:
+        get_data(
+            "DS-059359",
+            filters={"reporter": "AT", "product": "20158000", "indicators": "PRODVAL"},
+            since_time_period="2022",
+            until_time_period="2023",
+        )
     assert sent_urls(route) == [recorded_url(case)]
-    assert result.data.size[result.data.id.index("geo")] == 0
-    assert result.data.value == {}
-    assert list(result.data.observations()) == []
-    assert result.meta.vintage == recorded_updated(case)
-    assert result.meta.request["filters"] == {"geo": "XX", "time": "2023"}
+    assert str(refused.value) == (
+        "Eurostat holds no data for get_data(dataset_code='DS-059359', filters={'reporter': "
+        "'AT', 'product': '20158000', 'indicators': 'PRODVAL'}, since_time_period='2022', "
+        "until_time_period='2023'): the request was sent, and its cube has no cell with a "
+        "value or a status. A code that the dataset does not use, or a period that Eurostat "
+        "has not released, answers so, and the cube of a call without that filter lists the "
+        "codes of each dimension."
+    )
+    assert UNSENT not in str(refused.value)
+
+
+@pytest.mark.anyio
+async def test_get_data_tool_answers_a_refused_code_as_text(respx_mock: respx.MockRouter) -> None:
+    text = await mcp_call_text(
+        server, "eurostat_get_data", {"dataset_code": "apro_mk_cola", "filters": {"geo": "XX"}}
+    )
+    assert text.startswith("error: UnknownCode: 'XX' is not a geo in the packaged GEO list")
+    assert not respx_mock.calls
 
 
 def test_get_data_unknown_dataset(replay_fixture: ReplayFixture) -> None:
@@ -212,7 +392,7 @@ def test_get_data_unknown_dataset(replay_fixture: ReplayFixture) -> None:
 def test_get_data_unknown_dimension(replay_fixture: ReplayFixture) -> None:
     replay_fixture(GET_DATA, "unknown_dimension")
     with pytest.raises(InvalidRequestError, match="INVALID_QUERY_DIMENSION"):
-        tasks.get_data("apro_mk_cola", {"nosuchdim": "AT"})
+        tasks.get_data("apro_mk_cola", filters={"nosuchdim": "AT"})
 
 
 @pytest.mark.parametrize("level", [GeoLevel.COUNTRY, "country"], ids=["member", "plain"])
@@ -220,7 +400,7 @@ def test_get_data_geo_with_geo_level(replay_fixture: ReplayFixture, level: str) 
     """A plain string is accepted where the enumeration is expected, and sent as it."""
     route = replay_fixture(GET_DATA, "geo_with_geo_level")
     with pytest.raises(InvalidRequestError, match="cannot be set at the same time"):
-        tasks.get_data("apro_mk_cola", {"geo": "AT"}, geo_level=cast(GeoLevel, level))
+        tasks.get_data("apro_mk_cola", filters={"geo": "AT"}, geo_level=cast(GeoLevel, level))
     assert sent_urls(route) == [recorded_url("geo_with_geo_level")]
 
 
@@ -228,7 +408,7 @@ def test_get_data_takes_lang_as_a_plain_string(replay_fixture: ReplayFixture) ->
     case = "apro_mk_cola_AT_2022_2023"
     route = replay_fixture(GET_DATA, case)
     result = tasks.get_data(
-        "apro_mk_cola", {"geo": "AT", "time": ["2022", "2023"]}, lang=cast(Lang, "EN")
+        "apro_mk_cola", filters={"geo": "AT", "time": ["2022", "2023"]}, lang=cast(Lang, "EN")
     )
     assert sent_urls(route) == [recorded_url(case)]
     assert result.meta.request["lang"] == "EN"
@@ -242,7 +422,7 @@ def test_get_data_refuses_a_value_outside_the_enumeration(
     respx_mock: respx.MockRouter, argument: str, value: str
 ) -> None:
     with pytest.raises(InvalidRequestError, match=f"{argument}={value!r} is not one of") as refused:
-        tasks.get_data("apro_mk_cola", {"geo": "AT"}, **{argument: cast(Any, value)})
+        tasks.get_data("apro_mk_cola", filters={"geo": "AT"}, **{argument: cast(Any, value)})
     assert str(refused.value).endswith(f"'. {UNSENT}")
     assert not respx_mock.calls, "refused before any request"
 
@@ -279,7 +459,7 @@ def test_get_data_refuses_more_than_one_time_parameter(
     untilTimePeriod." Refused before any request (sdk-core ADR-0007), so nothing is replayed,
     and the refusal says so (conventions §5)."""
     with pytest.raises(InvalidRequestError) as refused:
-        tasks.get_data("apro_mk_cola", {"geo": "AT", **filters}, **times)
+        tasks.get_data("apro_mk_cola", filters={"geo": "AT", **filters}, **times)
     assert str(refused.value) == (
         f"{named}: the Statistics API does not accept more than one time parameter in a "
         f"query; the one exception is since_time_period with until_time_period. {UNSENT}"
@@ -321,14 +501,14 @@ def test_get_data_refuses_a_parameter_as_a_filter(
     with pytest.raises(
         InvalidRequestError, match="is a parameter of the Statistics API"
     ) as refused:
-        tasks.get_data("apro_mk_cola", filters)
+        tasks.get_data("apro_mk_cola", filters=filters)
     assert str(refused.value).endswith(f"are arguments of get_data. {UNSENT}")
     assert not respx_mock.calls, "refused before any request"
 
 
 def test_get_data_refuses_an_empty_list_of_codes(respx_mock: respx.MockRouter) -> None:
     with pytest.raises(InvalidRequestError, match="lists no code") as refused:
-        tasks.get_data("apro_mk_cola", {"geo": []})
+        tasks.get_data("apro_mk_cola", filters={"geo": []})
     assert str(refused.value) == (
         "filters['geo'] lists no code: give one code or several, or leave the dimension out "
         f"to get all of its codes. {UNSENT}"
@@ -349,7 +529,7 @@ def test_get_data_keeps_an_updated_without_zone_as_a_naive_published_at(
     respx_mock.route(method="GET", host="ec.europa.eu").mock(
         return_value=httpx.Response(200, json=body)
     )
-    result = tasks.get_data("apro_mk_cola", {"geo": "AT", "time": ["2022", "2023"]})
+    result = tasks.get_data("apro_mk_cola", filters={"geo": "AT", "time": ["2022", "2023"]})
     assert result.meta.published_at == datetime(2026, 10, 5, 23, 0)
     assert result.meta.published_at.tzinfo is None
     assert result.meta.published_at_naive is True
@@ -364,7 +544,7 @@ async def test_get_data_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
         server,
         "eurostat_get_data",
         {
-            "dataset": "apro_mk_cola",
+            "dataset_code": "apro_mk_cola",
             "filters": {"geo": "AT", "time": ["2022", "2023"]},
             "lang": "EN",
         },
@@ -415,7 +595,7 @@ def test_get_data_route_end_to_end(replay_fixture: ReplayFixture) -> None:
         answer = http.post(
             "/eurostat/get_data",
             json={
-                "dataset": "apro_mk_cola",
+                "dataset_code": "apro_mk_cola",
                 "filters": {"geo": "AT", "time": ["2022", "2023"]},
                 "lang": "EN",
             },
@@ -432,7 +612,8 @@ def test_get_data_route_answers_a_refusal_with_422(replay_fixture: ReplayFixture
     app.include_router(router)
     with TestClient(app) as http:
         answer = http.post(
-            "/eurostat/get_data", json={"dataset": "apro_mk_cola", "filters": {"nosuchdim": "AT"}}
+            "/eurostat/get_data",
+            json={"dataset_code": "apro_mk_cola", "filters": {"nosuchdim": "AT"}},
         )
     assert answer.status_code == 422
     assert "INVALID_QUERY_DIMENSION" in answer.text
@@ -452,7 +633,7 @@ def test_get_data_ds_059358_on_the_comext_base(replay_fixture: ReplayFixture) ->
     route = replay_fixture(GET_DATA, PRODCOM)
     before = datetime.now(UTC)
     result = tasks.get_data(
-        "DS-059358", FISH_OIL, since_time_period="2022", until_time_period="2023"
+        "DS-059358", filters=FISH_OIL, since_time_period="2022", until_time_period="2023"
     )
     after = datetime.now(UTC)
     assert sent_urls(route) == [recorded_url(PRODCOM)]
@@ -471,7 +652,7 @@ def test_get_data_ds_059358_on_the_comext_base(replay_fixture: ReplayFixture) ->
     assert result.meta.published_at_naive is False
     assert result.meta.vintage == "2026-10-20T11:00:00+0200" == recorded_updated(PRODCOM)
     assert result.meta.request == {
-        "dataset": "DS-059358",
+        "dataset_code": "DS-059358",
         "filters": FISH_OIL,
         "lang": "EN",
         "since_time_period": "2022",
@@ -502,7 +683,7 @@ def test_get_data_ds_059358_unknown_dimension_is_too_large(replay_fixture: Repla
     ``QueryTooLarge`` (conventions §5)."""
     route = replay_fixture(GET_DATA, "DS-059358_unknown_dimension_too_big")
     with pytest.raises(QueryTooLarge) as refused:
-        tasks.get_data("DS-059358", {"geo": "AT"})
+        tasks.get_data("DS-059358", filters={"geo": "AT"})
     assert sent_urls(route) == [recorded_url("DS-059358_unknown_dimension_too_big")]
     assert (refused.value.count, refused.value.limit) == (151_971_120, 5_000_000)
     assert str(refused.value) == (
@@ -513,22 +694,6 @@ def test_get_data_ds_059358_unknown_dimension_is_too_large(replay_fixture: Repla
     )
 
 
-def test_get_data_ds_059358_unknown_code_is_an_empty_cube(replay_fixture: ReplayFixture) -> None:
-    case = "DS-059358_unknown_code"
-    route = replay_fixture(GET_DATA, case)
-    result = get_data(
-        "DS-059358",
-        {"reporter": "XX", "product": "10411200"},
-        since_time_period="2022",
-        until_time_period="2023",
-    )
-    assert sent_urls(route) == [recorded_url(case)]
-    assert result.data.size[result.data.id.index("reporter")] == 0
-    assert result.data.value == {}
-    assert list(result.data.observations()) == []
-    assert result.meta.vintage == recorded_updated(case)
-
-
 @pytest.mark.anyio
 async def test_get_data_ds_059358_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
     route = replay_fixture(GET_DATA, PRODCOM)
@@ -536,7 +701,7 @@ async def test_get_data_ds_059358_tool_end_to_end(replay_fixture: ReplayFixture)
         server,
         "eurostat_get_data",
         {
-            "dataset": "DS-059358",
+            "dataset_code": "DS-059358",
             "filters": FISH_OIL,
             "since_time_period": "2022",
             "until_time_period": "2023",
@@ -550,7 +715,10 @@ async def test_get_data_ds_059358_tool_end_to_end(replay_fixture: ReplayFixture)
     assert payload["meta"]["endpoint"] == "getData"
     assert payload["meta"]["vintage"] == "2026-10-20T11:00:00+0200"
     assert payload["meta"]["published_at"] == "2026-10-20T11:00:00+02:00"
-    assert payload["meta"]["request"]["dataset"] == "DS-059358"
+    assert payload["meta"]["request"]["dataset_code"] == "DS-059358"
+    assert payload["meta"]["names"] == {"reporter": {"AT": label("cxt_free_iso", "AT")}}, (
+        "product, which three codelists feed, names no code"
+    )
 
 
 # The list tasks answer from the packaged files under src/xippios/eurostat/reference/,
@@ -574,12 +742,35 @@ def fetched(name: str) -> datetime:
     return datetime.fromisoformat(packaged_file(name)["fetched"])
 
 
+TOC_DATE = re.compile(r"(\d{2})\.(\d{2})\.(\d{4})")
+"""How the table of contents prints ``lastUpdate`` and ``lastModified``, ``"02.10.2026"``."""
+
+
+def toc_date(text: str) -> date:
+    """A packaged leaf's date: the table of contents' print, day first, or an ISO date, the
+    form ``dump_upstream`` writes a ``date`` in, which a refresh on this model packages."""
+    printed = TOC_DATE.fullmatch(text)
+    if printed is None:
+        return date.fromisoformat(text)
+    day, month, year = printed.groups()
+    return date(int(year), int(month), int(day))
+
+
+def toc_record(record: dict[str, Any]) -> dict[str, Any]:
+    """A packaged leaf as ``Dataset.dump_upstream`` gives it back: its dates in ISO."""
+    return record | {
+        name: toc_date(record[name]).isoformat() for name in ("lastUpdate", "lastModified")
+    }
+
+
 def test_list_datasets_answers_the_whole_table_of_contents() -> None:
     result = list_datasets()
     raw = packaged_file("toc")
     assert len(result.data) == len(raw["records"]) == index_record("toc")["count"]
     assert all(isinstance(leaf, Dataset) for leaf in result.data)
-    assert [leaf.dump_upstream() for leaf in result.data[:50]] == raw["records"][:50]
+    assert [leaf.dump_upstream() for leaf in result.data[:50]] == [
+        toc_record(record) for record in raw["records"][:50]
+    ]
     assert {leaf.type for leaf in result.data} == {LeafType.DATASET, LeafType.TABLE}
     assert all(leaf.path for leaf in result.data), "every leaf sits in a folder"
 
@@ -609,7 +800,9 @@ def test_list_datasets_search_keeps_code_or_title_ignoring_case() -> None:
         for record in packaged_file("toc")["records"]
         if "milk" in record["code"].casefold() or "milk" in record["title"].casefold()
     ]
-    assert [leaf.dump_upstream() for leaf in result.data] == expected
+    assert [leaf.dump_upstream() for leaf in result.data] == [
+        toc_record(record) for record in expected
+    ]
     assert "apro_mk_cola" in {leaf.code for leaf in result.data}
     assert result.meta.request == {"search": "MILK"}
 
@@ -620,7 +813,26 @@ def test_list_datasets_search_by_code() -> None:
     cola = result.data[0]
     assert cola.type == LeafType.DATASET
     assert cola.path.endswith(" > Milk and milk products")
-    assert re.fullmatch(r"\d{2}\.\d{2}\.\d{4}", cola.last_update), "as printed, day first"
+    record = next(
+        record for record in packaged_file("toc")["records"] if record["code"] == cola.code
+    )
+    assert cola.last_update == toc_date(record["lastUpdate"])
+    assert cola.last_modified == toc_date(record["lastModified"])
+
+
+def test_list_datasets_reads_the_dates_day_first() -> None:
+    """A leaf's ``lastUpdate`` and ``lastModified``, printed ``"02.10.2026"``, are read into
+    a ``date``, the type that keeps all that upstream sends, with no text beside it
+    (https://github.com/xippios/sdk-usda-esr/issues/60, part 3; conventions §3). The
+    samples of the table of contents fix the order (``tests/test_refresh_reference.py``),
+    and the packaged table is read in it, or in the ISO form a refresh on this model
+    packages."""
+    leaves = list_datasets().data
+    records = packaged_file("toc")["records"]
+    assert all(isinstance(leaf.last_update, date) for leaf in leaves)
+    assert all(isinstance(leaf.last_modified, date) for leaf in leaves)
+    assert [leaf.last_update for leaf in leaves] == [toc_date(r["lastUpdate"]) for r in records]
+    assert [leaf.last_modified for leaf in leaves] == [toc_date(r["lastModified"]) for r in records]
 
 
 def test_list_datasets_search_without_a_match_is_empty() -> None:
@@ -791,6 +1003,8 @@ async def test_list_datasets_tool_end_to_end() -> None:
         "data_end",
         "values",
     }
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", payload["data"][0]["last_update"]), "an ISO date"
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", payload["data"][0]["last_modified"])
     assert payload["meta"]["endpoint"] == "catalogue/toc/xml"
     assert payload["meta"]["request"] == {"search": "apro_mk_cola"}
 
@@ -867,7 +1081,9 @@ def test_download_dataset_apro_mk_cola(replay_fixture: ReplayFixture, tmp_path: 
     recorded = recorded_data(MILK_SLICE_GZ)
     dest = tmp_path / "milk.csv.gz"
     before = datetime.now(UTC)
-    result = download_dataset("apro_mk_cola", MILK_KEY, since="2022", until="2023", dest=dest)
+    result = download_dataset(
+        "apro_mk_cola", MILK_KEY, start_period="2022", end_period="2023", dest=dest
+    )
     after = datetime.now(UTC)
     assert sent_urls(route) == [recorded.request.url], "one exchange on the wire"
     assert recorded.request.url.endswith(
@@ -888,12 +1104,13 @@ def test_download_dataset_apro_mk_cola(replay_fixture: ReplayFixture, tmp_path: 
     assert meta.source == "eurostat"
     assert meta.endpoint == "dataQuery"
     assert meta.retrieved_at == downloaded.retrieved_at
-    assert meta.vintage == "05/10/26 23:00:00" == next(parse_sdmx_csv(dest)).last_update
+    assert meta.vintage == "05/10/26 23:00:00", "LAST UPDATE as printed"
     assert meta.published_at == datetime(2026, 10, 5, 23, 0)
+    assert meta.published_at == next(parse_sdmx_csv(dest)).last_update
     assert meta.published_at.tzinfo is None
     assert meta.published_at_naive is True
     assert meta.request == {
-        "dataset": "apro_mk_cola",
+        "flow_ref": "apro_mk_cola",
         "key": MILK_KEY,
         "start_period": "2022",
         "end_period": "2023",
@@ -922,7 +1139,7 @@ def test_download_dataset_reads_last_update_day_first(cube: str, sample: str) ->
     05/10/26, DS-059358's 20/10/26, DS-045409's 16/10/26)."""
     updated = datetime.fromisoformat(recorded_updated(cube))
     printed = next(parse_sdmx_csv(FIXTURES / "files" / "sdmx-csv" / f"{sample}.csv"))
-    assert datetime.strptime(printed.last_update, tasks.LAST_UPDATE) == updated.replace(tzinfo=None)
+    assert printed.last_update == updated.replace(tzinfo=None)
 
 
 def test_download_dataset_ds_059358_on_the_comext_base(
@@ -931,7 +1148,9 @@ def test_download_dataset_ds_059358_on_the_comext_base(
     route = replay_fixture(DATA_QUERY, PRODCOM_SLICE_GZ)
     recorded = recorded_data(PRODCOM_SLICE_GZ)
     dest = tmp_path / "fish_oil.csv.gz"
-    result = download_dataset("DS-059358", PRODCOM_KEY, since="2022", until="2023", dest=dest)
+    result = download_dataset(
+        "DS-059358", PRODCOM_KEY, start_period="2022", end_period="2023", dest=dest
+    )
     assert sent_urls(route) == [recorded.request.url], "one exchange on the wire"
     assert recorded.request.url == (
         f"{COMEXT_DATA_URL}/DS-059358/{PRODCOM_KEY}?format=SDMX-CSV&startPeriod=2022"
@@ -947,18 +1166,21 @@ def test_download_dataset_ds_059358_on_the_comext_base(
         ("freq", "reporter", "product", "indicators")
     }
     assert all(row.attributes == {} and row.obs_flag is None for row in rows), "no attribute"
-    values = {(row.dimensions["indicators"], row.time_period): row.obs_value for row in rows}
-    assert values[("QNTUNIT", "2022")] == "KG", "a unit among the measures, as printed"
-    assert values[("SCQNTFLAG", "2023")] == values[("SCVALFLAG", "2023")] == ":E"
-    assert {value for value in values.values() if isinstance(value, str)} == {"KG", ":E"}
-    assert values[("EXPVAL", "2022")] == Decimal("349477")
+    values = {(row.dimensions["indicators"], row.time_period): row for row in rows}
+    assert values[("QNTUNIT", "2022")].obs_value == "KG", "a unit among the measures, as printed"
+    assert values[("SCQNTFLAG", "2023")].obs_value == values[("SCVALFLAG", "2023")].obs_value
+    assert values[("SCQNTFLAG", "2023")].obs_value == ":E"
+    texts = {row.obs_value for row in rows if row.obs_value_number is None}
+    assert texts == {"KG", ":E"}, "the texts that read as no number"
+    assert values[("EXPVAL", "2022")].obs_value == "349477"
+    assert values[("EXPVAL", "2022")].obs_value_number == Decimal("349477")
     meta = result.meta
     assert meta.endpoint == "dataQuery"
-    assert meta.vintage == "20/10/26 11:00:00" == rows[0].last_update
-    assert meta.published_at == datetime(2026, 10, 20, 11, 0)
+    assert meta.vintage == "20/10/26 11:00:00", "LAST UPDATE as printed"
+    assert meta.published_at == datetime(2026, 10, 20, 11, 0) == rows[0].last_update
     assert meta.published_at_naive is True
     assert meta.request == {
-        "dataset": "DS-059358",
+        "flow_ref": "DS-059358",
         "key": PRODCOM_KEY,
         "start_period": "2022",
         "end_period": "2023",
@@ -978,7 +1200,7 @@ def test_download_dataset_without_a_key_downloads_the_whole_dataset(
     result = download_dataset("apro_mk_cola", dest=tmp_path / "all.csv.gz")
     assert sent_urls(route) == [url]
     assert result.meta.request == {
-        "dataset": "apro_mk_cola",
+        "flow_ref": "apro_mk_cola",
         "key": "",
         "format": "SDMX-CSV",
         "compressed": True,
@@ -1022,7 +1244,8 @@ def test_download_dataset_refuses_a_last_update_it_cannot_read(
 ) -> None:
     """NOT RECORDED: the recorded plain answer with its LAST UPDATE printed year first in
     memory, served with its recorded headers (conventions §10, kind 4). The file is written
-    and stays at ``dest``; the message names the form expected, never the text."""
+    and stays at ``dest``; the parser's refusal names the row and the form expected, never
+    the text."""
     recorded = recorded_data(MILK_SLICE)
     body = recorded.response.content.replace(b"05/10/26 23:00:00", b"2026-10-05 23:00:00")
     respx_mock.route(method="GET", host="ec.europa.eu").mock(
@@ -1031,9 +1254,9 @@ def test_download_dataset_refuses_a_last_update_it_cannot_read(
     dest = tmp_path / "milk.csv"
     with pytest.raises(ValidationError) as refused:
         download_dataset("apro_mk_cola", MILK_KEY, dest=dest)
-    assert str(refused.value) == (
-        "eurostat dataQuery: the first row's LAST UPDATE is not printed as dd/mm/yy HH:MM:SS"
-    )
+    assert str(refused.value).startswith("eurostat sdmx-csv line 2: ")
+    assert "LAST UPDATE is not printed as dd/mm/yy HH:MM:SS" in str(refused.value)
+    assert "2026-10-05" not in str(refused.value), "no value in the text"
     assert dest.read_bytes() == body, "the file stays at dest"
     assert leftovers(tmp_path) == ["milk.csv"]
 
@@ -1104,7 +1327,9 @@ def test_download_dataset_refuses_an_extraction_too_big(
     route = replay_fixture(DATA_QUERY, TOO_BIG)
     key = "M.AT+DE+FR+IT+NL.US..."
     with pytest.raises(QueryTooLarge) as refused:
-        download_dataset("DS-045409", key, since="2023", until="2023", dest=tmp_path / "t.csv.gz")
+        download_dataset(
+            "DS-045409", key, start_period="2023", end_period="2023", dest=tmp_path / "t.csv.gz"
+        )
     assert sent_urls(route) == [recorded_data(TOO_BIG).request.url]
     assert recorded_data(TOO_BIG).request.url == (
         f"{COMEXT_DATA_URL}/DS-045409/{key}?format=SDMX-CSV&startPeriod=2023&endPeriod=2023"
@@ -1209,6 +1434,75 @@ async def test_the_package_serves_four_tasks_and_three_tools() -> None:
     assert not hasattr(models, "Freq")
 
 
+ARGUMENTS: dict[str, tuple[list[str], list[str]]] = {
+    "get_data": (
+        ["dataset_code"],
+        [
+            "filters",
+            "lang",
+            "since_time_period",
+            "until_time_period",
+            "last_time_period",
+            "geo_level",
+        ],
+    ),
+    "download_dataset": (
+        ["flow_ref", "key"],
+        ["start_period", "end_period", "last_n_observations", "dest"],
+    ),
+    "list_codes": (["codelist"], ["search"]),
+    "list_datasets": ([], ["search"]),
+}
+"""Each task's arguments by position, in the order of upstream's path, then those by name."""
+
+
+@pytest.mark.parametrize("name", TASKS)
+def test_a_task_takes_upstreams_names_the_record_first_and_the_filters_by_name(name: str) -> None:
+    """An argument that upstream takes keeps the name of the parameter the task sends:
+    ``getData``'s ``datasetCode``, ``dataQuery``'s ``flowRef``, ``startPeriod`` and
+    ``endPeriod``, snake-cased, and ``list_codes`` keeps ``codelist``, the name under which
+    it looks up its packaged lists (sdk-core ADR-0061, decision 4; the maintainer's decision
+    of 2026-11-27 on https://github.com/xippios/sdk-eurostat/issues/82). The arguments that
+    identify a record stand first, by position, in the order of upstream's path, and every
+    optional filter and every argument of the package's own is keyword-only (decision 5;
+    https://github.com/xippios/sdk-usda-esr/issues/60, part 1). A task and its async twin
+    take the same."""
+    positional, named = ARGUMENTS[name]
+    for fn in (getattr(tasks, name), getattr(tasks, f"{name}_async")):
+        parameters = list(inspect.signature(fn).parameters.values())
+        assert [
+            p.name for p in parameters if p.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        ] == (positional)
+        assert [p.name for p in parameters if p.kind is inspect.Parameter.KEYWORD_ONLY] == named
+        assert len(parameters) == len(positional) + len(named), "no other kind of argument"
+
+
+def test_get_data_refuses_filters_by_position(respx_mock: respx.MockRouter) -> None:
+    """A call of 0.3.0 that passes ``filters`` second, by position, fails before anything is
+    sent: ``filters`` is an optional filter, so it is keyword-only (sdk-core ADR-0061,
+    decision 5)."""
+    with pytest.raises(TypeError, match="positional argument"):
+        cast(Any, tasks.get_data)("apro_mk_cola", {"geo": "AT"})
+    with pytest.raises(TypeError, match="positional argument"):
+        cast(Any, tasks.list_codes)("geo", "austria")
+    assert not respx_mock.calls
+
+
+@pytest.mark.anyio
+async def test_get_data_tool_takes_dataset_code() -> None:
+    """Over MCP a tool takes its arguments by name, so its schema carries the new name and
+    no other: ``dataset_code``, required, and ``dataset`` no longer (sdk-core ADR-0061,
+    decision 5: "Over MCP and HTTP nothing changes" but the names)."""
+    tools = {tool.name: tool for tool in await server.list_tools()}
+    schema = tools["eurostat_get_data"].input_schema
+    assert schema["required"] == ["dataset_code"]
+    assert list(schema["properties"])[:2] == ["dataset_code", "filters"]
+    assert "dataset" not in schema["properties"]
+    text = await mcp_call_text(server, "eurostat_get_data", {"dataset": "apro_mk_cola"})
+    assert text.startswith("error: ")
+    assert "dataset_code" in text
+
+
 BULK = ["download_dataset"]
 
 
@@ -1232,7 +1526,7 @@ def test_bulk_tasks_are_no_tool_and_no_route() -> None:
 @pytest.mark.anyio
 @pytest.mark.parametrize(
     ("name", "arguments"),
-    [("download_dataset", {"dataset": "apro_mk_cola"})],
+    [("download_dataset", {"flow_ref": "apro_mk_cola"})],
 )
 async def test_bulk_tasks_are_no_mcp_tool(
     respx_mock: respx.MockRouter, name: str, arguments: dict[str, Any]

@@ -21,9 +21,11 @@ The lists (conventions §3, sdk-core ADR-0041):
   to disk), then read from that file a megabyte at a time with the standard library's
   ``xml.etree.ElementTree`` pull parser (``TocParser``), each element cleared once read:
   every ``leaf``, datasets and tables alike, with its code, type, English title, the
-  English titles of the folders above it joined with ``" > "`` (``path``), ``lastUpdate``,
-  ``lastModified``, ``dataStart``, ``dataEnd`` and ``values`` as printed. This script is
-  the only code that parses XML, so the package parses none at run time (decision D1 of
+  English titles of the folders above it joined with ``" > "`` (``path``), ``lastUpdate``
+  and ``lastModified``, printed day first and read into dates, which ``toc.json`` holds as
+  ISO dates (``Dataset``, ``dump_upstream``), and ``dataStart``, ``dataEnd`` and ``values``
+  as printed. This script is the only code that parses XML, so the package parses none at
+  run time (decision D1 of
   https://github.com/xippios/sdk-eurostat/pull/6; sdk-core ADR-0020 decision 3).
 - ``<codelist>.json``: one codelist each, the latest version in JSON-stat through
   ``api.sdmx.code_list_query`` with English labels (decisions D1 and D2 of

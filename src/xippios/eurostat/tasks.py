@@ -25,9 +25,14 @@ asynchronously, which the package refuses with ``InvalidRequestError`` and does 
 and over 5,000,000 it refuses the query, which is core's ``QueryTooLarge``
 (``docs/upstream/user-guide/api-detailed-guidelines/asynchronous-api.md``).
 
-Every refusal before a request says ``Nothing was sent.`` after its first sentence, and a
-refusal of an answer names the request that was sent (conventions §5). No task sends more
-than one request, so none states a ceiling of its own.
+``get_data`` checks before its request the codes of each filter whose dimension one
+packaged codelist of the dataset's base feeds (``CHECKED_FILTERS``), by core's check of a
+packaged list, and names them in ``meta.names``; a cube without a cell, a code the dataset
+does not use or a period not yet released, raises ``NotFoundError`` (conventions §5;
+sdk-core ADR-0061, decision 6). Every refusal before a request says ``Nothing was sent.``
+after its first sentence, and a refusal of an answer names the request that was sent
+(conventions §5). No task sends more than one request, so none states a ceiling of its
+own.
 
 The list tasks, ``list_datasets`` and ``list_codes``, answer from the packaged lists
 (``params``) without a request, by sdk-core ADR-0041 decision 1: ``meta.retrieved_at``
@@ -36,9 +41,9 @@ is the list's ``fetched``, ``meta.endpoint`` the operation it was fetched from
 Comext base its full URL), ``meta.total`` ``None``. Their release metadata (decision D4
 of https://github.com/xippios/sdk-eurostat/pull/6) comes from ``reference/lists.json``:
 for the table of contents
-``meta.vintage`` is its ``creationDate`` as printed (``"20261120T1004"``) and
+``meta.vintage`` is its ``creationDate`` as printed (``"20261126T2200"``) and
 ``meta.published_at`` the same time without a zone, ``published_at_naive`` set (sdk-core ADR-0041
-decision 2); for a codelist ``meta.vintage`` is its version (``"28.1"``) and
+decision 2); for a codelist ``meta.vintage`` is its version (``"29.0"``) and
 ``meta.published_at`` its ``LAST_UPDATED`` annotation with the zone Eurostat prints, or
 ``None`` for a codelist without one (CXT_EU_FLUX).
 
@@ -64,21 +69,22 @@ from typing import Any
 from xippios.core import (
     Downloaded,
     InvalidRequestError,
+    NotFoundError,
     PackagedCodes,
     PackagedList,
     Result,
     ResultCap,
     ResultMeta,
-    ValidationError,
     matches,
     sync,
 )
 
 from xippios.eurostat import api, params
-from xippios.eurostat._client import SOURCE
+from xippios.eurostat._client import BASE_URL, COMEXT_BASE_URL, COMEXT_PREFIX, SOURCE
 from xippios.eurostat.api.statistics import ENDPOINT
 from xippios.eurostat.models import Code, Cube, Dataset, GeoLevel, Lang
 from xippios.eurostat.parse import parse_sdmx_csv
+from xippios.eurostat.parse.sdmx_csv import last_update_as_printed
 
 __all__ = [
     "download_dataset",
@@ -156,12 +162,65 @@ GET_DATA_ARGUMENTS = (
 """Where ``get_data`` sets the API's own parameters, for the refusal of one as a filter."""
 
 
-def _filters(filters: Mapping[str, str | Sequence[str]] | None) -> dict[str, str | list[str]]:
+UNKNOWN_FILTER_CODE = (
+    "Eurostat answers a code that matches nothing with an empty cube, so the package refuses "
+    "a code that the one packaged codelist of its dimension lacks; list_codes (over MCP, the "
+    "tool eurostat_list_codes) lists its codes."
+)
+"""Why ``get_data`` refuses a filter's code before its request: the reason of its
+``UnknownCode``."""
+
+
+def _fed_by_one_codelist(base_url: str) -> dict[str, str]:
+    """Each dimension that exactly one packaged codelist of ``base_url`` feeds, to its id."""
+    fed: dict[str, list[str]] = {}
+    for codelist, origin in params.CODELISTS.items():
+        if origin.base_url == base_url:
+            fed.setdefault(origin.param, []).append(codelist)
+    return {param: codelists[0] for param, codelists in fed.items() if len(codelists) == 1}
+
+
+CHECKED_FILTERS: Mapping[str, Mapping[str, str]] = {
+    base_url: _fed_by_one_codelist(base_url) for base_url in (BASE_URL, COMEXT_BASE_URL)
+}
+"""The filters ``get_data`` checks before its request, by the base that serves the dataset:
+each dimension that exactly one packaged codelist of that base feeds, the codelist's
+``param``, to the codelist (conventions §5; the maintainer's decision of 2026-11-27 on
+https://github.com/xippios/sdk-eurostat/issues/82). On the main base the twelve codelists,
+one for each dimension; on the Comext base ``reporter``, ``flow`` and ``indicators``.
+``product``, which CXT_PRODCOM2_SOLD, CXT_PRODCOM2_TOTAL and CXT_NC feed, and ``partner``,
+the ``param`` of no packaged list, are sent unchecked, and so is a key of one base on a
+dataset of the other, whose codes may be another coding system's, as ``freq`` of a ``DS-``
+dataset takes CXT_FREQ, which is not packaged ("A code sent under a coding system the
+packaged list does not hold goes unchecked", conventions §5)."""
+
+
+@cache
+def _codelist_codes(codelist: str) -> PackagedCodes:
+    """The codes of the packaged ``codelist``, by id, for core's check of a filter.
+
+    Compared without case, since the Statistics API takes a filter so ("DIMENSION_CODE and
+    VALUE are case-insensitive", api-statistics.md), and so sent as the caller gave them
+    (conventions §5); a refusal names the codelist by its id, which ``list_codes`` takes.
+    """
+    return params.packaged(codelist.lower()).codes(
+        "code", "label", fold_case=True, list_name=codelist, source=SOURCE
+    )
+
+
+def _filters(
+    filters: Mapping[str, str | Sequence[str]] | None, checked: Mapping[str, str]
+) -> dict[str, str | list[str]]:
     """The filters as sent: one code or a list of codes per dimension; refusals first.
+
+    A key that ``checked`` names, compared without case, has its codes checked against
+    the codelist it maps to, by core's check of a packaged list; the keys are read in the
+    caller's order, and the first problem found is refused (sdk-core ADR-0061, decision 7).
 
     Raises:
         InvalidRequestError: A filter names one of the API's own parameters, or gives an
             empty list of codes, which would send no filter for that dimension.
+        UnknownCode: A checked filter's code that its codelist lacks.
     """
     sent: dict[str, str | list[str]] = {}
     for code, values in (filters or {}).items():
@@ -178,8 +237,53 @@ def _filters(filters: Mapping[str, str | Sequence[str]] | None) -> dict[str, str
                 f"the dimension out to get all of its codes. {NOTHING_SENT}",
                 source=SOURCE,
             )
+        codelist = checked.get(code.lower())
+        if codelist is not None:
+            _codelist_codes(codelist).check(code, listed, reason=UNKNOWN_FILTER_CODE)
         sent[code] = listed
     return sent
+
+
+def _names(
+    sent: Mapping[str, str | list[str]], checked: Mapping[str, str]
+) -> dict[str, dict[str, str]]:
+    """``meta.names``: each checked filter's codes as the caller gave them, to their labels.
+
+    The labels of the packaged codelist, runs of white space collapsed as a refusal shows
+    them (sdk-core ADR-0067, decision 2); a filter that is not checked names no code.
+    """
+    names: dict[str, dict[str, str]] = {}
+    for key, values in sent.items():
+        codelist = checked.get(key.lower())
+        if codelist is not None:
+            codes = _codelist_codes(codelist)
+            listed = [values] if isinstance(values, str) else values
+            names[key] = {code: " ".join(str(codes.name_of(code)).split()) for code in listed}
+    return names
+
+
+NO_DATA = (
+    "A code that the dataset does not use, or a period that Eurostat has not released, "
+    "answers so, and the cube of a call without that filter lists the codes of each dimension."
+)
+"""What closes the refusal of a cube without a cell, after the call it names."""
+
+
+def _no_data(request: Mapping[str, Any]) -> NotFoundError:
+    """The refusal of a cube without a cell, naming the call as sent but its ``lang``.
+
+    Raised after the request, so it says that the request was sent (conventions §5).
+    """
+    call = ", ".join(
+        f"{name}={value!r}"
+        for name, value in request.items()
+        if name != "lang" and value is not None
+    )
+    return NotFoundError(
+        f"Eurostat holds no data for get_data({call}): the request was sent, and its cube "
+        f"has no cell with a value or a status. {NO_DATA}",
+        source=SOURCE,
+    )
 
 
 def _member[E: StrEnum](enum: type[E], value: str, name: str) -> E:
@@ -235,9 +339,9 @@ def _check_time_parameters(
 
 
 async def get_data_async(
-    dataset: str,
-    filters: Mapping[str, str | Sequence[str]] | None = None,
+    dataset_code: str,
     *,
+    filters: Mapping[str, str | Sequence[str]] | None = None,
     lang: Lang = Lang.EN,
     since_time_period: str | None = None,
     until_time_period: str | None = None,
@@ -253,24 +357,30 @@ async def get_data_async(
     (``value``, ``status``), keyed by cell index: row-major over ``size``, the last
     dimension varying fastest. A value is a number, or the text Eurostat prints where a
     Prodcom indicator is a unit or a flag (``"KG"``, ``":E"``). Keep slices small: the
-    whole slice comes back at once. A filter code that matches nothing gives an empty cube,
-    not an error. An unknown dataset raises ``NotFoundError``. A query Eurostat refuses or
-    would answer asynchronously raises ``InvalidRequestError``, and one over its limit
-    ``QueryTooLarge``, each naming how to narrow it.
+    whole slice comes back at once. A filter's code that its codelist lacks is refused
+    before sending. An unknown dataset, and a cube without a cell, raise ``NotFoundError``.
+    A query Eurostat refuses or would answer asynchronously raises ``InvalidRequestError``,
+    and one over its limit ``QueryTooLarge``, each naming how to narrow it.
 
     Args:
-        dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
-            collection and dairy products, annual), ``"apro_cpnh1"`` (crop production),
-            ``"ef_m_farmleg"`` (farm indicators by legal status) or ``"DS-059358"``
-            (Prodcom: sold production, exports and imports, on the Comext base).
+        dataset_code: The dataset's online data code, upstream's ``datasetCode``, e.g.
+            ``"apro_mk_cola"`` (cows' milk collection and dairy products, annual),
+            ``"apro_cpnh1"`` (crop production), ``"ef_m_farmleg"`` (farm indicators by
+            legal status) or ``"DS-059358"`` (Prodcom: sold production, exports and
+            imports, on the Comext base).
         filters: Dimension code to one code or a list of codes, each sent as
             ``DIMENSION_CODE=VALUE``; any dimension of the dataset, codes as in the
             cube's ``dimension``, case-insensitive, e.g. ``{"geo": "AT", "time":
             ["2022", "2023"]}``, ``{"geo": "AT", "milkitem": "PRD"}`` or, for
             DS-059358, ``{"reporter": "AT", "product": "10411200"}`` (fish and marine
-            oils, NACE 10.41); ``time`` (or
-            ``time_period``) filters periods and is a time parameter. ``None`` asks for
-            every code of every dimension.
+            oils, NACE 10.41); ``time`` (or ``time_period``) filters periods and is a
+            time parameter. ``None`` asks for every code of every dimension. The codes of
+            a dimension that one packaged codelist of the dataset's base feeds are checked
+            against it before sending, ``geo``, ``unit`` or ``milkitem`` on the main base,
+            ``reporter``, ``flow`` or ``indicators`` on the Comext base, as
+            ``list_codes`` lists them; ``product``, which three codelists feed, and
+            ``partner`` are sent unchecked. A code that the dataset does not use answers a
+            cube without a cell, ``NotFoundError``, and so may a period not yet released.
         lang: Language of the labels: ``"EN"`` (the default), ``"FR"`` or ``"DE"``.
         since_time_period: The first time period, included, e.g. ``"2022"``; combines
             with ``until_time_period`` and with no other time parameter, any other
@@ -283,13 +393,16 @@ async def get_data_async(
             ``"aggregate"``, ``"country"``, ``"nuts1"``, ``"nuts2"``, ``"nuts3"`` or
             ``"city"``; never together with ``filters["geo"]``, which Eurostat refuses.
     """
-    sent = _filters(filters)
+    checked = CHECKED_FILTERS[
+        COMEXT_BASE_URL if dataset_code.startswith(COMEXT_PREFIX) else BASE_URL
+    ]
+    sent = _filters(filters, checked)
     _check_time_parameters(sent, since_time_period, until_time_period, last_time_period)
     lang = _member(Lang, lang, "lang")
     if geo_level is not None:
         geo_level = _member(GeoLevel, geo_level, "geo_level")
     answer = await api.statistics.get_data(
-        dataset,
+        dataset_code,
         lang=lang,
         filters=sent,
         since_time_period=since_time_period,
@@ -298,7 +411,7 @@ async def get_data_async(
         geo_level=geo_level,
     )
     request: dict[str, Any] = {
-        "dataset": dataset,
+        "dataset_code": dataset_code,
         "filters": sent or None,
         "lang": lang.value,
         "since_time_period": since_time_period,
@@ -307,6 +420,8 @@ async def get_data_async(
         "geo_level": None if geo_level is None else geo_level.value,
     }
     cube = answer.payload.cube
+    if next(cube.observations(), None) is None:
+        raise _no_data(request)
     updated = cube.updated
     meta = ResultMeta(
         source=SOURCE,
@@ -316,6 +431,7 @@ async def get_data_async(
         published_at_naive=updated is not None and updated.tzinfo is None,
         vintage=answer.payload.updated,
         request=request,
+        names=_names(sent, checked),
     )
     return Result(data=cube, meta=meta)
 
@@ -337,7 +453,7 @@ CREATION_DATE = "%Y%m%dT%H%M"
 """How the TOC prints its ``creationDate``: ``"20261027T1000"``, no zone."""
 
 
-async def list_datasets_async(search: str | None = None) -> Result[list[Dataset]]:
+async def list_datasets_async(*, search: str | None = None) -> Result[list[Dataset]]:
     """Find Eurostat datasets and tables by code or title in the table of contents.
 
     Answers from the package's copy of Eurostat's table of contents (``catalogue/toc/xml``),
@@ -345,12 +461,12 @@ async def list_datasets_async(search: str | None = None) -> Result[list[Dataset]
     10,000 leaves, one per listing in the tree (a code filed under two folders appears
     twice). Each has its ``code``, its ``type`` (``"dataset"`` or ``"table"``), its English
     ``title``, the folders above it (``path``, joined with ``" > "``), its last data update
-    and structure change as Eurostat prints them, day first (``"02.10.2026"``), its first
-    and last period and its number of values, each ``None`` where Eurostat prints none. A
-    dataset's ``code`` is what ``get_data`` takes as ``dataset``. ``meta.vintage`` is the
-    table of contents' ``creationDate`` as printed (``"20261120T1004"``), and
-    ``meta.retrieved_at`` is when the package's copy was fetched: a dataset Eurostat added
-    since is missing until the package is refreshed.
+    and structure change as dates, which Eurostat prints day first (``"02.10.2026"``), its
+    first and last period and its number of values, each ``None`` where Eurostat prints
+    none. A dataset's ``code`` is what ``get_data`` takes as ``dataset_code``.
+    ``meta.vintage`` is the table of contents' ``creationDate`` as printed
+    (``"20261126T2200"``), and ``meta.retrieved_at`` is when the package's copy was
+    fetched: a dataset Eurostat added since is missing until the package is refreshed.
 
     Args:
         search: Text to look for in the code or the English title, ignoring case, e.g.
@@ -428,7 +544,7 @@ def _codelist_answer(
     return Result(data=found, meta=meta)
 
 
-async def list_codes_async(codelist: str, search: str | None = None) -> Result[list[Code]]:
+async def list_codes_async(codelist: str, *, search: str | None = None) -> Result[list[Code]]:
     """List the codes of one Eurostat codelist, the values a dimension filter takes.
 
     Answers from the package's copies of eighteen SDMX codelists
@@ -438,9 +554,9 @@ async def list_codes_async(codelist: str, search: str | None = None) -> Result[l
     the Prodcom datasets DS-059358 and DS-059359 and of the trade datasets DS-045409 and
     DS-059341. A codelist holds every code Eurostat defines in it, more than any one
     dataset uses: GEO has thousands. A dimension's filter takes its codes, e.g.
-    ``get_data("apro_mk_cola", {"geo": "AT"})``. A codelist the package does not carry
-    raises ``UnknownCode`` naming the closest it does. ``meta.vintage`` is the codelist's
-    version (``"28.1"``) and ``meta.published_at`` its last update, or ``None`` where it
+    ``get_data("apro_mk_cola", filters={"geo": "AT"})``. A codelist the package does not
+    carry raises ``UnknownCode`` naming the closest it does. ``meta.vintage`` is the codelist's
+    version (``"29.0"``) and ``meta.published_at`` its last update, or ``None`` where it
     names none; a code Eurostat added since is missing until the package is refreshed.
 
     Args:
@@ -470,60 +586,44 @@ async def list_codes_async(codelist: str, search: str | None = None) -> Result[l
 list_codes = sync(list_codes_async)
 
 
-LAST_UPDATE = "%d/%m/%y %H:%M:%S"
-"""How SDMX-CSV prints ``LAST UPDATE``: ``"05/10/26 23:00:00"``, day first, no zone.
-
-The order is fixed by the snapshot's two answers for apro_mk_cola of 2026-10-27: the
-JSON-stat sample's ``updated`` is ``"2026-10-05T23:00:00+0200"`` and the SDMX-CSV
-sample's ``LAST UPDATE`` ``"05/10/26 23:00:00"``, the same time without its zone. The
-Comext base prints it alike: DS-059358's ``"2026-10-20T11:00:00+0200"`` is
-``"20/10/26 11:00:00"`` (recorded 2026-10-28), whose day cannot be read as a month."""
-
 DOT_SEGMENTS = frozenset({".", ".."})
 """Keys a URL resolves away as a path segment before sending."""
 
 
 async def _download(
-    dataset: str,
+    flow_ref: str,
     target: Path,
     request: Mapping[str, Any],
     *,
     key: str,
-    since: str | None,
-    until: str | None,
+    start_period: str | None,
+    end_period: str | None,
     last_n_observations: int | None = None,
 ) -> Result[Downloaded]:
     """Stream one SDMX-CSV data query, gzip-compressed, to ``target``, with its meta.
 
     The release is read from the file's first row through the parser: ``LAST UPDATE`` as
-    ``vintage`` and its naive time as ``published_at`` (sdk-core ADR-0041 decision 2);
-    ``request`` is ``meta.request`` as given.
+    printed as ``vintage`` and the naive time the row reads it into as ``published_at``
+    (sdk-core ADR-0041 decision 2); ``request`` is ``meta.request`` as given.
 
     Raises:
-        ValidationError: The first row's ``LAST UPDATE`` is not printed as
-            ``LAST_UPDATE`` says; the file stays at ``target``.
+        ValidationError: The file's header or first row is not SDMX-CSV as the parser
+            reads it, a ``LAST UPDATE`` printed in another form among them; the file stays
+            at ``target``.
     """
     downloaded = await api.sdmx.data_query(
-        dataset,
+        flow_ref,
         target,
         key=key,
-        start_period=since,
-        end_period=until,
+        start_period=start_period,
+        end_period=end_period,
         last_n_observations=last_n_observations,
         compressed=True,
     )
     with closing(parse_sdmx_csv(downloaded.path)) as rows:
         first = next(rows, None)
-    vintage = None if first is None else first.last_update
-    try:
-        published = None if vintage is None else datetime.strptime(vintage, LAST_UPDATE)
-    except ValueError:
-        raise ValidationError(
-            f"{SOURCE} {api.sdmx.DATA_ENDPOINT}: the first row's LAST UPDATE is not printed "
-            "as dd/mm/yy HH:MM:SS",
-            raw=vintage,
-            source=SOURCE,
-        ) from None
+    published = None if first is None else first.last_update
+    vintage = None if first is None else last_update_as_printed(downloaded.path)
     meta = ResultMeta(
         source=SOURCE,
         endpoint=api.sdmx.DATA_ENDPOINT,
@@ -537,18 +637,18 @@ async def _download(
 
 
 async def download_dataset_async(
-    dataset: str,
+    flow_ref: str,
     key: str = "",
     *,
-    since: str | None = None,
-    until: str | None = None,
+    start_period: str | None = None,
+    end_period: str | None = None,
     last_n_observations: int | None = None,
     dest: str | os.PathLike[str],
 ) -> Result[Downloaded]:
     """Download a Eurostat dataset, or a slice of it, as a gzip-compressed SDMX-CSV file.
 
     Python only, no MCP tool or HTTP route (a bulk task). One request to the SDMX 2.1 API
-    (``sdmx/2.1/data/{dataset}/{key}?format=SDMX-CSV&compressed=true``), on Eurostat's
+    (``sdmx/2.1/data/{flowRef}/{key}?format=SDMX-CSV&compressed=true``), on Eurostat's
     Comext base for a ``DS-`` dataset (Comext trade, Prodcom production, e.g.
     ``"DS-059358"``) and on the main base for any other, streamed to ``dest``, never held
     in memory or cached; the file holds the answer as Eurostat sends
@@ -573,19 +673,20 @@ async def download_dataset_async(
     refused before any request.
 
     Args:
-        dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
-            collection and dairy products, annual), ``"ef_m_farmleg"`` (farm
-            indicators by legal status) or ``"DS-059358"`` (Prodcom: sold production,
-            exports and imports).
+        flow_ref: The dataset's online data code, upstream's ``flowRef``, e.g.
+            ``"apro_mk_cola"`` (cows' milk collection and dairy products, annual),
+            ``"ef_m_farmleg"`` (farm indicators by legal status) or ``"DS-059358"``
+            (Prodcom: sold production, exports and imports).
         key: Eurostat's series key, e.g. ``"A...THS_T.AT"`` for apro_mk_cola (freq A,
             every milkitem and dairyprod, unit THS_T, geo AT), ``"A.PRD.D1110D.THS_T.AT+DE"``
             (two geo codes) or ``"A.AT.10411200."`` for DS-059358 (freq A, reporter AT,
             product 10411200, every indicator); ``""``, the default, downloads every code
             of every dimension, the whole dataset.
-        since: The first period, included, as the dataset prints it, e.g. ``"2022"`` or
-            ``"2026-08"``; Eurostat's ``startPeriod``. ``None`` starts at the first.
-        until: The last period, included, e.g. ``"2023"``; Eurostat's ``endPeriod``.
-            ``None`` runs to the latest.
+        start_period: The first period, included, as the dataset prints it, e.g.
+            ``"2022"`` or ``"2026-08"``; Eurostat's ``startPeriod``. ``None`` starts at the
+            first.
+        end_period: The last period, included, e.g. ``"2023"``; Eurostat's
+            ``endPeriod``. ``None`` runs to the latest.
         last_n_observations: The most recent observations of each series, e.g. ``2``;
             Eurostat's ``lastNObservations``. ``None`` keeps them all.
         dest: The file to write, e.g. ``"apro_mk_cola.csv.gz"`` or
@@ -599,21 +700,21 @@ async def download_dataset_async(
             source=SOURCE,
         )
     request = {
-        "dataset": dataset,
+        "flow_ref": flow_ref,
         "key": key,
-        "start_period": since,
-        "end_period": until,
+        "start_period": start_period,
+        "end_period": end_period,
         "last_n_observations": last_n_observations,
         "format": api.sdmx.DATA_FORMAT,
         "compressed": True,
     }
     return await _download(
-        dataset,
+        flow_ref,
         Path(dest),
         request,
         key=key,
-        since=since,
-        until=until,
+        start_period=start_period,
+        end_period=end_period,
         last_n_observations=last_n_observations,
     )
 

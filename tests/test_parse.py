@@ -12,8 +12,9 @@ tests assert the parser's shape against the sample's own text, read here with th
 standard library's ``csv``, never values or sizes typed into a test (conventions §10).
 ``test_documented_shape_*`` read the user guide's SDMX-CSV examples verbatim from the
 snapshot at test time, neither recorded nor hand-written: a dataset whose attributes
-differ from apro_mk_cola's. ``NOT RECORDED`` marks a sample changed in memory to show a
-refusal.
+differ from apro_mk_cola's. A sample changed in memory to show a refusal, handed straight
+to the parser, is an input of the test, and its test's docstring says so in conventions
+§10's sentence (sdk-core ADR-0064).
 """
 
 import csv
@@ -22,6 +23,7 @@ import hashlib
 import inspect
 import io
 import re
+from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -52,6 +54,17 @@ RECORDED = {
 }
 PAIRS = [(PLAIN, PACKED), (PRODCOM_PLAIN, PRODCOM_PACKED), (TRADE_PLAIN, TRADE_PACKED)]
 DATA_QUERY = TESTS.parents[0] / "docs/upstream/user-guide/api-detailed-guidelines/sdmx2-1"
+PRINTED = "%d/%m/%y %H:%M:%S"
+"""How SDMX-CSV prints ``LAST UPDATE``, day first and without a zone: the samples' order,
+which ``tests/test_tasks.py`` fixes by the recorded pairs of one dataset."""
+
+
+def number(printed: str) -> Decimal | None:
+    """``printed`` as a number, ``None`` where it is a text such as ``"KG"`` or ``":E"``."""
+    try:
+        return Decimal(printed)
+    except ArithmeticError:
+        return None
 
 
 def text_of(sample: Path) -> str:
@@ -92,16 +105,19 @@ def test_parse_sdmx_csv_reads_every_row_as_printed(sample: Path) -> None:
         record = dict(zip(header, cells, strict=True))
         assert isinstance(row, SdmxCsvRow)
         assert row.dataflow == record["DATAFLOW"]
-        assert row.last_update == record["LAST UPDATE"]
+        assert row.last_update == datetime.strptime(record["LAST UPDATE"], PRINTED)
+        assert row.last_update.tzinfo is None, "printed without a zone, read without one"
         assert list(row.dimensions) == header[2:time], "the dimensions in column order"
         assert list(row.dimensions.values()) == cells[2:time]
         assert row.time_period == record["TIME_PERIOD"]
         if record["OBS_VALUE"]:
-            assert isinstance(row.obs_value, Decimal)
-            assert row.obs_value == Decimal(record["OBS_VALUE"])
-            assert str(row.obs_value) == record["OBS_VALUE"], "the number as printed"
+            assert row.obs_value == record["OBS_VALUE"], "upstream's text as printed"
+            assert isinstance(row.obs_value_number, Decimal)
+            assert row.obs_value_number == Decimal(record["OBS_VALUE"])
+            assert str(row.obs_value_number) == record["OBS_VALUE"], "the number as printed"
         else:
             assert row.obs_value is None
+            assert row.obs_value_number is None
         assert row.obs_flag == (record["OBS_FLAG"] or None)
         assert row.conf_status == (record["CONF_STATUS"] or None)
         assert row.attributes == {}, "apro_mk_cola's attributes are OBS_FLAG and CONF_STATUS"
@@ -139,8 +155,9 @@ def test_parse_sdmx_csv_reads_the_rows_through_core(
 @pytest.mark.parametrize("sample", [PRODCOM_PLAIN, PRODCOM_PACKED], ids=["plain", "gzip"])
 def test_parse_sdmx_csv_keeps_prodcom_text_values_as_printed(sample: Path) -> None:
     """DS-059358's ``indicators`` mix measures with units and flags, and ``OBS_VALUE``
-    prints them as text: a number is parsed, a text is kept as printed. Its header ends
-    at ``OBS_VALUE``: no attribute column."""
+    prints them as text: ``obs_value`` keeps every value as printed, and
+    ``obs_value_number`` beside it reads a number and is ``None`` for a text (sdk-core
+    ADR-0060, decisions 1 and 7). Its header ends at ``OBS_VALUE``: no attribute column."""
     header, table = table_of(text_of(sample))
     assert header[-1] == "OBS_VALUE"
     time = header.index("TIME_PERIOD")
@@ -156,19 +173,16 @@ def test_parse_sdmx_csv_keeps_prodcom_text_values_as_printed(sample: Path) -> No
         assert list(row.dimensions.values()) == cells[2:time]
         assert (row.obs_flag, row.conf_status, row.attributes) == (None, None, {})
         printed = record["OBS_VALUE"]
-        try:
-            number = Decimal(printed)
-        except ArithmeticError:
-            assert row.obs_value == printed, "a text kept as printed"
+        assert row.obs_value == printed, "every value kept as printed"
+        assert row.obs_value_number == number(printed)
+        if row.obs_value_number is None:
             texts += 1
         else:
-            assert isinstance(row.obs_value, Decimal)
-            assert row.obs_value == number
-            assert str(row.obs_value) == printed, "the number as printed"
+            assert str(row.obs_value_number) == printed, "the number as printed"
     assert texts, "the sample holds a text value"
-    shown = {row.obs_value for row in rows if isinstance(row.obs_value, str)}
+    shown = {row.obs_value for row in rows if row.obs_value_number is None}
     units = {row.obs_value for row in rows if row.dimensions["indicators"] == "QNTUNIT"}
-    assert units <= shown, "QNTUNIT, the quantity's unit, is text"
+    assert units <= shown, "QNTUNIT, the quantity's unit, is text and no number"
 
 
 @pytest.mark.parametrize("sample", [TRADE_PLAIN, TRADE_PACKED], ids=["plain", "gzip"])
@@ -183,7 +197,7 @@ def test_parse_sdmx_csv_reads_comext_trade_rows(sample: Path) -> None:
     for row, cells in zip(rows, table, strict=True):
         record = dict(zip(header, cells, strict=True))
         assert row.dataflow == record["DATAFLOW"]
-        assert row.last_update == record["LAST UPDATE"]
+        assert row.last_update == datetime.strptime(record["LAST UPDATE"], PRINTED)
         assert (
             list(row.dimensions)
             == header[2:time]
@@ -199,8 +213,9 @@ def test_parse_sdmx_csv_reads_comext_trade_rows(sample: Path) -> None:
         assert list(row.dimensions.values()) == cells[2:time]
         assert re.fullmatch(r"\d{4}-\d{2}", row.time_period), "a monthly period as printed"
         assert row.time_period == record["TIME_PERIOD"]
-        assert isinstance(row.obs_value, Decimal)
-        assert str(row.obs_value) == record["OBS_VALUE"], "the number as printed"
+        assert row.obs_value == record["OBS_VALUE"]
+        assert isinstance(row.obs_value_number, Decimal)
+        assert str(row.obs_value_number) == record["OBS_VALUE"], "the number as printed"
         assert (row.obs_flag, row.conf_status, row.attributes) == (None, None, {})
 
 
@@ -244,7 +259,9 @@ def test_documented_shape_attributes_are_kept_by_their_headers(
     for row, cells in zip(rows, table, strict=True):
         record = dict(zip(header, cells, strict=True))
         assert list(row.dimensions) == ["freq", "wat_proc", "unit", "geo"]
-        assert row.obs_value == Decimal(record["OBS_VALUE"])
+        assert row.obs_value == record["OBS_VALUE"]
+        assert row.obs_value_number == Decimal(record["OBS_VALUE"])
+        assert row.last_update == datetime.strptime(record["LAST UPDATE"], PRINTED)
         assert row.obs_flag == (record.get("OBS_FLAG") or None)
         assert row.conf_status is None, "ENV_WAT_RES has no CONF_STATUS column"
         assert row.attributes == {
@@ -255,8 +272,27 @@ def test_documented_shape_attributes_are_kept_by_their_headers(
         assert any(row.attributes["LTAA"] for row in rows), "a series attribute with a value"
 
 
+def test_parse_sdmx_csv_refuses_a_last_update_printed_otherwise(tmp_path: Path) -> None:
+    """A time in another form than the samples' is refused at its row, naming the form
+    expected and never the text (core's ``parse``). The plain sample with its first row's
+    LAST UPDATE printed year first in memory is an input of the test, not an answer from
+    Eurostat."""
+    lines = PLAIN.read_bytes().split(b"\r\n")
+    printed = next(csv.reader([lines[1].decode("utf-8")]))[1]
+    lines[1] = lines[1].replace(printed.encode("utf-8"), b"2026-10-05 23:00:00", 1)
+    path = tmp_path / "year_first.csv"
+    path.write_bytes(b"\r\n".join(lines))
+    with pytest.raises(ValidationError) as refused:
+        next(parse_sdmx_csv(path))
+    message = str(refused.value)
+    assert message.startswith("eurostat sdmx-csv line 2: ")
+    assert "LAST UPDATE is not printed as dd/mm/yy HH:MM:SS" in message
+    assert "2026-10-05" not in message, "no value in the text"
+
+
 def test_parse_sdmx_csv_refuses_a_cut_gzip_file(tmp_path: Path) -> None:
-    """NOT RECORDED: the gzip sample cut to its first half in memory."""
+    """The gzip sample cut to its first half in memory is an input of the test, not an
+    answer from Eurostat."""
     cut = tmp_path / "cut.csv.gz"
     data = PACKED.read_bytes()
     cut.write_bytes(data[: len(data) // 2])
@@ -265,7 +301,8 @@ def test_parse_sdmx_csv_refuses_a_cut_gzip_file(tmp_path: Path) -> None:
 
 
 def test_parse_sdmx_csv_refuses_a_row_that_does_not_match_its_header(tmp_path: Path) -> None:
-    """NOT RECORDED: the plain sample with its third line's last two cells cut in memory."""
+    """The plain sample with its third line's last two cells cut in memory is an input of
+    the test, not an answer from Eurostat."""
     lines = PLAIN.read_bytes().split(b"\r\n")
     lines[2] = lines[2].rsplit(b",", 2)[0]
     path = tmp_path / "short.csv"
@@ -286,7 +323,8 @@ def test_parse_sdmx_csv_refuses_another_file_kind(sample: str) -> None:
 
 
 def test_parse_sdmx_csv_refuses_a_header_out_of_order(tmp_path: Path) -> None:
-    """NOT RECORDED: the plain sample with OBS_VALUE and TIME_PERIOD swapped in its header."""
+    """The plain sample with OBS_VALUE and TIME_PERIOD swapped in its header in memory is
+    an input of the test, not an answer from Eurostat."""
     data = PLAIN.read_bytes().replace(b"TIME_PERIOD,OBS_VALUE", b"OBS_VALUE,TIME_PERIOD", 1)
     path = tmp_path / "swapped.csv"
     path.write_bytes(data)
@@ -304,9 +342,9 @@ def write(path: Path, data: bytes, *, packed: bool) -> Path:
 def test_parse_sdmx_csv_refuses_a_header_only_file_of_another_layout(
     tmp_path: Path, packed: bool
 ) -> None:
-    """NOT RECORDED: the plain sample's header line alone, OBS_VALUE and TIME_PERIOD swapped
-    in memory. The header is checked before any row, so a file without rows is refused
-    too."""
+    """The header is checked before any row, so a file without rows is refused too. The
+    plain sample's header line alone, OBS_VALUE and TIME_PERIOD swapped in memory, is an
+    input of the test, not an answer from Eurostat."""
     header = PLAIN.read_bytes().split(b"\r\n", 1)[0]
     swapped = header.replace(b"TIME_PERIOD,OBS_VALUE", b"OBS_VALUE,TIME_PERIOD")
     path = write(tmp_path / "swapped.csv", swapped + b"\r\n", packed=packed)
@@ -320,10 +358,10 @@ def test_parse_sdmx_csv_refuses_a_header_only_file_of_another_layout(
 
 @pytest.mark.parametrize("packed", [False, True], ids=["plain", "gzip"])
 def test_parse_sdmx_csv_refuses_text_that_is_not_utf8(tmp_path: Path, packed: bool) -> None:
-    """NOT RECORDED: the plain sample's rows repeated past 64 KiB, its last row with a byte
-    that is no UTF-8, in memory. The header reads, so the rows' reader refuses it: core's
-    ``decode_csv``, which reads the plain file by its path and the gzip file as its open
-    stream, naming the file alike."""
+    """The header reads, so the rows' reader refuses the text: core's ``decode_csv``, which
+    reads the plain file by its path and the gzip file as its open stream, naming the file
+    alike. The plain sample's rows repeated past 64 KiB, its last row with a byte that is
+    no UTF-8, in memory, is an input of the test, not an answer from Eurostat."""
     header, rows = PLAIN.read_bytes().split(b"\r\n", 1)
     body = rows * (64 * 1024 // len(rows) + 1)
     last = body.rindex(b"ESTAT:")
@@ -340,8 +378,8 @@ def test_parse_sdmx_csv_refuses_text_that_is_not_utf8(tmp_path: Path, packed: bo
 def test_parse_sdmx_csv_refuses_csv_the_csv_module_cannot_read(
     tmp_path: Path, packed: bool
 ) -> None:
-    """NOT RECORDED: the plain sample with one OBS_FLAG cell made longer than the csv
-    module's field limit (131,072 characters) in memory."""
+    """The plain sample with one OBS_FLAG cell made longer than the csv module's field
+    limit (131,072 characters) in memory is an input of the test, not an answer from Eurostat."""
     lines = PLAIN.read_bytes().split(b"\r\n")
     lines[1] = lines[1].replace(b",,", b"," + b"e" * (csv.field_size_limit() + 1) + b",", 1)
     path = write(tmp_path / "wide.csv", b"\r\n".join(lines), packed=packed)
