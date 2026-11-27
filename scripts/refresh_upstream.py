@@ -289,6 +289,9 @@ specification among them) that are deliberately not requested, with the reason."
 COPYRIGHT_URL = "https://ec.europa.eu/eurostat/web/main/help/copyright-notice"
 """Eurostat's copyright notice: the terms of the website's content, read for ``ATTRIBUTION``
 and kept as no file."""
+NAVIGATION_NOTICE_URL = "https://ec.europa.eu/eurostat/en/help/copyright-notice"
+"""The address at which the site's navigation links the copyright notice, which the snapshot
+reads at ``COPYRIGHT_URL``: the link's target in ``ATTRIBUTION``, never requested."""
 
 PAUSE = 5.0
 """Seconds before every request; requests never run in parallel. The website reports a
@@ -1333,10 +1336,18 @@ ATTRIBUTION = (
         COPYRIGHT_URL,
         where=f"{_CITATION} for a customised version of a dataset",
     ),
+    Statement(
+        "Copyright notice and free re-use of data",
+        GUIDE_BASE + GUIDE_PAGES[0],
+        where="the site's navigation on every user-guide page, its link to Eurostat's "
+        f"copyright notice, which the snapshot reads at {COPYRIGHT_URL}",
+        link=NAVIGATION_NOTICE_URL,
+    ),
 )
-"""Every copyright line, licence or terms of use the pages state, as printed: all in
+"""Every copyright line, licence or terms of use the pages state, as printed: those of
 Eurostat's copyright notice, the terms themselves, which must print each of them on every
-run."""
+run, and the site's navigation's link to the notice, which the check reads past wherever it
+stands as that link's text."""
 
 CAPTURE = "\n\n".join(
     (
