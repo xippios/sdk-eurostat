@@ -61,17 +61,28 @@ oil.data.value["6"], oil.data.value["12"]  # 349477 (EXPVAL 2022), "KG" (QNTUNIT
 the one exception being `since_time_period` with `until_time_period`; any other
 combination is refused before sending. `lang` takes `Lang.EN`, `Lang.FR` or `Lang.DE` and
 `geo_level` a `GeoLevel` (`aggregate`, `country`, `nuts1`, `nuts2`, `nuts3`, `city`), both
-in `xippios.eurostat.models`; a plain string such as `"FR"` works too. A code that matches
-nothing gives an empty cube, size 0 on that dimension. `meta.published_at` is the cube's
-`updated` with Eurostat's zone; one printed without a zone, never seen, is kept as printed
-with `meta.published_at_naive` set, and `meta.vintage` holds the text either way. An
-unknown dataset, and Eurostat's "No results found", raise `NotFoundError`; a query
-Eurostat refuses raises `InvalidRequestError` with Eurostat's message, and one it judges
-too large core's `QueryTooLarge`, with Eurostat's estimate and limit and how to narrow it.
-A query Eurostat would answer asynchronously raises `InvalidRequestError`: this package
-does not poll asynchronous answers, and the Statistics API's own route is to send the same
-request again later. Ask for small slices: the cube comes back whole, and over
-MCP a result above 64 KB is replaced by a preview and a note.
+in `xippios.eurostat.models`; a plain string such as `"FR"` works too.
+
+The codes of a dimension that one packaged codelist feeds are checked against it before
+the request, on the dataset's base: `geo`, `unit` and the other ten dimensions of the
+main base's codelists, and `reporter`, `flow` and `indicators` of the Comext base, as
+`list_codes` lists them. A code the codelist lacks raises core's `UnknownCode`, which says
+that nothing was sent and names the closest codes, and `meta.names` names each checked
+code with its label (`{"geo": {"AT": "Austria"}}`). `product`, which three codelists
+feed, and `partner` are sent unchecked, and so is a dimension of one base on a dataset of
+the other. A cube that holds no cell, a code the dataset does not use or a period not yet
+released, raises `NotFoundError` naming the dataset and the filters sent.
+
+`meta.published_at` is the cube's `updated` with Eurostat's zone; one printed without a
+zone, never seen, is kept as printed with `meta.published_at_naive` set, and
+`meta.vintage` holds the text either way. An unknown dataset, and Eurostat's "No results
+found", raise `NotFoundError` too; a query Eurostat refuses raises `InvalidRequestError`
+with Eurostat's message, and one it judges too large core's `QueryTooLarge`, with
+Eurostat's estimate and limit and how to narrow it. A query Eurostat would answer
+asynchronously raises `InvalidRequestError`: this package does not poll asynchronous
+answers, and the Statistics API's own route is to send the same request again later. Ask
+for small slices: the cube comes back whole, and over MCP a result above 64 KB is replaced
+by a preview and a note.
 
 ### Datasets and codes
 

@@ -171,7 +171,8 @@ class Cube(UpstreamModel):
     A cell's index counts row-major over ``size``, the last dimension varying fastest:
     with ``size`` ``[1, 3, 10, 2, 1, 2]``, cell 40 is position 0, 1, 0, 0, 0, 0. A cell
     absent from ``value`` is a JSON-stat null. A code that matches nothing in a filter
-    gives a dimension of size 0 and an empty ``value``: an empty cube, not an error.
+    gives a dimension of size 0 and an empty ``value``: an empty cube, which the model
+    reads and ``get_data`` answers with ``NotFoundError``.
 
     Attributes:
         version: The JSON-stat version, ``"2.0"``.

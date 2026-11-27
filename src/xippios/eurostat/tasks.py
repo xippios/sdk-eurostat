@@ -25,8 +25,13 @@ asynchronously, which the package refuses with ``InvalidRequestError`` and does 
 and over 5,000,000 it refuses the query, which is core's ``QueryTooLarge``
 (``docs/upstream/user-guide/api-detailed-guidelines/asynchronous-api.md``).
 
-Every refusal before a request says ``Nothing was sent.`` after its first sentence, and a
-refusal of an answer names the request that was sent (conventions §5). No task sends more
+``get_data`` checks before its request the codes of each filter whose dimension one
+packaged codelist of the dataset's base feeds (``CHECKED_FILTERS``), by core's check of a
+packaged list, and names them in ``meta.names``; a cube without a cell, a code the dataset
+does not use or a period not yet released, raises ``NotFoundError`` (conventions §5;
+sdk-core ADR-0061, decision 6). Every refusal before a request says ``Nothing was sent.``
+after its first sentence, and a refusal of an answer names the request that was sent
+(conventions §5). No task sends more
 than one request, so none states a ceiling of its own.
 
 The list tasks, ``list_datasets`` and ``list_codes``, answer from the packaged lists
@@ -64,6 +69,7 @@ from typing import Any
 from xippios.core import (
     Downloaded,
     InvalidRequestError,
+    NotFoundError,
     PackagedCodes,
     PackagedList,
     Result,
@@ -75,7 +81,7 @@ from xippios.core import (
 )
 
 from xippios.eurostat import api, params
-from xippios.eurostat._client import SOURCE
+from xippios.eurostat._client import BASE_URL, COMEXT_BASE_URL, COMEXT_PREFIX, SOURCE
 from xippios.eurostat.api.statistics import ENDPOINT
 from xippios.eurostat.models import Code, Cube, Dataset, GeoLevel, Lang
 from xippios.eurostat.parse import parse_sdmx_csv
@@ -156,12 +162,65 @@ GET_DATA_ARGUMENTS = (
 """Where ``get_data`` sets the API's own parameters, for the refusal of one as a filter."""
 
 
-def _filters(filters: Mapping[str, str | Sequence[str]] | None) -> dict[str, str | list[str]]:
+UNKNOWN_FILTER_CODE = (
+    "Eurostat answers a code that matches nothing with an empty cube, so the package refuses "
+    "a code that the one packaged codelist of its dimension lacks; list_codes (over MCP, the "
+    "tool eurostat_list_codes) lists its codes."
+)
+"""Why ``get_data`` refuses a filter's code before its request: the reason of its
+``UnknownCode``."""
+
+
+def _fed_by_one_codelist(base_url: str) -> dict[str, str]:
+    """Each dimension that exactly one packaged codelist of ``base_url`` feeds, to its id."""
+    fed: dict[str, list[str]] = {}
+    for codelist, origin in params.CODELISTS.items():
+        if origin.base_url == base_url:
+            fed.setdefault(origin.param, []).append(codelist)
+    return {param: codelists[0] for param, codelists in fed.items() if len(codelists) == 1}
+
+
+CHECKED_FILTERS: Mapping[str, Mapping[str, str]] = {
+    base_url: _fed_by_one_codelist(base_url) for base_url in (BASE_URL, COMEXT_BASE_URL)
+}
+"""The filters ``get_data`` checks before its request, by the base that serves the dataset:
+each dimension that exactly one packaged codelist of that base feeds, the codelist's
+``param``, to the codelist (conventions §5; the maintainer's decision of 2026-11-27 on
+https://github.com/xippios/sdk-eurostat/issues/82). On the main base the twelve codelists,
+one for each dimension; on the Comext base ``reporter``, ``flow`` and ``indicators``.
+``product``, which CXT_PRODCOM2_SOLD, CXT_PRODCOM2_TOTAL and CXT_NC feed, and ``partner``,
+the ``param`` of no packaged list, are sent unchecked, and so is a key of one base on a
+dataset of the other, whose codes may be another coding system's, as ``freq`` of a ``DS-``
+dataset takes CXT_FREQ, which is not packaged ("A code sent under a coding system the
+packaged list does not hold goes unchecked", conventions §5)."""
+
+
+@cache
+def _codelist_codes(codelist: str) -> PackagedCodes:
+    """The codes of the packaged ``codelist``, by id, for core's check of a filter.
+
+    Compared without case, since the Statistics API takes a filter so ("DIMENSION_CODE and
+    VALUE are case-insensitive", api-statistics.md), and so sent as the caller gave them
+    (conventions §5); a refusal names the codelist by its id, which ``list_codes`` takes.
+    """
+    return params.packaged(codelist.lower()).codes(
+        "code", "label", fold_case=True, list_name=codelist, source=SOURCE
+    )
+
+
+def _filters(
+    filters: Mapping[str, str | Sequence[str]] | None, checked: Mapping[str, str]
+) -> dict[str, str | list[str]]:
     """The filters as sent: one code or a list of codes per dimension; refusals first.
+
+    A key that ``checked`` names, compared without case, has its codes checked against
+    the codelist it maps to, by core's check of a packaged list; the keys are read in the
+    caller's order, and the first problem found is refused (sdk-core ADR-0061, decision 7).
 
     Raises:
         InvalidRequestError: A filter names one of the API's own parameters, or gives an
             empty list of codes, which would send no filter for that dimension.
+        UnknownCode: A checked filter's code that its codelist lacks.
     """
     sent: dict[str, str | list[str]] = {}
     for code, values in (filters or {}).items():
@@ -178,8 +237,53 @@ def _filters(filters: Mapping[str, str | Sequence[str]] | None) -> dict[str, str
                 f"the dimension out to get all of its codes. {NOTHING_SENT}",
                 source=SOURCE,
             )
+        codelist = checked.get(code.lower())
+        if codelist is not None:
+            _codelist_codes(codelist).check(code, listed, reason=UNKNOWN_FILTER_CODE)
         sent[code] = listed
     return sent
+
+
+def _names(
+    sent: Mapping[str, str | list[str]], checked: Mapping[str, str]
+) -> dict[str, dict[str, str]]:
+    """``meta.names``: each checked filter's codes as the caller gave them, to their labels.
+
+    The labels of the packaged codelist, runs of white space collapsed as a refusal shows
+    them (sdk-core ADR-0067, decision 2); a filter that is not checked names no code.
+    """
+    names: dict[str, dict[str, str]] = {}
+    for key, values in sent.items():
+        codelist = checked.get(key.lower())
+        if codelist is not None:
+            codes = _codelist_codes(codelist)
+            listed = [values] if isinstance(values, str) else values
+            names[key] = {code: " ".join(str(codes.name_of(code)).split()) for code in listed}
+    return names
+
+
+NO_DATA = (
+    "A code that the dataset does not use, or a period that Eurostat has not released, "
+    "answers so, and the cube of a call without that filter lists the codes of each dimension."
+)
+"""What closes the refusal of a cube without a cell, after the call it names."""
+
+
+def _no_data(request: Mapping[str, Any]) -> NotFoundError:
+    """The refusal of a cube without a cell, naming the call as sent but its ``lang``.
+
+    Raised after the request, so it says that the request was sent (conventions §5).
+    """
+    call = ", ".join(
+        f"{name}={value!r}"
+        for name, value in request.items()
+        if name != "lang" and value is not None
+    )
+    return NotFoundError(
+        f"Eurostat holds no data for get_data({call}): the request was sent, and its cube "
+        f"has no cell with a value or a status. {NO_DATA}",
+        source=SOURCE,
+    )
 
 
 def _member[E: StrEnum](enum: type[E], value: str, name: str) -> E:
@@ -253,8 +357,9 @@ async def get_data_async(
     (``value``, ``status``), keyed by cell index: row-major over ``size``, the last
     dimension varying fastest. A value is a number, or the text Eurostat prints where a
     Prodcom indicator is a unit or a flag (``"KG"``, ``":E"``). Keep slices small: the
-    whole slice comes back at once. A filter code that matches nothing gives an empty cube,
-    not an error. An unknown dataset raises ``NotFoundError``. A query Eurostat refuses or
+    whole slice comes back at once. A filter's code that its codelist lacks is refused
+    before sending. An unknown dataset, and a cube without a cell, raise ``NotFoundError``.
+    A query Eurostat refuses or
     would answer asynchronously raises ``InvalidRequestError``, and one over its limit
     ``QueryTooLarge``, each naming how to narrow it.
 
@@ -269,9 +374,14 @@ async def get_data_async(
             cube's ``dimension``, case-insensitive, e.g. ``{"geo": "AT", "time":
             ["2022", "2023"]}``, ``{"geo": "AT", "milkitem": "PRD"}`` or, for
             DS-059358, ``{"reporter": "AT", "product": "10411200"}`` (fish and marine
-            oils, NACE 10.41); ``time`` (or
-            ``time_period``) filters periods and is a time parameter. ``None`` asks for
-            every code of every dimension.
+            oils, NACE 10.41); ``time`` (or ``time_period``) filters periods and is a
+            time parameter. ``None`` asks for every code of every dimension. The codes of
+            a dimension that one packaged codelist of the dataset's base feeds are checked
+            against it before sending, ``geo``, ``unit`` or ``milkitem`` on the main base,
+            ``reporter``, ``flow`` or ``indicators`` on the Comext base, as
+            ``list_codes`` lists them; ``product``, which three codelists feed, and
+            ``partner`` are sent unchecked. A code that the dataset does not use answers a
+            cube without a cell, ``NotFoundError``, and so may a period not yet released.
         lang: Language of the labels: ``"EN"`` (the default), ``"FR"`` or ``"DE"``.
         since_time_period: The first time period, included, e.g. ``"2022"``; combines
             with ``until_time_period`` and with no other time parameter, any other
@@ -284,7 +394,10 @@ async def get_data_async(
             ``"aggregate"``, ``"country"``, ``"nuts1"``, ``"nuts2"``, ``"nuts3"`` or
             ``"city"``; never together with ``filters["geo"]``, which Eurostat refuses.
     """
-    sent = _filters(filters)
+    checked = CHECKED_FILTERS[
+        COMEXT_BASE_URL if dataset_code.startswith(COMEXT_PREFIX) else BASE_URL
+    ]
+    sent = _filters(filters, checked)
     _check_time_parameters(sent, since_time_period, until_time_period, last_time_period)
     lang = _member(Lang, lang, "lang")
     if geo_level is not None:
@@ -308,6 +421,8 @@ async def get_data_async(
         "geo_level": None if geo_level is None else geo_level.value,
     }
     cube = answer.payload.cube
+    if next(cube.observations(), None) is None:
+        raise _no_data(request)
     updated = cube.updated
     meta = ResultMeta(
         source=SOURCE,
@@ -317,6 +432,7 @@ async def get_data_async(
         published_at_naive=updated is not None and updated.tzinfo is None,
         vintage=answer.payload.updated,
         request=request,
+        names=_names(sent, checked),
     )
     return Result(data=cube, meta=meta)
 
