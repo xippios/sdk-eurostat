@@ -283,9 +283,10 @@ def test_get_data_refuses_the_first_code_that_a_codelist_lacks(
 def test_get_data_sends_a_checked_code_as_given(replay_fixture: ReplayFixture) -> None:
     """A code is compared with its codelist without case, as the Statistics API compares it,
     and sent, recorded in ``meta.request`` and named in ``meta.names`` as the caller gave it
-    (conventions §5; sdk-core ADR-0067, decision 2). The recorded answer to ``geo=AT`` served
-    at the URL of ``GEO=at``, for a test that asserts only what was sent and the names that
-    the packaged list holds (conventions §10, kind 3)."""
+    (conventions §5; sdk-core ADR-0067, decision 2). NOT RECORDED: the recorded answer to
+    ``geo=AT`` served at the URL of ``GEO=at``, which Eurostat answers alike, since
+    "DIMENSION_CODE and VALUE are case-insensitive" (api-statistics.md) (conventions §10,
+    kind 3)."""
     url = recorded_url("apro_mk_cola_AT_2022_2023").replace("&geo=AT&", "&GEO=at&")
     route = replay_fixture(GET_DATA, "apro_mk_cola_AT_2022_2023", url=url)
     result = get_data("apro_mk_cola", filters={"GEO": "at", "time": ["2022", "2023"]})
@@ -322,9 +323,10 @@ def test_get_data_checks_the_dimensions_that_one_codelist_of_its_base_feeds() ->
 def test_get_data_sends_a_product_unchecked(replay_fixture: ReplayFixture) -> None:
     """``product`` is the ``param`` of three packaged codelists, so its code is sent
     unchecked, and a cube without a cell answers it with ``NotFoundError``, after the
-    request. The recorded empty cube of ``DS-059358_unknown_code`` served at the URL of an
-    unlisted product with the reporter AT, for a test that asserts only what was sent and
-    that no check refused it (conventions §10, kind 3)."""
+    request. NOT RECORDED: the recorded empty cube of ``DS-059358_unknown_code`` served at
+    the URL of an unlisted product with the reporter AT, which Eurostat answers alike, since
+    it answers a code that matches nothing with an empty cube, as that recording holds for
+    ``reporter=XX`` (conventions §10, kind 3)."""
     url = recorded_url("DS-059358_unknown_code").replace(
         "&reporter=XX&product=10411200&", "&reporter=AT&product=NO_SUCH_PRODUCT&"
     )

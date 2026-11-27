@@ -272,9 +272,10 @@ def test_documented_shape_attributes_are_kept_by_their_headers(
 
 
 def test_parse_sdmx_csv_refuses_a_last_update_printed_otherwise(tmp_path: Path) -> None:
-    """NOT RECORDED: the plain sample with its first row's LAST UPDATE printed year first in
-    memory. A time in another form than the samples' is refused at its row, naming the form
-    expected and never the text (core's ``parse``)."""
+    """A time in another form than the samples' is refused at its row, naming the form
+    expected and never the text (core's ``parse``). The plain sample with its first row's
+    LAST UPDATE printed year first in memory is an input of the test, not an answer from
+    Eurostat."""
     lines = PLAIN.read_bytes().split(b"\r\n")
     printed = next(csv.reader([lines[1].decode("utf-8")]))[1]
     lines[1] = lines[1].replace(printed.encode("utf-8"), b"2026-10-05 23:00:00", 1)
