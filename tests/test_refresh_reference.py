@@ -25,7 +25,7 @@ import shutil
 import xml.etree.ElementTree as ET
 from collections.abc import Iterator
 from dataclasses import replace
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -198,11 +198,35 @@ def test_read_toc_reads_every_leaf_with_its_folders() -> None:
     assert leaves
     assert all(isinstance(leaf, Dataset) for leaf in leaves)
     assert all(leaf.code and leaf.title and leaf.path for leaf in leaves)
-    assert all(re.fullmatch(r"\d{2}\.\d{2}\.\d{4}", leaf.last_update) for leaf in leaves)
+    assert all(isinstance(leaf.last_update, date) for leaf in leaves), "day first, a date"
+    assert all(isinstance(leaf.last_modified, date) for leaf in leaves)
     folders = {leaf.path for leaf in leaves if leaf.type == LeafType.DATASET}
     assert len(folders) == 1, "the sample's datasets sit in one folder"
     (folder,) = folders
     assert folder.count(script.PATH_SEPARATOR) >= 1, "the folders above it, top first"
+
+
+def test_read_toc_reads_a_leaf_s_dates_day_first() -> None:
+    """A leaf's ``lastUpdate`` and ``lastModified`` as the samples print them, ``"17.11.2026"``,
+    read into a ``date`` day first: the samples hold a day past 12, which no other order
+    reads, and each leaf's dates are its printed day, month and year (conventions §3;
+    https://github.com/xippios/sdk-usda-esr/issues/60, part 3)."""
+    printed: list[tuple[str, str]] = []
+    for sample in (TOC_SAMPLE, TOC_SAMPLE_WITHOUT_VALUES):
+        leaves = script.read_toc(sample).leaves
+        elements = list(ET.parse(sample).getroot().iter(script.LEAF))
+        assert len(elements) == len(leaves)
+        for element, leaf in zip(elements, leaves, strict=True):
+            for name, read in (
+                ("lastUpdate", leaf.last_update),
+                ("lastModified", leaf.last_modified),
+            ):
+                text = element.findtext(script._tag(name))
+                assert text is not None
+                day, month, year = text.split(".")
+                assert read == date(int(year), int(month), int(day)), "day first"
+                printed.append((name, day))
+    assert any(int(day) > 12 for _, day in printed), "a day that no month reads"
 
 
 def test_read_toc_reads_a_table_under_a_dataset_after_it() -> None:
@@ -239,8 +263,8 @@ def test_read_toc_reads_a_leaf_that_prints_no_number_of_values() -> None:
     for leaf in without:
         assert leaf.title
         assert leaf.path
-        assert re.fullmatch(r"\d{2}\.\d{2}\.\d{4}", leaf.last_update)
-        assert re.fullmatch(r"\d{2}\.\d{2}\.\d{4}", leaf.last_modified)
+        assert isinstance(leaf.last_update, date)
+        assert isinstance(leaf.last_modified, date)
 
 
 def test_toc_list_writes_an_absent_number_of_values_as_null(tmp_path: Path) -> None:
@@ -320,6 +344,10 @@ def test_toc_list_is_a_packaged_list_of_the_leaves(tmp_path: Path) -> None:
         "dataEnd",
         "values",
     }
+    first = written["records"][0]
+    assert first["lastUpdate"] == toc.leaves[0].last_update.isoformat(), (
+        "a date as dump_upstream writes it, which the model reads back"
+    )
     packaged = PackagedList.model_validate(written)
     assert packaged.parse(Dataset, source="eurostat") == toc.leaves
     info = script.toc_info(toc)

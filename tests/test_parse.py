@@ -22,6 +22,7 @@ import hashlib
 import inspect
 import io
 import re
+from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -52,6 +53,17 @@ RECORDED = {
 }
 PAIRS = [(PLAIN, PACKED), (PRODCOM_PLAIN, PRODCOM_PACKED), (TRADE_PLAIN, TRADE_PACKED)]
 DATA_QUERY = TESTS.parents[0] / "docs/upstream/user-guide/api-detailed-guidelines/sdmx2-1"
+PRINTED = "%d/%m/%y %H:%M:%S"
+"""How SDMX-CSV prints ``LAST UPDATE``, day first and without a zone: the samples' order,
+which ``tests/test_tasks.py`` fixes by the recorded pairs of one dataset."""
+
+
+def number(printed: str) -> Decimal | None:
+    """``printed`` as a number, ``None`` where it is a text such as ``"KG"`` or ``":E"``."""
+    try:
+        return Decimal(printed)
+    except ArithmeticError:
+        return None
 
 
 def text_of(sample: Path) -> str:
@@ -92,16 +104,19 @@ def test_parse_sdmx_csv_reads_every_row_as_printed(sample: Path) -> None:
         record = dict(zip(header, cells, strict=True))
         assert isinstance(row, SdmxCsvRow)
         assert row.dataflow == record["DATAFLOW"]
-        assert row.last_update == record["LAST UPDATE"]
+        assert row.last_update == datetime.strptime(record["LAST UPDATE"], PRINTED)
+        assert row.last_update.tzinfo is None, "printed without a zone, read without one"
         assert list(row.dimensions) == header[2:time], "the dimensions in column order"
         assert list(row.dimensions.values()) == cells[2:time]
         assert row.time_period == record["TIME_PERIOD"]
         if record["OBS_VALUE"]:
-            assert isinstance(row.obs_value, Decimal)
-            assert row.obs_value == Decimal(record["OBS_VALUE"])
-            assert str(row.obs_value) == record["OBS_VALUE"], "the number as printed"
+            assert row.obs_value == record["OBS_VALUE"], "upstream's text as printed"
+            assert isinstance(row.obs_value_number, Decimal)
+            assert row.obs_value_number == Decimal(record["OBS_VALUE"])
+            assert str(row.obs_value_number) == record["OBS_VALUE"], "the number as printed"
         else:
             assert row.obs_value is None
+            assert row.obs_value_number is None
         assert row.obs_flag == (record["OBS_FLAG"] or None)
         assert row.conf_status == (record["CONF_STATUS"] or None)
         assert row.attributes == {}, "apro_mk_cola's attributes are OBS_FLAG and CONF_STATUS"
@@ -139,8 +154,9 @@ def test_parse_sdmx_csv_reads_the_rows_through_core(
 @pytest.mark.parametrize("sample", [PRODCOM_PLAIN, PRODCOM_PACKED], ids=["plain", "gzip"])
 def test_parse_sdmx_csv_keeps_prodcom_text_values_as_printed(sample: Path) -> None:
     """DS-059358's ``indicators`` mix measures with units and flags, and ``OBS_VALUE``
-    prints them as text: a number is parsed, a text is kept as printed. Its header ends
-    at ``OBS_VALUE``: no attribute column."""
+    prints them as text: ``obs_value`` keeps every value as printed, and
+    ``obs_value_number`` beside it reads a number and is ``None`` for a text (sdk-core
+    ADR-0060, decisions 1 and 7). Its header ends at ``OBS_VALUE``: no attribute column."""
     header, table = table_of(text_of(sample))
     assert header[-1] == "OBS_VALUE"
     time = header.index("TIME_PERIOD")
@@ -156,19 +172,16 @@ def test_parse_sdmx_csv_keeps_prodcom_text_values_as_printed(sample: Path) -> No
         assert list(row.dimensions.values()) == cells[2:time]
         assert (row.obs_flag, row.conf_status, row.attributes) == (None, None, {})
         printed = record["OBS_VALUE"]
-        try:
-            number = Decimal(printed)
-        except ArithmeticError:
-            assert row.obs_value == printed, "a text kept as printed"
+        assert row.obs_value == printed, "every value kept as printed"
+        assert row.obs_value_number == number(printed)
+        if row.obs_value_number is None:
             texts += 1
         else:
-            assert isinstance(row.obs_value, Decimal)
-            assert row.obs_value == number
-            assert str(row.obs_value) == printed, "the number as printed"
+            assert str(row.obs_value_number) == printed, "the number as printed"
     assert texts, "the sample holds a text value"
-    shown = {row.obs_value for row in rows if isinstance(row.obs_value, str)}
+    shown = {row.obs_value for row in rows if row.obs_value_number is None}
     units = {row.obs_value for row in rows if row.dimensions["indicators"] == "QNTUNIT"}
-    assert units <= shown, "QNTUNIT, the quantity's unit, is text"
+    assert units <= shown, "QNTUNIT, the quantity's unit, is text and no number"
 
 
 @pytest.mark.parametrize("sample", [TRADE_PLAIN, TRADE_PACKED], ids=["plain", "gzip"])
@@ -183,7 +196,7 @@ def test_parse_sdmx_csv_reads_comext_trade_rows(sample: Path) -> None:
     for row, cells in zip(rows, table, strict=True):
         record = dict(zip(header, cells, strict=True))
         assert row.dataflow == record["DATAFLOW"]
-        assert row.last_update == record["LAST UPDATE"]
+        assert row.last_update == datetime.strptime(record["LAST UPDATE"], PRINTED)
         assert (
             list(row.dimensions)
             == header[2:time]
@@ -199,8 +212,9 @@ def test_parse_sdmx_csv_reads_comext_trade_rows(sample: Path) -> None:
         assert list(row.dimensions.values()) == cells[2:time]
         assert re.fullmatch(r"\d{4}-\d{2}", row.time_period), "a monthly period as printed"
         assert row.time_period == record["TIME_PERIOD"]
-        assert isinstance(row.obs_value, Decimal)
-        assert str(row.obs_value) == record["OBS_VALUE"], "the number as printed"
+        assert row.obs_value == record["OBS_VALUE"]
+        assert isinstance(row.obs_value_number, Decimal)
+        assert str(row.obs_value_number) == record["OBS_VALUE"], "the number as printed"
         assert (row.obs_flag, row.conf_status, row.attributes) == (None, None, {})
 
 
@@ -244,7 +258,9 @@ def test_documented_shape_attributes_are_kept_by_their_headers(
     for row, cells in zip(rows, table, strict=True):
         record = dict(zip(header, cells, strict=True))
         assert list(row.dimensions) == ["freq", "wat_proc", "unit", "geo"]
-        assert row.obs_value == Decimal(record["OBS_VALUE"])
+        assert row.obs_value == record["OBS_VALUE"]
+        assert row.obs_value_number == Decimal(record["OBS_VALUE"])
+        assert row.last_update == datetime.strptime(record["LAST UPDATE"], PRINTED)
         assert row.obs_flag == (record.get("OBS_FLAG") or None)
         assert row.conf_status is None, "ENV_WAT_RES has no CONF_STATUS column"
         assert row.attributes == {
@@ -253,6 +269,23 @@ def test_documented_shape_attributes_are_kept_by_their_headers(
     if heading == "Request FULL":
         assert list(rows[0].attributes) == ["LTAA_FLAG", "LTAA"]
         assert any(row.attributes["LTAA"] for row in rows), "a series attribute with a value"
+
+
+def test_parse_sdmx_csv_refuses_a_last_update_printed_otherwise(tmp_path: Path) -> None:
+    """NOT RECORDED: the plain sample with its first row's LAST UPDATE printed year first in
+    memory. A time in another form than the samples' is refused at its row, naming the form
+    expected and never the text (core's ``parse``)."""
+    lines = PLAIN.read_bytes().split(b"\r\n")
+    printed = next(csv.reader([lines[1].decode("utf-8")]))[1]
+    lines[1] = lines[1].replace(printed.encode("utf-8"), b"2026-10-05 23:00:00", 1)
+    path = tmp_path / "year_first.csv"
+    path.write_bytes(b"\r\n".join(lines))
+    with pytest.raises(ValidationError) as refused:
+        next(parse_sdmx_csv(path))
+    message = str(refused.value)
+    assert message.startswith("eurostat sdmx-csv line 2: ")
+    assert "LAST UPDATE is not printed as dd/mm/yy HH:MM:SS" in message
+    assert "2026-10-05" not in message, "no value in the text"
 
 
 def test_parse_sdmx_csv_refuses_a_cut_gzip_file(tmp_path: Path) -> None:

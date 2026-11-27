@@ -31,7 +31,7 @@ the latest.
 import importlib.util
 import re
 from collections.abc import Awaitable, Callable
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -179,9 +179,10 @@ async def test_download_dataset_apro_mk_cola(tmp_path: Path) -> None:
     assert {row.dimensions["geo"] for row in rows} == {"AT"}
     assert {row.time_period for row in rows} <= {"2022", "2023"}
     assert result.meta.endpoint == "dataQuery"
-    assert result.meta.vintage == rows[0].last_update
+    assert result.meta.vintage is not None
     assert LAST_UPDATE.fullmatch(result.meta.vintage)
     assert result.meta.published_at is not None
+    assert result.meta.published_at == rows[0].last_update
     assert result.meta.published_at.tzinfo is None
     assert result.meta.published_at_naive is True
     assert result.meta.request["key"] == "A...THS_T.AT"
@@ -219,6 +220,7 @@ async def test_list_datasets_upstream_toc_still_reads() -> None:
     assert first.code
     assert first.title
     assert first.path
+    assert isinstance(first.last_update, date), "printed day first, read into a date"
     result = await tasks.list_datasets_async(search="apro_mk_cola")
     assert result.data
     assert result.meta.published_at_naive is True

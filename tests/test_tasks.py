@@ -26,7 +26,7 @@ import importlib.util
 import inspect
 import json
 import re
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast
@@ -740,12 +740,35 @@ def fetched(name: str) -> datetime:
     return datetime.fromisoformat(packaged_file(name)["fetched"])
 
 
+TOC_DATE = re.compile(r"(\d{2})\.(\d{2})\.(\d{4})")
+"""How the table of contents prints ``lastUpdate`` and ``lastModified``, ``"02.10.2026"``."""
+
+
+def toc_date(text: str) -> date:
+    """A packaged leaf's date: the table of contents' print, day first, or an ISO date, the
+    form ``dump_upstream`` writes a ``date`` in, which a refresh on this model packages."""
+    printed = TOC_DATE.fullmatch(text)
+    if printed is None:
+        return date.fromisoformat(text)
+    day, month, year = printed.groups()
+    return date(int(year), int(month), int(day))
+
+
+def toc_record(record: dict[str, Any]) -> dict[str, Any]:
+    """A packaged leaf as ``Dataset.dump_upstream`` gives it back: its dates in ISO."""
+    return record | {
+        name: toc_date(record[name]).isoformat() for name in ("lastUpdate", "lastModified")
+    }
+
+
 def test_list_datasets_answers_the_whole_table_of_contents() -> None:
     result = list_datasets()
     raw = packaged_file("toc")
     assert len(result.data) == len(raw["records"]) == index_record("toc")["count"]
     assert all(isinstance(leaf, Dataset) for leaf in result.data)
-    assert [leaf.dump_upstream() for leaf in result.data[:50]] == raw["records"][:50]
+    assert [leaf.dump_upstream() for leaf in result.data[:50]] == [
+        toc_record(record) for record in raw["records"][:50]
+    ]
     assert {leaf.type for leaf in result.data} == {LeafType.DATASET, LeafType.TABLE}
     assert all(leaf.path for leaf in result.data), "every leaf sits in a folder"
 
@@ -775,7 +798,9 @@ def test_list_datasets_search_keeps_code_or_title_ignoring_case() -> None:
         for record in packaged_file("toc")["records"]
         if "milk" in record["code"].casefold() or "milk" in record["title"].casefold()
     ]
-    assert [leaf.dump_upstream() for leaf in result.data] == expected
+    assert [leaf.dump_upstream() for leaf in result.data] == [
+        toc_record(record) for record in expected
+    ]
     assert "apro_mk_cola" in {leaf.code for leaf in result.data}
     assert result.meta.request == {"search": "MILK"}
 
@@ -786,7 +811,26 @@ def test_list_datasets_search_by_code() -> None:
     cola = result.data[0]
     assert cola.type == LeafType.DATASET
     assert cola.path.endswith(" > Milk and milk products")
-    assert re.fullmatch(r"\d{2}\.\d{2}\.\d{4}", cola.last_update), "as printed, day first"
+    record = next(
+        record for record in packaged_file("toc")["records"] if record["code"] == cola.code
+    )
+    assert cola.last_update == toc_date(record["lastUpdate"])
+    assert cola.last_modified == toc_date(record["lastModified"])
+
+
+def test_list_datasets_reads_the_dates_day_first() -> None:
+    """A leaf's ``lastUpdate`` and ``lastModified``, printed ``"02.10.2026"``, are read into
+    a ``date``, the type that keeps all that upstream sends, with no text beside it
+    (https://github.com/xippios/sdk-usda-esr/issues/60, part 3; conventions §3). The
+    samples of the table of contents fix the order (``tests/test_refresh_reference.py``),
+    and the packaged table is read in it, or in the ISO form a refresh on this model
+    packages."""
+    leaves = list_datasets().data
+    records = packaged_file("toc")["records"]
+    assert all(isinstance(leaf.last_update, date) for leaf in leaves)
+    assert all(isinstance(leaf.last_modified, date) for leaf in leaves)
+    assert [leaf.last_update for leaf in leaves] == [toc_date(r["lastUpdate"]) for r in records]
+    assert [leaf.last_modified for leaf in leaves] == [toc_date(r["lastModified"]) for r in records]
 
 
 def test_list_datasets_search_without_a_match_is_empty() -> None:
@@ -957,6 +1001,8 @@ async def test_list_datasets_tool_end_to_end() -> None:
         "data_end",
         "values",
     }
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", payload["data"][0]["last_update"]), "an ISO date"
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", payload["data"][0]["last_modified"])
     assert payload["meta"]["endpoint"] == "catalogue/toc/xml"
     assert payload["meta"]["request"] == {"search": "apro_mk_cola"}
 
@@ -1056,8 +1102,9 @@ def test_download_dataset_apro_mk_cola(replay_fixture: ReplayFixture, tmp_path: 
     assert meta.source == "eurostat"
     assert meta.endpoint == "dataQuery"
     assert meta.retrieved_at == downloaded.retrieved_at
-    assert meta.vintage == "05/10/26 23:00:00" == next(parse_sdmx_csv(dest)).last_update
+    assert meta.vintage == "05/10/26 23:00:00", "LAST UPDATE as printed"
     assert meta.published_at == datetime(2026, 10, 5, 23, 0)
+    assert meta.published_at == next(parse_sdmx_csv(dest)).last_update
     assert meta.published_at.tzinfo is None
     assert meta.published_at_naive is True
     assert meta.request == {
@@ -1090,7 +1137,7 @@ def test_download_dataset_reads_last_update_day_first(cube: str, sample: str) ->
     05/10/26, DS-059358's 20/10/26, DS-045409's 16/10/26)."""
     updated = datetime.fromisoformat(recorded_updated(cube))
     printed = next(parse_sdmx_csv(FIXTURES / "files" / "sdmx-csv" / f"{sample}.csv"))
-    assert datetime.strptime(printed.last_update, tasks.LAST_UPDATE) == updated.replace(tzinfo=None)
+    assert printed.last_update == updated.replace(tzinfo=None)
 
 
 def test_download_dataset_ds_059358_on_the_comext_base(
@@ -1117,15 +1164,18 @@ def test_download_dataset_ds_059358_on_the_comext_base(
         ("freq", "reporter", "product", "indicators")
     }
     assert all(row.attributes == {} and row.obs_flag is None for row in rows), "no attribute"
-    values = {(row.dimensions["indicators"], row.time_period): row.obs_value for row in rows}
-    assert values[("QNTUNIT", "2022")] == "KG", "a unit among the measures, as printed"
-    assert values[("SCQNTFLAG", "2023")] == values[("SCVALFLAG", "2023")] == ":E"
-    assert {value for value in values.values() if isinstance(value, str)} == {"KG", ":E"}
-    assert values[("EXPVAL", "2022")] == Decimal("349477")
+    values = {(row.dimensions["indicators"], row.time_period): row for row in rows}
+    assert values[("QNTUNIT", "2022")].obs_value == "KG", "a unit among the measures, as printed"
+    assert values[("SCQNTFLAG", "2023")].obs_value == values[("SCVALFLAG", "2023")].obs_value
+    assert values[("SCQNTFLAG", "2023")].obs_value == ":E"
+    texts = {row.obs_value for row in rows if row.obs_value_number is None}
+    assert texts == {"KG", ":E"}, "the texts that read as no number"
+    assert values[("EXPVAL", "2022")].obs_value == "349477"
+    assert values[("EXPVAL", "2022")].obs_value_number == Decimal("349477")
     meta = result.meta
     assert meta.endpoint == "dataQuery"
-    assert meta.vintage == "20/10/26 11:00:00" == rows[0].last_update
-    assert meta.published_at == datetime(2026, 10, 20, 11, 0)
+    assert meta.vintage == "20/10/26 11:00:00", "LAST UPDATE as printed"
+    assert meta.published_at == datetime(2026, 10, 20, 11, 0) == rows[0].last_update
     assert meta.published_at_naive is True
     assert meta.request == {
         "flow_ref": "DS-059358",
@@ -1192,7 +1242,8 @@ def test_download_dataset_refuses_a_last_update_it_cannot_read(
 ) -> None:
     """NOT RECORDED: the recorded plain answer with its LAST UPDATE printed year first in
     memory, served with its recorded headers (conventions §10, kind 4). The file is written
-    and stays at ``dest``; the message names the form expected, never the text."""
+    and stays at ``dest``; the parser's refusal names the row and the form expected, never
+    the text."""
     recorded = recorded_data(MILK_SLICE)
     body = recorded.response.content.replace(b"05/10/26 23:00:00", b"2026-10-05 23:00:00")
     respx_mock.route(method="GET", host="ec.europa.eu").mock(
@@ -1201,9 +1252,9 @@ def test_download_dataset_refuses_a_last_update_it_cannot_read(
     dest = tmp_path / "milk.csv"
     with pytest.raises(ValidationError) as refused:
         download_dataset("apro_mk_cola", MILK_KEY, dest=dest)
-    assert str(refused.value) == (
-        "eurostat dataQuery: the first row's LAST UPDATE is not printed as dd/mm/yy HH:MM:SS"
-    )
+    assert str(refused.value).startswith("eurostat sdmx-csv line 2: ")
+    assert "LAST UPDATE is not printed as dd/mm/yy HH:MM:SS" in str(refused.value)
+    assert "2026-10-05" not in str(refused.value), "no value in the text"
     assert dest.read_bytes() == body, "the file stays at dest"
     assert leftovers(tmp_path) == ["milk.csv"]
 
