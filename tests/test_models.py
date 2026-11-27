@@ -1,13 +1,18 @@
-"""``Cube`` against the recorded answers: every member kept, the cells read out right.
+"""``Cube`` against the recorded answers, and the value sets written by hand against the
+snapshot's pages.
 
 The cubes are the recorded answers under ``tests/fixtures/get_data/``, of the main base
 and of the Comext base (``DS-059358``, Prodcom, whose ``indicators`` dimension carries
 units and flags as text among its measures). Where a test needs a shape the service did
 not send (JSON-stat's dense ``value`` array, an incoherent cube), it derives it in memory
-from a recorded body and says so; no fixture is written.
+from a recorded body and says so; no fixture is written. ``Lang``, ``GeoLevel`` and
+``LeafType`` are read against the user guide's pages under ``docs/upstream/`` at test time
+(sdk-core ADR-0061, decision 12).
 """
 
+import inspect
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -16,9 +21,11 @@ import pytest
 from xippios.core import ValidationError, parse
 from xippios.core.testing import load_fixture
 
-from xippios.eurostat.models import Cube, Observation
+from xippios.eurostat import tasks
+from xippios.eurostat.models import Cube, GeoLevel, Lang, LeafType, Observation
 
 FIXTURES = Path(__file__).parent / "fixtures" / "get_data"
+GUIDE = Path(__file__).parents[1] / "docs" / "upstream" / "user-guide" / "api-detailed-guidelines"
 PRODCOM = "DS-059358_AT_10411200_2022_2023"
 CUBES = [
     "apro_mk_cola_AT_2022_2023",
@@ -199,3 +206,42 @@ def test_incoherent_cube_is_refused(change: dict[str, Any], message: str) -> Non
         f"Value error, {message}"
     )
     assert refused.value.__cause__ is None
+
+
+def test_lang_holds_the_values_of_the_user_guide() -> None:
+    """``Lang``, written by hand, holds the three values that api-statistics.md gives
+    ``lang``, in its order, and ``get_data`` takes its default: "The Language parameter
+    ("lang") can have only three values: "EN", "FR", and "DE". In case the parameter isn't
+    specified, the default value "EN" is taken." (sdk-core ADR-0061, decision 12)."""
+    page = (GUIDE / "api-statistics.md").read_text(encoding="utf-8")
+    sentence = next(line for line in page.splitlines() if line.startswith("The Language parameter"))
+    values = re.search(r"only three values: (.*?)\. ", sentence)
+    default = re.search(r"the default value \W(\w+)\W is taken", sentence)
+    assert values is not None
+    assert default is not None
+    assert [member.value for member in Lang] == re.findall(r"\W([A-Z]{2})\W", values[1])
+    assert inspect.signature(tasks.get_data).parameters["lang"].default == default[1]
+
+
+def test_geo_level_holds_the_values_of_the_user_guide() -> None:
+    """``GeoLevel``, written by hand, holds the values of api-statistics.md's section "The
+    geoLevel parameter", in its order, ``geoLevel= city`` with its space among them
+    (sdk-core ADR-0061, decision 12)."""
+    page = (GUIDE / "api-statistics.md").read_text(encoding="utf-8")
+    section = page.split("### The geoLevel parameter\n", 1)[1].split("\n### ", 1)[0]
+    documented = re.findall(r"^- \**geoLevel=\s*(\w+)", section, flags=re.MULTILINE)
+    assert len(documented) == 6
+    assert [member.value for member in GeoLevel] == documented
+
+
+def test_leaf_type_holds_the_types_of_a_leaf_in_the_user_guide() -> None:
+    """``LeafType``, written by hand, holds the types that toc.md's row "type (dataset,
+    table, folder)" names but ``folder``, a branch of the tree and never a leaf, which the
+    package does not list (sdk-core ADR-0061, decision 12)."""
+    page = (GUIDE / "catalogue-api" / "toc.md").read_text(encoding="utf-8")
+    row = next(line for line in page.splitlines() if line.startswith("| type ("))
+    named = re.match(r"\| type \(([^)]*)\)", row)
+    assert named is not None
+    types = named[1].split(", ")
+    assert "folder" in types
+    assert [member.value for member in LeafType] == [kind for kind in types if kind != "folder"]
