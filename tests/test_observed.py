@@ -7,9 +7,11 @@ Core's family check holds the file's row in ``FETCHED.md``, the label and the da
 each note's last paragraph and the files its code spans cite (sdk-core ADR-0044, decision 1).
 What stays here is the package's own (decision 3): each probe's operation and sample, the day
 of each recording it cites, and that no dated note of what Eurostat answered stands outside
-the file, in ``CLAUDE.md``, the README or a module of the package.
+the file, in ``CLAUDE.md``, the README, a module of the package or the docstrings of the
+tests and the scripts.
 """
 
+import ast
 import json
 import re
 from pathlib import Path
@@ -25,6 +27,9 @@ SAMPLE = re.compile(
 """A sample a probe names: a recording, a file of the snapshot or a packaged list."""
 REQUEST = re.compile(r"`GET (?:https://\S+|[a-z][^`\s]*)`")
 """A request a probe names where it kept no answer, as sent: ``GET <path or URL>``."""
+WEBSITE = re.compile(r"`GET https://ec\.europa\.eu/eurostat/web/\S+`")
+"""A request to Eurostat's website, whose pages no WADL file lists as an operation."""
+NOT_KEPT = re.compile(r"\bkept no answer\b|\bnot kept\b")
 OPERATION = re.compile(r"`(\w+)`")
 REFERENCE = re.compile(r"^\[[^\]\n]+\]: \S+\n?", re.MULTILINE)
 """A link reference definition, which renders as nothing and is no note's paragraph."""
@@ -67,15 +72,29 @@ def operations() -> set[str]:
 
 
 def test_every_probe_names_an_operation_of_the_snapshot_and_its_sample() -> None:
-    """The last paragraph of each note names the operation it probed, by its WADL id, and a
-    sample of the answer, or the request where the probe kept none."""
+    """The last paragraph of each note names the operation it probed, by its WADL id, or
+    the request to Eurostat's website that it sent, and a sample of the answer, or the
+    request where the probe kept none."""
     known = operations()
     found = notes()
     assert found
     for heading, paragraphs in found.items():
         probe = paragraphs[-1]
-        assert set(OPERATION.findall(probe)) & known, heading
+        assert set(OPERATION.findall(probe)) & known or WEBSITE.search(probe), heading
         assert SAMPLE.search(probe) or REQUEST.search(probe), heading
+
+
+def test_a_probe_that_kept_no_answer_names_its_request() -> None:
+    """Where no recording holds the answer, the request stands in its place, in the sentence
+    or the clause that says so (sdk-core ``docs/conventions.md`` §3: a probe names "its
+    sample, a request or the fixture that holds the answer")."""
+    found = [
+        f"{heading}: {clause}"
+        for heading, paragraphs in notes().items()
+        for clause in re.split(r"(?<=[.;]) ", paragraphs[-1])
+        if NOT_KEPT.search(clause) and not REQUEST.search(clause)
+    ]
+    assert found == []
 
 
 def test_every_recording_a_probe_cites_has_its_day_among_the_probe_s_dates() -> None:
@@ -94,12 +113,48 @@ def dated(path: Path) -> list[str]:
     return [f"{path.relative_to(ROOT)}: {match.group(0)}" for match in DATED.finditer(body)]
 
 
+def docstrings(path: Path) -> list[str]:
+    """The docstrings of a module of the tests or the scripts: the module's, each class's and
+    function's, and each string that stands as a statement, a constant's docstring."""
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    return [
+        node.value.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Expr)
+        and isinstance(node.value, ast.Constant)
+        and isinstance(node.value.value, str)
+    ]
+
+
+def dated_docstrings(path: Path) -> list[str]:
+    """What tells a probe in the docstrings of ``path``."""
+    return [
+        f"{path.relative_to(ROOT)}: {match.group(0)}"
+        for text in docstrings(path)
+        for match in DATED.finditer(" ".join(text.split()))
+    ]
+
+
 def test_no_dated_note_stands_outside_the_notes() -> None:
     """What Eurostat was seen to do stands in ``OBSERVED.md`` alone, with its date and its
     recording: neither ``CLAUDE.md``, the README nor any module of the package tells it
     (sdk-core ``docs/conventions.md`` §3; https://github.com/xippios/sdk-eurostat/issues/49)."""
     paths = [ROOT / "CLAUDE.md", ROOT / "README.md", *sorted(PACKAGE.rglob("*.py"))]
     assert [found for path in paths for found in dated(path)] == []
+
+
+def test_no_dated_note_stands_in_the_docstrings_of_the_tests_and_the_scripts() -> None:
+    """A test or a script says what it replays or sends and cites the note for what Eurostat
+    answered: no docstring of ``tests/`` or ``scripts/`` tells a probe. This module spells
+    the pattern it looks for and is left out."""
+    paths = [
+        *sorted((ROOT / "tests").glob("*.py")),
+        *sorted((ROOT / "scripts").glob("*.py")),
+    ]
+    found = [
+        hit for path in paths if path.name != Path(__file__).name for hit in dated_docstrings(path)
+    ]
+    assert found == []
 
 
 def test_a_dated_note_is_found() -> None:
@@ -111,6 +166,7 @@ def test_a_dated_note_is_found() -> None:
 
 
 def test_the_rules_point_to_the_notes() -> None:
-    """``CLAUDE.md`` and the README send a reader to the notes for what Eurostat does."""
-    for path in (ROOT / "CLAUDE.md", ROOT / "README.md"):
+    """``CLAUDE.md``, the README and the capture script, whose pace answers the website's
+    request budget, send a reader to the notes for what Eurostat does."""
+    for path in (ROOT / "CLAUDE.md", ROOT / "README.md", ROOT / "scripts" / "refresh_upstream.py"):
         assert "docs/upstream/OBSERVED.md" in path.read_text(encoding="utf-8"), path.name
