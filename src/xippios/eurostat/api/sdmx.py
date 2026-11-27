@@ -21,9 +21,8 @@ version, a path segment, is "latest" when left out. This wrapper sends ``format=
 always, since the package reads no SDMX-ML (decision D1 of
 https://github.com/xippios/sdk-eurostat/pull/6), and leaves the version out, for the
 latest: the guide's other sentence, that a query without a version returns "all existing
-versions", is not what a JSON-stat answer does, which carries one version (``UNIT``
-answered with 84.0 on 2026-10-27, newer than the 82.0 and 75.0 that the data structures
-of apro_mk_cola and ef_m_farmleg name). The answer is one JSON-stat dimension
+versions", is not what a JSON-stat answer does, which carries one version
+(``docs/upstream/OBSERVED.md``). The answer is one JSON-stat dimension
 (``models.Codelist``). Only
 ``scripts/refresh_reference.py`` calls this operation; ``list_codes`` answers from the
 packaged codelists.
@@ -40,19 +39,17 @@ takes ``firstNObservations``, ``lastNObservations``, ``detail``, ``format``, ``l
   separated list of dimension filtered values": a dimension left empty is not filtered,
   and "Explicit listing of values for a dimension is done using the plus '+' character"
   (``A.CP_MEUR.B1GQ.BE+LU``); without a key, ``data/{flowRef}``, no dimension is
-  filtered (``data/ef_m_farmleg?format=SDMX-CSV``, 6.2 million values, answered HTTP 200
-  with SDMX-CSV on 2026-10-27, its status and headers probed);
+  filtered, and the whole dataset is answered (``docs/upstream/OBSERVED.md``);
 - ``startPeriod`` and ``endPeriod`` filter on time (the guide's; the WADL lists
   neither), and ``lastNObservations`` is "The maximum number of observations to be
   returned for each of the matching series, counting back from the most recent
   observation";
 - ``format`` ``SDMX-CSV`` is "SDMX-CSV 1.0 flat format", sent always, since the package
   reads no SDMX-ML (https://github.com/xippios/sdk-eurostat/pull/7);
-- ``compressed`` gives "responses in .gz compressed format": ``compressed=true``
-  answered on 2026-10-27 with the same ``Content-Type``,
-  ``application/vnd.sdmx.data+csv;version=1.0.0``, and a gzip file
-  (``estat_apro_mk_cola_filtered_en.csv.gz``) that decompresses to the plain answer
-  byte for byte (``tests/fixtures/data_query/``).
+- ``compressed`` gives "responses in .gz compressed format": a gzip file under the
+  plain answer's ``Content-Type``, ``application/vnd.sdmx.data+csv;version=1.0.0``,
+  that decompresses to the plain answer byte for byte (``tests/fixtures/data_query/``;
+  ``docs/upstream/OBSERVED.md``).
 
 The answer is a file, streamed to disk with core's ``download`` and never held in
 memory (sdk-core ADR-0040); ``parse.sdmx_csv`` reads it. A large request is answered

@@ -5,11 +5,11 @@ Reference: ``docs/upstream/api/catalogue.wadl``, resource ``toc/xml`` under
 ``application/xml;charset=UTF-8``; its content is
 ``docs/upstream/user-guide/api-detailed-guidelines/catalogue-api/toc.md``: every folder,
 dataset and table of Eurostat's navigation tree with its code, titles, last update and
-period coverage, multilingual. The file is large (23 MB on 2026-10-27), so it is
-streamed to disk with core's ``download`` (sdk-core ADR-0040), never held in memory, and read by
-``scripts/refresh_reference.py`` alone, the only code that parses XML (decision D1 of
-https://github.com/xippios/sdk-eurostat/pull/6): no task calls this operation, the
-package answers ``list_datasets`` from its packaged copy.
+period coverage, multilingual. The file is large, over 10,000 leaves with their titles in
+three languages, so it is streamed to disk with core's ``download`` (sdk-core ADR-0040),
+never held in memory, and read by ``scripts/refresh_reference.py`` alone, the only code
+that parses XML (decision D1 of https://github.com/xippios/sdk-eurostat/pull/6): no task
+calls this operation, the package answers ``list_datasets`` from its packaged copy.
 """
 
 import os

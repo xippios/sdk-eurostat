@@ -7,7 +7,7 @@ writes it. The layout, from the guide's examples and the sample
 observation, comma-separated, lines ending in CRLF::
 
     DATAFLOW,LAST UPDATE,freq,milkitem,dairyprod,unit,geo,TIME_PERIOD,OBS_VALUE,...
-    ESTAT:APRO_MK_COLA(1.0),05/10/26 23:00:00,A,PRD,D1110D,THS_T,AT,2022,3247.05,,
+    ESTAT:APRO_MK_COLA(1.0),05/11/26 11:00:00,A,PRD,D1110D,THS_T,AT,2022,3247.05,,
 
 ``DATAFLOW`` and ``LAST UPDATE`` come first, the dataset's dimensions in structure order
 up to ``TIME_PERIOD``, then ``OBS_VALUE`` and the observation's attributes, which differ

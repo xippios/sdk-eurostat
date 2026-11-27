@@ -28,10 +28,12 @@ src/xippios/eurostat/
                    script alone reads
   parse/
     sdmx_csv.py    parse_sdmx_csv, the SDMX-CSV 1.0 file that download_dataset writes, gzip
-                   or plain, row by row
-  params.py        CODELISTS, each codelist's base and dimension, and the readers of the
-                   packaged lists: datasets(), the table of contents, codes(), a codelist,
-                   list_info(), the index lists.json
+                   or plain, row by row, and last_update_as_printed, the first row's LAST
+                   UPDATE as printed, download_dataset's meta.vintage
+  params.py        CODELISTS, each codelist's base and dimension, which get_data's check of a
+                   filter's code reads (tasks.CHECKED_FILTERS), and the readers of the
+                   packaged lists: packaged(), a list's file, datasets(), the table of
+                   contents, codes(), a codelist, list_info(), the index lists.json
   reference/       the table of contents, twelve codelists of the main base and six of the
                    Comext base (CXT_PRODCOM2_SOLD, CXT_PRODCOM2_TOTAL, CXT_INDICATORS, CXT_NC,
                    CXT_FREE_ISO, CXT_EU_FLUX), and the index lists.json
@@ -47,8 +49,15 @@ tests/
   fixtures/files/  a sample of each file kind the parsers and the reference script read,
                    <kind>/<case>.*: toc/, codelist/ and sdmx-csv/
   test_client.py   classify against the recorded refusals and the documented ones
-  test_models.py   Cube against the recorded answers
+  test_models.py   Cube against the recorded answers, and Lang, GeoLevel and LeafType
+                   against the snapshot's pages
+  test_observed.py docs/upstream/OBSERVED.md as committed: each note's probe and sample,
+                   and no dated note of what Eurostat answered outside it
   test_parse.py    parse_sdmx_csv on the samples under tests/fixtures/files/sdmx-csv/
+  test_readme.py   README.md's scope against the snapshot's WADL files and guide pages:
+                   each documented operation once, each parameter and each form of format
+                   that a task takes or the scope places beside it, and the two country
+                   lists against the packaged ones
   test_refresh_reference.py  the reference script's declaration, readers and cuts, and the
                    frame's run of it, offline
   test_refresh_upstream.py   the snapshot's declaration and hooks, offline

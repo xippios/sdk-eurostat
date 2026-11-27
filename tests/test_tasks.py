@@ -2,16 +2,17 @@
 
 ``/add-endpoint`` and ``/record-fixture`` add them.
 
-The fixtures are ``tests/fixtures/get_data/<case>.json``, recorded on the main base on
-2026-10-27, and its ``DS-*`` cases, recorded on the Comext base on 2026-10-28 for the
-Prodcom dataset ``DS-059358``; each test sends exactly the recorded URL, parameter order
-included. The user guide's documented asynchronous ``warning``, never seen, keeps a test
-that serves its documented body. The list tasks (``list_datasets``, ``list_codes``) send
+The fixtures are ``tests/fixtures/get_data/<case>.json``, recorded on the main base, and
+its ``DS-*`` cases, recorded on the Comext base, each with its day in ``recorded_at``;
+each test sends exactly the recorded URL, parameter order included. The user guide's
+documented asynchronous ``warning``, which Eurostat answers in another shape
+(``docs/upstream/OBSERVED.md``, "The asynchronous answer comes as an `error` array"), keeps
+a test that serves its documented body. The list tasks (``list_datasets``, ``list_codes``) send
 nothing: their tests read the packaged files under ``src/xippios/eurostat/reference/``
 and take the expected values from them. The bulk task ``download_dataset`` replays
 ``tests/fixtures/data_query/<case>.json``, the SDMX 2.1 data query recorded with
-``compressed=true`` (a gzip file) and without it, on the main base on 2026-10-27 and on
-the Comext base on 2026-10-28, through core's ``download``; the refusals of an
+``compressed=true`` (a gzip file) and without it, on the main base and on the Comext base,
+through core's ``download``; the refusals of an
 asynchronous answer and of an extraction too big replay the answers
 recorded on the Comext base for ``DS-045409``.
 
@@ -212,7 +213,7 @@ def label(codelist: str, code: str) -> str:
 def test_get_data_refuses_a_code_its_codelist_lacks_before_sending(
     respx_mock: respx.MockRouter,
 ) -> None:
-    """The call of the recorded empty cube ``unknown_code`` (``geo=XX``, 2026-10-27): GEO,
+    """The call of the recorded empty cube ``unknown_code`` (``geo=XX``): GEO,
     the one packaged codelist that feeds the main base's ``geo``, lacks ``XX``, so the call
     is refused before its request by core's check of a packaged list, saying that nothing
     was sent (conventions §5; the maintainer's decision of 2026-11-27 on
@@ -237,8 +238,8 @@ def test_get_data_refuses_a_code_its_codelist_lacks_before_sending(
 def test_get_data_ds_059358_refuses_a_reporter_its_codelist_lacks(
     respx_mock: respx.MockRouter,
 ) -> None:
-    """The call of the recorded empty cube ``DS-059358_unknown_code`` (``reporter=XX``,
-    2026-10-28): on the Comext base CXT_FREE_ISO is the one packaged codelist that feeds
+    """The call of the recorded empty cube ``DS-059358_unknown_code`` (``reporter=XX``): on
+    the Comext base CXT_FREE_ISO is the one packaged codelist that feeds
     ``reporter``, so ``XX`` is refused before the request, and ``product``, which three
     codelists feed, is not checked."""
     assert "&reporter=XX&product=10411200&" in recorded_url("DS-059358_unknown_code")
@@ -345,10 +346,11 @@ def test_get_data_sends_a_product_unchecked(replay_fixture: ReplayFixture) -> No
 def test_get_data_answers_a_cube_without_a_cell_with_not_found(
     replay_fixture: ReplayFixture,
 ) -> None:
-    """Recorded on the Comext base on 2026-10-28: DS-059359 for the reporter AT, the product
-    20158000 and the indicator PRODVAL, codes that CXT_FREE_ISO, CXT_PRODCOM2_TOTAL and
-    CXT_INDICATORS hold, answered with a cube that holds no cell, size 0 on ``indicators``,
-    since DS-059359 serves no PRODVAL. The check passes the codes, and a task of one record
+    """Recorded on the Comext base: DS-059359 for the reporter AT, the product 20158000 and
+    the indicator PRODVAL, codes that CXT_FREE_ISO, CXT_PRODCOM2_TOTAL and CXT_INDICATORS
+    hold, answered with a cube that holds no cell, size 0 on ``indicators``, since
+    DS-059359 serves no PRODVAL (``docs/upstream/OBSERVED.md``, "A code that matches nothing
+    answers an empty cube"). The check passes the codes, and a task of one record
     answers no data with ``NotFoundError``, which names the dataset and the filters sent
     (sdk-core ADR-0061, decision 6; conventions §5; the maintainer's decision of 2026-11-27
     on https://github.com/xippios/sdk-eurostat/issues/82)."""
@@ -471,9 +473,10 @@ def test_documented_shape_get_data_refuses_an_asynchronous_answer(
     respx_mock: respx.MockRouter,
 ) -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written, and never seen: the asynchronous answer of api-statistics.md. The
-    Statistics API's asynchronous answer was recorded on 2026-10-28 as an ``error`` array
-    (``tests/test_client.py``, ``test_statistics_api_asynchronous_answer_is_refused_as_recorded``);
+    hand-written: the asynchronous answer of api-statistics.md. Eurostat answers it as an
+    ``error`` array (``tests/test_client.py``,
+    ``test_statistics_api_asynchronous_answer_is_refused_as_recorded``;
+    ``docs/upstream/OBSERVED.md``, "The asynchronous answer comes as an `error` array");
     this test stays for the documented ``warning`` (conventions §10, kind 1)."""
     documented = next(
         line.strip()
@@ -520,7 +523,7 @@ def test_get_data_keeps_an_updated_without_zone_as_a_naive_published_at(
     respx_mock: respx.MockRouter,
 ) -> None:
     """NOT RECORDED: the recorded cube with ``updated`` stripped of its zone in memory, a
-    form never seen; ``published_at`` keeps it as printed, no zone invented, with
+    form Eurostat was not seen to send; ``published_at`` keeps it as printed, no zone invented, with
     ``published_at_naive`` set, and the text stays the vintage (sdk-core ADR-0041 decision 2;
     conventions §10, kind 4)."""
     fixture = load_fixture(FIXTURES / GET_DATA / "apro_mk_cola_AT_2022_2023.json")
@@ -620,7 +623,7 @@ def test_get_data_route_answers_a_refusal_with_422(replay_fixture: ReplayFixture
 
 
 # The Comext base: a DS- dataset is requested on COMEXT_BASE_URL (prefixed-datasets.md),
-# through the same client; the fixtures mirror the main base's, recorded on 2026-10-28.
+# through the same client; the fixtures mirror the main base's.
 
 PRODCOM = "DS-059358_AT_10411200_2022_2023"
 FISH_OIL = {"reporter": "AT", "product": "10411200"}

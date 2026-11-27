@@ -67,15 +67,26 @@ The codes of a dimension that one packaged codelist feeds are checked against it
 the request, on the dataset's base: `geo`, `unit` and the other ten dimensions of the
 main base's codelists, and `reporter`, `flow` and `indicators` of the Comext base, as
 `list_codes` lists them. A code the codelist lacks raises core's `UnknownCode`, which says
-that nothing was sent and names the closest codes, and `meta.names` names each checked
+that nothing was sent and names the codes of that codelist closest to it by their text: a
+hint and no successor, so `FCA`, which MILKITEM no longer holds, is offered `FAT`, another
+measure. A code that Eurostat added after the packaged fetch is refused alike, and
+`download_dataset`'s `key`, which no check reads, sends it. `meta.names` names each checked
 code with its label (`{"geo": {"AT": "Austria"}}`). `product`, which three codelists
 feed, and `partner` are sent unchecked, and so is a dimension of one base on a dataset of
 the other. A cube that holds no cell, a code the dataset does not use or a period not yet
 released, raises `NotFoundError` naming the dataset and the filters sent.
 
+Eurostat keeps two lists of countries. GEO, "Geopolitical entity (reporting)", the codelist
+of `geo` on the main base, writes Greece `EL` and the United Kingdom `UK`; CXT_FREE_ISO,
+the codelist of `reporter` and `partner` on the Comext base, writes them `GR` and `GB`. A
+`geo` filter takes GEO's codes and a `reporter` or `partner` filter CXT_FREE_ISO's, as
+`list_codes("geo")` and `list_codes("cxt_free_iso")` list them with their labels. The check
+refuses a code of the other list for `geo` and for `reporter`, and its hint names no code of
+the other list.
+
 `meta.published_at` is the cube's `updated` with Eurostat's zone; one printed without a
-zone, never seen, is kept as printed with `meta.published_at_naive` set, and
-`meta.vintage` holds the text either way. An unknown dataset, and Eurostat's "No results
+zone is kept as printed with `meta.published_at_naive` set, and `meta.vintage` holds the
+text either way. An unknown dataset, and Eurostat's "No results
 found", raise `NotFoundError` too; a query Eurostat refuses raises `InvalidRequestError`
 with Eurostat's message, and one it judges too large core's `QueryTooLarge`, with
 Eurostat's estimate and limit and how to narrow it. A query Eurostat would answer
@@ -221,11 +232,63 @@ other on the main base URL, `https://ec.europa.eu/eurostat/api/dissemination`. T
 Comext base serves Prodcom's DS-059358 and DS-059359 and Comext's DS-045409 and
 DS-059341. `list_codes` lists eighteen packaged codelists, twelve of the main base and
 six of the Comext base, CXT_PRODCOM2_SOLD and CXT_NC among them, the products of the
-Prodcom and trade datasets. `list_datasets` lists the main base's table of contents only, and does not list the
-Comext or Prodcom datasets: the Comext base answers `catalogue/toc/xml` with HTTP 404
-(probed 2026-10-28), though its WADL lists it. Not covered: polling an asynchronous
-answer, which is refused with how to narrow the query; SDMX-ML and TSV; codelists other
-than the eighteen packaged ones, which `list_codes` refuses naming the closest.
+Prodcom and trade datasets. `list_datasets` lists the main base's table of contents only,
+and does not list the Comext or Prodcom datasets: the Comext base answers
+`catalogue/toc/xml` with HTTP 404, though its WADL lists it (`docs/upstream/OBSERVED.md`).
+
+## Scope
+
+The WADL files of Eurostat's main base (`docs/upstream/api/`) document 24 operations, and
+the package's scope is its data, its lists and its releases, 17 of them, as the maintainer
+decided on 2026-11-27 (https://github.com/xippios/sdk-eurostat/issues/82#issuecomment-7219313682).
+Four are served today, as the status table above names them: the Statistics API's
+`getData` and the SDMX 2.1 API's `dataQuery`, wrapped, and `codeListQuery` and `getTocXml`,
+whose answers the package ships, eighteen codelists and the table of contents, refreshed
+before each release. The other thirteen wait for their public issues:
+
+- the Statistics API's lookups of the geo codes by level and of a country's label,
+  `getGeoCategoricalResponse` and `getCountryLabelResponse`, and five structure queries of
+  the SDMX 2.1 API, `dataStructureQuery`, `contentConstraintQuery`, `conceptSchemeQuery`,
+  `categorySchemeQuery` and `categorisationQuery`
+  (https://github.com/xippios/sdk-eurostat/issues/62);
+- `dataflowQuery`, the SDMX 2.1 API's list of datasets, the one list of the Comext base's
+  datasets (https://github.com/xippios/sdk-eurostat/issues/36);
+- the Catalogue API's DCAT catalogue, RSS feed of updates and metabase file, `getDcatRdf`,
+  `getRss` and `getMetabase` (https://github.com/xippios/sdk-eurostat/issues/61);
+- the asynchronous API's `getStatus` and `getData`, which follow a queued extraction to its
+  answer (https://github.com/xippios/sdk-eurostat/issues/57).
+
+Seven are left out. `getTocTxt`, `getLegacyTocTxt` and `getLegacyTocXml` serve the table of
+contents as text and in two legacy forms, the same content in other forms, and `getTocXsd`
+its schema, which holds no data. `getJsonLd`, `getDatasetWithRelations` and
+`essmhMetaDataSearch`, the paths `jsonld`, `relations` and `linked-datasets`, serve the
+records of Eurostat's metadata portal. Out beside them: SDMX 3.0, whose WADL the Comext
+base serves (`docs/upstream/api/comext/sdmx-rest-3.0.wadl`), the same data and structures
+under another version of the standard (https://github.com/xippios/sdk-eurostat/pull/11);
+the SDMX-ML and TSV forms of the answers that the package reads in JSON or SDMX-CSV; and the
+bulk download facility, a service beside the API that Eurostat advises for large
+extractions (https://github.com/xippios/sdk-eurostat/issues/60, closed as not planned).
+
+`get_data` takes each parameter that the user guide documents for the Statistics API's data
+query but `format`, whose one documented value, `JSON`, it sends. `download_dataset` takes
+the data query's `flowRef`, `key`, `startPeriod`, `endPeriod` and `lastNObservations`, and of
+its `format` it sends `SDMX-CSV`, the form it downloads, leaves the SDMX-ML forms, the
+default and `SDMX_2.1_STRUCTURED`, and `TSV` out, as above, and leaves `JSON`, JSON-stat,
+to https://github.com/xippios/sdk-eurostat/issues/39. A caller of `download_dataset` cannot
+set yet the data query's `firstNObservations`, `detail`, `returnData`, `lang`, `label` and
+`providerRef`, nor its `compressed`, which it sends as `true`
+(https://github.com/xippios/sdk-eurostat/issues/39). `list_codes` answers each codelist in
+the form its refresh fetched, the codelist query's `format` `JSON`, JSON-stat, and leaves
+its default, SDMX-ML, and `TSV` out, as above. A caller of `list_codes` cannot set yet the
+codelist query's other parameters, since the package ships each codelist as its refresh
+fetched it, of the agency ESTAT, in its latest version and with English labels: another
+`agencyID` or `resourceID`, a `version` and a `lang`, the `detail`, `completestub` and
+`references` that select what a structure query returns, and `compressed`
+(https://github.com/xippios/sdk-eurostat/issues/35). The table of contents' query takes no
+parameter, and `list_datasets` leaves out what each leaf holds beside its nine fields: the
+links to its reference metadata, its short description, its titles in French and German,
+and the folders above it as records of their own
+(https://github.com/xippios/sdk-eurostat/issues/40).
 
 ## Upstream terms and attribution
 
@@ -278,6 +341,7 @@ reopens. It hands over nothing, and the called workflow reads its switch itself:
 - sdk-core: [docs/review-checklist.md](https://github.com/xippios/sdk-core/blob/main/docs/review-checklist.md) — what the review of a pull request checks, in order.
 - sdk-eurostat: [docs/adr.md](https://github.com/xippios/sdk-eurostat/blob/main/docs/adr.md) — the index of this package's own decisions, generated from the records in `docs/adr/`.
 - sdk-eurostat: [docs/upstream/FETCHED.md](https://github.com/xippios/sdk-eurostat/blob/main/docs/upstream/FETCHED.md) — the snapshot of the upstream documentation, the reference for names, parameters and semantics.
+- sdk-eurostat: [docs/upstream/OBSERVED.md](https://github.com/xippios/sdk-eurostat/blob/main/docs/upstream/OBSERVED.md) — what Eurostat does that its documentation does not state, each note with the probe that showed it.
 
 ## Licence
 

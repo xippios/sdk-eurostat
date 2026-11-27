@@ -12,7 +12,7 @@ so are their answers' shapes. Release metadata: ``meta.published_at`` is the cub
 member as upstream printed it (``"2026-10-05T23:00:00+0200"``), Eurostat's only release
 identifier for a dataset (``docs/upstream/user-guide/api-introduction.md``: "there is no
 versioning or documentation of past versions of the data"; sdk-core ADR-0041 decision
-2). An ``updated`` without a zone, never seen, goes into ``published_at`` as printed with
+2). An ``updated`` without a zone goes into ``published_at`` as printed with
 ``published_at_naive`` set, no zone invented (sdk-core ADR-0041 decision 2).
 ``meta.endpoint`` is the operation's name, ``"getData"``; ``meta.request`` holds what
 was sent, a parameter left ``None`` omitted; ``meta.total`` stays ``None``: the answer
@@ -96,8 +96,10 @@ __all__ = [
 MCP_INSTRUCTIONS = (
     "Eurostat dissemination API via xippios. "
     "Tools are read-only. "
-    "Where list tools (eurostat_list_*) exist, call them first to find valid values, "
-    "then query."
+    "eurostat_list_datasets finds a dataset's code in the table of contents, and "
+    "eurostat_list_codes lists the codes of eighteen codelists, the values of the "
+    "dimensions they feed; for any other dimension, the cube of eurostat_get_data lists "
+    "the codes it answers with."
 )
 """The server's instructions, which core's ``ToolSet.from_tasks`` reads from this module
 (sdk-core ADR-0063, decision 7)."""
@@ -144,10 +146,10 @@ add the note that names ``search``. ``list_datasets`` keeps the family's 200 row
 bytes each as compact JSON, so the bytes cut it at about 150), and a search narrows it to
 what it looks for. ``list_codes`` takes up to 1,000 rows within the family's 64 KB
 (sdk-core ADR-0038 decision 4): a code of the main base's codelists is about 45 to 70
-bytes, so a codelist comes whole up to the byte bound, eleven of the twelve packaged on
-2026-11-20 (UNIT's 773 codes are 57,670 bytes), and CXT_INDICATORS too; GEO's thousands,
-the two PRODCOM product lists, whose labels are long, and CXT_NC's tens of thousands are
-cut with the note (CXT_PRODCOM2_TOTAL's 822 codes at 652 rows on 2026-10-28).
+bytes, so a codelist comes whole up to the byte bound, every packaged one but GEO's
+thousands, the two PRODCOM product lists, whose labels are long, and CXT_NC's tens of
+thousands, which are cut with the note; UNIT's 773 codes, the most of those that come
+whole, are about 57 KB as compact JSON.
 
 Both caps are paged, ``ResultCap(paged=True)``, so their tools take ``offset`` and a cut
 answer's note names the offset to continue with: the next page runs the task again and
@@ -379,8 +381,12 @@ async def get_data_async(
             against it before sending, ``geo``, ``unit`` or ``milkitem`` on the main base,
             ``reporter``, ``flow`` or ``indicators`` on the Comext base, as
             ``list_codes`` lists them; ``product``, which three codelists feed, and
-            ``partner`` are sent unchecked. A code that the dataset does not use answers a
-            cube without a cell, ``NotFoundError``, and so may a period not yet released.
+            ``partner`` are sent unchecked. Eurostat keeps two lists of countries: GEO,
+            the codelist of ``geo``, writes Greece ``EL`` and the United Kingdom ``UK``,
+            and CXT_FREE_ISO, the codelist of ``reporter`` and ``partner`` on the Comext
+            base, writes them ``GR`` and ``GB``; a code of the other list is refused for
+            ``geo`` and ``reporter``. A code that the dataset does not use answers a cube
+            without a cell, ``NotFoundError``, and so may a period not yet released.
         lang: Language of the labels: ``"EN"`` (the default), ``"FR"`` or ``"DE"``.
         since_time_period: The first time period, included, e.g. ``"2022"``; combines
             with ``until_time_period`` and with no other time parameter, any other

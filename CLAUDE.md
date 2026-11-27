@@ -85,33 +85,42 @@ CXT_FREE_ISO feeds `partner` too; its `param` is `reporter`, the first of the tw
 data structures' order.
 `scripts/refresh_reference.py --only <file> [<file> ...]` refreshes the lists of those
 files (`--only statinfo`) and keeps every other list's file, `lists.json` record and
-provenance row; the index's `fetched` is the latest among all lists. No task checks a code
-against a packaged list before sending: a code no list holds (`XX`) is sent, and Eurostat
-answered it with an empty cube (`DS-059358_unknown_code`), as it answers a code that
-matches nothing on the main base (`unknown_code`). What Eurostat answers a code that a
-list holds and the dataset lacks is its own, as recorded on 2026-10-28: an empty cube for
-an indicator DS-059359 lacks, `PRODVAL` with the reporter `AT` and the product `20158000`,
-which CXT_INDICATORS, CXT_FREE_ISO and CXT_PRODCOM2_TOTAL hold
-(`DS-059359_AT_20158000_indicator_not_in_dataset`).
+provenance row; the index's `fetched` is the latest among all lists.
+
+What Eurostat does that its documentation does not state stands in
+`docs/upstream/OBSERVED.md` once, each note with the probe that showed it: the empty cube
+for a code that matches nothing, the shapes of its refusals and of its asynchronous
+answers, what the Comext base answers otherwise than the main one, SDMX-CSV's media type,
+a codelist's one version and the codelists that the Comext base's data structures name.
+This section holds what the package does with it and cites a note by its heading.
+
+`get_data` checks before its request the codes of each filter whose dimension exactly one
+packaged codelist of the dataset's base feeds (`tasks.CHECKED_FILTERS`): a code the
+codelist lacks, `XX` or one that Eurostat removed or renamed after the packaged fetch, is
+refused with core's `UnknownCode`, which says that nothing was sent and names the codes of
+that codelist closest to it by their text, a hint and no successor. `product`, which three
+codelists feed, `partner`, the `param` of no packaged list, and a dimension of one base on a
+dataset of the other are sent unchecked, and no check reads `download_dataset`'s `key`. A
+cube that holds no cell raises `NotFoundError` after the request: Eurostat answers so a
+code that the dataset does not use ("A code that matches nothing answers an empty cube"),
+as `DS-059359_AT_20158000_indicator_not_in_dataset` replays, and the calls of the recorded
+empty cubes of `XX`, `unknown_code` and `DS-059358_unknown_code` are refused before their
+request.
 
 Comext's trade datasets DS-045409 (EU trade since 1988 by HS2-4-6 and CN8) and DS-059341
 (international trade of EU and non-EU countries since 2002 by HS2-4-6) name the same
-codelists, read on 2026-10-28: CXT_FREQ (`A`, `M`; not packaged), CXT_FREE_ISO for
-`reporter` and `partner`, CXT_NC for `product`, CXT_EU_FLUX for `flow` and CXT_INDICATORS,
-in the positional order freq.reporter.partner.product.flow.indicators, the order of
-`download_dataset`'s key for them. DS-045409 serves VALUE_IN_EUROS, QUANTITY_IN_100KG and
-SUPPLEMENTARY_QUANTITY, DS-059341 VALUE_EUR, VALUE_NAC and QUANTITY_KG (the recorded cubes).
-DS-059341 answered a CN8 code (`15071090`) with HTTP 413 and an `error` array labelled
-`ASYNCHRONOUS_RESPONSE`
-(`tests/fixtures/get_data/DS-059341_AT_DE_15071090_cn8_on_hs_flow.json`): the Statistics
-API's asynchronous answer, recorded on 2026-10-28 in another shape than the user guide's
-`warning`, which was never seen. `classify` refuses it by its label
-(`errors.asynchronous_fault`), before its HTTP 413 refusal of `EXTRACTION_TOO_BIG`, which
-shares its id and status and is core's `QueryTooLarge`: send the request again later, or
-narrow it; the package does not poll. A Comext trade dataset is served filtered only
-(`prefixed-datasets.md`); Eurostat answers up to 500,000 estimated cells at once, queues up
-to 5,000,000 (the asynchronous answer `classify` refuses) and refuses more with HTTP 413
-(`asynchronous-api.md`), stating its estimate and its limit, which `QueryTooLarge` carries.
+codelists ("The Comext base's datasets take these codelists"): CXT_FREQ (`A`, `M`; not
+packaged), CXT_FREE_ISO for `reporter` and `partner`, CXT_NC for `product`, CXT_EU_FLUX
+for `flow` and CXT_INDICATORS, in the positional order
+freq.reporter.partner.product.flow.indicators, the order of `download_dataset`'s key for
+them. `classify` refuses the Statistics API's asynchronous answer by its label
+(`errors.asynchronous_fault`; "The asynchronous answer comes as an `error` array"), before
+its HTTP 413 refusal of `EXTRACTION_TOO_BIG`, which shares its id and status and is core's
+`QueryTooLarge`: send the request again later, or narrow it; the package does not poll. A
+Comext trade dataset is served filtered only (`prefixed-datasets.md`); Eurostat answers up
+to 500,000 estimated cells at once, queues up to 5,000,000 (the asynchronous answer
+`classify` refuses) and refuses more with HTTP 413 (`asynchronous-api.md`), stating its
+estimate and its limit, which `QueryTooLarge` carries.
 `list_codes` serves CXT_NC whole: its lettered codes (`1507XXXX`, `15SSS421`) are
 Eurostat's positions for trade no regular code holds, and its one code of five characters is
 `TOTAL`.

@@ -291,10 +291,10 @@ COPYRIGHT_URL = "https://ec.europa.eu/eurostat/web/main/help/copyright-notice"
 and kept as no file."""
 
 PAUSE = 5.0
-"""Seconds before every request; requests never run in parallel. The website reports a
-small request budget in ``X-Rate-Limit-Remaining`` that a series of requests a few seconds
-apart drains (429 "Quota Exhausted"); five seconds apart, a run seldom meets a 429, and the
-one retry covers it."""
+"""Seconds before every request; requests never run in parallel. The website's request
+budget runs out within a few requests, and five seconds apart a run seldom meets its 429,
+which the one retry covers (``docs/upstream/OBSERVED.md``, "The website's request budget
+runs out within a few requests")."""
 RETRY_PAUSE = 10.0
 """The shortest wait before the one retry, the frame's own ``RETRY_PAUSE`` too."""
 QUOTA_PAUSE = 60.0
