@@ -12,11 +12,10 @@ are those of a client with one base.
 
 ``classify`` maps the Statistics API's documented refusals, and the SDMX 2.1 data API's
 answers that are no SDMX-CSV, onto the family's taxonomy once (sdk-core ADR-0031); ``errors``
-reads them. Both bases answer in the same shapes, recorded on each, though not always to
-the same request: a filter on a dimension the dataset lacks is fault 150 at HTTP 400 on
-the main base, and HTTP 413 as too large on the Comext base, whose estimate for
-DS-059358, 151,971,120 rows, is that of an unfiltered query, so the unknown filter seems
-to be ignored. Answers of HTTP 200 are cached in core's ``MemoryCache`` with its default
+reads them. Both bases answer in the same shapes, though not always to the same request,
+as the notes of ``docs/upstream/OBSERVED.md`` give each with its probe: a filter on a
+dimension the dataset lacks is a semantic error on the main base and an extraction too
+large on the Comext base. Answers of HTTP 200 are cached in core's ``MemoryCache`` with its default
 lifetime of five minutes for every path, up to core's ``cache_max_bytes`` of 8 MiB a body
 and 64 MiB of bodies in all, an expired answer dropped (sdk-core ADR-0040 decision 3), so a
 larger cube is returned and fetched again the next time; a file streamed to disk with
@@ -59,7 +58,7 @@ COMEXT_BASE_URL = "https://ec.europa.eu/eurostat/api/comext/dissemination"
 <api_base_uri> is: https://ec.europa.eu/eurostat/api/comext/dissemination"
 (``prefixed-datasets.md``). It serves the main base's services, the Statistics API and
 the SDMX 2.1 API among them, at the same paths; not ``catalogue/toc/xml``, which it
-answers with HTTP 404 (probed 2026-10-28)."""
+answers with HTTP 404 (``docs/upstream/OBSERVED.md``)."""
 COMEXT_PREFIX = "DS-"
 """How the code of a Comext or Prodcom dataset begins, as upstream writes it: "Comext and
 Prodcom datasets (DS- prefixed dataset code, i.e DS-057555) are separated"
@@ -70,8 +69,8 @@ SDMX_DATA_PATHS = tuple(
 """Where the SDMX 2.1 API's data queries go (``api.sdmx.data_query``) on either base, as a
 request path begins."""
 SDMX_CSV = "application/vnd.sdmx.data+csv"
-"""The media type of an SDMX-CSV answer, plain or ``compressed=true`` (recorded
-2026-10-27; ``version=1.0.0`` as its parameter)."""
+"""The media type of an SDMX-CSV answer, plain or ``compressed=true``, with
+``version=1.0.0`` as its parameter (``docs/upstream/OBSERVED.md``)."""
 ENV_VARS: tuple[EnvVar, ...] = ()
 """The variables the package reads, for a host (conventions §7; sdk-core ADR-0026, amendment
 2026-11-18, point c): none, since the API is open. An ``EnvVar`` names a variable and reads
@@ -173,9 +172,9 @@ def classify(response: httpx.Response) -> XippiosError | None:
       alone, since a download's body goes to the file unread.
     - The Statistics API's asynchronous answer, at any HTTP status, 413 included: a
       ``warning`` whose status is 413 or whose label starts ``ASYNCHRONOUS_RESPONSE``, as
-      the user guide documents it (never seen), or a fault of an ``error`` member whose
-      label starts so, as recorded on the Comext base on 2026-10-28: an ``error`` array
-      at HTTP 413 with id 413, DS-059341's answer to a CN8 code the dataset does not serve
+      the user guide documents it, or a fault of an ``error`` member whose label starts
+      so, the shape Eurostat answers in: an ``error`` array at HTTP 413 with id 413,
+      DS-059341's answer to a CN8 code the dataset does not serve
       (``tests/fixtures/get_data/DS-059341_AT_DE_15071090_cn8_on_hs_flow.json``). The
       service will treat the request asynchronously, which this package does not poll
       (https://github.com/xippios/sdk-eurostat/pull/12): ``InvalidRequestError`` saying to
@@ -192,11 +191,9 @@ def classify(response: httpx.Response) -> XippiosError | None:
       fault 150, and for ``geo`` with ``geoLevel``; the fault table's 140 alike).
     - HTTP 413 otherwise: core's ``QueryTooLarge`` (conventions §5), its count and its
       limit read from upstream's text, the labels of an ``error`` member or else the
-      ``faultstring`` of a SOAP fault, and naming how to narrow the query. Recorded on the
-      Comext base: the
-      Statistics API's ``error`` array with id 413, ``EXTRACTION_TOO_BIG``, its answer to
-      a filter on a dimension the dataset lacks, whose estimate, 151,971,120 rows, is
-      that of an unfiltered query, so the unknown filter seems to be ignored
+      ``faultstring`` of a SOAP fault, and naming how to narrow the query. On the Comext
+      base: the Statistics API's ``error`` array with id 413, ``EXTRACTION_TOO_BIG``, its
+      answer to a filter on a dimension the dataset lacks
       (``tests/fixtures/get_data/DS-059358_unknown_dimension_too_big.json``), and the SOAP
       fault ``EXTRACTION_TOO_BIG`` the user guide documents for the SDMX APIs (an
       extraction over 5,000,000 cells;

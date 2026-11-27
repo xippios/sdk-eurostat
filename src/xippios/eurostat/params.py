@@ -100,7 +100,7 @@ PRODCOM_SOLD = "CXT_PRODCOM2_SOLD"
 
 PRODCOM_TOTAL = "CXT_PRODCOM2_TOTAL"
 """The products of DS-059359 (Prodcom, total production): its ``product`` dimension's
-codelist (the data structure DS-059359 2.7, read 2026-10-28)."""
+codelist (the data structure DS-059359 2.7)."""
 
 PRODCOM_INDICATORS = "CXT_INDICATORS"
 """The indicators of DS-059358 and DS-059359: their ``indicators`` dimension's codelist,
@@ -111,7 +111,7 @@ TRADE_PRODUCTS = "CXT_NC"
 CN8) and DS-059341 (International trade of EU and non-EU countries since 2002 by
 HS2-4-6): their ``product`` dimension's codelist, the Combined Nomenclature's eight-digit
 codes with the HS chapters, headings and subheadings above them (the data structures
-DS-045409 6.6 and DS-059341 3.7, read 2026-10-28)."""
+DS-045409 6.6 and DS-059341 3.7; ``docs/upstream/OBSERVED.md``)."""
 
 TRADE_COUNTRIES = "CXT_FREE_ISO"
 """The reporters and partners of Comext's trade datasets DS-045409 and DS-059341: the

@@ -71,13 +71,16 @@ TOC_DATE = "%d.%m.%Y"
 the sample ``tests/fixtures/files/toc/ai.xml``."""
 
 LAST_UPDATE = "%d/%m/%y %H:%M:%S"
-"""How SDMX-CSV prints ``LAST UPDATE``: ``"05/10/26 23:00:00"``, day first, no zone.
+"""How SDMX-CSV prints ``LAST UPDATE``: ``"05/11/26 11:00:00"``, day first, no zone.
 
-The order is fixed by the snapshot's two answers for apro_mk_cola of 2026-10-27: the
-JSON-stat sample's ``updated`` is ``"2026-10-05T23:00:00+0200"`` and the SDMX-CSV
-sample's ``LAST UPDATE`` ``"05/10/26 23:00:00"``, the same time without its zone. The
-Comext base prints it alike: DS-059358's ``"2026-10-20T11:00:00+0200"`` is
-``"20/10/26 11:00:00"`` (recorded 2026-10-28), whose day cannot be read as a month."""
+The order is fixed by the snapshot's samples of one dataset on each base, each its
+JSON-stat ``updated`` beside its SDMX-CSV ``LAST UPDATE``: apro_mk_cola's
+``"2026-11-05T11:00:00+0100"`` is ``"05/11/26 11:00:00"``
+(``docs/upstream/samples/apro_mk_cola-json-stat.json``,
+``docs/upstream/samples/apro_mk_cola-sdmx-csv.csv``), the same time without its zone, and
+the Comext base's DS-059358 ``"2026-10-20T11:00:00+0200"`` is ``"20/10/26 11:00:00"``
+(``docs/upstream/samples/DS-059358-sdmx-csv.csv``), whose day cannot be read as a
+month."""
 
 
 # Lang and GeoLevel are written by hand from
@@ -204,7 +207,7 @@ class Cube(UpstreamModel):
         source: The producer, ``"ESTAT"``.
         updated: The dataset's last update, with the zone upstream prints, e.g.
             2026-10-05 23:00 +02:00 for upstream's ``"2026-10-05T23:00:00+0200"``; naive
-            if upstream prints none (never seen).
+            if upstream prints none.
         value: The cells that have a value, by cell index as upstream prints it, each
             value as upstream's JSON has it, an integer staying an ``int``, e.g.
             ``{"40": 3247.05, "44": 0}``, and a text staying a ``str``, e.g. ``{"12":

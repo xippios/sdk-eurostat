@@ -5,8 +5,9 @@ module only reads them. The shapes, from the user guide
 (``docs/upstream/user-guide/api-detailed-guidelines/api-statistics.md``, "Error messages
 returned in case of invalid queries", "The geoLevel parameter" and "Asynchronous response
 in case of big extractions"; ``asynchronous-api.md`` beside it for the SOAP fault) and
-from the answers recorded under ``tests/fixtures/get_data/``, on the main base on
-2026-10-27 and on the Comext base on 2026-10-28:
+from the answers recorded under ``tests/fixtures/get_data/`` on both bases, where Eurostat
+answers otherwise than the guide documents (``docs/upstream/OBSERVED.md``, each note with
+its probe):
 
 - ``{"error": [{"status": 404, "id": 100, "label": "ERR_NOT_FOUND_4: ..."}]}``, an array
   of faults: recorded for an unknown dataset (HTTP 404, ``unknown_dataset.json``, and
@@ -14,32 +15,28 @@ from the answers recorded under ``tests/fixtures/get_data/``, on the main base o
   150, ``unknown_dimension.json``) and ``geo`` together with ``geoLevel`` (HTTP 400, id
   400, ``geo_with_geo_level.json``).
 - ``{"error": [{"status": 413, "id": 413, "label": "EXTRACTION_TOO_BIG: ..."}]}``, the
-  same array at HTTP 413: recorded on the Comext base for a filter on a dimension the
-  dataset lacks, judged too large, "estimated 151971120 rows, max authorised is 5000000"
+  same array at HTTP 413: the Comext base's answer to a filter on a dimension the dataset
+  lacks, "estimated 151971120 rows, max authorised is 5000000"
   (``DS-059358_unknown_dimension_too_big.json``), where the main base answers fault 150
-  at HTTP 400. The estimate is that of an unfiltered query, so the unknown filter seems
-  to be ignored.
+  at HTTP 400.
 - ``{"error": {"status": "400", "label": "'geo' parameter and 'geoLevel' parameter ..."}}``,
   one fault as an object, its status as text and without an id: how the user guide
-  documents the answer to ``geo`` with ``geoLevel``; the service answered that request
-  with the array above when recorded, and both shapes are read.
+  documents the answer to ``geo`` with ``geoLevel``, which the service answers with the
+  array above, and both shapes are read.
 - ``{"error": [{"status": 413, "id": 413, "label": "ASYNCHRONOUS_RESPONSE. Your request
   will be treated asynchronously. Please try again later."}]}``, the same array at HTTP
   413: the Statistics API's answer to a request the service will treat asynchronously,
-  recorded on the Comext base on 2026-10-28 for DS-059341 and a CN8 code the dataset
-  does not serve (``DS-059341_AT_DE_15071090_cn8_on_hs_flow.json``); its label, not its
-  id or status, tells it from ``EXTRACTION_TOO_BIG``.
+  DS-059341's to a CN8 code the dataset does not serve
+  (``DS-059341_AT_DE_15071090_cn8_on_hs_flow.json``); its label, not its id or status,
+  tells it from ``EXTRACTION_TOO_BIG``.
 - ``{"warning": {"status": 413, "label": "ASYNCHRONOUS_RESPONSE. ..."}}``: the
   asynchronous answer as the user guide documents it, at an HTTP status the guide does
-  not name; never seen. Four unfiltered requests on 2026-10-27 to datasets of 624,554 to
-  853,146 values all answered synchronously, and probing stopped there
-  (https://github.com/xippios/sdk-eurostat/pull/4); the answer recorded on 2026-10-28
-  came as the ``error`` array above. The
-  SDMX API's asynchronous answer, an XML envelope, is recorded too (``_client.classify``).
+  not name, read beside the ``error`` array above, in which Eurostat answers. The SDMX
+  API's asynchronous answer, an XML envelope, is read too (``_client.classify``).
 - ``<S:Fault>`` with ``<faultcode>413</faultcode>`` and a ``<faultstring>`` such as
   ``EXTRACTION_TOO_BIG: The requested extraction is too big, ...``: the SOAP fault the
-  guide documents for an SDMX request over the maximum extraction, recorded on the
-  Comext base for one (``tests/fixtures/data_query/DS-045409_too_big_413.json``); read
+  guide documents for an SDMX request over the maximum extraction, as the Comext base
+  answers one (``tests/fixtures/data_query/DS-045409_too_big_413.json``); read
   in case the Statistics API sends it too. Only the ``faultstring`` text is taken, with
   a regular expression on the body text: the package parses no XML at run time
   (https://github.com/xippios/sdk-eurostat/pull/4).
@@ -168,9 +165,9 @@ def asynchronous_fault(payload: dict[str, Any]) -> Fault | None:
 
     The ``warning`` member, as the user guide documents the answer, when its status is 413
     or its label starts ``ASYNCHRONOUS_LABEL``; else the first fault of the ``error``
-    member whose label starts so, as the answer was recorded on 2026-10-28 (an ``error``
-    array at HTTP 413, id 413). The label, not the id or the status, tells it from
-    ``EXTRACTION_TOO_BIG``, which shares them.
+    member whose label starts so, the shape Eurostat answers in (an ``error`` array at
+    HTTP 413, id 413; ``docs/upstream/OBSERVED.md``). The label, not the id or the status,
+    tells it from ``EXTRACTION_TOO_BIG``, which shares them.
     """
     warning = warning_fault(payload)
     if warning is not None and (
