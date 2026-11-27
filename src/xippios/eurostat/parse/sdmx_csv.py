@@ -13,10 +13,11 @@ observation, comma-separated, lines ending in CRLF::
 up to ``TIME_PERIOD``, then ``OBS_VALUE`` and the observation's attributes, which differ
 by dataset (``OBS_FLAG`` and ``CONF_STATUS`` in apro_mk_cola; ``OBS_FLAG``,
 ``LTAA_FLAG`` and ``LTAA`` in the guide's ENV_WAT_RES; none in Prodcom's DS-059358).
-Each row becomes a ``models.SdmxCsvRow`` with nothing renamed or computed (sdk-core ADR-0020
-decision 2); ``OBS_VALUE`` is parsed as a ``Decimal`` where its text is a number and
-kept as printed where it is not, as Prodcom's units and flags are (``"KG"``, ``":E"``,
-``docs/upstream/samples/DS-059358-sdmx-csv.csv``).
+Each row becomes a ``models.SdmxCsvRow`` with nothing renamed (sdk-core ADR-0020
+decision 2); ``OBS_VALUE`` is kept as printed, a number or a text such as Prodcom's units
+and flags (``"KG"``, ``":E"``, ``docs/upstream/samples/DS-059358-sdmx-csv.csv``), with its
+reading as a number beside it, and ``LAST UPDATE`` is read into a naive time, whose text
+``last_update_as_printed`` gives for ``meta.vintage``.
 
 The header row is read first, with the standard library's ``csv``, and checked before
 any row, so a file of another layout is refused even without rows. The rows of both files
@@ -34,7 +35,7 @@ import gzip
 import os
 import zlib
 from collections.abc import Generator, Iterator
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import IO, Any
 
@@ -45,7 +46,7 @@ from xippios.core.client import decode_csv
 from xippios.eurostat._client import SOURCE
 from xippios.eurostat.models import SdmxCsvRow
 
-__all__ = ["FILE_KIND", "parse_sdmx_csv"]
+__all__ = ["FILE_KIND", "last_update_as_printed", "parse_sdmx_csv"]
 
 FILE_KIND = "sdmx-csv"
 """The file kind, named in a parse error."""
@@ -141,6 +142,28 @@ class _Layout:
         }
 
 
+def _rows(file: Path) -> Generator[tuple[int, dict[str, Any]], None, None]:
+    """Each row with its line, as ``SdmxCsvRow`` validates it, under upstream's headers.
+
+    The header is checked first, before any row; an empty file, or one with a header and
+    no row, yields nothing.
+
+    Raises:
+        ValidationError: As ``parse_sdmx_csv`` raises it, but for a row that ``SdmxCsvRow``
+            refuses.
+    """
+    packed = _is_gzip(file)
+    columns = _header(file, packed)
+    if columns is None:
+        return
+    layout = _Layout(file, columns)
+    records = _gzip_records(file) if packed else decode_csv(file, source=SOURCE)
+    for line, record in enumerate(records, start=2):
+        if None in record or None in record.values():
+            raise _refuse(file, f"has a row, line {line}, whose values do not match its header")
+        yield line, layout.raw(record)
+
+
 def parse_sdmx_csv(path: str | os.PathLike[str]) -> Generator[SdmxCsvRow, None, None]:
     """Read an SDMX-CSV file row by row, each row one ``SdmxCsvRow``.
 
@@ -156,22 +179,29 @@ def parse_sdmx_csv(path: str | os.PathLike[str]) -> Generator[SdmxCsvRow, None, 
 
     Raises:
         ValidationError: The file is not SDMX-CSV: its header lacks the columns above in
-            their order, a row has more or fewer values than the header, the text is not
+            their order, a row has more or fewer values than the header or prints its
+            ``LAST UPDATE`` in another form than ``models.LAST_UPDATE``, the text is not
             UTF-8 or not CSV, or a gzip file is cut short or damaged. Raised when the
             header is read, or at the row where it is found.
     """
-    file = Path(path)
-    packed = _is_gzip(file)
-    columns = _header(file, packed)
-    if columns is None:
-        return
-    layout = _Layout(file, columns)
-    records = _gzip_records(file) if packed else decode_csv(file, source=SOURCE)
-    for line, record in enumerate(records, start=2):
-        if None in record or None in record.values():
-            raise _refuse(file, f"has a row, line {line}, whose values do not match its header")
-        raw = layout.raw(record)
+    for line, raw in _rows(Path(path)):
         try:
             yield SdmxCsvRow.model_validate(raw)
         except pydantic.ValidationError:
             yield parse(SdmxCsvRow, raw, source=SOURCE, endpoint=f"{FILE_KIND} line {line}")
+
+
+def last_update_as_printed(path: str | os.PathLike[str]) -> str | None:
+    """The first row's ``LAST UPDATE`` as Eurostat printed it, e.g. ``"05/10/26 23:00:00"``.
+
+    ``SdmxCsvRow.last_update`` reads it into a time and keeps no text beside it, while
+    ``meta.vintage`` of ``download_dataset`` is the release as upstream states it
+    (conventions §4), so the text is read from the row as the file holds it. ``None`` for
+    a file without a row.
+
+    Raises:
+        ValidationError: As ``parse_sdmx_csv`` raises it for the header and the first row.
+    """
+    with closing(_rows(Path(path))) as rows:
+        first = next(rows, None)
+    return None if first is None else str(first[1]["LAST UPDATE"])

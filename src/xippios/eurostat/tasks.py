@@ -75,7 +75,6 @@ from xippios.core import (
     Result,
     ResultCap,
     ResultMeta,
-    ValidationError,
     matches,
     sync,
 )
@@ -85,6 +84,7 @@ from xippios.eurostat._client import BASE_URL, COMEXT_BASE_URL, COMEXT_PREFIX, S
 from xippios.eurostat.api.statistics import ENDPOINT
 from xippios.eurostat.models import Code, Cube, Dataset, GeoLevel, Lang
 from xippios.eurostat.parse import parse_sdmx_csv
+from xippios.eurostat.parse.sdmx_csv import last_update_as_printed
 
 __all__ = [
     "download_dataset",
@@ -462,10 +462,11 @@ async def list_datasets_async(*, search: str | None = None) -> Result[list[Datas
     10,000 leaves, one per listing in the tree (a code filed under two folders appears
     twice). Each has its ``code``, its ``type`` (``"dataset"`` or ``"table"``), its English
     ``title``, the folders above it (``path``, joined with ``" > "``), its last data update
-    and structure change as Eurostat prints them, day first (``"02.10.2026"``), its first
-    and last period and its number of values, each ``None`` where Eurostat prints none. A
-    dataset's ``code`` is what ``get_data`` takes as ``dataset_code``. ``meta.vintage`` is the
-    table of contents' ``creationDate`` as printed (``"20261120T1004"``), and
+    and structure change as dates, which Eurostat prints day first (``"02.10.2026"``), its
+    first and last period and its number of values, each ``None`` where Eurostat prints
+    none. A dataset's ``code`` is what ``get_data`` takes as ``dataset_code``.
+    ``meta.vintage`` is the table of contents' ``creationDate`` as printed
+    (``"20261120T1004"``), and
     ``meta.retrieved_at`` is when the package's copy was fetched: a dataset Eurostat added
     since is missing until the package is refreshed.
 
@@ -587,15 +588,6 @@ async def list_codes_async(codelist: str, *, search: str | None = None) -> Resul
 list_codes = sync(list_codes_async)
 
 
-LAST_UPDATE = "%d/%m/%y %H:%M:%S"
-"""How SDMX-CSV prints ``LAST UPDATE``: ``"05/10/26 23:00:00"``, day first, no zone.
-
-The order is fixed by the snapshot's two answers for apro_mk_cola of 2026-10-27: the
-JSON-stat sample's ``updated`` is ``"2026-10-05T23:00:00+0200"`` and the SDMX-CSV
-sample's ``LAST UPDATE`` ``"05/10/26 23:00:00"``, the same time without its zone. The
-Comext base prints it alike: DS-059358's ``"2026-10-20T11:00:00+0200"`` is
-``"20/10/26 11:00:00"`` (recorded 2026-10-28), whose day cannot be read as a month."""
-
 DOT_SEGMENTS = frozenset({".", ".."})
 """Keys a URL resolves away as a path segment before sending."""
 
@@ -613,12 +605,13 @@ async def _download(
     """Stream one SDMX-CSV data query, gzip-compressed, to ``target``, with its meta.
 
     The release is read from the file's first row through the parser: ``LAST UPDATE`` as
-    ``vintage`` and its naive time as ``published_at`` (sdk-core ADR-0041 decision 2);
-    ``request`` is ``meta.request`` as given.
+    printed as ``vintage`` and the naive time the row reads it into as ``published_at``
+    (sdk-core ADR-0041 decision 2); ``request`` is ``meta.request`` as given.
 
     Raises:
-        ValidationError: The first row's ``LAST UPDATE`` is not printed as
-            ``LAST_UPDATE`` says; the file stays at ``target``.
+        ValidationError: The file's header or first row is not SDMX-CSV as the parser
+            reads it, a ``LAST UPDATE`` printed in another form among them; the file stays
+            at ``target``.
     """
     downloaded = await api.sdmx.data_query(
         flow_ref,
@@ -631,16 +624,8 @@ async def _download(
     )
     with closing(parse_sdmx_csv(downloaded.path)) as rows:
         first = next(rows, None)
-    vintage = None if first is None else first.last_update
-    try:
-        published = None if vintage is None else datetime.strptime(vintage, LAST_UPDATE)
-    except ValueError:
-        raise ValidationError(
-            f"{SOURCE} {api.sdmx.DATA_ENDPOINT}: the first row's LAST UPDATE is not printed "
-            "as dd/mm/yy HH:MM:SS",
-            raw=vintage,
-            source=SOURCE,
-        ) from None
+    published = None if first is None else first.last_update
+    vintage = None if first is None else last_update_as_printed(downloaded.path)
     meta = ResultMeta(
         source=SOURCE,
         endpoint=api.sdmx.DATA_ENDPOINT,

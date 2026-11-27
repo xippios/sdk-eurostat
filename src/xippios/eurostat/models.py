@@ -28,17 +28,25 @@ of https://github.com/xippios/sdk-eurostat/pull/6).
 sample ``docs/upstream/samples/apro_mk_cola-sdmx-csv.csv``): one observation, its
 columns under their headers snake_cased, the dimensions and the other attributes kept
 by their column names (sdk-core ADR-0020 decision 2).
+
+A value that Eurostat prints as text and that may be no number, a row's ``OBS_VALUE``,
+stays the text under upstream's name with its reading beside it, ``obs_value_number``
+(sdk-core ADR-0060, decisions 1 and 7). A date or a time that Eurostat prints is read
+into the type that keeps all that it sends, naive where it states no zone, with no text
+beside it (https://github.com/xippios/sdk-usda-esr/issues/60, part 3): a leaf's
+``lastUpdate`` and ``lastModified``, ``TOC_DATE``, and a row's ``LAST UPDATE``,
+``LAST_UPDATE``, both printed day first.
 """
 
 import math
 from collections.abc import Iterator, Mapping
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 from typing import Any, Self
 
-from pydantic import Field, model_validator
-from xippios.core import UpstreamModel
+from pydantic import Field, computed_field, field_validator, model_validator
+from xippios.core import UpstreamModel, parse_decimal
 
 __all__ = [
     "Annotation",
@@ -56,6 +64,20 @@ __all__ = [
     "Observation",
     "SdmxCsvRow",
 ]
+
+TOC_DATE = "%d.%m.%Y"
+"""How the table of contents prints a leaf's ``lastUpdate`` and ``lastModified``:
+``"02.10.2026"``, day first, the order that a day past 12 among the packaged leaves fixes
+(``"19.11.2026"``)."""
+
+LAST_UPDATE = "%d/%m/%y %H:%M:%S"
+"""How SDMX-CSV prints ``LAST UPDATE``: ``"05/10/26 23:00:00"``, day first, no zone.
+
+The order is fixed by the snapshot's two answers for apro_mk_cola of 2026-10-27: the
+JSON-stat sample's ``updated`` is ``"2026-10-05T23:00:00+0200"`` and the SDMX-CSV
+sample's ``LAST UPDATE`` ``"05/10/26 23:00:00"``, the same time without its zone. The
+Comext base prints it alike: DS-059358's ``"2026-10-20T11:00:00+0200"`` is
+``"20/10/26 11:00:00"`` (recorded 2026-10-28), whose day cannot be read as a month."""
 
 
 # Lang and GeoLevel are written by hand from
@@ -309,9 +331,9 @@ class Dataset(UpstreamModel):
             forestry and fisheries > Agriculture > Animal production > Milk and milk
             products"``; a table listed under a dataset ends with that dataset's title.
             The package's reading of the tree's nesting, nothing else.
-        last_update: The last update of the data as printed, day first, e.g.
-            ``"02.10.2026"``; upstream's ``lastUpdate``.
-        last_modified: The last change of the structure as printed, e.g.
+        last_update: The last update of the data, a date, e.g. 2026-10-02 for upstream's
+            ``"02.10.2026"``, printed day first; upstream's ``lastUpdate``.
+        last_modified: The last change of the structure, a date, e.g. 2026-10-02 for
             ``"02.10.2026"``; upstream's ``lastModified``.
         data_start: The oldest period as printed, e.g. ``"1991-Q1"`` or ``"2000"``;
             ``None`` where the TOC prints none. Upstream's ``dataStart``.
@@ -325,11 +347,27 @@ class Dataset(UpstreamModel):
     type: LeafType
     title: str
     path: str
-    last_update: str = Field(validation_alias="lastUpdate")
-    last_modified: str = Field(validation_alias="lastModified")
+    last_update: date = Field(validation_alias="lastUpdate")
+    last_modified: date = Field(validation_alias="lastModified")
     data_start: str | None = Field(default=None, validation_alias="dataStart")
     data_end: str | None = Field(default=None, validation_alias="dataEnd")
     values: int | None = None
+
+    @field_validator("last_update", "last_modified", mode="before")
+    @classmethod
+    def _printed_day_first(cls, value: object) -> object:
+        """The table of contents' print, ``"02.10.2026"``, as a date, ``TOC_DATE``.
+
+        Any other value is left to pydantic, which reads an ISO date, ``"2026-10-02"``: the
+        form ``dump_upstream`` writes a ``date`` in, so a refresh packages a leaf so and the
+        package reads it back.
+        """
+        if isinstance(value, str):
+            try:
+                return datetime.strptime(value, TOC_DATE).date()
+            except ValueError:
+                return value
+        return value
 
 
 class Code(UpstreamModel):
@@ -433,26 +471,30 @@ class SdmxCsvRow(UpstreamModel):
     ``OBS_FLAG``, ``LTAA_FLAG`` and ``LTAA`` in the user guide's ENV_WAT_RES). Nothing is
     renamed: each field is its column's header snake_cased, and the dimensions and the
     other attributes keep their headers as keys. Every value is text as printed but
-    ``obs_value``, a number where its text is one; an empty cell is ``None`` except in a
-    dimension.
+    ``last_update``, a time; ``obs_value`` keeps its text too, with ``obs_value_number``
+    beside it, its reading as a number. An empty cell is ``None`` except in a dimension.
 
     Attributes:
         dataflow: The dataflow and its version, e.g. ``"ESTAT:APRO_MK_COLA(1.0)"``;
             upstream's ``DATAFLOW``.
-        last_update: The dataset's last update as printed, day first, without a zone,
-            e.g. ``"05/10/26 23:00:00"``; upstream's ``LAST UPDATE``.
+        last_update: The dataset's last update, a naive time, e.g. 2026-10-05 23:00 for
+            upstream's ``"05/10/26 23:00:00"``, printed day first and without a zone
+            (``LAST_UPDATE``); upstream's ``LAST UPDATE``. ``meta.vintage`` of
+            ``download_dataset`` keeps the text.
         dimensions: The row's code on each dimension, in column order, e.g. ``{"freq":
             "A", "milkitem": "PRD", "dairyprod": "D1110D", "unit": "THS_T", "geo":
             "AT"}``: the columns between ``LAST UPDATE`` and ``TIME_PERIOD``.
         time_period: The period, as the dataset prints it, e.g. ``"2022"``; upstream's
             ``TIME_PERIOD``.
-        obs_value: The value, a number where the text is one, e.g.
-            ``Decimal("3247.05")``, else the text as upstream printed it, e.g. ``"KG"``
-            or ``":E"``: the ``indicators`` dimension of Prodcom's datasets
-            (``DS-059358``) carries units and flags among its measures (``QNTUNIT``,
-            ``SCQNTFLAG``; the sample ``docs/upstream/samples/DS-059358-sdmx-csv.csv``).
-            ``None`` when the cell is empty (a confidential value, say). Upstream's
-            ``OBS_VALUE``.
+        obs_value: The value as upstream printed it, e.g. ``"3247.05"``, or a text that is
+            no number, e.g. ``"KG"`` or ``":E"``: the ``indicators`` dimension of
+            Prodcom's datasets (``DS-059358``) carries units and flags among its measures
+            (``QNTUNIT``, ``SCQNTFLAG``; the sample
+            ``docs/upstream/samples/DS-059358-sdmx-csv.csv``). ``None`` when the cell is
+            empty (a confidential value, say). Upstream's ``OBS_VALUE``.
+        obs_value_number: ``obs_value`` read as a number by core's ``parse_decimal``,
+            e.g. ``Decimal("3247.05")``; ``None`` for a text that is no number and for an
+            empty cell.
         obs_flag: The observation's flag, e.g. ``"e"`` (estimated); ``None`` when empty
             or when the file has no such column. Upstream's ``OBS_FLAG``.
         conf_status: The confidentiality status, e.g. ``"C"``; ``None`` when empty or
@@ -463,12 +505,33 @@ class SdmxCsvRow(UpstreamModel):
     """
 
     dataflow: str = Field(validation_alias="DATAFLOW")
-    last_update: str = Field(validation_alias="LAST UPDATE")
+    last_update: datetime = Field(validation_alias="LAST UPDATE")
     dimensions: Mapping[str, str]
     time_period: str = Field(validation_alias="TIME_PERIOD")
-    obs_value: Decimal | str | None = Field(
-        validation_alias="OBS_VALUE", union_mode="left_to_right"
-    )
+    obs_value: str | None = Field(validation_alias="OBS_VALUE")
     obs_flag: str | None = Field(default=None, validation_alias="OBS_FLAG")
     conf_status: str | None = Field(default=None, validation_alias="CONF_STATUS")
     attributes: Mapping[str, str | None] = Field(default_factory=dict)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def obs_value_number(self) -> Decimal | None:
+        """``obs_value`` as a number, ``None`` for a text such as ``"KG"`` or for none."""
+        return None if self.obs_value is None else parse_decimal(self.obs_value)
+
+    @field_validator("last_update", mode="before")
+    @classmethod
+    def _printed_day_first(cls, value: object) -> object:
+        """``LAST UPDATE`` as SDMX-CSV prints it, ``"05/10/26 23:00:00"``, as a naive time.
+
+        Raises:
+            ValueError: A text in another form, which the error names, never the text.
+        """
+        if isinstance(value, str):
+            try:
+                return datetime.strptime(value, LAST_UPDATE)
+            except ValueError:
+                raise ValueError(
+                    "LAST UPDATE is not printed as dd/mm/yy HH:MM:SS, day first"
+                ) from None
+        return value

@@ -94,7 +94,7 @@ cola = list_datasets(search="apro_mk_cola").data[0]
 cola.code, cola.type  # ("apro_mk_cola", "dataset")
 cola.title  # "Production of main cows' milk products - annual data"
 cola.path  # "Database by themes > Agriculture, forestry and fisheries > ... > Milk and milk products"
-cola.last_update, cola.data_start, cola.data_end  # ("05.11.2026", "1968", "2025"), as printed
+cola.last_update, cola.data_start, cola.data_end  # (date(2026, 11, 5), "1968", "2025")
 milk.meta.vintage, milk.meta.published_at  # "20261120T1004", 2026-11-20 10:04 without a zone
 austria = list_codes("geo", search="austria")
 austria.data  # [Code(code="AT", label="Austria")]
@@ -107,9 +107,9 @@ is when the package fetched the list, `meta.endpoint` the operation it came from
 `list_datasets(*, search=None)` reads Eurostat's table of contents (`catalogue/toc/xml`):
 every dataset and pre-defined table of the navigation tree, over 10,000 leaves, one per
 listing in the tree, each with its code, type, English title, the folders above it
-(`path`, joined with `" > "`), its last update and structure change, its first and last
-period and its number of values as Eurostat prints them, each `None` where it prints
-none. `meta.vintage` is the table of contents' `creationDate` as printed and
+(`path`, joined with `" > "`), its last update and structure change, each a `date`
+that Eurostat prints day first (`"05.11.2026"`), and its first and last period and its
+number of values as Eurostat prints them, each `None` where it prints none. `meta.vintage` is the table of contents' `creationDate` as printed and
 `meta.published_at` the same time, which Eurostat prints without a zone, so
 `meta.published_at_naive` is set.
 `list_codes(codelist, *, search=None)` reads one of eighteen SDMX codelists
@@ -153,7 +153,9 @@ milk.meta.published_at  # 2026-10-05 23:00 without a zone, meta.published_at_nai
 rows = parse_sdmx_csv(milk.data.path)  # one SdmxCsvRow per observation, read lazily
 first = next(rows)
 first.dimensions  # {"freq": "A", "milkitem": "PRD", "dairyprod": "D1110D", ...}
-first.time_period, first.obs_value  # ("2022", Decimal("3247.05"))
+first.time_period, first.obs_value  # ("2022", "3247.05"), as printed
+first.obs_value_number  # Decimal("3247.05"), None where the text is no number
+first.last_update  # 2026-10-05 23:00 without a zone: LAST UPDATE, read day first
 ```
 
 `download_dataset(flow_ref, key="", *, start_period=None, end_period=None,
@@ -172,10 +174,11 @@ for a file without a row. A query Eurostat would answer asynchronously raises
 `InvalidRequestError`, and one it refuses as too large `QueryTooLarge`, each naming how to
 narrow it. `parse_sdmx_csv(path)`
 reads the file, gzip-compressed or plain, row by row: each `SdmxCsvRow` has the
-`dataflow`, the `last_update`, the `dimensions` in column order, the `time_period`, the
-`obs_value` as a `Decimal`, or as the text printed where it is no number (Prodcom's
-`"KG"`, `":E"`), `None` when empty, `obs_flag`, `conf_status` and any other `attributes`
-of the dataset, as Eurostat prints them. A `DS-` dataset is downloaded from the Comext
+`dataflow`, the `last_update` as a naive `datetime`, the `dimensions` in column order,
+the `time_period`, the `obs_value` as printed, `None` when empty, with `obs_value_number`
+beside it, its `Decimal` or `None` where the text is no number (Prodcom's `"KG"`,
+`":E"`), and `obs_flag`, `conf_status` and any other `attributes` of the dataset, as
+Eurostat prints them. A `DS-` dataset is downloaded from the Comext
 base, `key` in its own dimensions' order (`"A.AT.10411200."` for DS-059358); a Comext
 trade dataset is served filtered only, a Prodcom dataset whole as well.
 
