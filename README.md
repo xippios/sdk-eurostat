@@ -95,10 +95,10 @@ cola.code, cola.type  # ("apro_mk_cola", "dataset")
 cola.title  # "Production of main cows' milk products - annual data"
 cola.path  # "Database by themes > Agriculture, forestry and fisheries > ... > Milk and milk products"
 cola.last_update, cola.data_start, cola.data_end  # (date(2026, 11, 5), "1968", "2025")
-milk.meta.vintage, milk.meta.published_at  # "20261120T1004", 2026-11-20 10:04 without a zone
+milk.meta.vintage, milk.meta.published_at  # "20261126T2200", 2026-11-26 22:00 without a zone
 austria = list_codes("geo", search="austria")
 austria.data  # [Code(code="AT", label="Austria")]
-austria.meta.vintage, austria.meta.published_at  # "28.1", 2026-11-16 23:00+01:00
+austria.meta.vintage, austria.meta.published_at  # "29.0", 2026-11-25 23:00+01:00
 list_codes("unit", search="THS_T").data[0]  # Code(code="THS_T", label="Thousand tonnes")
 ```
 

@@ -14,8 +14,11 @@ geo.records[0]  # {"code": "EUR", "label": "Europe*"}
 
 - `toc.json`: every leaf of the Catalogue API's table of contents, datasets and
   pre-defined tables, with its code, type, English title, the folders above it
-  (`path`, their English titles joined with ` > `), `lastUpdate`, `lastModified`,
-  `dataStart`, `dataEnd` and `values` as printed.
+  (`path`, their English titles joined with ` > `), `lastUpdate` and `lastModified`,
+  which the table of contents prints day first (`05.11.2026`) and the script, from 0.4.0
+  on, writes as ISO dates (`2026-11-05`), the form `dump_upstream` writes a date in, and
+  `dataStart`, `dataEnd` and `values` as printed. The package reads a date in either form,
+  as the file written on 2026-11-27 holds the printed one.
 - `<codelist>.json`, the codelist's id lower-cased: the codes and English labels of one
   SDMX codelist, the latest version, in upstream's order, its `param` the dimension it
   feeds (`params.CODELISTS`). Twelve come from the main base, the codelists of the

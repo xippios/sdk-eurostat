@@ -41,9 +41,9 @@ is the list's ``fetched``, ``meta.endpoint`` the operation it was fetched from
 Comext base its full URL), ``meta.total`` ``None``. Their release metadata (decision D4
 of https://github.com/xippios/sdk-eurostat/pull/6) comes from ``reference/lists.json``:
 for the table of contents
-``meta.vintage`` is its ``creationDate`` as printed (``"20261120T1004"``) and
+``meta.vintage`` is its ``creationDate`` as printed (``"20261126T2200"``) and
 ``meta.published_at`` the same time without a zone, ``published_at_naive`` set (sdk-core ADR-0041
-decision 2); for a codelist ``meta.vintage`` is its version (``"28.1"``) and
+decision 2); for a codelist ``meta.vintage`` is its version (``"29.0"``) and
 ``meta.published_at`` its ``LAST_UPDATED`` annotation with the zone Eurostat prints, or
 ``None`` for a codelist without one (CXT_EU_FLUX).
 
@@ -465,7 +465,7 @@ async def list_datasets_async(*, search: str | None = None) -> Result[list[Datas
     first and last period and its number of values, each ``None`` where Eurostat prints
     none. A dataset's ``code`` is what ``get_data`` takes as ``dataset_code``.
     ``meta.vintage`` is the table of contents' ``creationDate`` as printed
-    (``"20261120T1004"``), and ``meta.retrieved_at`` is when the package's copy was
+    (``"20261126T2200"``), and ``meta.retrieved_at`` is when the package's copy was
     fetched: a dataset Eurostat added since is missing until the package is refreshed.
 
     Args:
@@ -556,7 +556,7 @@ async def list_codes_async(codelist: str, *, search: str | None = None) -> Resul
     dataset uses: GEO has thousands. A dimension's filter takes its codes, e.g.
     ``get_data("apro_mk_cola", filters={"geo": "AT"})``. A codelist the package does not
     carry raises ``UnknownCode`` naming the closest it does. ``meta.vintage`` is the codelist's
-    version (``"28.1"``) and ``meta.published_at`` its last update, or ``None`` where it
+    version (``"29.0"``) and ``meta.published_at`` its last update, or ``None`` where it
     names none; a code Eurostat added since is missing until the package is refreshed.
 
     Args:
