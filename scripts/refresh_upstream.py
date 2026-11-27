@@ -22,8 +22,8 @@ snapshot keeps:
   separately, never here);
 
 and records Eurostat's copyright notice, the page that states the terms the attribution
-quotes, as a row without a file, and the two Confluence pages of ``WIKI_PAGES`` under ``Not
-fetched``.
+quotes, as a row without a file. It requests nothing of Eurostat's wiki: the two Confluence
+pages of ``WIKI_PAGES`` require EU Login, and ``CAPTURE`` names them with their subjects.
 
 Every request goes through ``CLIENT``, a client of Eurostat's website on core's
 ``AsyncClient`` that sends no credential, one request at a time, ``PAUSE`` seconds apart.
@@ -35,12 +35,12 @@ the request budget the website reports in ``X-Rate-Limit-Remaining``.
 The script's own code is its hooks. ``reduce`` converts a user-guide page to Markdown and
 keeps a WADL file as recorded where the service sent the same elements in another order,
 which ``canonical`` reads in a form with the order fixed. ``note`` checks each page the
-script recognises and writes its row's note, a Confluence page's redirect to EU Login
-among them. ``sections`` checks the samples against each other and against the data-query
-page's statement of the key's order, with every row read, and writes no section of its
-own. A page that changed in a way the script does not know stops the run before anything is
-written. The frame stops, too, on a copyright, a licence or terms of use that
-``ATTRIBUTION`` does not record, on every page it reads but the samples and the copyright
+script recognises and writes its row's note. ``sections`` checks the samples against each
+other and against the data-query page's statement of the key's order, with every row read,
+and writes no section of its own. A page that changed in a way the script does not know
+stops the run before anything is written. The frame stops, too, on a copyright, a licence
+or terms of use that ``ATTRIBUTION`` does not record, read in the whole visible text of each
+page, the site's header and footer included, but not in the samples or in the copyright
 notice, which is the terms and must print each statement recorded from it. No key exists
 or is read. Run from the repository root::
 
@@ -64,7 +64,7 @@ from datetime import UTC, datetime
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import urljoin
 
 import httpx
 from xippios.core import AsyncClient, ClientConfig, RateLimitError, RetryPolicy, parse_retry_after
@@ -230,11 +230,8 @@ WIKI_PAGES = (
     ("https://wikis.ec.europa.eu/x/-AD9B", "SDMX 2.1 and asynchronous answers"),
     ("https://wikis.ec.europa.eu/x/c4eBBg", "the TSV format"),
 )
-"""Eurostat's Confluence pages on these subjects, requested once each without credentials."""
-WIKI_STATUS = 302
-"""What each Confluence page answers an anonymous client: a redirect to ``LOGIN_HOST``."""
-LOGIN_HOST = "webgate.ec.europa.eu"
-"""EU Login, where an anonymous client is sent; never requested."""
+"""Eurostat's Confluence pages on these subjects, which require EU Login: ``CAPTURE`` names
+them, and the snapshot never requests them."""
 
 NOT_REQUESTED = (
     (
@@ -1191,20 +1188,6 @@ def check_key_order(content: bytes) -> None:
         )
 
 
-def wiki_note(row: Row) -> str:
-    """Check that a Confluence page sent the anonymous client to EU Login, and keep its note.
-
-    The frame records the redirect to another host and follows none; a redirect anywhere
-    but ``LOGIN_HOST`` stops the run, since the note says that the page asks for a login.
-    """
-    hops = row.response.redirects
-    target = urlsplit(hops[-1][1]).hostname if hops else None
-    if target != LOGIN_HOST:
-        where = f"a redirect to {target}" if target else "no redirect"
-        raise changed(row.page.url, f"it answers with {where}, not one to {LOGIN_HOST}")
-    return row.note
-
-
 # --- the hooks -------------------------------------------------------------------------
 
 
@@ -1235,8 +1218,6 @@ def note(row: Row) -> str:
     before anything is written.
     """
     page, response = row.page, row.response
-    if page.url in _WIKI_URLS:
-        return wiki_note(row)
     if (page.file or "").startswith("user-guide/"):
         return guide_note(guide_markdown(page, response))
     sample = _SAMPLE_FILES.get(page.file or "")
@@ -1396,10 +1377,11 @@ CAPTURE = "\n\n".join(
         "dimension, that every SDMX-CSV row lies inside the key, and that the data-query "
         "page states the key's order. JSON-stat 2.0 is a third-party specification "
         f"({JSON_STAT_SPEC}): cited, not snapshotted.",
-        "The two Confluence pages under Not fetched are requested once each without "
-        f"credentials; each sends an anonymous client to EU Login, {LOGIN_HOST}, which is "
-        "recorded and not followed, and a redirect anywhere else stops the run. After a 429 "
-        "the one retry waits as long as the website asks in "
+        "Eurostat's wiki holds two Confluence pages on the API: "
+        + ", and ".join(f"{url}, on {subject}" for url, subject in WIKI_PAGES)
+        + ". Both require EU Login, so the snapshot requests neither, and the public pages "
+        "of the user guide are its statement of their subjects.",
+        "After a 429 the one retry waits as long as the website asks in "
         "`X-Rate-Limit-Retry-After-Seconds` or `Retry-After`, "
         f"{QUOTA_PAUSE:g} s where it names no wait, and a wait over {MAX_QUOTA_WAIT:g} s stops "
         "the run.",
@@ -1407,21 +1389,10 @@ CAPTURE = "\n\n".join(
 )
 """``FETCHED.md``'s "How this is captured": what is converted, cut or left out, and why."""
 
-_WIKI_REASON = (
-    "; EU Login is required, so the page is not fetched (no credentials are sent and no "
-    "browser is imitated); the public user-guide pages above are the snapshot's statement of "
-    "the subject"
-)
-_WIKI_URLS = frozenset(url for url, _ in WIKI_PAGES)
-
 SNAPSHOT = Snapshot(
     name="Eurostat dissemination API",
     slug=SOURCE,
     pages=(
-        *(
-            Page(url, status=WIKI_STATUS, note=f"{subject}{_WIKI_REASON}")
-            for url, subject in WIKI_PAGES
-        ),
         *(
             Page(
                 GUIDE_BASE + path,
@@ -1461,11 +1432,9 @@ SNAPSHOT = Snapshot(
     sections=sections,
     client=CLIENT,
 )
-"""The snapshot: the two Confluence pages first, recorded under Not fetched, so that a run
-that stops on their redirect has sent one request, not the whole run's; then the user-guide
-pages, the documents and the samples in the order of ``FETCHED.md``'s rows, and the copyright
-notice, whose statements the attribution quotes. 35 requests where no page redirects on its
-host and none is retried."""
+"""The snapshot: the user-guide pages, the documents and the samples in the order of
+``FETCHED.md``'s rows, then the copyright notice, whose statements the attribution quotes.
+33 requests where no page redirects on its host and none is retried."""
 
 if __name__ == "__main__":
     raise SystemExit(run(SNAPSHOT))
