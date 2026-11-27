@@ -122,6 +122,7 @@ def test_get_data_apro_mk_cola(replay_fixture: ReplayFixture) -> None:
         "filters": {"geo": "AT", "time": ["2022", "2023"]},
         "lang": "EN",
     }
+    assert result.meta.names == {"geo": {"AT": label("geo", "AT")}}, "time names no code"
     assert result.meta.total is None
     assert result.meta.tenant is None
     assert_time_between(result.meta.retrieved_at, before, after)
@@ -191,18 +192,192 @@ def test_get_data_ef_m_farmleg_last_periods(replay_fixture: ReplayFixture) -> No
         "lang": "EN",
         "last_time_period": 2,
     }
+    assert result.meta.names == {
+        "geo": {"AT": label("geo", "AT")},
+        "unit": {"HLD": label("unit", "HLD")},
+    }
 
 
-def test_get_data_unknown_code_is_an_empty_cube(replay_fixture: ReplayFixture) -> None:
-    case = "unknown_code"
+def label(codelist: str, code: str) -> str:
+    """The label of ``code`` in the packaged ``codelist``, as its file holds it."""
+    return str(
+        next(
+            record["label"]
+            for record in packaged_file(codelist)["records"]
+            if record["code"] == code
+        )
+    )
+
+
+def test_get_data_refuses_a_code_its_codelist_lacks_before_sending(
+    respx_mock: respx.MockRouter,
+) -> None:
+    """The call of the recorded empty cube ``unknown_code`` (``geo=XX``, 2026-10-27): GEO,
+    the one packaged codelist that feeds the main base's ``geo``, lacks ``XX``, so the call
+    is refused before its request by core's check of a packaged list, saying that nothing
+    was sent (conventions §5; the maintainer's decision of 2026-11-27 on
+    https://github.com/xippios/sdk-eurostat/issues/82). The recording stays the evidence of
+    what Eurostat answers such a code."""
+    assert "&geo=XX&time=2023" in recorded_url("unknown_code")
+    with pytest.raises(UnknownCode) as refused:
+        get_data("apro_mk_cola", filters={"geo": "XX", "time": "2023"})
+    assert (refused.value.param, refused.value.value, refused.value.list_name) == (
+        "geo",
+        "XX",
+        "GEO",
+    )
+    message = str(refused.value)
+    assert message.startswith(
+        f"'XX' is not a geo in the packaged GEO list (fetched {fetched('geo'):%Y-%m-%d}). {UNSENT} "
+    )
+    assert tasks.UNKNOWN_FILTER_CODE in message
+    assert not respx_mock.calls, "refused before any request"
+
+
+def test_get_data_ds_059358_refuses_a_reporter_its_codelist_lacks(
+    respx_mock: respx.MockRouter,
+) -> None:
+    """The call of the recorded empty cube ``DS-059358_unknown_code`` (``reporter=XX``,
+    2026-10-28): on the Comext base CXT_FREE_ISO is the one packaged codelist that feeds
+    ``reporter``, so ``XX`` is refused before the request, and ``product``, which three
+    codelists feed, is not checked."""
+    assert "&reporter=XX&product=10411200&" in recorded_url("DS-059358_unknown_code")
+    with pytest.raises(UnknownCode) as refused:
+        get_data(
+            "DS-059358",
+            filters={"reporter": "XX", "product": "10411200"},
+            since_time_period="2022",
+            until_time_period="2023",
+        )
+    assert str(refused.value).startswith(
+        "'XX' is not a reporter in the packaged CXT_FREE_ISO list (fetched "
+        f"{fetched('cxt_free_iso'):%Y-%m-%d}). {UNSENT} "
+    )
+    assert not respx_mock.calls, "refused before any request"
+
+
+@pytest.mark.parametrize(
+    ("filters", "refused"),
+    [
+        ({"geo": ["AT", "XX"]}, ("geo", "XX")),
+        ({"geo": "XX", "unit": "NO_SUCH_UNIT"}, ("geo", "XX")),
+        ({"unit": "NO_SUCH_UNIT", "geo": "XX"}, ("unit", "NO_SUCH_UNIT")),
+        ({"time": "2023", "MILKITEM": "NO_SUCH_ITEM"}, ("MILKITEM", "NO_SUCH_ITEM")),
+    ],
+    ids=["a-list", "geo-first", "unit-first", "a-key-in-capitals"],
+)
+def test_get_data_refuses_the_first_code_that_a_codelist_lacks(
+    respx_mock: respx.MockRouter, filters: dict[str, Any], refused: tuple[str, str]
+) -> None:
+    """One refusal names the first problem it finds, in the caller's order: the first key
+    whose code its codelist lacks, and in a list its first such code (sdk-core ADR-0061,
+    decision 7). A dimension code is compared without case, as the Statistics API takes it
+    ("DIMENSION_CODE and VALUE are case-insensitive", api-statistics.md), and named as the
+    caller wrote it."""
+    with pytest.raises(UnknownCode) as error:
+        get_data("apro_mk_cola", filters=filters)
+    assert (error.value.param, error.value.value) == refused
+    assert not respx_mock.calls, "refused before any request"
+
+
+def test_get_data_sends_a_checked_code_as_given(replay_fixture: ReplayFixture) -> None:
+    """A code is compared with its codelist without case, as the Statistics API compares it,
+    and sent, recorded in ``meta.request`` and named in ``meta.names`` as the caller gave it
+    (conventions §5; sdk-core ADR-0067, decision 2). The recorded answer to ``geo=AT`` served
+    at the URL of ``GEO=at``, for a test that asserts only what was sent and the names that
+    the packaged list holds (conventions §10, kind 3)."""
+    url = recorded_url("apro_mk_cola_AT_2022_2023").replace("&geo=AT&", "&GEO=at&")
+    route = replay_fixture(GET_DATA, "apro_mk_cola_AT_2022_2023", url=url)
+    result = get_data("apro_mk_cola", filters={"GEO": "at", "time": ["2022", "2023"]})
+    assert sent_urls(route) == [url]
+    assert result.meta.request["filters"] == {"GEO": "at", "time": ["2022", "2023"]}
+    assert result.meta.names == {"GEO": {"at": label("geo", "AT")}}
+
+
+def test_get_data_checks_the_dimensions_that_one_codelist_of_its_base_feeds() -> None:
+    """The keys checked before the request, by the base that serves the dataset: the twelve
+    codelists of the main base, one for each of its dimensions, and of the Comext base
+    ``reporter``, ``flow`` and ``indicators``. ``product``, which CXT_PRODCOM2_SOLD,
+    CXT_PRODCOM2_TOTAL and CXT_NC feed, and ``partner``, the ``param`` of no packaged list,
+    go unchecked, and so does a key of one base on a dataset of the other, ``freq`` on a
+    ``DS-`` dataset among them, whose CXT_FREQ is not packaged (conventions §5: "A code
+    sent under a coding system the packaged list does not hold goes unchecked")."""
+    main = {
+        origin.param: codelist
+        for codelist, origin in params.CODELISTS.items()
+        if origin.base_url == BASE_URL
+    }
+    assert len(main) == 12
+    checked = tasks.CHECKED_FILTERS
+    assert checked == {
+        BASE_URL: main,
+        COMEXT_BASE_URL: {
+            "indicators": "CXT_INDICATORS",
+            "reporter": "CXT_FREE_ISO",
+            "flow": "CXT_EU_FLUX",
+        },
+    }
+
+
+def test_get_data_sends_a_product_unchecked(replay_fixture: ReplayFixture) -> None:
+    """``product`` is the ``param`` of three packaged codelists, so its code is sent
+    unchecked, and a cube without a cell answers it with ``NotFoundError``, after the
+    request. The recorded empty cube of ``DS-059358_unknown_code`` served at the URL of an
+    unlisted product with the reporter AT, for a test that asserts only what was sent and
+    that no check refused it (conventions §10, kind 3)."""
+    url = recorded_url("DS-059358_unknown_code").replace(
+        "&reporter=XX&product=10411200&", "&reporter=AT&product=NO_SUCH_PRODUCT&"
+    )
+    route = replay_fixture(GET_DATA, "DS-059358_unknown_code", url=url)
+    with pytest.raises(NotFoundError) as refused:
+        get_data(
+            "DS-059358",
+            filters={"reporter": "AT", "product": "NO_SUCH_PRODUCT"},
+            since_time_period="2022",
+            until_time_period="2023",
+        )
+    assert sent_urls(route) == [url]
+    assert not isinstance(refused.value, InvalidRequestError)
+
+
+def test_get_data_answers_a_cube_without_a_cell_with_not_found(
+    replay_fixture: ReplayFixture,
+) -> None:
+    """Recorded on the Comext base on 2026-10-28: DS-059359 for the reporter AT, the product
+    20158000 and the indicator PRODVAL, codes that CXT_FREE_ISO, CXT_PRODCOM2_TOTAL and
+    CXT_INDICATORS hold, answered with a cube that holds no cell, size 0 on ``indicators``,
+    since DS-059359 serves no PRODVAL. The check passes the codes, and a task of one record
+    answers no data with ``NotFoundError``, which names the dataset and the filters sent
+    (sdk-core ADR-0061, decision 6; conventions §5; the maintainer's decision of 2026-11-27
+    on https://github.com/xippios/sdk-eurostat/issues/82)."""
+    case = "DS-059359_AT_20158000_indicator_not_in_dataset"
     route = replay_fixture(GET_DATA, case)
-    result = get_data("apro_mk_cola", filters={"geo": "XX", "time": "2023"})
+    with pytest.raises(NotFoundError) as refused:
+        get_data(
+            "DS-059359",
+            filters={"reporter": "AT", "product": "20158000", "indicators": "PRODVAL"},
+            since_time_period="2022",
+            until_time_period="2023",
+        )
     assert sent_urls(route) == [recorded_url(case)]
-    assert result.data.size[result.data.id.index("geo")] == 0
-    assert result.data.value == {}
-    assert list(result.data.observations()) == []
-    assert result.meta.vintage == recorded_updated(case)
-    assert result.meta.request["filters"] == {"geo": "XX", "time": "2023"}
+    assert str(refused.value) == (
+        "Eurostat holds no data for get_data(dataset_code='DS-059359', filters={'reporter': "
+        "'AT', 'product': '20158000', 'indicators': 'PRODVAL'}, since_time_period='2022', "
+        "until_time_period='2023'): the request was sent, and its cube has no cell with a "
+        "value or a status. A code that the dataset does not use, or a period that Eurostat "
+        "has not released, answers so, and the cube of a call without that filter lists the "
+        "codes of each dimension."
+    )
+    assert UNSENT not in str(refused.value)
+
+
+@pytest.mark.anyio
+async def test_get_data_tool_answers_a_refused_code_as_text(respx_mock: respx.MockRouter) -> None:
+    text = await mcp_call_text(
+        server, "eurostat_get_data", {"dataset_code": "apro_mk_cola", "filters": {"geo": "XX"}}
+    )
+    assert text.startswith("error: UnknownCode: 'XX' is not a geo in the packaged GEO list")
+    assert not respx_mock.calls
 
 
 def test_get_data_unknown_dataset(replay_fixture: ReplayFixture) -> None:
@@ -517,22 +692,6 @@ def test_get_data_ds_059358_unknown_dimension_is_too_large(replay_fixture: Repla
     )
 
 
-def test_get_data_ds_059358_unknown_code_is_an_empty_cube(replay_fixture: ReplayFixture) -> None:
-    case = "DS-059358_unknown_code"
-    route = replay_fixture(GET_DATA, case)
-    result = get_data(
-        "DS-059358",
-        filters={"reporter": "XX", "product": "10411200"},
-        since_time_period="2022",
-        until_time_period="2023",
-    )
-    assert sent_urls(route) == [recorded_url(case)]
-    assert result.data.size[result.data.id.index("reporter")] == 0
-    assert result.data.value == {}
-    assert list(result.data.observations()) == []
-    assert result.meta.vintage == recorded_updated(case)
-
-
 @pytest.mark.anyio
 async def test_get_data_ds_059358_tool_end_to_end(replay_fixture: ReplayFixture) -> None:
     route = replay_fixture(GET_DATA, PRODCOM)
@@ -555,6 +714,9 @@ async def test_get_data_ds_059358_tool_end_to_end(replay_fixture: ReplayFixture)
     assert payload["meta"]["vintage"] == "2026-10-20T11:00:00+0200"
     assert payload["meta"]["published_at"] == "2026-10-20T11:00:00+02:00"
     assert payload["meta"]["request"]["dataset_code"] == "DS-059358"
+    assert payload["meta"]["names"] == {"reporter": {"AT": label("cxt_free_iso", "AT")}}, (
+        "product, which three codelists feed, names no code"
+    )
 
 
 # The list tasks answer from the packaged files under src/xippios/eurostat/reference/,
