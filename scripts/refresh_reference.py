@@ -422,7 +422,7 @@ def codelist_sample(body: bytes, codelist: Codelist, retrieved_at: datetime, des
     """A codelist's answer whole, as compact JSON, with its provenance row.
 
     The answer as decoded, written again with ``ensure_ascii=False`` and no spaces, which
-    gave back every codelist answer probed byte for byte when the sample was first cut;
+    gave back each codelist answer byte for byte when the sample was first cut;
     the row's sha256 and size are the file's.
     """
     text = json.dumps(json.loads(body), ensure_ascii=False, separators=(",", ":"))

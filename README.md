@@ -240,11 +240,11 @@ and does not list the Comext or Prodcom datasets: the Comext base answers
 
 The WADL files of Eurostat's main base (`docs/upstream/api/`) document 24 operations, and
 the package's scope is its data, its lists and its releases, 17 of them, as the maintainer
-decided on 2026-11-27 (https://github.com/xippios/sdk-eurostat/issues/82). Four are served
-today, as the status table above names them: the Statistics API's `getData` and the SDMX
-2.1 API's `dataQuery`, wrapped, and `codeListQuery` and `getTocXml`, whose answers the
-package ships, eighteen codelists and the table of contents, refreshed before each
-release. The other thirteen wait for their public issues:
+decided on 2026-11-27 (https://github.com/xippios/sdk-eurostat/issues/82#issuecomment-7219313682).
+Four are served today, as the status table above names them: the Statistics API's
+`getData` and the SDMX 2.1 API's `dataQuery`, wrapped, and `codeListQuery` and `getTocXml`,
+whose answers the package ships, eighteen codelists and the table of contents, refreshed
+before each release. The other thirteen wait for their public issues:
 
 - the Statistics API's lookups of the geo codes by level and of a country's label,
   `getGeoCategoricalResponse` and `getCountryLabelResponse`, and five structure queries of
@@ -270,16 +270,20 @@ bulk download facility, a service beside the API that Eurostat advises for large
 extractions (https://github.com/xippios/sdk-eurostat/issues/60, closed as not planned).
 
 `get_data` takes each parameter that the user guide documents for the Statistics API's data
-query, and `download_dataset` the data query's `flowRef`, `key`, `startPeriod`, `endPeriod`
-and `lastNObservations`. A caller of `download_dataset` cannot set yet the data query's
-`firstNObservations`, `detail`, `returnData`, `lang`, `label` and `providerRef`, nor its
-`format` and `compressed`, which it sends as `SDMX-CSV` and `true`
-(https://github.com/xippios/sdk-eurostat/issues/39). A caller of `list_codes` cannot set the
-codelist query's parameters, since the package ships each codelist as its refresh fetched
-it, of the agency ESTAT, in its latest version, with English labels and in JSON-stat:
-another `agencyID` or `resourceID`, a `version` and a `lang`, and the `detail`,
-`completestub` and `references` that select what a structure query returns, wait for a
-live `list_codes`, beside `format` and `compressed`, which choose a form of the same answer
+query but `format`, whose one documented value, `JSON`, it sends. `download_dataset` takes
+the data query's `flowRef`, `key`, `startPeriod`, `endPeriod` and `lastNObservations`, and of
+its `format` it sends `SDMX-CSV`, the form it downloads, leaves the SDMX-ML forms, the
+default and `SDMX_2.1_STRUCTURED`, and `TSV` out, as above, and leaves `JSON`, JSON-stat,
+to https://github.com/xippios/sdk-eurostat/issues/39. A caller of `download_dataset` cannot
+set yet the data query's `firstNObservations`, `detail`, `returnData`, `lang`, `label` and
+`providerRef`, nor its `compressed`, which it sends as `true`
+(https://github.com/xippios/sdk-eurostat/issues/39). `list_codes` answers each codelist in
+the form its refresh fetched, the codelist query's `format` `JSON`, JSON-stat, and leaves
+its default, SDMX-ML, and `TSV` out, as above. A caller of `list_codes` cannot set yet the
+codelist query's other parameters, since the package ships each codelist as its refresh
+fetched it, of the agency ESTAT, in its latest version and with English labels: another
+`agencyID` or `resourceID`, a `version` and a `lang`, the `detail`, `completestub` and
+`references` that select what a structure query returns, and `compressed`
 (https://github.com/xippios/sdk-eurostat/issues/35). The table of contents' query takes no
 parameter, and `list_datasets` leaves out what each leaf holds beside its nine fields: the
 links to its reference metadata, its short description, its titles in French and German,

@@ -103,8 +103,9 @@ codelists feed, `partner`, the `param` of no packaged list, and a dimension of o
 dataset of the other are sent unchecked, and no check reads `download_dataset`'s `key`. A
 cube that holds no cell raises `NotFoundError` after the request: Eurostat answers so a
 code that the dataset does not use ("A code that matches nothing answers an empty cube"),
-as `DS-059359_AT_20158000_indicator_not_in_dataset` replays, and the recorded empty cubes of
-`XX`, `unknown_code` and `DS-059358_unknown_code`, are refused before their request.
+as `DS-059359_AT_20158000_indicator_not_in_dataset` replays, and the calls of the recorded
+empty cubes of `XX`, `unknown_code` and `DS-059358_unknown_code` are refused before their
+request.
 
 Comext's trade datasets DS-045409 (EU trade since 1988 by HS2-4-6 and CN8) and DS-059341
 (international trade of EU and non-EU countries since 2002 by HS2-4-6) name the same

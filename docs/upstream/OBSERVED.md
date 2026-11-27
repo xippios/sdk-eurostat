@@ -58,12 +58,16 @@ of one fault, its status and its id 413, labelled "ASYNCHRONOUS_RESPONSE. Your r
 be treated asynchronously. Please try again later.": the status and the id of its refusal
 of an extraction too large, `EXTRACTION_TOO_BIG`, so the label alone tells the two apart
 (`errors.asynchronous_fault`). The documented `warning` was never answered: four requests
-without a filter to datasets of 624,554 to 853,146 values on the main base were answered at
-once (https://github.com/xippios/sdk-eurostat/pull/4).
+without a filter on the main base, to the datasets apro_ec_poulm, ef_mp_digicr, ef_ah_pigt
+and env_air_emis, were answered at once with HTTP 200, 9.9 to 19.2 MB in 3.0 to 5.5 s
+(https://github.com/xippios/sdk-eurostat/pull/4, its live calls).
 
-Probe: 2026-10-27 and 2026-10-28, `getData`: the four requests of 2026-10-27 kept no
-answer; on the Comext base DS-059341, by HS2-4-6, answered so the CN8 product `15071090`
-with the reporter `AT` and the partner `DE`,
+Probe: 2026-10-27 and 2026-10-28, `getData`: on the main base
+`GET statistics/1.0/data/apro_ec_poulm`, `GET statistics/1.0/data/ef_mp_digicr`,
+`GET statistics/1.0/data/ef_ah_pigt` and `GET statistics/1.0/data/env_air_emis`, each
+without a filter as https://github.com/xippios/sdk-eurostat/pull/4 names them, the rest of
+their query not recorded, kept no answer (2026-10-27); on the Comext base DS-059341, by
+HS2-4-6, answered so the CN8 product `15071090` with the reporter `AT` and the partner `DE`,
 `tests/fixtures/get_data/DS-059341_AT_DE_15071090_cn8_on_hs_flow.json` (2026-10-28).
 
 ### The Comext base reads a filter on a dimension the dataset lacks as none
@@ -121,7 +125,8 @@ answered one for ef_m_farmleg, 6.2 million values, with HTTP 200 and SDMX-CSV, a
 `download_dataset` sends the key `""` so, for the whole dataset.
 
 Probe: 2026-10-27, `dataQuery`, `GET sdmx/2.1/data/ef_m_farmleg?format=SDMX-CSV`, its
-status and headers read and its body not kept.
+status and headers read and its body not kept
+([fb9c058](https://github.com/xippios/sdk-eurostat/commit/fb9c0580106445b43bacb3c6b324711ea3a1192a)).
 
 ### A codelist in JSON-stat carries one version
 
@@ -151,8 +156,19 @@ VALUE_IN_EUROS, QUANTITY_IN_100KG and SUPPLEMENTARY_QUANTITY, and DS-059341's VA
 VALUE_NAC and QUANTITY_KG. `params.CODELISTS` declares each packaged codelist's base and
 dimension from them.
 
-Probe: 2026-10-28, `dataStructureQuery`, the four data structures, which kept no answer, and
-`getData`, the cubes `tests/fixtures/get_data/DS-045409_AT_DE_15071090_2023.json` and
+Probe: 2026-10-28, `dataStructureQuery` on the Comext base, one request for each data
+structure in SDMX-ML, written here in the WADL's form
+(`docs/upstream/api/comext/sdmx-rest.wadl:983`), since no record holds the requests as
+sent:
+`GET https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/datastructure/ESTAT/DS-059358/2.7`,
+`GET https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/datastructure/ESTAT/DS-059359/2.7`,
+`GET https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/datastructure/ESTAT/DS-045409/6.6`
+and
+`GET https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/datastructure/ESTAT/DS-059341/3.7`
+kept no answer (https://github.com/xippios/sdk-eurostat/pull/14 counts DS-059341's read, and
+[2362757](https://github.com/xippios/sdk-eurostat/commit/2362757ca9b7b70db177b5d10cfec9696efdc8e2)
+states the versions 6.6 and 3.7); and `getData`, the cubes
+`tests/fixtures/get_data/DS-045409_AT_DE_15071090_2023.json` and
 DS-059341's for the reporter `AT`, the partner `DE` and the product `1507` in 2023,
 recorded the same day and removed with the trade tasks in 0.4.0, as it stands at
 https://github.com/xippios/sdk-eurostat/blob/1713cf7ff17283a012f1b40721140b10a82b54c3/tests/fixtures/get_data/DS-059341_AT_DE_1507_2023.json.
@@ -192,3 +208,29 @@ and `list_datasets` lists the main base's alone.
 Probe: 2026-10-28, `getTocXml`,
 `GET https://ec.europa.eu/eurostat/api/comext/dissemination/catalogue/toc/xml`, which kept
 no answer.
+
+## Eurostat's website
+
+### The website's request budget runs out within a few requests
+
+The pages of the user guide are served by Eurostat's website, for which no page of the
+snapshot gives a rate, and the API's fair-use rule names no number
+(`docs/upstream/user-guide/api-detailed-guidelines/asynchronous-api.md`, "Fair use of the
+service"). The website reports a small request budget in `X-Rate-Limit-Remaining`, which a
+series of requests a few seconds apart drains, and then answers HTTP 429 "Quota Exhausted",
+naming the wait in `X-Rate-Limit-Retry-After-Seconds` or `Retry-After`. Five seconds apart,
+`scripts/refresh_upstream.py`'s pace, a capture of its 33 pages met three 429s, each
+answered at the one retry after the wait the website named. The script's `PAUSE`,
+`QUOTA_PAUSE` and `MAX_QUOTA_WAIT` follow from it.
+
+Probe: 2026-10-27 and 2026-11-27, the website's pages: the first runs of the capture
+script, whose requests were the snapshot's pages from
+`GET https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-introduction`
+on, kept no answer, and the budget, its header and the 429 stand in the script's text since
+[564652c](https://github.com/xippios/sdk-eurostat/commit/564652ceb5bb7591564e12308e67c29998d7ac35)
+(2026-10-27); the capture of 2026-11-27 met a 429 once at each of
+`GET https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines`,
+`GET https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-detailed-guidelines/catalogue-api/dcat`
+and `GET https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-faq`,
+retried after 25, 28 and 29 s, and kept no answer
+(https://github.com/xippios/sdk-eurostat/pull/91, its live calls).

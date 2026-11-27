@@ -54,9 +54,10 @@ tests/
   test_observed.py docs/upstream/OBSERVED.md as committed: each note's probe and sample,
                    and no dated note of what Eurostat answered outside it
   test_parse.py    parse_sdmx_csv on the samples under tests/fixtures/files/sdmx-csv/
-  test_readme.py   README.md's scope against the snapshot's WADL files: each documented
-                   operation once, each parameter a task takes or the scope names, and the
-                   two country lists against the packaged ones
+  test_readme.py   README.md's scope against the snapshot's WADL files and guide pages:
+                   each documented operation once, each parameter and each form of format
+                   that a task takes or the scope places beside it, and the two country
+                   lists against the packaged ones
   test_refresh_reference.py  the reference script's declaration, readers and cuts, and the
                    frame's run of it, offline
   test_refresh_upstream.py   the snapshot's declaration and hooks, offline

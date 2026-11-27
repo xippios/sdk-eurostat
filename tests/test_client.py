@@ -1,33 +1,32 @@
 """``classify`` against the recorded refusals and the documented ones, on both bases.
 
-Recorded on the main base on 2026-10-27: under ``tests/fixtures/get_data/`` an unknown
-dataset, an unknown dimension and ``geo`` with ``geoLevel``, all with ``error`` as an
-array, and the empty cube of an unknown code; under ``tests/fixtures/data_query/`` two
-SDMX-CSV answers, plain and ``compressed=true``. Recorded on the Comext base on
-2026-10-28, mirroring them: under ``get_data/`` the Prodcom cube ``DS-059358``, an
-unknown ``DS-`` dataset (HTTP 404, the same ``error`` array), a filter on a dimension
-``DS-059358`` lacks, which the Comext base does not refuse as the main base does but
-refuses as too large (HTTP 413, an ``error`` array with id 413, ``EXTRACTION_TOO_BIG``;
-the estimate, 151,971,120 rows, is that of an unfiltered query, so the unknown filter
-seems to be ignored), the Statistics API's asynchronous answer (HTTP 413, an ``error``
-array with id 413 labelled ``ASYNCHRONOUS_RESPONSE``, DS-059341's answer to a CN8 code
-the dataset does not serve) and the empty cube of an unknown reporter; under
-``data_query/`` two SDMX-CSV answers of ``DS-059358``, the envelope that queues an
-asynchronous answer (``DS-045409``, the whole monthly flow: HTTP 200,
-``application/xml``, status ``SUBMITTED``) and the SOAP fault ``EXTRACTION_TOO_BIG`` at
-HTTP 413 (``DS-045409``, five reporters and one partner for a year). The two SDMX
-answers replace the tests that served the user guide's documented bodies (conventions
-§10). Not recorded, two kinds of tests serve answers the service was not seen to send:
+Recorded on the main base: under ``tests/fixtures/get_data/`` an unknown dataset, an unknown
+dimension and ``geo`` with ``geoLevel``, all with ``error`` as an array, and the empty cube
+of an unknown code; under ``tests/fixtures/data_query/`` two SDMX-CSV answers, plain and
+``compressed=true``. Recorded on the Comext base, mirroring them: under ``get_data/`` the
+Prodcom cube ``DS-059358``, an unknown ``DS-`` dataset (HTTP 404, the same ``error``
+array), a filter on a dimension ``DS-059358`` lacks, which the Comext base refuses as too
+large (HTTP 413, an ``error`` array with id 413, ``EXTRACTION_TOO_BIG``), the Statistics
+API's asynchronous answer (HTTP 413, an ``error`` array with id 413 labelled
+``ASYNCHRONOUS_RESPONSE``, DS-059341's answer to a CN8 code the dataset does not serve)
+and the empty cube of an unknown reporter; under ``data_query/`` two SDMX-CSV answers of
+``DS-059358``, the envelope that queues an asynchronous answer (``DS-045409``, the whole
+monthly flow: HTTP 200, ``application/xml``, status ``SUBMITTED``) and the SOAP fault
+``EXTRACTION_TOO_BIG`` at HTTP 413 (``DS-045409``, five reporters and one partner for a
+year). Each recording's ``recorded_at`` gives its day, and what it shows of Eurostat stands
+in ``docs/upstream/OBSERVED.md`` with its probe: "The Comext base reads a filter on a
+dimension the dataset lacks as none", "The asynchronous answer comes as an `error` array"
+and "A data query to be queued answers HTTP 200 with its envelope". The two SDMX answers
+replace the tests that served the user guide's documented bodies (conventions §10). Not
+recorded, two kinds of tests serve answers the service was not seen to send:
 
 - ``test_documented_shape_*`` read a documented body verbatim from the snapshot's user
   guide at test time, so it is neither recorded nor hand-written: the Statistics API's
   asynchronous ``warning`` and the single-object ``error`` the guide shows for ``geo``
-  with ``geoLevel`` (``api-statistics.md``). Four unfiltered requests to datasets of
-  624,554 to 853,146 values answered synchronously on 2026-10-27, and probing stopped
-  there (https://github.com/xippios/sdk-eurostat/pull/4); the Statistics API's
-  asynchronous answer was recorded on 2026-10-28 in another shape, the ``error`` array
-  above, and the documented ``warning``, never seen, keeps its test as the documented
-  shape (conventions §10).
+  with ``geoLevel`` (``api-statistics.md``). Eurostat answers both in another shape, the
+  ``error`` arrays above, and each documented shape keeps its test (conventions §10;
+  ``docs/upstream/OBSERVED.md``, "The asynchronous answer comes as an `error` array" and
+  "The refusal of `geo` with `geoLevel` comes as an array").
 - ``test_fault_table_*`` compose a body from a row of the fault table
   (``api-statistics.md``), read at test time, in the recorded ``error`` array form: the
   guide documents the fault codes, not their bodies (faults 100, 140 and 150 at HTTP 400).
@@ -266,10 +265,10 @@ def test_fault_table_syntax_and_semantic_errors_are_refused(code: int, status: i
 @pytest.mark.parametrize("status", [200, 413])
 def test_documented_shape_asynchronous_answer_is_refused(status: int) -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written, and never seen: the Statistics API's asynchronous answer was recorded on
-    2026-10-28 as an ``error`` array instead (the test after this one), and this test
-    stays for the documented ``warning`` (conventions §10, kind 1). The guide names no HTTP
-    status for it: both are read."""
+    hand-written: Eurostat answers the Statistics API's asynchronous answer as an ``error``
+    array (the test after this one; ``docs/upstream/OBSERVED.md``, "The asynchronous answer
+    comes as an `error` array"), and this test stays for the documented ``warning``
+    (conventions §10, kind 1). The guide names no HTTP status for it: both are read."""
     assert ASYNCHRONOUS.startswith('{"warning":{"status":413, "label":"ASYNCHRONOUS_RESPONSE.')
     error = classify(answer(status, ASYNCHRONOUS))
     assert isinstance(error, InvalidRequestError)
