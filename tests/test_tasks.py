@@ -1151,8 +1151,7 @@ async def test_code_list_query_takes_the_comext_base(respx_mock: respx.MockRoute
     asserted. NOT RECORDED: the answer is the main base's STATINFO sample
     (``tests/fixtures/files/codelist/statinfo.json``) served at the Comext base's codelist
     path, an exchange upstream never had, so that the call completes, for a test that
-    asserts only what was sent (conventions §10, kind 3). The wrapper answers core's
-    ``Answer`` of the parsed codelist."""
+    asserts only what was sent (conventions §10, kind 3)."""
     sample = (FIXTURES / "files" / "codelist" / "statinfo.json").read_bytes()
     route = respx_mock.route(
         method="GET",
@@ -1163,14 +1162,28 @@ async def test_code_list_query_takes_the_comext_base(respx_mock: respx.MockRoute
             200, headers={"content-type": "application/json"}, content=sample
         )
     )
-    answer = await api.sdmx.code_list_query(
-        "ESTAT", "STATINFO", lang="en", base_url=COMEXT_BASE_URL
-    )
-    assert isinstance(answer, Answer)
-    assert isinstance(answer.payload, models.Codelist)
+    await api.sdmx.code_list_query("ESTAT", "STATINFO", lang="en", base_url=COMEXT_BASE_URL)
     assert sent_urls(route) == [
         f"{COMEXT_BASE_URL}/sdmx/2.1/codelist/ESTAT/STATINFO?format=JSON&lang=en"
     ]
+
+
+@pytest.mark.anyio
+async def test_code_list_query_answers_the_parsed_codelist(respx_mock: respx.MockRouter) -> None:
+    """``api.sdmx.code_list_query`` answers core's ``Answer`` of the parsed codelist. NOT
+    RECORDED as served: the main base's STATINFO sample
+    (``tests/fixtures/files/codelist/statinfo.json``), the whole answer of the operation as
+    decoded, served in memory at its own URL, where upstream answers alike (conventions §10,
+    kind 3)."""
+    sample = (FIXTURES / "files" / "codelist" / "statinfo.json").read_bytes()
+    respx_mock.get(f"{BASE_URL}/sdmx/2.1/codelist/ESTAT/STATINFO").mock(
+        return_value=httpx.Response(
+            200, headers={"content-type": "application/json"}, content=sample
+        )
+    )
+    answer = await api.sdmx.code_list_query("ESTAT", "STATINFO", lang="en")
+    assert isinstance(answer, Answer)
+    assert isinstance(answer.payload, models.Codelist)
 
 
 TASKS = ["download_dataset", "get_data", "list_codes", "list_datasets"]
