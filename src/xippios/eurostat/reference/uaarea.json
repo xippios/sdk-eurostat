@@ -1,7 +1,7 @@
 {
   "param": "uaarea",
   "endpoint": "sdmx/2.1/codelist/ESTAT/UAAREA",
-  "fetched": "2026-11-20T14:17:47Z",
+  "fetched": "2026-11-27T07:27:10Z",
   "records": [
     {
       "code": "TOTAL",

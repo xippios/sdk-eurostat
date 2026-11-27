@@ -1,7 +1,7 @@
 {
   "param": "freq",
   "endpoint": "sdmx/2.1/codelist/ESTAT/FREQ",
-  "fetched": "2026-11-20T14:17:25Z",
+  "fetched": "2026-11-27T07:26:45Z",
   "records": [
     {
       "code": "P",

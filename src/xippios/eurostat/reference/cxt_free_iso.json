@@ -1,7 +1,7 @@
 {
   "param": "reporter",
   "endpoint": "https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_FREE_ISO",
-  "fetched": "2026-11-20T14:17:58Z",
+  "fetched": "2026-11-27T07:27:20Z",
   "records": [
     {
       "code": "AD",

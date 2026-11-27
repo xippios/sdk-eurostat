@@ -1,7 +1,7 @@
 {
   "param": "strucpro",
   "endpoint": "sdmx/2.1/codelist/ESTAT/STRUCPRO",
-  "fetched": "2026-11-20T14:17:33Z",
+  "fetched": "2026-11-27T07:26:53Z",
   "records": [
     {
       "code": "AR_THS_HA",
@@ -92,12 +92,12 @@
       "label": "Certified organic harvested production - percentage of total harvested production"
     },
     {
-      "code": "HOL",
-      "label": "Number of holders (1000)"
+      "code": "HLD_THS_NR",
+      "label": "Holders - thousand"
     },
     {
-      "code": "ANI",
-      "label": "Number of animals (1000)"
+      "code": "ANI_THS_NR",
+      "label": "Animals - thousand"
     }
   ]
 }
