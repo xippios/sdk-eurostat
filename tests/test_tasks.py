@@ -346,10 +346,11 @@ def test_get_data_sends_a_product_unchecked(replay_fixture: ReplayFixture) -> No
 def test_get_data_answers_a_cube_without_a_cell_with_not_found(
     replay_fixture: ReplayFixture,
 ) -> None:
-    """Recorded on the Comext base on 2026-10-28: DS-059359 for the reporter AT, the product
-    20158000 and the indicator PRODVAL, codes that CXT_FREE_ISO, CXT_PRODCOM2_TOTAL and
-    CXT_INDICATORS hold, answered with a cube that holds no cell, size 0 on ``indicators``,
-    since DS-059359 serves no PRODVAL. The check passes the codes, and a task of one record
+    """Recorded on the Comext base: DS-059359 for the reporter AT, the product 20158000 and
+    the indicator PRODVAL, codes that CXT_FREE_ISO, CXT_PRODCOM2_TOTAL and CXT_INDICATORS
+    hold, answered with a cube that holds no cell, size 0 on ``indicators``, since
+    DS-059359 serves no PRODVAL (``docs/upstream/OBSERVED.md``, "A code that matches nothing
+    answers an empty cube"). The check passes the codes, and a task of one record
     answers no data with ``NotFoundError``, which names the dataset and the filters sent
     (sdk-core ADR-0061, decision 6; conventions §5; the maintainer's decision of 2026-11-27
     on https://github.com/xippios/sdk-eurostat/issues/82)."""
@@ -622,7 +623,7 @@ def test_get_data_route_answers_a_refusal_with_422(replay_fixture: ReplayFixture
 
 
 # The Comext base: a DS- dataset is requested on COMEXT_BASE_URL (prefixed-datasets.md),
-# through the same client; the fixtures mirror the main base's, recorded on 2026-10-28.
+# through the same client; the fixtures mirror the main base's.
 
 PRODCOM = "DS-059358_AT_10411200_2022_2023"
 FISH_OIL = {"reporter": "AT", "product": "10411200"}

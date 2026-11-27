@@ -140,8 +140,9 @@ apro_mk_cola and ef_m_farmleg name. `api.sdmx.code_list_query` leaves the versio
 the latest, and the reference refresh packages the version it answers.
 
 Probe: 2026-10-27, `codeListQuery`, `GET sdmx/2.1/codelist/ESTAT/UNIT?format=JSON&lang=en`,
-version 84.0, which kept no answer; the refresh of 2026-11-27 packaged UNIT at 84.0 again,
-`src/xippios/eurostat/reference/lists.json`.
+written here as `api.sdmx.code_list_query` builds it, since no record holds the request as
+sent, version 84.0, which kept no answer; the refresh of 2026-11-27 packaged UNIT at 84.0
+again, `src/xippios/eurostat/reference/lists.json`.
 
 ### The Comext base's datasets take these codelists
 

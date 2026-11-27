@@ -296,11 +296,12 @@ ASYNCHRONOUS_REFUSAL = (
 
 
 def test_statistics_api_asynchronous_answer_is_refused_as_recorded() -> None:
-    """Recorded on the Comext base on 2026-10-28: DS-059341's answer to a CN8 code the
-    dataset does not serve, HTTP 413 with an ``error`` array whose id is 413, as
-    ``EXTRACTION_TOO_BIG``'s is, and whose label starts ``ASYNCHRONOUS_RESPONSE``. The
-    label makes it the asynchronous refusal, checked before the HTTP 413 one: send the
-    request again later, or narrow it; never "too large"."""
+    """Recorded on the Comext base: DS-059341's answer to a CN8 code the dataset does not
+    serve, HTTP 413 with an ``error`` array whose id is 413, as ``EXTRACTION_TOO_BIG``'s is,
+    and whose label starts ``ASYNCHRONOUS_RESPONSE`` (``docs/upstream/OBSERVED.md``, "The
+    asynchronous answer comes as an `error` array"). The label makes it the asynchronous
+    refusal, checked before the HTTP 413 one: send the request again later, or narrow it;
+    never "too large"."""
     response = recorded(ASYNCHRONOUS_RECORDED)
     assert response.status_code == 413
     fault = response.json()["error"][0]
