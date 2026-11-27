@@ -269,19 +269,18 @@ def test_the_attribution_stands_on_the_copyright_notice_which_is_the_terms() -> 
     assert all(statement.where for statement in snapshot.attribution)
 
 
-def test_the_sites_navigation_links_the_notice_at_another_address() -> None:
+def test_the_sites_navigation_is_recorded_by_its_words_without_a_link() -> None:
     """The site's navigation, on every user-guide page, links the copyright notice by the
-    text ``Copyright notice and free re-use of data`` to ``/eurostat/en/help/copyright-notice``,
-    another address than the one the snapshot reads the notice at. Recorded as that link from
-    the first page, the check reads past it wherever it stands as that link's text, and stops
-    where the first page no longer links it so (sdk-core ADR-0062, decision 10)."""
+    words ``Copyright notice and free re-use of data``, at an address that is not the same in
+    every answer. A statement with a link passes only as a link to the one target recorded,
+    so the words are recorded without one: the check reads past them wherever they stand,
+    on every page, and the first page must print them (sdk-core ADR-0062, decision 10)."""
     (statement,) = [item for item in script.ATTRIBUTION if item.source != script.COPYRIGHT_URL]
     assert (statement.text, statement.source, statement.link) == (
         "Copyright notice and free re-use of data",
         f"{GUIDE}api-introduction",
-        "https://ec.europa.eu/eurostat/en/help/copyright-notice",
+        None,
     )
-    assert statement.link != script.COPYRIGHT_URL
     assert "navigation" in statement.where
     assert declared(statement.source).file == "user-guide/api-introduction.md"
 
