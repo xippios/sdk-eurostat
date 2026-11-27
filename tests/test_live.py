@@ -117,20 +117,22 @@ def _check(result: Result[Cube], *, periods: int) -> None:
 
 
 async def test_get_data_apro_mk_cola() -> None:
-    result = await tasks.get_data_async("apro_mk_cola", {"geo": "AT", "time": ["2022", "2023"]})
+    result = await tasks.get_data_async(
+        "apro_mk_cola", filters={"geo": "AT", "time": ["2022", "2023"]}
+    )
     _check(result, periods=2)
 
 
 async def test_get_data_apro_cpnh1() -> None:
     result = await tasks.get_data_async(
-        "apro_cpnh1", {"geo": "AT"}, since_time_period="2022", until_time_period="2023"
+        "apro_cpnh1", filters={"geo": "AT"}, since_time_period="2022", until_time_period="2023"
     )
     _check(result, periods=2)
 
 
 async def test_get_data_ef_m_farmleg() -> None:
     result = await tasks.get_data_async(
-        "ef_m_farmleg", {"geo": "AT", "unit": "HLD"}, last_time_period=2
+        "ef_m_farmleg", filters={"geo": "AT", "unit": "HLD"}, last_time_period=2
     )
     _check(result, periods=2)
 
@@ -139,7 +141,7 @@ async def test_get_data_ds_059358() -> None:
     """Prodcom's DS-059358 on the Comext base: Austria, product 10411200 (fats and oils of
     fish or marine mammals, NACE 10.41), the latest period."""
     result = await tasks.get_data_async(
-        "DS-059358", {"reporter": "AT", "product": "10411200"}, last_time_period=1
+        "DS-059358", filters={"reporter": "AT", "product": "10411200"}, last_time_period=1
     )
     cube = result.data
     assert cube.class_ == "dataset"
@@ -161,7 +163,7 @@ async def test_get_data_ds_059358() -> None:
 async def test_download_dataset_apro_mk_cola(tmp_path: Path) -> None:
     dest = tmp_path / "milk.csv.gz"
     result = await tasks.download_dataset_async(
-        "apro_mk_cola", "A...THS_T.AT", since="2022", until="2023", dest=dest
+        "apro_mk_cola", "A...THS_T.AT", start_period="2022", end_period="2023", dest=dest
     )
     assert result.data.path == dest
     assert result.data.bytes == dest.stat().st_size
