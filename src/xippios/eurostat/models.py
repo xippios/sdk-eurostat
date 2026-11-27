@@ -67,8 +67,8 @@ __all__ = [
 
 TOC_DATE = "%d.%m.%Y"
 """How the table of contents prints a leaf's ``lastUpdate`` and ``lastModified``:
-``"02.10.2026"``, day first, the order that a day past 12 among the packaged leaves fixes
-(``"19.11.2026"``)."""
+``"02.10.2026"``, day first, the order that a day past 12 fixes, as in ``"17.11.2026"`` of
+the sample ``tests/fixtures/files/toc/ai.xml``."""
 
 LAST_UPDATE = "%d/%m/%y %H:%M:%S"
 """How SDMX-CSV prints ``LAST UPDATE``: ``"05/10/26 23:00:00"``, day first, no zone.

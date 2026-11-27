@@ -31,8 +31,8 @@ packaged list, and names them in ``meta.names``; a cube without a cell, a code t
 does not use or a period not yet released, raises ``NotFoundError`` (conventions §5;
 sdk-core ADR-0061, decision 6). Every refusal before a request says ``Nothing was sent.``
 after its first sentence, and a refusal of an answer names the request that was sent
-(conventions §5). No task sends more
-than one request, so none states a ceiling of its own.
+(conventions §5). No task sends more than one request, so none states a ceiling of its
+own.
 
 The list tasks, ``list_datasets`` and ``list_codes``, answer from the packaged lists
 (``params``) without a request, by sdk-core ADR-0041 decision 1: ``meta.retrieved_at``
@@ -359,16 +359,15 @@ async def get_data_async(
     Prodcom indicator is a unit or a flag (``"KG"``, ``":E"``). Keep slices small: the
     whole slice comes back at once. A filter's code that its codelist lacks is refused
     before sending. An unknown dataset, and a cube without a cell, raise ``NotFoundError``.
-    A query Eurostat refuses or
-    would answer asynchronously raises ``InvalidRequestError``, and one over its limit
-    ``QueryTooLarge``, each naming how to narrow it.
+    A query Eurostat refuses or would answer asynchronously raises ``InvalidRequestError``,
+    and one over its limit ``QueryTooLarge``, each naming how to narrow it.
 
     Args:
         dataset_code: The dataset's online data code, upstream's ``datasetCode``, e.g.
             ``"apro_mk_cola"`` (cows' milk collection and dairy products, annual),
-            ``"apro_cpnh1"`` (crop production),
-            ``"ef_m_farmleg"`` (farm indicators by legal status) or ``"DS-059358"``
-            (Prodcom: sold production, exports and imports, on the Comext base).
+            ``"apro_cpnh1"`` (crop production), ``"ef_m_farmleg"`` (farm indicators by
+            legal status) or ``"DS-059358"`` (Prodcom: sold production, exports and
+            imports, on the Comext base).
         filters: Dimension code to one code or a list of codes, each sent as
             ``DIMENSION_CODE=VALUE``; any dimension of the dataset, codes as in the
             cube's ``dimension``, case-insensitive, e.g. ``{"geo": "AT", "time":
@@ -466,9 +465,8 @@ async def list_datasets_async(*, search: str | None = None) -> Result[list[Datas
     first and last period and its number of values, each ``None`` where Eurostat prints
     none. A dataset's ``code`` is what ``get_data`` takes as ``dataset_code``.
     ``meta.vintage`` is the table of contents' ``creationDate`` as printed
-    (``"20261120T1004"``), and
-    ``meta.retrieved_at`` is when the package's copy was fetched: a dataset Eurostat added
-    since is missing until the package is refreshed.
+    (``"20261120T1004"``), and ``meta.retrieved_at`` is when the package's copy was
+    fetched: a dataset Eurostat added since is missing until the package is refreshed.
 
     Args:
         search: Text to look for in the code or the English title, ignoring case, e.g.
@@ -556,8 +554,8 @@ async def list_codes_async(codelist: str, *, search: str | None = None) -> Resul
     the Prodcom datasets DS-059358 and DS-059359 and of the trade datasets DS-045409 and
     DS-059341. A codelist holds every code Eurostat defines in it, more than any one
     dataset uses: GEO has thousands. A dimension's filter takes its codes, e.g.
-    ``get_data("apro_mk_cola", filters={"geo": "AT"})``. A codelist the package does not carry
-    raises ``UnknownCode`` naming the closest it does. ``meta.vintage`` is the codelist's
+    ``get_data("apro_mk_cola", filters={"geo": "AT"})``. A codelist the package does not
+    carry raises ``UnknownCode`` naming the closest it does. ``meta.vintage`` is the codelist's
     version (``"28.1"``) and ``meta.published_at`` its last update, or ``None`` where it
     names none; a code Eurostat added since is missing until the package is refreshed.
 
