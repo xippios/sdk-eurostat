@@ -9,7 +9,7 @@ sdk-core ADR-0041) that `xippios.core.PackagedList.load` reads through `params.p
 from xippios.core import PackagedList
 
 geo = PackagedList.load("xippios.eurostat", "geo")
-geo.records[0]  # {"code": "EUR", "label": "Europe"}
+geo.records[0]  # {"code": "EUR", "label": "Europe*"}
 ```
 
 - `toc.json`: every leaf of the Catalogue API's table of contents, datasets and
