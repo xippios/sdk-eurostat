@@ -1,11 +1,11 @@
 {
   "param": "geo",
   "endpoint": "sdmx/2.1/codelist/ESTAT/GEO",
-  "fetched": "2026-11-20T14:17:27Z",
+  "fetched": "2026-11-27T07:26:47Z",
   "records": [
     {
       "code": "EUR",
-      "label": "Europe"
+      "label": "Europe*"
     },
     {
       "code": "EU",
@@ -14684,6 +14684,22 @@
       "label": "Andorra"
     },
     {
+      "code": "AM",
+      "label": "Armenia"
+    },
+    {
+      "code": "AM_CAP",
+      "label": "Yerevan"
+    },
+    {
+      "code": "AZ",
+      "label": "Azerbaijan"
+    },
+    {
+      "code": "AZ_CAP",
+      "label": "Baki (Baku)"
+    },
+    {
       "code": "BY",
       "label": "Belarus"
     },
@@ -16222,22 +16238,6 @@
     {
       "code": "ASI_W",
       "label": "Western Asia"
-    },
-    {
-      "code": "AM",
-      "label": "Armenia"
-    },
-    {
-      "code": "AM_CAP",
-      "label": "Yerevan"
-    },
-    {
-      "code": "AZ",
-      "label": "Azerbaijan"
-    },
-    {
-      "code": "AZ_CAP",
-      "label": "Baki (Baku)"
     },
     {
       "code": "BH",

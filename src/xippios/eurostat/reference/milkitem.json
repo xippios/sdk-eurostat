@@ -1,7 +1,7 @@
 {
   "param": "milkitem",
   "endpoint": "sdmx/2.1/codelist/ESTAT/MILKITEM",
-  "fetched": "2026-11-20T14:17:35Z",
+  "fetched": "2026-11-27T07:26:55Z",
   "records": [
     {
       "code": "PTEN",
@@ -29,7 +29,7 @@
     },
     {
       "code": "FAT",
-      "label": "Fat content (t)"
+      "label": "Fat content"
     },
     {
       "code": "FAT_ORG",
@@ -37,7 +37,7 @@
     },
     {
       "code": "USM",
-      "label": "Utilization of skimmed milk and buttermilk (1 000 t)"
+      "label": "Utilization of skimmed milk and buttermilk"
     },
     {
       "code": "USM_ORG",
@@ -45,7 +45,7 @@
     },
     {
       "code": "UWM",
-      "label": "Utilization of whole milk (1 000 t)"
+      "label": "Utilization of whole milk"
     },
     {
       "code": "UWM_ORG",
@@ -56,20 +56,8 @@
       "label": "Whey powder equivalent"
     },
     {
-      "code": "FCA",
-      "label": "Fat content (% of product weight) (annual)"
-    },
-    {
-      "code": "PCA",
-      "label": "Protein content (% of product weight) (annual)"
-    },
-    {
       "code": "PRO",
       "label": "Products obtained (1 000 t)"
-    },
-    {
-      "code": "PAT",
-      "label": "Protein content (t)"
     }
   ]
 }

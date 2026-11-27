@@ -1,7 +1,7 @@
 {
   "param": "leg_form",
   "endpoint": "sdmx/2.1/codelist/ESTAT/LEG_FORM",
-  "fetched": "2026-11-20T14:17:41Z",
+  "fetched": "2026-11-27T07:27:04Z",
   "records": [
     {
       "code": "TOTAL",

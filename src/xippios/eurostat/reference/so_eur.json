@@ -1,7 +1,7 @@
 {
   "param": "so_eur",
   "endpoint": "sdmx/2.1/codelist/ESTAT/SO_EUR",
-  "fetched": "2026-11-20T14:17:45Z",
+  "fetched": "2026-11-27T07:27:08Z",
   "records": [
     {
       "code": "TOTAL",

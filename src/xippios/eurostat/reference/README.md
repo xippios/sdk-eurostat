@@ -9,7 +9,7 @@ sdk-core ADR-0041) that `xippios.core.PackagedList.load` reads through `params.p
 from xippios.core import PackagedList
 
 geo = PackagedList.load("xippios.eurostat", "geo")
-geo.records[0]  # {"code": "EUR", "label": "Europe"}
+geo.records[0]  # {"code": "EUR", "label": "Europe*"}
 ```
 
 - `toc.json`: every leaf of the Catalogue API's table of contents, datasets and
@@ -59,22 +59,22 @@ fetch.
 
 | File | Origin | Fetched |
 | --- | --- | --- |
-| `toc.json` | `catalogue/toc/xml` | 2026-11-20T14:17:23Z |
-| `freq.json` | `sdmx/2.1/codelist/ESTAT/FREQ` | 2026-11-20T14:17:25Z |
-| `geo.json` | `sdmx/2.1/codelist/ESTAT/GEO` | 2026-11-20T14:17:27Z |
-| `unit.json` | `sdmx/2.1/codelist/ESTAT/UNIT` | 2026-11-20T14:17:29Z |
-| `crops.json` | `sdmx/2.1/codelist/ESTAT/CROPS` | 2026-11-20T14:17:31Z |
-| `strucpro.json` | `sdmx/2.1/codelist/ESTAT/STRUCPRO` | 2026-11-20T14:17:33Z |
-| `milkitem.json` | `sdmx/2.1/codelist/ESTAT/MILKITEM` | 2026-11-20T14:17:35Z |
-| `dairyprod.json` | `sdmx/2.1/codelist/ESTAT/DAIRYPROD` | 2026-11-20T14:17:37Z |
-| `statinfo.json` | `sdmx/2.1/codelist/ESTAT/STATINFO` | 2026-11-20T14:17:39Z |
-| `leg_form.json` | `sdmx/2.1/codelist/ESTAT/LEG_FORM` | 2026-11-20T14:17:41Z |
-| `farmtype.json` | `sdmx/2.1/codelist/ESTAT/FARMTYPE` | 2026-11-20T14:17:43Z |
-| `so_eur.json` | `sdmx/2.1/codelist/ESTAT/SO_EUR` | 2026-11-20T14:17:45Z |
-| `uaarea.json` | `sdmx/2.1/codelist/ESTAT/UAAREA` | 2026-11-20T14:17:47Z |
-| `cxt_prodcom2_sold.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_SOLD` | 2026-11-20T14:17:49Z |
-| `cxt_prodcom2_total.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_TOTAL` | 2026-11-20T14:17:51Z |
-| `cxt_indicators.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_INDICATORS` | 2026-11-20T14:17:53Z |
-| `cxt_nc.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_NC` | 2026-11-20T14:17:57Z |
-| `cxt_free_iso.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_FREE_ISO` | 2026-11-20T14:17:58Z |
-| `cxt_eu_flux.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_EU_FLUX` | 2026-11-20T14:18:00Z |
+| `toc.json` | `catalogue/toc/xml` | 2026-11-27T07:26:43Z |
+| `freq.json` | `sdmx/2.1/codelist/ESTAT/FREQ` | 2026-11-27T07:26:45Z |
+| `geo.json` | `sdmx/2.1/codelist/ESTAT/GEO` | 2026-11-27T07:26:47Z |
+| `unit.json` | `sdmx/2.1/codelist/ESTAT/UNIT` | 2026-11-27T07:26:49Z |
+| `crops.json` | `sdmx/2.1/codelist/ESTAT/CROPS` | 2026-11-27T07:26:51Z |
+| `strucpro.json` | `sdmx/2.1/codelist/ESTAT/STRUCPRO` | 2026-11-27T07:26:53Z |
+| `milkitem.json` | `sdmx/2.1/codelist/ESTAT/MILKITEM` | 2026-11-27T07:26:55Z |
+| `dairyprod.json` | `sdmx/2.1/codelist/ESTAT/DAIRYPROD` | 2026-11-27T07:26:57Z |
+| `statinfo.json` | `sdmx/2.1/codelist/ESTAT/STATINFO` | 2026-11-27T07:27:23Z |
+| `leg_form.json` | `sdmx/2.1/codelist/ESTAT/LEG_FORM` | 2026-11-27T07:27:04Z |
+| `farmtype.json` | `sdmx/2.1/codelist/ESTAT/FARMTYPE` | 2026-11-27T07:27:06Z |
+| `so_eur.json` | `sdmx/2.1/codelist/ESTAT/SO_EUR` | 2026-11-27T07:27:08Z |
+| `uaarea.json` | `sdmx/2.1/codelist/ESTAT/UAAREA` | 2026-11-27T07:27:10Z |
+| `cxt_prodcom2_sold.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_SOLD` | 2026-11-27T07:27:12Z |
+| `cxt_prodcom2_total.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_PRODCOM2_TOTAL` | 2026-11-27T07:27:14Z |
+| `cxt_indicators.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_INDICATORS` | 2026-11-27T07:27:16Z |
+| `cxt_nc.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_NC` | 2026-11-27T07:27:19Z |
+| `cxt_free_iso.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_FREE_ISO` | 2026-11-27T07:27:20Z |
+| `cxt_eu_flux.json` | `https://ec.europa.eu/eurostat/api/comext/dissemination/sdmx/2.1/codelist/ESTAT/CXT_EU_FLUX` | 2026-11-27T07:27:22Z |

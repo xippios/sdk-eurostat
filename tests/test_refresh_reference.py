@@ -181,6 +181,16 @@ def test_the_committed_provenance_rows_are_the_declared_lists() -> None:
     assert f"{HEADER}\n| --- | --- | --- |\n" in readme
 
 
+def test_the_readme_example_shows_the_first_packaged_geo_record() -> None:
+    """The README's example prints GEO's first record as the refresh packaged it, so a
+    refresh that changes the record fails here until the example follows."""
+    readme = (REFERENCE / "README.md").read_text(encoding="utf-8")
+    shown = re.search(r"^geo\.records\[0\]  # (\{.*\})$", readme, re.MULTILINE)
+    assert shown is not None, "the example of GEO's first record"
+    geo = PackagedList.load(params.PACKAGE, "geo")
+    assert json.loads(shown.group(1)) == geo.records[0]
+
+
 def test_read_toc_reads_every_leaf_with_its_folders() -> None:
     toc = script.read_toc(TOC_SAMPLE)
     assert re.fullmatch(r"\d{8}T\d{4}", toc.creation_date)

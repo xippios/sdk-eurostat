@@ -1,5 +1,5 @@
 {
-  "fetched": "2026-11-20T14:18:00Z",
+  "fetched": "2026-11-27T07:27:23Z",
   "lists": [
     {
       "name": "toc",
@@ -8,8 +8,8 @@
       "label": null,
       "version": null,
       "LAST_UPDATED": null,
-      "creationDate": "20261120T1004",
-      "count": 10454
+      "creationDate": "20261126T2200",
+      "count": 10461
     },
     {
       "name": "freq",
@@ -26,8 +26,8 @@
       "kind": "codelist",
       "id": "GEO",
       "label": "Geopolitical entity (reporting)",
-      "version": "28.1",
-      "LAST_UPDATED": "2026-11-16T23:00:00+0100",
+      "version": "29.0",
+      "LAST_UPDATED": "2026-11-25T23:00:00+0100",
       "creationDate": null,
       "count": 4292
     },
@@ -56,8 +56,8 @@
       "kind": "codelist",
       "id": "STRUCPRO",
       "label": "Structure of production",
-      "version": "9.0",
-      "LAST_UPDATED": "2026-06-29T11:00:00+0200",
+      "version": "11.0",
+      "LAST_UPDATED": "2026-11-25T23:00:00+0100",
       "creationDate": null,
       "count": 24
     },
@@ -66,10 +66,10 @@
       "kind": "codelist",
       "id": "MILKITEM",
       "label": "Item of milk",
-      "version": "3.0",
-      "LAST_UPDATED": "2025-09-09T23:00:00+0200",
+      "version": "4.0",
+      "LAST_UPDATED": "2026-11-23T23:00:00+0100",
       "creationDate": null,
-      "count": 17
+      "count": 14
     },
     {
       "name": "dairyprod",
