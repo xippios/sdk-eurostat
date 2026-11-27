@@ -6,7 +6,8 @@ whose fetch, redirects, retry, attribution check, ``FETCHED.md`` with its row of
 check holds the notes of ``OBSERVED.md`` (sdk-core ADR-0044). What stays here is the script's
 own: its pages, its client of the website and the wait it gives a 429, its attribution, and its
 hooks, the converter of the user-guide pages, the rule that keeps a WADL file as recorded, the
-rows' notes, the Confluence pages' redirect to EU Login and the checks of the samples. A hook
+rows' notes and the checks of the samples, and the sentence that names the two pages of
+Eurostat's wiki, which it never requests. A hook
 is handed an answer built from a file under ``docs/upstream/`` or from a literal of the page's
 shape, never one fetched.
 """
@@ -16,6 +17,7 @@ import importlib.util
 import re
 from pathlib import Path
 from types import ModuleType
+from urllib.parse import urlsplit
 
 import pytest
 from xippios.core import RetryPolicy
@@ -88,8 +90,6 @@ def kept_row(page: Page) -> Row:
 
 
 PAGES = (
-    ("https://wikis.ec.europa.eu/x/-AD9B", None),
-    ("https://wikis.ec.europa.eu/x/c4eBBg", None),
     *(
         (f"{GUIDE}{path}", f"user-guide/{path}.md")
         for path in (
@@ -144,15 +144,14 @@ PAGES = (
     ),
     ("https://ec.europa.eu/eurostat/web/main/help/copyright-notice", None),
 )
-"""The 35 URLs the snapshot requests, each with its file, in the order of the requests."""
+"""The 33 URLs the snapshot requests, each with its file, in the order of the requests."""
 
 
-def test_the_snapshot_declares_its_35_pages_in_the_order_it_requests_them() -> None:
-    """The two Confluence pages first, so that a stop on their redirect costs one request,
-    then the 18 user-guide pages, the 10 documents and the 4 samples, and the copyright
-    notice; the Confluence pages and the notice are rows without a file, and the hooks are
-    the script's."""
+def test_the_snapshot_declares_its_33_pages_in_the_order_it_requests_them() -> None:
+    """The 18 user-guide pages, the 10 documents and the 4 samples, then the copyright
+    notice, the one row without a file; the hooks are the script's."""
     snapshot = script.SNAPSHOT
+    assert len(PAGES) == 33
     assert [(page.url, page.file) for page in snapshot.pages] == list(PAGES)
     assert (snapshot.name, snapshot.slug) == ("Eurostat dissemination API", "eurostat")
     assert snapshot.out == UPSTREAM
@@ -280,47 +279,32 @@ def test_the_capture_states_the_changes_and_the_disclaimer_the_notice_asks() -> 
     assert "Eurostat is not responsible for this reproduction" in capture
 
 
-# --- the Confluence pages --------------------------------------------------------------
+# --- the wiki's pages ------------------------------------------------------------------
 
-WIKI = "https://wikis.ec.europa.eu/x/-AD9B"
-LOGIN = "https://webgate.ec.europa.eu/cas/login?service=https%3A%2F%2Fwikis.ec.europa.eu"
-
-
-def wiki_row(redirects: tuple[tuple[int, str], ...]) -> Row:
-    """The row of the first Confluence page, answered with ``redirects``."""
-    page = declared(WIKI)
-    return Row(page, answer(WIKI, b"", status=302, redirects=redirects), None, page.note)
-
-
-def test_the_confluence_pages_are_recorded_by_their_redirect_to_eu_login() -> None:
-    """An anonymous client is sent to EU Login: the row goes to Not fetched with its
-    status, the login's host and the reason, and nothing is fetched there."""
-    for url, subject in script.WIKI_PAGES:
-        page = declared(url)
-        assert (page.status, page.file) == (302, None)
-        assert page.note.startswith(subject)
-        assert "EU Login is required" in page.note
-    assert script.note(wiki_row(((302, LOGIN),))) == declared(WIKI).note
-
-
-def test_a_confluence_page_redirected_within_its_host_then_to_eu_login_passes() -> None:
-    """The frame follows a redirect on the page's host and records the one to EU Login."""
-    hops = ((302, "https://wikis.ec.europa.eu/pages/viewpage.action?pageId=1"), (302, LOGIN))
-    assert script.note(wiki_row(hops)) == declared(WIKI).note
-
-
-@pytest.mark.parametrize(
-    "redirects",
-    [((302, "https://sorry.ec.europa.eu/"),), ()],
-    ids=["another-host", "no-redirect"],
+WIKI_PAGES = (
+    ("https://wikis.ec.europa.eu/x/-AD9B", "SDMX 2.1 and asynchronous answers"),
+    ("https://wikis.ec.europa.eu/x/c4eBBg", "the TSV format"),
 )
-def test_a_confluence_page_not_sent_to_eu_login_stops_the_run(
-    redirects: tuple[tuple[int, str], ...],
-) -> None:
-    """The note says that the page asks for a login, so a redirect elsewhere, or none,
-    stops the run before anything is written."""
-    with pytest.raises(SystemExit, match=re.escape(script.LOGIN_HOST)):
-        script.note(wiki_row(redirects))
+"""Eurostat's two Confluence pages on the API, which a client reads after EU Login alone."""
+
+
+def test_the_snapshot_requests_nothing_of_eurostats_wiki() -> None:
+    """Every page it requests stands on Eurostat's website and must answer 200, so no
+    request goes to ``wikis.ec.europa.eu`` and no row records a redirect to a login."""
+    pages = script.SNAPSHOT.pages
+    assert {urlsplit(page.url).hostname for page in pages} == {"ec.europa.eu"}
+    assert {page.status for page in pages} == {200}
+
+
+def test_the_capture_names_the_wiki_pages_that_require_eu_login() -> None:
+    """How this is captured names each page with its subject, says that EU Login is
+    required, so that none is requested, and that the user guide's public pages state the
+    subjects (conventions §3)."""
+    capture = " ".join(script.SNAPSHOT.capture.split())
+    for url, subject in WIKI_PAGES:
+        assert f"{url}, on {subject}" in capture
+    assert "Both require EU Login, so the snapshot requests neither" in capture
+    assert "the public pages of the user guide are its statement of their subjects" in capture
 
 
 # --- the user-guide pages ----------------------------------------------------------------
