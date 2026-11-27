@@ -235,9 +235,9 @@ def _check_time_parameters(
 
 
 async def get_data_async(
-    dataset: str,
-    filters: Mapping[str, str | Sequence[str]] | None = None,
+    dataset_code: str,
     *,
+    filters: Mapping[str, str | Sequence[str]] | None = None,
     lang: Lang = Lang.EN,
     since_time_period: str | None = None,
     until_time_period: str | None = None,
@@ -259,8 +259,9 @@ async def get_data_async(
     ``QueryTooLarge``, each naming how to narrow it.
 
     Args:
-        dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
-            collection and dairy products, annual), ``"apro_cpnh1"`` (crop production),
+        dataset_code: The dataset's online data code, upstream's ``datasetCode``, e.g.
+            ``"apro_mk_cola"`` (cows' milk collection and dairy products, annual),
+            ``"apro_cpnh1"`` (crop production),
             ``"ef_m_farmleg"`` (farm indicators by legal status) or ``"DS-059358"``
             (Prodcom: sold production, exports and imports, on the Comext base).
         filters: Dimension code to one code or a list of codes, each sent as
@@ -289,7 +290,7 @@ async def get_data_async(
     if geo_level is not None:
         geo_level = _member(GeoLevel, geo_level, "geo_level")
     answer = await api.statistics.get_data(
-        dataset,
+        dataset_code,
         lang=lang,
         filters=sent,
         since_time_period=since_time_period,
@@ -298,7 +299,7 @@ async def get_data_async(
         geo_level=geo_level,
     )
     request: dict[str, Any] = {
-        "dataset": dataset,
+        "dataset_code": dataset_code,
         "filters": sent or None,
         "lang": lang.value,
         "since_time_period": since_time_period,
@@ -337,7 +338,7 @@ CREATION_DATE = "%Y%m%dT%H%M"
 """How the TOC prints its ``creationDate``: ``"20261027T1000"``, no zone."""
 
 
-async def list_datasets_async(search: str | None = None) -> Result[list[Dataset]]:
+async def list_datasets_async(*, search: str | None = None) -> Result[list[Dataset]]:
     """Find Eurostat datasets and tables by code or title in the table of contents.
 
     Answers from the package's copy of Eurostat's table of contents (``catalogue/toc/xml``),
@@ -347,7 +348,7 @@ async def list_datasets_async(search: str | None = None) -> Result[list[Dataset]
     ``title``, the folders above it (``path``, joined with ``" > "``), its last data update
     and structure change as Eurostat prints them, day first (``"02.10.2026"``), its first
     and last period and its number of values, each ``None`` where Eurostat prints none. A
-    dataset's ``code`` is what ``get_data`` takes as ``dataset``. ``meta.vintage`` is the
+    dataset's ``code`` is what ``get_data`` takes as ``dataset_code``. ``meta.vintage`` is the
     table of contents' ``creationDate`` as printed (``"20261120T1004"``), and
     ``meta.retrieved_at`` is when the package's copy was fetched: a dataset Eurostat added
     since is missing until the package is refreshed.
@@ -428,7 +429,7 @@ def _codelist_answer(
     return Result(data=found, meta=meta)
 
 
-async def list_codes_async(codelist: str, search: str | None = None) -> Result[list[Code]]:
+async def list_codes_async(codelist: str, *, search: str | None = None) -> Result[list[Code]]:
     """List the codes of one Eurostat codelist, the values a dimension filter takes.
 
     Answers from the package's copies of eighteen SDMX codelists
@@ -438,7 +439,7 @@ async def list_codes_async(codelist: str, search: str | None = None) -> Result[l
     the Prodcom datasets DS-059358 and DS-059359 and of the trade datasets DS-045409 and
     DS-059341. A codelist holds every code Eurostat defines in it, more than any one
     dataset uses: GEO has thousands. A dimension's filter takes its codes, e.g.
-    ``get_data("apro_mk_cola", {"geo": "AT"})``. A codelist the package does not carry
+    ``get_data("apro_mk_cola", filters={"geo": "AT"})``. A codelist the package does not carry
     raises ``UnknownCode`` naming the closest it does. ``meta.vintage`` is the codelist's
     version (``"28.1"``) and ``meta.published_at`` its last update, or ``None`` where it
     names none; a code Eurostat added since is missing until the package is refreshed.
@@ -484,13 +485,13 @@ DOT_SEGMENTS = frozenset({".", ".."})
 
 
 async def _download(
-    dataset: str,
+    flow_ref: str,
     target: Path,
     request: Mapping[str, Any],
     *,
     key: str,
-    since: str | None,
-    until: str | None,
+    start_period: str | None,
+    end_period: str | None,
     last_n_observations: int | None = None,
 ) -> Result[Downloaded]:
     """Stream one SDMX-CSV data query, gzip-compressed, to ``target``, with its meta.
@@ -504,11 +505,11 @@ async def _download(
             ``LAST_UPDATE`` says; the file stays at ``target``.
     """
     downloaded = await api.sdmx.data_query(
-        dataset,
+        flow_ref,
         target,
         key=key,
-        start_period=since,
-        end_period=until,
+        start_period=start_period,
+        end_period=end_period,
         last_n_observations=last_n_observations,
         compressed=True,
     )
@@ -537,18 +538,18 @@ async def _download(
 
 
 async def download_dataset_async(
-    dataset: str,
+    flow_ref: str,
     key: str = "",
     *,
-    since: str | None = None,
-    until: str | None = None,
+    start_period: str | None = None,
+    end_period: str | None = None,
     last_n_observations: int | None = None,
     dest: str | os.PathLike[str],
 ) -> Result[Downloaded]:
     """Download a Eurostat dataset, or a slice of it, as a gzip-compressed SDMX-CSV file.
 
     Python only, no MCP tool or HTTP route (a bulk task). One request to the SDMX 2.1 API
-    (``sdmx/2.1/data/{dataset}/{key}?format=SDMX-CSV&compressed=true``), on Eurostat's
+    (``sdmx/2.1/data/{flowRef}/{key}?format=SDMX-CSV&compressed=true``), on Eurostat's
     Comext base for a ``DS-`` dataset (Comext trade, Prodcom production, e.g.
     ``"DS-059358"``) and on the main base for any other, streamed to ``dest``, never held
     in memory or cached; the file holds the answer as Eurostat sends
@@ -573,19 +574,20 @@ async def download_dataset_async(
     refused before any request.
 
     Args:
-        dataset: The dataset's online data code, e.g. ``"apro_mk_cola"`` (cows' milk
-            collection and dairy products, annual), ``"ef_m_farmleg"`` (farm
-            indicators by legal status) or ``"DS-059358"`` (Prodcom: sold production,
-            exports and imports).
+        flow_ref: The dataset's online data code, upstream's ``flowRef``, e.g.
+            ``"apro_mk_cola"`` (cows' milk collection and dairy products, annual),
+            ``"ef_m_farmleg"`` (farm indicators by legal status) or ``"DS-059358"``
+            (Prodcom: sold production, exports and imports).
         key: Eurostat's series key, e.g. ``"A...THS_T.AT"`` for apro_mk_cola (freq A,
             every milkitem and dairyprod, unit THS_T, geo AT), ``"A.PRD.D1110D.THS_T.AT+DE"``
             (two geo codes) or ``"A.AT.10411200."`` for DS-059358 (freq A, reporter AT,
             product 10411200, every indicator); ``""``, the default, downloads every code
             of every dimension, the whole dataset.
-        since: The first period, included, as the dataset prints it, e.g. ``"2022"`` or
-            ``"2026-08"``; Eurostat's ``startPeriod``. ``None`` starts at the first.
-        until: The last period, included, e.g. ``"2023"``; Eurostat's ``endPeriod``.
-            ``None`` runs to the latest.
+        start_period: The first period, included, as the dataset prints it, e.g.
+            ``"2022"`` or ``"2026-08"``; Eurostat's ``startPeriod``. ``None`` starts at the
+            first.
+        end_period: The last period, included, e.g. ``"2023"``; Eurostat's
+            ``endPeriod``. ``None`` runs to the latest.
         last_n_observations: The most recent observations of each series, e.g. ``2``;
             Eurostat's ``lastNObservations``. ``None`` keeps them all.
         dest: The file to write, e.g. ``"apro_mk_cola.csv.gz"`` or
@@ -599,21 +601,21 @@ async def download_dataset_async(
             source=SOURCE,
         )
     request = {
-        "dataset": dataset,
+        "flow_ref": flow_ref,
         "key": key,
-        "start_period": since,
-        "end_period": until,
+        "start_period": start_period,
+        "end_period": end_period,
         "last_n_observations": last_n_observations,
         "format": api.sdmx.DATA_FORMAT,
         "compressed": True,
     }
     return await _download(
-        dataset,
+        flow_ref,
         Path(dest),
         request,
         key=key,
-        since=since,
-        until=until,
+        start_period=start_period,
+        end_period=end_period,
         last_n_observations=last_n_observations,
     )
 

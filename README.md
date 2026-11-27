@@ -22,7 +22,7 @@ No API key is needed.
 ```python
 from xippios.eurostat import get_data
 
-milk = get_data("apro_mk_cola", {"geo": "AT", "time": ["2022", "2023"]})
+milk = get_data("apro_mk_cola", filters={"geo": "AT", "time": ["2022", "2023"]})
 cube = milk.data  # the JSON-stat 2.0 dataset, member by member
 cube.id  # ["freq", "milkitem", "dairyprod", "unit", "geo", "time"]
 cube.size  # [1, 3, 10, 2, 1, 2]: codes per dimension
@@ -33,12 +33,13 @@ first.codes  # {"freq": "A", "milkitem": "PRD", "dairyprod": "D1110D", "unit": "
 first.labels["dairyprod"], first.value  # "Raw cows' milk delivered to dairies", 3247.05
 milk.meta.published_at  # 2026-10-05 23:00+02:00: the dataset's last update, `updated`
 milk.meta.vintage  # "2026-10-05T23:00:00+0200": the same, as Eurostat prints it
-milk.meta.request  # {"dataset": "apro_mk_cola", "filters": {...}, "lang": "EN"}
+milk.meta.request  # {"dataset_code": "apro_mk_cola", "filters": {...}, "lang": "EN"}
 ```
 
-`get_data(dataset, filters=None, *, lang=Lang.EN, since_time_period=None,
+`get_data(dataset_code, *, filters=None, lang=Lang.EN, since_time_period=None,
 until_time_period=None, last_time_period=None, geo_level=None)` sends one request to the
-Statistics API (`statistics/1.0/data/{datasetCode}`). A `DS-` dataset, Comext trade or
+Statistics API (`statistics/1.0/data/{datasetCode}`); `dataset_code` is its first
+argument, and every other is passed by name. A `DS-` dataset, Comext trade or
 Prodcom production, is requested on Eurostat's Comext base, every other on the main
 base; the call and its answer are the same, and a value is the text Eurostat prints where
 a Prodcom indicator is a unit or a flag:
@@ -46,7 +47,7 @@ a Prodcom indicator is a unit or a flag:
 ```python
 oil = get_data(
     "DS-059358",  # Prodcom: sold production, exports and imports
-    {"reporter": "AT", "product": "10411200"},  # fish and marine oils, NACE 10.41
+    filters={"reporter": "AT", "product": "10411200"},  # fish and marine oils, NACE 10.41
     since_time_period="2022",
     until_time_period="2023",
 )
@@ -92,7 +93,7 @@ list_codes("unit", search="THS_T").data[0]  # Code(code="THS_T", label="Thousand
 
 Both answer from lists packaged with this version, without a request: `meta.retrieved_at`
 is when the package fetched the list, `meta.endpoint` the operation it came from.
-`list_datasets(search=None)` reads Eurostat's table of contents (`catalogue/toc/xml`):
+`list_datasets(*, search=None)` reads Eurostat's table of contents (`catalogue/toc/xml`):
 every dataset and pre-defined table of the navigation tree, over 10,000 leaves, one per
 listing in the tree, each with its code, type, English title, the folders above it
 (`path`, joined with `" > "`), its last update and structure change, its first and last
@@ -100,7 +101,7 @@ period and its number of values as Eurostat prints them, each `None` where it pr
 none. `meta.vintage` is the table of contents' `creationDate` as printed and
 `meta.published_at` the same time, which Eurostat prints without a zone, so
 `meta.published_at_naive` is set.
-`list_codes(codelist, search=None)` reads one of eighteen SDMX codelists
+`list_codes(codelist, *, search=None)` reads one of eighteen SDMX codelists
 (`sdmx/2.1/codelist/ESTAT/<ID>`, English labels): FREQ, GEO, UNIT, CROPS, STRUCPRO,
 MILKITEM, DAIRYPROD, STATINFO, LEG_FORM, FARMTYPE, SO_EUR and UAAREA, the codelists of
 the dimensions of apro_cpnh1, apro_mk_cola and ef_m_farmleg, named as the dimension is
@@ -127,7 +128,11 @@ from xippios.eurostat import download_dataset
 from xippios.eurostat.parse import parse_sdmx_csv
 
 milk = download_dataset(
-    "apro_mk_cola", "A...THS_T.AT", since="2022", until="2023", dest=Path("milk.csv.gz")
+    "apro_mk_cola",
+    "A...THS_T.AT",
+    start_period="2022",
+    end_period="2023",
+    dest=Path("milk.csv.gz"),
 )
 milk.data.path  # PosixPath("milk.csv.gz"): the gzip-compressed SDMX-CSV file
 milk.data.bytes  # 335
@@ -140,8 +145,8 @@ first.dimensions  # {"freq": "A", "milkitem": "PRD", "dairyprod": "D1110D", ...}
 first.time_period, first.obs_value  # ("2022", Decimal("3247.05"))
 ```
 
-`download_dataset(dataset, key="", *, since=None, until=None, last_n_observations=None,
-dest)` sends one SDMX 2.1 data query (`dataQuery`, `sdmx/2.1/data/{flowRef}/{key}`) with
+`download_dataset(flow_ref, key="", *, start_period=None, end_period=None,
+last_n_observations=None, dest)` sends one SDMX 2.1 data query (`dataQuery`, `sdmx/2.1/data/{flowRef}/{key}`) with
 `format=SDMX-CSV` and `compressed=true` and streams the answer to `dest`, never holding
 it in memory or caching it; it returns core's `Downloaded` (path, size, content type,
 Eurostat's file name, retrieval time). It is a bulk task: Python only, so the MCP server
@@ -149,8 +154,8 @@ and the router skip it and no agent is handed a file path. `key` is Eurostat's s
 key, the dimensions but time in the dataset's order, dot-separated, empty for every code
 of a dimension, `+` between codes (`"A...THS_T.AT+DE"`); `""` downloads the whole
 dataset.
-`since`, `until` and `last_n_observations` are Eurostat's `startPeriod`, `endPeriod` and
-`lastNObservations`. `meta.vintage` is the file's `LAST UPDATE` as printed and
+`start_period`, `end_period` and `last_n_observations` are Eurostat's `startPeriod`,
+`endPeriod` and `lastNObservations`. `meta.vintage` is the file's `LAST UPDATE` as printed and
 `meta.published_at` the same time, which Eurostat prints without a zone; both are `None`
 for a file without a row. A query Eurostat would answer asynchronously raises
 `InvalidRequestError`, and one it refuses as too large `QueryTooLarge`, each naming how to
@@ -190,10 +195,10 @@ exactly tasks.__all__, and tasks_write.__all__ where the package has write tasks
 
 | Upstream operation | Task function | MCP tool | Status |
 | --- | --- | --- | --- |
-| `getData` (`statistics/1.0/data/{datasetCode}`) | `get_data(dataset, filters)`, a JSON-stat cube | `eurostat_get_data` | alpha |
+| `getData` (`statistics/1.0/data/{datasetCode}`) | `get_data(dataset_code, filters)`, a JSON-stat cube | `eurostat_get_data` | alpha |
 | `getTocXml` (`catalogue/toc/xml`), packaged | `list_datasets(search)`, the datasets and tables of the table of contents | `eurostat_list_datasets` | alpha |
 | `codeListQuery` (`sdmx/2.1/codelist/ESTAT/{resourceID}`), packaged | `list_codes(codelist, search)`, the codes of one of eighteen codelists, six of them the Comext base's | `eurostat_list_codes` | alpha |
-| `dataQuery` (`sdmx/2.1/data/{flowRef}/{key}`), SDMX-CSV | `download_dataset(dataset, key, dest)`, a gzip-compressed SDMX-CSV file on disk | none: a bulk task, Python only, which the adapters skip | alpha |
+| `dataQuery` (`sdmx/2.1/data/{flowRef}/{key}`), SDMX-CSV | `download_dataset(flow_ref, key, dest)`, a gzip-compressed SDMX-CSV file on disk | none: a bulk task, Python only, which the adapters skip | alpha |
 
 Two of these four tasks choose the base URL by the dataset's code: `get_data` and
 `download_dataset` request a dataset whose code starts with `DS-`, Eurostat's Comext and
