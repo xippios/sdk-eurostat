@@ -12,8 +12,9 @@ tests assert the parser's shape against the sample's own text, read here with th
 standard library's ``csv``, never values or sizes typed into a test (conventions §10).
 ``test_documented_shape_*`` read the user guide's SDMX-CSV examples verbatim from the
 snapshot at test time, neither recorded nor hand-written: a dataset whose attributes
-differ from apro_mk_cola's. ``NOT RECORDED`` marks a sample changed in memory to show a
-refusal.
+differ from apro_mk_cola's. A sample changed in memory to show a refusal, handed straight
+to the parser, is an input of the test, and its test's docstring says so in conventions
+§10's sentence (sdk-core ADR-0064).
 """
 
 import csv
@@ -290,7 +291,8 @@ def test_parse_sdmx_csv_refuses_a_last_update_printed_otherwise(tmp_path: Path) 
 
 
 def test_parse_sdmx_csv_refuses_a_cut_gzip_file(tmp_path: Path) -> None:
-    """NOT RECORDED: the gzip sample cut to its first half in memory."""
+    """The gzip sample cut to its first half in memory is an input of the test, not an
+    answer from Eurostat."""
     cut = tmp_path / "cut.csv.gz"
     data = PACKED.read_bytes()
     cut.write_bytes(data[: len(data) // 2])
@@ -299,7 +301,8 @@ def test_parse_sdmx_csv_refuses_a_cut_gzip_file(tmp_path: Path) -> None:
 
 
 def test_parse_sdmx_csv_refuses_a_row_that_does_not_match_its_header(tmp_path: Path) -> None:
-    """NOT RECORDED: the plain sample with its third line's last two cells cut in memory."""
+    """The plain sample with its third line's last two cells cut in memory is an input of
+    the test, not an answer from Eurostat."""
     lines = PLAIN.read_bytes().split(b"\r\n")
     lines[2] = lines[2].rsplit(b",", 2)[0]
     path = tmp_path / "short.csv"
@@ -320,7 +323,8 @@ def test_parse_sdmx_csv_refuses_another_file_kind(sample: str) -> None:
 
 
 def test_parse_sdmx_csv_refuses_a_header_out_of_order(tmp_path: Path) -> None:
-    """NOT RECORDED: the plain sample with OBS_VALUE and TIME_PERIOD swapped in its header."""
+    """The plain sample with OBS_VALUE and TIME_PERIOD swapped in its header in memory is
+    an input of the test, not an answer from Eurostat."""
     data = PLAIN.read_bytes().replace(b"TIME_PERIOD,OBS_VALUE", b"OBS_VALUE,TIME_PERIOD", 1)
     path = tmp_path / "swapped.csv"
     path.write_bytes(data)
@@ -338,9 +342,9 @@ def write(path: Path, data: bytes, *, packed: bool) -> Path:
 def test_parse_sdmx_csv_refuses_a_header_only_file_of_another_layout(
     tmp_path: Path, packed: bool
 ) -> None:
-    """NOT RECORDED: the plain sample's header line alone, OBS_VALUE and TIME_PERIOD swapped
-    in memory. The header is checked before any row, so a file without rows is refused
-    too."""
+    """The header is checked before any row, so a file without rows is refused too. The
+    plain sample's header line alone, OBS_VALUE and TIME_PERIOD swapped in memory, is an
+    input of the test, not an answer from Eurostat."""
     header = PLAIN.read_bytes().split(b"\r\n", 1)[0]
     swapped = header.replace(b"TIME_PERIOD,OBS_VALUE", b"OBS_VALUE,TIME_PERIOD")
     path = write(tmp_path / "swapped.csv", swapped + b"\r\n", packed=packed)
@@ -354,10 +358,10 @@ def test_parse_sdmx_csv_refuses_a_header_only_file_of_another_layout(
 
 @pytest.mark.parametrize("packed", [False, True], ids=["plain", "gzip"])
 def test_parse_sdmx_csv_refuses_text_that_is_not_utf8(tmp_path: Path, packed: bool) -> None:
-    """NOT RECORDED: the plain sample's rows repeated past 64 KiB, its last row with a byte
-    that is no UTF-8, in memory. The header reads, so the rows' reader refuses it: core's
-    ``decode_csv``, which reads the plain file by its path and the gzip file as its open
-    stream, naming the file alike."""
+    """The header reads, so the rows' reader refuses the text: core's ``decode_csv``, which
+    reads the plain file by its path and the gzip file as its open stream, naming the file
+    alike. The plain sample's rows repeated past 64 KiB, its last row with a byte that is
+    no UTF-8, in memory, is an input of the test, not an answer from Eurostat."""
     header, rows = PLAIN.read_bytes().split(b"\r\n", 1)
     body = rows * (64 * 1024 // len(rows) + 1)
     last = body.rindex(b"ESTAT:")
@@ -374,8 +378,8 @@ def test_parse_sdmx_csv_refuses_text_that_is_not_utf8(tmp_path: Path, packed: bo
 def test_parse_sdmx_csv_refuses_csv_the_csv_module_cannot_read(
     tmp_path: Path, packed: bool
 ) -> None:
-    """NOT RECORDED: the plain sample with one OBS_FLAG cell made longer than the csv
-    module's field limit (131,072 characters) in memory."""
+    """The plain sample with one OBS_FLAG cell made longer than the csv module's field
+    limit (131,072 characters) in memory is an input of the test, not an answer from Eurostat."""
     lines = PLAIN.read_bytes().split(b"\r\n")
     lines[1] = lines[1].replace(b",,", b"," + b"e" * (csv.field_size_limit() + 1) + b",", 1)
     path = write(tmp_path / "wide.csv", b"\r\n".join(lines), packed=packed)
