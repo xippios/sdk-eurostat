@@ -253,21 +253,43 @@ def _recorded_attribution() -> str:
     return " ".join(text.split())
 
 
+NOTICE = tuple(item for item in script.ATTRIBUTION if item.source == script.COPYRIGHT_URL)
+"""The statements recorded from Eurostat's copyright notice."""
+
+
 def test_the_attribution_stands_on_the_copyright_notice_which_is_the_terms() -> None:
-    """Every statement is printed in Eurostat's copyright notice, the one page marked
-    ``terms``: each run checks that it prints them all, and searches nothing else on it."""
+    """Every statement but the navigation's link is printed in Eurostat's copyright notice,
+    the one page marked ``terms``: each run checks that it prints them all, and searches
+    nothing else on it."""
     snapshot = script.SNAPSHOT
     assert [page.url for page in snapshot.pages if page.terms] == [script.COPYRIGHT_URL]
     assert declared(script.COPYRIGHT_URL).file is None
-    assert snapshot.attribution
-    assert {statement.source for statement in snapshot.attribution} == {script.COPYRIGHT_URL}
+    assert len(NOTICE) == 14
+    assert len(snapshot.attribution) == len(NOTICE) + 1
     assert all(statement.where for statement in snapshot.attribution)
 
 
-@pytest.mark.parametrize("index", range(len(script.ATTRIBUTION)))
+def test_the_sites_navigation_links_the_notice_at_another_address() -> None:
+    """The site's navigation, on every user-guide page, links the copyright notice by the
+    text ``Copyright notice and free re-use of data`` to ``/eurostat/en/help/copyright-notice``,
+    another address than the one the snapshot reads the notice at. Recorded as that link from
+    the first page, the check reads past it wherever it stands as that link's text, and stops
+    where the first page no longer links it so (sdk-core ADR-0062, decision 10)."""
+    (statement,) = [item for item in script.ATTRIBUTION if item.source != script.COPYRIGHT_URL]
+    assert (statement.text, statement.source, statement.link) == (
+        "Copyright notice and free re-use of data",
+        f"{GUIDE}api-introduction",
+        "https://ec.europa.eu/eurostat/en/help/copyright-notice",
+    )
+    assert statement.link != script.COPYRIGHT_URL
+    assert "navigation" in statement.where
+    assert declared(statement.source).file == "user-guide/api-introduction.md"
+
+
+@pytest.mark.parametrize("index", range(len(NOTICE)))
 def test_each_statement_is_the_notice_as_the_snapshot_records_it(index: int) -> None:
     """Each statement's text stands in ``FETCHED.md`` as recorded from the notice."""
-    statement = script.ATTRIBUTION[index]
+    statement = NOTICE[index]
     assert " ".join(statement.text.split()) in _recorded_attribution()
 
 
