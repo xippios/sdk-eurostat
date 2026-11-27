@@ -1,6 +1,6 @@
 """Live smoke tests, one per task, skipped unless XIPPIOS_LIVE_TESTS=1 (conventions §10).
 
-``/add-endpoint`` adds them, next to the reachability check.
+``/add-endpoint`` adds them.
 
 ``get_data`` has one per dataset chosen when the package started
 (https://github.com/xippios/sdk-eurostat/pull/1), each the small slice its fixture holds:
@@ -9,28 +9,39 @@
 The list tasks answer from the packaged lists, so theirs check upstream's side: that the
 answers ``scripts/refresh_reference.py`` packages still read as it reads them, through
 the script's own functions; ``list_datasets``'s reads the start of the table of contents
-only (its test says why), ``list_codes``'s fetches the STATINFO codelist.
+only (its test says why), ``list_codes``'s fetches the STATINFO codelist through the
+script's declared fetch.
 ``download_dataset``'s downloads the slice its fixture holds, apro_mk_cola for Austria in
 thousand tonnes, 2022 and 2023, to a temporary file and reads it with ``parse_sdmx_csv``,
 the live parser test of the file kind ``sdmx-csv`` (sdk-core ADR-0020 decision 6).
 ``get_data`` has one more on the Comext base, the smallest slice of the Prodcom dataset
 ``DS-059358`` (Austria, one product, the latest period), which is also the nightly's
 check that the Comext base answers.
-The tests send no key. They assert shape and release metadata, never values, which
-Eurostat revises twice a day, nor which period is the latest.
+
+Core's nightly comparison, collected by the star import below, compares each of the
+eighteen packaged codelists, declared in ``LIVE_LISTS``, with the codelist that
+``codeListQuery`` serves now, through the script's declared fetch, one request each
+(sdk-core ADR-0055); the table of contents stands in ``NO_LIVE_LIST`` with its reason.
+Core's testing plugin prints the run's requests as ``requests sent by the live run: <n>``,
+the count that ``live.yml``'s log holds. The tests send no key. They assert shape and
+release metadata, never values, which Eurostat revises twice a day, nor which period is
+the latest.
 """
 
 import importlib.util
 import re
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 import httpx
 import pytest
-from xippios.core import Result
+from xippios.core import PackagedCodes, Result
+from xippios.core.testing.live import *  # noqa: F403
 
-from xippios.eurostat import tasks
+from xippios.eurostat import params, tasks
 from xippios.eurostat._client import BASE_URL, config
 from xippios.eurostat.api import catalogue
 from xippios.eurostat.models import Code, Cube, Dataset, SdmxCsvRow
@@ -38,26 +49,56 @@ from xippios.eurostat.parse import parse_sdmx_csv
 
 pytestmark = [pytest.mark.live, pytest.mark.anyio]
 
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "refresh_reference.py"
+
+
+def load_script() -> ModuleType:
+    spec = importlib.util.spec_from_file_location("refresh_reference", SCRIPT)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+script = load_script()
+
+
+def _live_codes(resource_id: str) -> Callable[[], Awaitable[list[dict[str, Any]]]]:
+    """The records of ``resource_id`` as the refresh packages them from its answer now."""
+
+    async def fetch() -> list[dict[str, Any]]:
+        packaged = await script.fetch_codelist(resource_id)
+        records: list[dict[str, Any]] = packaged.records
+        return records
+
+    return fetch
+
+
+LIVE_LISTS: dict[str, tuple[PackagedCodes, Callable[[], Awaitable[list[dict[str, Any]]]]]] = {
+    resource_id.lower(): (
+        params.packaged(resource_id.lower()).codes("code", "label"),
+        _live_codes(resource_id),
+    )
+    for resource_id in params.CODELISTS
+}
+"""The eighteen packaged codelists, each compared with upstream's codelist each night by
+its codes and their labels (sdk-core ADR-0055)."""
+NO_LIVE_LIST: dict[str, str] = {
+    params.TOC: (
+        "Each leaf of the table of contents carries its dataset's lastUpdate, dataEnd and "
+        "values, which change whenever Eurostat updates the data, twice a day, so a nightly "
+        "comparison of it would fail every night."
+    ),
+}
+"""The table of contents, not compared: its start is read by
+``test_list_datasets_upstream_toc_still_reads``."""
+
 UPDATED = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{4}$")
 """``updated`` as Eurostat prints it, e.g. ``2026-10-05T23:00:00+0200``."""
 
 LAST_UPDATE = re.compile(r"^\d{2}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}$")
 """SDMX-CSV's ``LAST UPDATE`` as Eurostat prints it, e.g. ``05/10/26 23:00:00``."""
-
-
-async def test_upstream_answers() -> None:
-    """The base URL answers without a server error.
-
-    A plain request, not the package's client; any answer below 500 (a 404 at the
-    root, say) shows the host is up.
-    """
-    async with httpx.AsyncClient(
-        headers={"User-Agent": config.user_agent},
-        timeout=config.timeouts.to_httpx(),
-        follow_redirects=True,
-    ) as http:
-        response = await http.get(BASE_URL)
-    assert response.status_code < 500
 
 
 def _check(result: Result[Cube], *, periods: int) -> None:
@@ -144,18 +185,6 @@ async def test_download_dataset_apro_mk_cola(tmp_path: Path) -> None:
     assert result.meta.request["key"] == "A...THS_T.AT"
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "refresh_reference.py"
-
-
-def load_script() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("refresh_reference", SCRIPT)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
 async def test_list_datasets_upstream_toc_still_reads() -> None:
     """The table of contents upstream serves still reads as the refresh script reads it.
 
@@ -167,11 +196,11 @@ async def test_list_datasets_upstream_toc_still_reads() -> None:
     shape through the script's ``TocParser``; the packaged answer's metadata is checked
     on the way, without a request.
     """
-    script = load_script()
     parser = script.TocParser()
     async with (
         httpx.AsyncClient(
-            headers={"User-Agent": config.user_agent}, timeout=config.timeouts.to_httpx()
+            headers={"User-Agent": config.user_agent},
+            timeout=httpx.Timeout(10.0, read=config.read_timeout),
         ) as http,
         http.stream("GET", f"{BASE_URL}/{catalogue.PATH}") as response,
     ):
@@ -196,13 +225,14 @@ async def test_list_datasets_upstream_toc_still_reads() -> None:
 async def test_list_codes_upstream_statinfo_still_reads() -> None:
     """The STATINFO codelist upstream serves still reads as the refresh script reads it.
 
-    One request through the package's client and the script's ``fetch_codelist``: the
-    codes in order with their labels, the version and a ``LAST_UPDATED`` with a zone.
+    One request through the package's client and the script's ``fetch_codelist``, the
+    fetch its declaration hands core's frame: the codes in order with their labels, the
+    version and a ``LAST_UPDATED`` with a zone, which the script keeps for ``lists.json``.
     """
-    script = load_script()
-    answer = await script.fetch_codelist("STATINFO")
-    packaged = script.codelist_list(answer.codelist, answer.retrieved_at)
-    info = script.codelist_info(answer.codelist)
+    script.RUN.start(samples=False)
+    packaged = await script.fetch_codelist("STATINFO")
+    info = script.RUN.infos["statinfo"]
+    script.RUN.start(samples=False)
     assert packaged.endpoint == "sdmx/2.1/codelist/ESTAT/STATINFO"
     assert packaged.records
     assert all(Code.model_validate(record).code for record in packaged.records)

@@ -60,9 +60,8 @@ __all__ = [
 
 # Lang and GeoLevel are written by hand from
 # docs/upstream/user-guide/api-detailed-guidelines/api-statistics.md, since no endpoint
-# lists them; enums.py holds only what scripts/refresh_reference.py generates from the
-# packaged lists, and the script rewrites it whole. The adapters publish each docstring
-# as the schema's description.
+# lists them, and the package renders no enumeration from its packaged lists. The adapters
+# publish each docstring as the schema's description.
 
 
 class Lang(StrEnum):

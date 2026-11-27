@@ -1,20 +1,30 @@
 """Refresh the packaged reference data from upstream (``/refresh-reference-data``).
 
-Eurostat's lists are packaged as tables, not as enums: the Catalogue API's table of
-contents (TOC) and the eighteen codelists in ``params.CODELISTS``, each too large for an
-enum (https://github.com/xippios/sdk-eurostat/pull/6), written with ``PackagedList.write``
-to ``reference/<name>.json`` (conventions §3, sdk-core ADR-0041):
+The script declares Eurostat's nineteen packaged lists in one ``Lists`` and hands it to
+core's ``run`` (sdk-core ADR-0062), which fetches every list through the declared fetch,
+then writes each to ``reference/<name>.json`` with ``PackagedList.write`` and the
+provenance rows of ``reference/README.md``, and no ``enums.py``, since no list declares an
+enum: Eurostat's lists are tables, each too large for one
+(https://github.com/xippios/sdk-eurostat/pull/6). The frame sends each request once
+through the package's client, ``RetryPolicy(max_attempts=1)`` for the run, so a 5xx or a
+429 spends no second request of upstream's fair use; it fetches every list before it
+writes the first file, so a run that fails writes nothing and is run again, and it prints
+the requests it sent, a failed run's too, and the quota left, which Eurostat reports in no
+header. ``--only <list> [<list> ...]`` fetches the lists named by their files
+(``statinfo``, ``cxt_prodcom2_sold``, ``toc``) alone and keeps every other list's file and
+row; ``--render-only`` writes the rows from the packaged files without a request.
 
-- ``toc.json``: the TOC, downloaded whole to a temporary file through
-  ``api.catalogue.get_toc_xml`` (core's ``download``, which streams the body to disk; 23 MB
-  on 2026-10-27), then read from that file a megabyte at a time with the standard
-  library's ``xml.etree.ElementTree`` pull parser (``TocParser``), each element cleared
-  once read: every ``leaf``, datasets and tables alike, with its code, type, English
-  title, the English titles of the folders above it joined with ``" > "`` (``path``),
-  ``lastUpdate``, ``lastModified``, ``dataStart``, ``dataEnd`` and ``values`` as printed.
-  This script is the only code that parses XML, so the package parses none at run time
-  (decision D1 of https://github.com/xippios/sdk-eurostat/pull/6; sdk-core ADR-0020
-  decision 3).
+The lists (conventions §3, sdk-core ADR-0041):
+
+- ``toc.json``: the Catalogue API's table of contents, downloaded whole to a temporary
+  file through ``api.catalogue.get_toc_xml`` (core's ``download``, which streams the body
+  to disk), then read from that file a megabyte at a time with the standard library's
+  ``xml.etree.ElementTree`` pull parser (``TocParser``), each element cleared once read:
+  every ``leaf``, datasets and tables alike, with its code, type, English title, the
+  English titles of the folders above it joined with ``" > "`` (``path``), ``lastUpdate``,
+  ``lastModified``, ``dataStart``, ``dataEnd`` and ``values`` as printed. This script is
+  the only code that parses XML, so the package parses none at run time (decision D1 of
+  https://github.com/xippios/sdk-eurostat/pull/6; sdk-core ADR-0020 decision 3).
 - ``<codelist>.json``: one codelist each, the latest version in JSON-stat through
   ``api.sdmx.code_list_query`` with English labels (decisions D1 and D2 of
   https://github.com/xippios/sdk-eurostat/pull/6), its codes and labels in upstream's
@@ -22,75 +32,63 @@ to ``reference/<name>.json`` (conventions §3, sdk-core ADR-0041):
   base, six on the Comext base, the codelists of the Prodcom datasets' ``product`` and
   ``indicators`` and of the trade datasets' ``product``, ``reporter`` and ``partner``, and
   ``flow`` (https://github.com/xippios/sdk-eurostat/pull/13 and
-  https://github.com/xippios/sdk-eurostat/pull/14). Its ``param`` is the
-  dimension ``params.CODELISTS`` names (``geo``, ``product``), and its ``endpoint`` the
-  path it was fetched from on the main base (``sdmx/2.1/codelist/ESTAT/GEO``) and the
-  full URL on the Comext base (``codelist_endpoint``).
+  https://github.com/xippios/sdk-eurostat/pull/14). Its ``param`` is the dimension
+  ``params.CODELISTS`` names (``geo``, ``product``), and its ``endpoint`` the path it was
+  fetched from on the main base (``sdmx/2.1/codelist/ESTAT/GEO``) and the full URL on the
+  Comext base (``codelist_endpoint``).
+
+Each fetch builds its finished ``PackagedList``, its ``fetched`` the time its answer
+arrived, and keeps what upstream gives the list as its release for the index. The
+declaration's ``after``, which the frame calls once the lists are written, writes beside
+them:
+
 - ``lists.json``: not a packaged list but a derived index, plain JSON with keys of its
   own (``params.ListIndex``): ``fetched``, the latest ``fetched`` among the packaged
   lists, and ``lists``, one record per packaged list with what upstream gives each as
   its release (the TOC's ``creationDate``, a codelist's ``version`` and
   ``LAST_UPDATED``), since a packaged file holds its four keys and a ``note`` and
   nothing else (sdk-core ADR-0041, decision 5; https://github.com/xippios/sdk-core/issues/81).
-  It names no upstream operation: it is derived from the nineteen answers.
+  It names no upstream operation: it is derived from the nineteen answers. After a run
+  with ``--only`` the records of the lists it fetched are replaced and every other is
+  kept as committed, and the index's ``fetched`` becomes the latest ``fetched`` among all
+  the packaged lists, the previous index's or this run's, whichever is later.
+- With ``--samples``, the parser tests' samples, cut from the same answers without a
+  request of their own: each folder of the TOC that ``TOC_SAMPLES`` names, with the leaves
+  it names and the folders above it, under ``tests/fixtures/files/toc/``, and the STATINFO
+  codelist's answer whole under ``tests/fixtures/files/codelist/``, their provenance in
+  ``tests/fixtures/files/README.md`` (sdk-core ADR-0020 decision 6, conventions §10). The
+  samples are cut while their answers are at hand and written with the index, so a run
+  that fails writes none. Each TOC cut parses the whole file again with
+  ``ElementTree.parse``, about 200 MB at its peak: fine for a one-off run, not for the
+  plain refresh, which reads the file a megabyte at a time. ``--samples`` takes no other
+  option, since it cuts from a run of every list.
 
-Each packaged file's ``fetched`` is the time its answer arrived, UTC to the second. The
-provenance table of ``reference/README.md`` is rewritten from the packaged files. Run
-from the repository root, without a key (the API takes none)::
+Run from the repository root, without a key (the API takes none)::
 
     uv run python scripts/refresh_reference.py
 
-Nineteen keyless requests: the TOC and eighteen codelists, paced by the package client.
-The client sends each request once, ``RetryPolicy(max_attempts=1)``, so a 5xx or a 429
-spends no second request of upstream's fair use: every list is fetched before the first
-file is written, a sample included, so a run that fails writes nothing and is run again.
-After the fetches the script prints the requests it sent, a failed run's too,
-and the quota left, which Eurostat reports in no header (``QUOTA_HEADER``).
-``--only <name> [<name> ...]`` fetches the named lists alone, each named by its id as
-upstream writes it (``CXT_PRODCOM2_SOLD``) or by its file (``cxt_prodcom2_sold``,
-``toc``), one request each: it writes their files, replaces their records in
-``lists.json`` and their rows in ``reference/README.md`` and keeps every other list's
-as it was, and the index's ``fetched`` becomes the latest ``fetched`` among all the
-packaged lists, the previous index's or this run's, whichever is later.
-``--samples`` also cuts the parser tests' samples from the same answers, without a
-request of its own: each folder of the TOC that ``TOC_SAMPLES`` names, with the leaves it
-names and the folders above it, under ``tests/fixtures/files/toc/``, and the STATINFO
-codelist whole under ``tests/fixtures/files/codelist/``, their provenance in
-``tests/fixtures/files/README.md`` (sdk-core ADR-0020 decision 6, conventions §10). Each
-TOC cut parses the whole file again with ``ElementTree.parse``, about 200 MB at its peak:
-fine for a one-off run, not for the plain refresh, which reads the file a megabyte at a
-time.
-
-Value lists and lists of integer ids would become enums: a value list in ``LISTS`` a
-``StrEnum``, a list of ids and names in ``ID_LISTS``, through ``id_name_pairs``, an
-``IntEnum`` (conventions §3), rendered into ``enums.py`` with one
-``xippios.core.reference.render_enums`` call, ASCII-only, and formatted with
-``ruff format`` and ``ruff check --fix``, to be committed as formatted (sdk-core ADR-0031,
-decision 6). Eurostat's lists are neither, so both mappings stay empty and
-``enums.py`` is an empty module. ``--render-only`` regenerates it from the packaged
-files alone, without a request: after a core release changes the renderer (conventions
-§15, item 6), it changes ``enums.py`` and nothing else.
+Nineteen keyless requests, the TOC and eighteen codelists, each sent once and paced by the
+package's client.
 """
 
-import argparse
 import functools
 import hashlib
+import importlib.util
 import json
 import re
-import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
-from collections.abc import Callable, Coroutine, Iterable, Iterator, Mapping, Sequence
-from contextlib import contextmanager
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 import httpx
-from xippios.core import AsyncClient, Downloaded, PackagedList, RetryPolicy, UpstreamModel, sync
-from xippios.core.reference import id_name_pairs, render_enums
+from xippios.core import AsyncClient, Downloaded, PackagedList
+from xippios.core.refresh import Listed, Lists, run
 
 from xippios.eurostat import api, params
 from xippios.eurostat._client import BASE_URL, client
@@ -98,24 +96,11 @@ from xippios.eurostat.models import Codelist, Dataset
 from xippios.eurostat.params import ListInfo
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGE_DIR = ROOT / "src/xippios/eurostat"
-REFERENCE = PACKAGE_DIR / "reference"
-ENUMS = PACKAGE_DIR / "enums.py"
 GENERATOR = "scripts/refresh_reference.py"
 SAMPLES = ROOT / "tests/fixtures/files"
 
-QUOTA_HEADER: str | None = None
-"""The response header in which upstream reports the requests left in its quota, as its
-documentation names it, or ``None`` where it reports none: the API documents a fair-use
-rule without a number (``asynchronous-api.md``) and no such header."""
-
-LISTS: dict[str, Callable[[], Coroutine[Any, Any, list[str]]]] = {}
-"""Value lists, one ``StrEnum`` each: Eurostat's packaged lists are tables, none is one."""
-
-ID_LISTS: dict[
-    str, tuple[str, str, Callable[[], Coroutine[Any, Any, Sequence[UpstreamModel]]]]
-] = {}
-"""Lists of integer ids and names, one ``IntEnum`` each (conventions §3): none either."""
+SAMPLES_OPTION = "--samples"
+"""The script's own option, read before the frame's command line."""
 
 NAVTREE = "urn:eu.europa.ec.eurostat.navtree"
 """The namespace of the TOC's XML (``TableOfContent.xsd``)."""
@@ -139,64 +124,16 @@ TOC_SAMPLES: dict[str, tuple[str, ...]] = {
 
 "Milk and milk products" with a dataset without tables under it and one with a
 pre-defined table under it; "Agri-environmental indicators" with a pre-defined table
-whose number of values the TOC printed empty on 2026-11-20
+whose number of values the TOC printed empty
 (https://github.com/xippios/sdk-eurostat/issues/72).
 """
 
 SAMPLE_CODELIST = "STATINFO"
-"""The codelist the sample keeps whole: 18 KB on 2026-10-27."""
+"""The codelist the sample keeps whole, its answer as decoded."""
 
 SAMPLE_KINDS = ("toc", "codelist")
 """The sample kinds this script cuts; the README rows of any other kind are kept as they
 are (``sdmx-csv/``, the bodies of the recorded ``dataQuery`` exchanges)."""
-
-
-class Meter:
-    """What a run spent: the requests it sent and the quota left that upstream reported.
-
-    The client's ``observe`` hook, which core calls with every response from the wire. It
-    calls the hook the client had first, a quota policy's say (sdk-core ADR-0037), and keeps
-    the last count that upstream sent in ``QUOTA_HEADER``. A request is counted by its
-    response: with no retry each has one, but for one that fails in transport, whose error
-    ends the run.
-    """
-
-    def __init__(self, observe: Callable[[httpx.Response], None] | None) -> None:
-        self.sent = 0
-        self.left: int | None = None
-        self._observe = observe
-
-    def __call__(self, response: httpx.Response) -> None:
-        """Count ``response`` and keep the quota it reports, after the hook it replaces."""
-        if self._observe is not None:
-            self._observe(response)
-        self.sent += 1
-        value = response.headers.get(QUOTA_HEADER) if QUOTA_HEADER else None
-        if value is not None and value.isascii() and value.isdigit():
-            self.left = int(value)
-
-    def report(self) -> str:
-        """The requests sent and the quota left, as upstream last reported it, one line."""
-        left = "not reported" if self.left is None else f"{self.left} ({QUOTA_HEADER})"
-        return f"requests sent: {self.sent}; quota left: {left}"
-
-
-@contextmanager
-def metered(target: AsyncClient) -> Iterator[Meter]:
-    """``target`` for the block: one attempt per request, each counted, then the report.
-
-    ``RetryPolicy(max_attempts=1)`` keeps a 5xx or a 429 from spending a second request.
-    ``target``'s configuration is restored after the block, and the report is printed, a
-    failed run's too.
-    """
-    configured = target.config
-    meter = Meter(configured.observe)
-    target.config = replace(configured, retry=RetryPolicy(max_attempts=1), observe=meter)
-    try:
-        yield meter
-    finally:
-        target.config = configured
-        print(meter.report())  # noqa: T201
 
 
 def _tag(name: str) -> str:
@@ -210,12 +147,6 @@ def _text(element: ET.Element, name: str) -> str | None:
     """The text of ``element``'s child ``name``, ``None`` when it is absent or empty."""
     text = element.findtext(_tag(name))
     return text if text else None
-
-
-def _english_title(element: ET.Element) -> str | None:
-    return next(
-        (title.text for title in element.findall(TITLE) if title.get("language") == "en"), None
-    )
 
 
 class Toc(NamedTuple):
@@ -416,18 +347,6 @@ def codelist_info(codelist: Codelist) -> ListInfo:
     )
 
 
-async def fetch_toc(dest: Path) -> Downloaded:
-    """Stream the TOC's XML to ``dest`` through ``api.catalogue.get_toc_xml``: one request."""
-    return await api.catalogue.get_toc_xml(dest)
-
-
-async def fetch_codelist(resource_id: str) -> api.sdmx.CodelistAnswer:
-    """One codelist, the latest version with English labels, on its base: one request."""
-    return await api.sdmx.code_list_query(
-        params.AGENCY, resource_id, lang=LANG, base_url=params.CODELISTS[resource_id].base_url
-    )
-
-
 def _utc(moment: datetime) -> str:
     return f"{moment.astimezone(UTC):%Y-%m-%dT%H:%M:%SZ}"
 
@@ -440,9 +359,10 @@ def _sha256(path: Path) -> str:
 
 
 class Sample(NamedTuple):
-    """One parser-test sample and its provenance row."""
+    """One parser-test sample, cut and not yet written, and its provenance row."""
 
     path: Path
+    text: str
     row: str
 
 
@@ -485,41 +405,190 @@ def cut_toc_sample(
     )
     if "--" in comment:
         raise ValueError("an XML comment cannot hold two hyphens in a row")
-    text = ET.tostring(root, encoding="unicode")
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(
-        f'<?xml version="1.0" encoding="UTF-8"?>\n<!-- {comment} -->\n{text}\n', encoding="utf-8"
-    )
+    tree = ET.tostring(root, encoding="unicode")
+    text = f'<?xml version="1.0" encoding="UTF-8"?>\n<!-- {comment} -->\n{tree}\n'
     row = (
         f"| `{dest.relative_to(SAMPLES)}` | `{toc.creation_date}` (creationDate) | {url} | "
         f"{size} | `{sha256}` | {_utc(downloaded.retrieved_at)} | the folder `{folder}` "
         f"with the leaves {', '.join(f'`{code}`' for code in leaves)} and the folders "
         "above it, written again by ElementTree |"
     )
-    return Sample(dest, row)
+    return Sample(dest, text, row)
 
 
-def write_codelist_sample(answer: api.sdmx.CodelistAnswer, dest: Path) -> Sample:
-    """Write a codelist answer whole, as compact JSON, with its provenance row.
+def codelist_sample(body: bytes, codelist: Codelist, retrieved_at: datetime, dest: Path) -> Sample:
+    """A codelist's answer whole, as compact JSON, with its provenance row.
 
     The answer as decoded, written again with ``ensure_ascii=False`` and no spaces, which
-    gave back every codelist answer probed on 2026-10-27 byte for byte; the row's sha256
-    and size are the file's.
+    gave back every codelist answer probed byte for byte when the sample was first cut;
+    the row's sha256 and size are the file's.
     """
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    text = json.dumps(answer.payload, ensure_ascii=False, separators=(",", ":"))
-    dest.write_text(text, encoding="utf-8")
-    extension = answer.codelist.extension
+    text = json.dumps(json.loads(body), ensure_ascii=False, separators=(",", ":"))
+    encoded = text.encode("utf-8")
+    extension = codelist.extension
     base_url = params.CODELISTS[extension.id].base_url
     url = (
         f"{base_url}/{api.sdmx.codelist_path(params.AGENCY, extension.id)}?format=JSON&lang={LANG}"
     )
     row = (
         f"| `{dest.relative_to(SAMPLES)}` | `{extension.version}` (version) | {url} | "
-        f"{dest.stat().st_size} | `{_sha256(dest)}` | {_utc(answer.retrieved_at)} | the "
-        "whole answer, decoded and written again as compact JSON |"
+        f"{len(encoded)} | `{hashlib.sha256(encoded).hexdigest()}` | {_utc(retrieved_at)} | "
+        "the whole answer, decoded and written again as compact JSON |"
     )
-    return Sample(dest, row)
+    return Sample(dest, text, row)
+
+
+class Gathered:
+    """What one run's fetches gather beside the lists, for the declaration's ``after``.
+
+    Attributes:
+        samples: Whether the run cuts the parser tests' samples (``--samples``).
+        infos: Each fetched list's record in ``lists.json``, by the list's name.
+        pending: The samples to cut once every list is fetched, in the order of their
+            fetches, which ``after`` cuts and writes.
+        answered: The body of the sampled codelist's answer as it came from the wire,
+            which ``SampledAnswer`` keeps in a ``--samples`` run.
+    """
+
+    def __init__(self) -> None:
+        self.samples = False
+        self.infos: dict[str, ListInfo] = {}
+        self.pending: list[Callable[[], Sample]] = []
+        self.answered: bytes | None = None
+        self._work: tempfile.TemporaryDirectory[str] | None = None
+
+    def start(self, *, samples: bool) -> None:
+        """Forget what an earlier run gathered, its kept TOC removed with it."""
+        if self._work is not None:
+            self._work.cleanup()
+        self._work = tempfile.TemporaryDirectory(prefix="xippios-eurostat-") if samples else None
+        self.samples = samples
+        self.infos = {}
+        self.pending = []
+        self.answered = None
+
+    def kept(self) -> Path | None:
+        """The directory that keeps the TOC for its samples until the run ends, if any."""
+        return None if self._work is None else Path(self._work.name)
+
+
+RUN = Gathered()
+"""What the current run's fetches gather: the fetches take no argument, as the frame calls
+them, so they hand what the index and the samples need here."""
+
+
+class SampledAnswer:
+    """The client's ``observe`` hook in a ``--samples`` run: keeps the sampled codelist's body.
+
+    Core calls the hook with every response from the wire, its body read, and a cache hit
+    never (``ClientConfig.observe``); it calls the hook the client had first, and keeps the
+    body of the 200 answer to ``SAMPLE_CODELIST``'s request in ``RUN.answered``, so the
+    sample is the same answer as the packaged list, without a request of its own.
+    """
+
+    def __init__(self, observe: Callable[[httpx.Response], None] | None) -> None:
+        self._observe = observe
+        self._path = f"/{api.sdmx.codelist_path(params.AGENCY, SAMPLE_CODELIST)}"
+
+    def __call__(self, response: httpx.Response) -> None:
+        """Call the hook the client had, then keep the sampled answer's body."""
+        if self._observe is not None:
+            self._observe(response)
+        if response.status_code == 200 and response.request.url.path.endswith(self._path):
+            RUN.answered = response.content
+
+
+@contextmanager
+def sampling(target: AsyncClient) -> Iterator[None]:
+    """``target`` for a ``--samples`` run: ``SampledAnswer`` observes it, then it is restored."""
+    configured = target.config
+    target.config = replace(configured, observe=SampledAnswer(configured.observe))
+    try:
+        yield
+    finally:
+        target.config = configured
+
+
+async def fetch_toc() -> PackagedList:
+    """The packaged TOC through ``api.catalogue.get_toc_xml``: one request.
+
+    The XML is streamed to a temporary file and read from it; a ``--samples`` run keeps the
+    file until the run ends, its samples of ``TOC_SAMPLES`` cut from it once every list is
+    fetched.
+    """
+    kept = RUN.kept()
+    with tempfile.TemporaryDirectory(prefix="xippios-eurostat-toc-") as work:
+        downloaded = await api.catalogue.get_toc_xml((kept or Path(work)) / "toc.xml")
+        toc = read_toc(downloaded.path)
+    if kept is not None:
+        for folder, leaves in TOC_SAMPLES.items():
+            dest = SAMPLES / "toc" / f"{folder}.xml"
+            RUN.pending.append(
+                functools.partial(
+                    cut_toc_sample, downloaded.path, downloaded, toc, dest, folder, leaves
+                )
+            )
+    RUN.infos[params.TOC] = toc_info(toc)
+    return toc_list(toc, downloaded.retrieved_at)
+
+
+async def fetch_codelist(resource_id: str) -> PackagedList:
+    """One packaged codelist, the latest version with English labels, on its base.
+
+    One request through ``api.sdmx.code_list_query``; in a ``--samples`` run the sampled
+    codelist's answer is cut whole from the body ``SampledAnswer`` kept.
+
+    Raises:
+        SystemExit: Upstream answered another codelist, or the sampled codelist's answer
+            came from the client's cache, which keeps no body for the sample; nothing is
+            written then.
+    """
+    answer = await api.sdmx.code_list_query(
+        params.AGENCY, resource_id, lang=LANG, base_url=params.CODELISTS[resource_id].base_url
+    )
+    codelist = answer.payload
+    if codelist.extension.id != resource_id:
+        raise SystemExit(f"asked for {resource_id}, got {codelist.extension.id}")
+    RUN.infos[resource_id.lower()] = codelist_info(codelist)
+    if RUN.samples and resource_id == SAMPLE_CODELIST:
+        if RUN.answered is None:
+            raise SystemExit(
+                f"{resource_id}'s answer came from the client's cache, which keeps no body for "
+                "the sample: run the script again in a process of its own. Nothing was written."
+            )
+        dest = SAMPLES / "codelist" / f"{resource_id.lower()}.json"
+        sample = codelist_sample(RUN.answered, codelist, answer.retrieved_at, dest)
+        RUN.pending.append(lambda: sample)
+    return codelist_list(codelist, answer.retrieved_at)
+
+
+def _codelist(resource_id: str) -> Listed:
+    """The declaration of one packaged codelist, its file the id lower-cased."""
+
+    async def fetch() -> PackagedList:
+        return await fetch_codelist(resource_id)
+
+    return Listed(
+        resource_id.lower(),
+        fetch=fetch,
+        endpoint=codelist_endpoint(resource_id),
+        param=params.CODELISTS[resource_id].param,
+    )
+
+
+LISTS = Lists(
+    package=params.PACKAGE,
+    lists=(
+        Listed(params.TOC, fetch=fetch_toc, endpoint=api.catalogue.PATH, param=TOC_PARAM),
+        *(_codelist(resource_id) for resource_id in params.CODELISTS),
+    ),
+    packaged=params.PACKAGED_LISTS,
+    client=client,
+    quota_header=None,
+)
+"""The nineteen packaged lists, the TOC and the codelists in ``params.CODELISTS``' order, each
+a table and no enum. Eurostat reports its quota in no header: the user guide states a
+fair-use rule without a number (``asynchronous-api.md``) and no such header."""
 
 
 SAMPLES_README = """# Parser-test samples
@@ -542,12 +611,15 @@ SAMPLE_ROW = re.compile(r"^\| `(?P<kind>[^/`]+)/[^`]*` \|")
 """A sample's row in the README, its kind the first part of its path."""
 
 
-def write_samples_readme(samples: Sequence[Sample]) -> None:
-    """Write ``tests/fixtures/files/README.md``: one row per sample of this run.
+def write_samples(samples: Sequence[Sample]) -> None:
+    """Write each sample and ``tests/fixtures/files/README.md``: one row per sample.
 
     The rows of the samples this script does not cut (a kind outside ``SAMPLE_KINDS``)
     are kept as they are, after this run's.
     """
+    for sample in samples:
+        sample.path.parent.mkdir(parents=True, exist_ok=True)
+        sample.path.write_text(sample.text, encoding="utf-8")
     path = SAMPLES / "README.md"
     kept = []
     if path.is_file():
@@ -559,57 +631,26 @@ def write_samples_readme(samples: Sequence[Sample]) -> None:
     path.write_text(SAMPLES_README + rows, encoding="utf-8")
 
 
-README_TABLE = "| File | Origin | Fetched |\n| --- | --- | --- |\n"
+def reference_directory(package: str) -> Path:
+    """The ``reference/`` directory of ``package`` as imported, where the frame writes.
 
-README_ROW = re.compile(r"^\| `(?P<name>[^`]+)\.json` \|")
-"""A packaged list's row in the provenance table, its file's name without ``.json``."""
-
-
-def packaged_names() -> list[str]:
-    """The packaged lists' file names, without ``.json``, in the index's order.
-
-    ``params.PACKAGED_LISTS``, read from ``params.CODELISTS`` at the call, so a test that
-    narrows the codelists narrows them too.
+    Raises:
+        SystemExit: The package is not importable as one directory.
     """
-    return [params.TOC, *(resource_id.lower() for resource_id in params.CODELISTS)]
+    spec = importlib.util.find_spec(package)
+    locations = list(spec.submodule_search_locations or []) if spec is not None else []
+    if len(locations) != 1:
+        raise SystemExit(f"{package} is not importable as one package directory")
+    return Path(locations[0]) / "reference"
 
 
-def write_reference_readme(written: Mapping[str, PackagedList], *, keep: bool = False) -> None:
-    """Rewrite the provenance table at the end of ``reference/README.md``.
-
-    One row per packaged list, in the index's order: this run's for the lists in
-    ``written``; with ``keep``, a run with ``--only``, every other packaged list's row as
-    it was. ``lists.json``, the derived index, has no origin and no row, and the README's
-    text says so.
-    """
-    path = REFERENCE / "README.md"
-    text = path.read_text(encoding="utf-8")
-    head, found, table = text.partition(README_TABLE)
-    if not found:
-        raise SystemExit(f"{path.name} has no provenance table to rewrite")
-    kept: dict[str, str] = {}
-    if keep:
-        for line in table.splitlines():
-            row = README_ROW.match(line)
-            if row is not None:
-                kept[row["name"]] = line
-    rows = []
-    for name in packaged_names():
-        packaged = written.get(name)
-        if packaged is not None:
-            rows.append(f"| `{name}.json` | `{packaged.endpoint}` | {_utc(packaged.fetched)} |")
-        elif name in kept:
-            rows.append(kept[name])
-    path.write_text(head + README_TABLE + "".join(f"{row}\n" for row in rows), encoding="utf-8")
-
-
-def read_index() -> params.ListIndex:
+def read_index(reference: Path) -> params.ListIndex:
     """The committed ``reference/lists.json``, for a run with ``--only`` to merge into.
 
     Raises:
         SystemExit: The index is missing; a run without ``--only`` writes it whole.
     """
-    path = REFERENCE / f"{params.INDEX}.json"
+    path = reference / f"{params.INDEX}.json"
     if not path.is_file():
         raise SystemExit(f"{path.name} is not written yet: run the script without --only")
     return params.ListIndex.model_validate_json(path.read_text(encoding="utf-8"))
@@ -630,14 +671,14 @@ def merge_index(
     before = {info.name: info for info in previous.lists}
     merged = [
         fresh[name] if name in fresh else before[name]
-        for name in packaged_names()
+        for name in params.PACKAGED_LISTS
         if name in fresh or name in before
     ]
     latest = max([previous.fetched, *(packaged.fetched for packaged in written.values())])
     return merged, latest
 
 
-def write_index(infos: Sequence[ListInfo], fetched: datetime) -> None:
+def write_index(reference: Path, infos: Sequence[ListInfo], fetched: datetime) -> None:
     """Write ``reference/lists.json``, the derived index, as plain JSON (``params.ListIndex``).
 
     ``fetched`` is written to the second, as ISO 8601 UTC with ``Z``; the records under
@@ -648,188 +689,64 @@ def write_index(infos: Sequence[ListInfo], fetched: datetime) -> None:
         "fetched": _utc(index.fetched),
         "lists": [info.dump_upstream() for info in index.lists],
     }
-    path = REFERENCE / f"{params.INDEX}.json"
+    path = reference / f"{params.INDEX}.json"
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"{path.name}: {len(index.lists)} lists")  # noqa: T201
 
 
-def write(name: str, packaged: PackagedList) -> None:
-    """Write ``reference/<name>.json`` with ``PackagedList.write``."""
-    path = REFERENCE / f"{name}.json"
-    packaged.write(path)
-    print(f"{path.name}: {len(packaged.records)} records")  # noqa: T201
+def write_beside(package: str, written: Mapping[str, PackagedList]) -> None:
+    """The declaration's ``after``: ``lists.json``, then the samples a ``--samples`` run cut.
 
-
-def read(name: str) -> dict[str, Any]:
-    """The packaged ``reference/<name>.json``, as ``write`` wrote it."""
-    path = REFERENCE / f"{name}.json"
-    if not path.is_file():
-        raise SystemExit(f"{path.name} is not packaged yet: run the script without --render-only")
-    payload: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
-    return payload
-
-
-def render(
-    lists: Mapping[str, Sequence[str] | Sequence[tuple[int, str]]],
-    fetched: Mapping[str, str],
-) -> None:
-    """Write ``enums.py`` with one ``render_enums`` call, then format it with ruff.
-
-    A value list renders a ``StrEnum``, a list of ``(id, name)`` pairs an ``IntEnum``, each
-    class docstring naming its list's date in ``fetched``. ``ruff format`` and
-    ``ruff check --fix`` then choose the quotes, wrap what fits and sort ``__all__``; the
-    module is committed as formatted (sdk-core ADR-0031, decision 6).
-    """
-    ENUMS.write_text(render_enums(lists, fetched=fetched, generator=GENERATOR), encoding="utf-8")
-    for command in (["format"], ["check", "--fix"]):
-        subprocess.run([sys.executable, "-m", "ruff", *command, str(ENUMS)], check=True, cwd=ROOT)
-
-
-class Fetched(NamedTuple):
-    """What one run fetched: the packaged lists, their records in ``lists.json``, samples."""
-
-    written: dict[str, PackagedList]
-    infos: list[ListInfo]
-    samples: list[Sample]
-
-
-def selected(names: Sequence[str]) -> list[str]:
-    """The packaged lists ``--only`` names, as file names, in the index's order.
-
-    A name is a codelist's id as upstream writes it (``CXT_PRODCOM2_SOLD``) or a packaged
-    list's file without ``.json`` (``cxt_prodcom2_sold``, ``toc``).
+    A run of every list writes the index whole, its ``fetched`` the latest of the lists'; a
+    run with ``--only`` merges its lists' records into the committed index (``merge_index``).
 
     Raises:
-        SystemExit: A name is neither, before any request; the message names the known.
+        SystemExit: A fetched list left no record for the index, or a run with ``--only``
+            finds no committed index to merge into.
     """
-    known = {name: name for name in packaged_names()}
-    known.update({resource_id: resource_id.lower() for resource_id in params.CODELISTS})
-    unknown = [name for name in names if name not in known]
-    if unknown:
-        raise SystemExit(
-            f"--only: {', '.join(unknown)} is no packaged list; give a codelist's id "
-            f"({', '.join(params.CODELISTS)}) or a file ({', '.join(packaged_names())})"
-        )
-    chosen = {known[name] for name in names}
-    return [name for name in packaged_names() if name in chosen]
-
-
-async def fetch_all(work: Path, *, samples: bool, only: Sequence[str] | None = None) -> Fetched:
-    """Fetch the TOC and every codelist, one request each, and build their files.
-
-    ``only``, file names from ``selected``, fetches those lists alone; ``None`` fetches
-    every one. The TOC goes to ``work`` while it is read; nothing else touches the disk
-    here but the samples, when asked for, which are cut once every list is fetched, so a
-    failed request leaves none behind.
-    """
-    written: dict[str, PackagedList] = {}
-    infos: list[ListInfo] = []
-    pending: list[Callable[[], Sample]] = []
-    if only is None or params.TOC in only:
-        downloaded = await fetch_toc(work / "toc.xml")
-        toc = read_toc(downloaded.path)
-        written[params.TOC] = toc_list(toc, downloaded.retrieved_at)
-        infos.append(toc_info(toc))
-        if samples:
-            for folder, leaves in TOC_SAMPLES.items():
-                dest = SAMPLES / "toc" / f"{folder}.xml"
-                pending.append(
-                    functools.partial(
-                        cut_toc_sample, downloaded.path, downloaded, toc, dest, folder, leaves
-                    )
-                )
-    for resource_id in params.CODELISTS:
-        if only is not None and resource_id.lower() not in only:
-            continue
-        answer = await fetch_codelist(resource_id)
-        if answer.codelist.extension.id != resource_id:
-            raise SystemExit(f"asked for {resource_id}, got {answer.codelist.extension.id}")
-        written[resource_id.lower()] = codelist_list(answer.codelist, answer.retrieved_at)
-        infos.append(codelist_info(answer.codelist))
-        if samples and resource_id == SAMPLE_CODELIST:
-            dest = SAMPLES / "codelist" / f"{resource_id.lower()}.json"
-            pending.append(functools.partial(write_codelist_sample, answer, dest))
-    return Fetched(written, infos, [cut() for cut in pending])
-
-
-def refresh(*, samples: bool = False, only: Sequence[str] | None = None) -> None:
-    """Fetch every list, write its file, ``lists.json`` and the README, render ``enums.py``.
-
-    ``only``, the names ``--only`` gives, fetches those lists alone and merges them into
-    the committed index and README (``merge_index``, ``write_reference_readme``); every
-    name is checked before the first request.
-    """
-    chosen = None if only is None else selected(only)
-    previous = None if chosen is None else read_index()
-    REFERENCE.mkdir(exist_ok=True)
-    with tempfile.TemporaryDirectory() as work, metered(client):
-        fetched = sync(fetch_all)(Path(work), samples=samples, only=chosen)
-    for name, packaged in fetched.written.items():
-        write(name, packaged)
-    if previous is None:
-        latest = max(packaged.fetched for packaged in fetched.written.values())
-        write_index(fetched.infos, latest)
+    reference = reference_directory(package)
+    if missing := [name for name in written if name not in RUN.infos]:
+        raise SystemExit(f"no record for lists.json of {', '.join(missing)}")
+    infos = [RUN.infos[name] for name in params.PACKAGED_LISTS if name in written]
+    if set(written) == set(params.PACKAGED_LISTS):
+        write_index(reference, infos, max(packaged.fetched for packaged in written.values()))
     else:
-        write_index(*merge_index(previous, fetched.infos, fetched.written))
-    write_reference_readme(fetched.written, keep=previous is not None)
-    if fetched.samples:
-        write_samples_readme(fetched.samples)
-        for sample in fetched.samples:
-            print(f"{sample.path.relative_to(ROOT)}: {sample.path.stat().st_size} bytes")  # noqa: T201
-    render_only()
+        write_index(reference, *merge_index(read_index(reference), infos, written))
+    if RUN.pending:
+        samples = [cut() for cut in RUN.pending]
+        write_samples(samples)
+        for sample in samples:
+            print(f"{sample.path.relative_to(SAMPLES)}: {len(sample.text.encode())} bytes")  # noqa: T201
 
 
-def render_only() -> None:
-    """Regenerate ``enums.py`` from the packaged files, without a request.
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run core's frame on ``LISTS``, writing the index and any samples in its ``after``.
 
-    Each list keeps the date its file records, so lists fetched on different days render
-    with their own dates. With ``LISTS`` and ``ID_LISTS`` empty, the module has no enum.
+    ``--samples``, the script's own option, is read first and handed on to no parser: it
+    takes no other option, so the run fetches every list, and the client keeps the sampled
+    codelist's answer for the sample while the run lasts.
+
+    Raises:
+        SystemExit: ``--samples`` beside another option, before any request.
     """
-    lists: dict[str, Sequence[str] | Sequence[tuple[int, str]]] = {}
-    fetched: dict[str, str] = {}
-    for name in LISTS:
-        payload = read(name)
-        lists[name] = [next(iter(record.values())) for record in payload["records"]]
-        fetched[name] = str(payload["fetched"])[:10]
-    for name, (id_field, name_field, _) in ID_LISTS.items():
-        payload = read(name)
-        lists[name] = id_name_pairs(payload["records"], id_field=id_field, name_field=name_field)
-        fetched[name] = str(payload["fetched"])[:10]
-    render(lists, fetched)
-    print(f"{ENUMS.name}: {len(lists)} enums, from the packaged files")  # noqa: T201
-
-
-def main(argv: Sequence[str] | None = None) -> None:
-    """Refresh from upstream, some lists with ``--only``, or regenerate ``enums.py`` alone."""
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
-    choice = parser.add_mutually_exclusive_group()
-    choice.add_argument(
-        "--render-only",
-        action="store_true",
-        help="regenerate enums.py from the packaged reference/*.json, without a request",
-    )
-    choice.add_argument(
-        "--samples",
-        action="store_true",
-        help="also cut the parser tests' samples under tests/fixtures/files/ from this run",
-    )
-    choice.add_argument(
-        "--only",
-        nargs="+",
-        metavar="NAME",
-        help=(
-            "fetch these lists alone, each a codelist's id (CXT_PRODCOM2_SOLD) or a file "
-            "(cxt_prodcom2_sold, toc), and keep every other list's file, record and row"
-        ),
-    )
-    args = parser.parse_args(argv)
-    if shared := sorted(LISTS.keys() & ID_LISTS.keys()):
-        raise SystemExit(f"a list is named in both LISTS and ID_LISTS: {shared}")
-    if args.render_only:
-        render_only()
-    else:
-        refresh(samples=args.samples, only=args.only)
+    given = list(sys.argv[1:] if argv is None else argv)
+    samples = SAMPLES_OPTION in given
+    if samples:
+        given = [arg for arg in given if arg != SAMPLES_OPTION]
+        if given:
+            raise SystemExit(
+                f"{SAMPLES_OPTION} cuts the samples from a run of every list, so it takes no "
+                f"other option: {' '.join(given)}. Nothing was fetched or written."
+            )
+    declaration = LISTS
+    RUN.start(samples=samples)
+    after = functools.partial(write_beside, declaration.package)
+    try:
+        with sampling(declaration.client) if samples else nullcontext():
+            return run(replace(declaration, after=after), given)
+    finally:
+        RUN.start(samples=False)
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

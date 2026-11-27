@@ -34,14 +34,16 @@ answers replace the tests that served the user guide's documented bodies (conven
 """
 
 import json
+import re
 from pathlib import Path
 
 import httpx
 import pytest
-from xippios.core import InvalidRequestError, NotFoundError
+from xippios.core import InvalidRequestError, NotFoundError, QueryTooLarge
 from xippios.core.client import MemoryCache
 from xippios.core.testing import load_fixture, response_from_fixture
 
+from xippios.eurostat import _client
 from xippios.eurostat._client import (
     BASE_URL,
     COMEXT_BASE_URL,
@@ -160,6 +162,13 @@ def test_env_vars_name_no_variable() -> None:
     assert ENV_VARS == ()
 
 
+def test_the_client_declares_no_key_variable() -> None:
+    """A source without a key declares no key's variable: ``ENV_VARS`` names what a host
+    sets (https://github.com/xippios/sdk-template/issues/300)."""
+    assert not hasattr(_client, "API_KEY_ENV")
+    assert "API_KEY_ENV" not in _client.__all__
+
+
 def test_url_for_requests_a_ds_code_on_the_comext_base() -> None:
     """Upstream's rule (prefixed-datasets.md): a "DS- prefixed dataset code" is served on
     the Comext base, as an absolute URL the client sends as it is; every other code keeps
@@ -216,7 +225,7 @@ def test_geo_with_geo_level_is_refused_as_recorded() -> None:
 
 def test_documented_shape_geo_with_geo_level_object_is_refused() -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
-    hand-written: one ``error`` object, its status as text, no id."""
+    hand-written: one ``error`` object, its status as text, no id (conventions §10, kind 1)."""
     assert GEO_AND_GEO_LEVEL.startswith('{"error":{"status":"400","label":')
     error = classify(answer(400, GEO_AND_GEO_LEVEL))
     assert isinstance(error, InvalidRequestError)
@@ -230,7 +239,8 @@ def test_documented_shape_geo_with_geo_level_object_is_refused() -> None:
 def test_fault_table_no_results_at_400_is_not_found() -> None:
     """NOT RECORDED: composed from the fault table's row in the recorded array form, "100
     No results found | 400 Bad request | The result from the query is empty.", its name
-    and description as the label. Upstream signals absence: ``NotFoundError``."""
+    and description as the label. Upstream signals absence: ``NotFoundError``
+    (conventions §10, kind 2)."""
     name, description = documented_fault_row(100, 400)
     assert (name, description) == ("No results found", "The result from the query is empty.")
     body = json.dumps({"error": [{"status": 400, "id": 100, "label": f"{name}: {description}"}]})
@@ -245,7 +255,7 @@ def test_fault_table_no_results_at_400_is_not_found() -> None:
 @pytest.mark.parametrize(("code", "status"), [(140, 400), (150, 400)])
 def test_fault_table_syntax_and_semantic_errors_are_refused(code: int, status: int) -> None:
     """NOT RECORDED: composed from the fault table's row in the recorded array form; the
-    140 and 150 rows at HTTP 400 stay refusals."""
+    140 and 150 rows at HTTP 400 stay refusals (conventions §10, kind 2)."""
     name, description = documented_fault_row(code, status)
     body = json.dumps(
         {"error": [{"status": status, "id": code, "label": f"{name}: {description}"}]}
@@ -258,8 +268,8 @@ def test_documented_shape_asynchronous_answer_is_refused(status: int) -> None:
     """Documented shape, read verbatim from the snapshot at test time; neither recorded nor
     hand-written, and never seen: the Statistics API's asynchronous answer was recorded on
     2026-10-28 as an ``error`` array instead (the test after this one), and this test
-    stays for the documented ``warning`` (conventions §10). The guide names no HTTP status
-    for it: both are read."""
+    stays for the documented ``warning`` (conventions §10, kind 1). The guide names no HTTP
+    status for it: both are read."""
     assert ASYNCHRONOUS.startswith('{"warning":{"status":413, "label":"ASYNCHRONOUS_RESPONSE.')
     error = classify(answer(status, ASYNCHRONOUS))
     assert isinstance(error, InvalidRequestError)
@@ -306,7 +316,8 @@ def test_statistics_api_asynchronous_answer_is_refused_as_recorded() -> None:
 
 def test_statistics_api_asynchronous_error_array_is_refused_at_any_status() -> None:
     """NOT RECORDED: the recorded body, as recorded, served at HTTP 200 in memory: the
-    label decides, at any status, as for the documented ``warning``."""
+    label decides, at any status, as for the documented ``warning`` (conventions §10,
+    kind 4)."""
     body = recorded(ASYNCHRONOUS_RECORDED).text
     url = f"{COMEXT_BASE_URL}/statistics/1.0/data/DS-059341?format=JSON&lang=EN"
     error = classify(answer(200, body, url=url))
@@ -314,46 +325,72 @@ def test_statistics_api_asynchronous_error_array_is_refused_at_any_status() -> N
     assert str(error) == ASYNCHRONOUS_REFUSAL
 
 
-def test_extraction_too_big_is_refused() -> None:
+def test_extraction_too_big_is_query_too_large() -> None:
     """Recorded on the Comext base: the SDMX API's SOAP fault ``EXTRACTION_TOO_BIG`` at
-    HTTP 413, which a download reads for the error's text; its ``faultstring`` goes into
-    the message."""
+    HTTP 413, which a download reads for the error's text. It is core's ``QueryTooLarge``
+    (conventions §5), its count and its limit read from the ``faultstring``, "estimated
+    13344840 rows, max authorised is 5000000"."""
     error = classify(recorded_sdmx("DS-045409_too_big_413"))
-    assert isinstance(error, InvalidRequestError)
-    text = str(error)
-    assert text.startswith(
-        f"Eurostat refused {COMEXT_WHERE}/sdmx/2.1/data/DS-045409/M.AT+DE+FR+IT+NL.US... as "
-        "too large (HTTP 413: EXTRACTION_TOO_BIG: The requested extraction is too big, "
-        "estimated "
+    assert isinstance(error, QueryTooLarge)
+    assert (error.count, error.limit) == (13_344_840, 5_000_000)
+    where = f"{COMEXT_WHERE}/sdmx/2.1/data/DS-045409/M.AT+DE+FR+IT+NL.US..."
+    assert error.request == where
+    assert str(error) == (
+        f"{where} would return 13,344,840 records; upstream serves at most 5,000,000 per "
+        "call. Eurostat estimates an extraction in cells and refuses one over its limit: "
+        "narrow the query with fewer codes per dimension or a shorter period."
     )
-    assert text.endswith(
-        "please change your filters to reduce the extraction size): narrow the query with "
-        "fewer codes per dimension or a shorter period."
-    )
-    assert "again later" not in text, "too large is not a matter of waiting"
+    assert "again later" not in str(error), "too large is not a matter of waiting"
+    assert error.source == "eurostat"
     assert_host_and_query_free(error)
 
 
-def test_statistics_api_too_big_is_refused_on_the_comext_base() -> None:
+def test_statistics_api_too_big_is_query_too_large_on_the_comext_base() -> None:
     """Recorded on the Comext base: a filter on a dimension ``DS-059358`` lacks (``geo``)
     is answered with HTTP 413 and an ``error`` array whose id is 413
     (``EXTRACTION_TOO_BIG``), not with the main base's fault 150 at HTTP 400; the
     estimate, 151,971,120 rows, is that of an unfiltered query, so the unknown filter
-    seems to be ignored. It is refused as too large, the array's fault described as at
-    HTTP 400."""
+    seems to be ignored. It is core's ``QueryTooLarge``, its count and its limit read
+    from the fault's label."""
     response = recorded("DS-059358_unknown_dimension_too_big")
     assert response.status_code == 413
     assert '"label": "EXTRACTION_TOO_BIG' in response.text
     error = classify(response)
-    assert isinstance(error, InvalidRequestError)
+    assert isinstance(error, QueryTooLarge)
+    assert (error.count, error.limit) == (151_971_120, 5_000_000)
     assert str(error) == (
-        f"Eurostat refused {COMEXT_WHERE}/statistics/1.0/data/DS-059358 as too large "
-        "(HTTP 413: fault 413: EXTRACTION_TOO_BIG: The requested extraction is too big, "
-        "estimated 151971120 rows, max authorised is 5000000, please change your filters "
-        "to reduce the extraction size): narrow the query with fewer codes per dimension or "
-        "a shorter period."
+        f"{COMEXT_WHERE}/statistics/1.0/data/DS-059358 would return 151,971,120 records; "
+        "upstream serves at most 5,000,000 per call. Eurostat estimates an extraction in "
+        "cells and refuses one over its limit: narrow the query with fewer codes per "
+        "dimension or a shorter period."
     )
     assert_host_and_query_free(error)
+
+
+def test_a_too_big_answer_without_a_count_is_query_too_large() -> None:
+    """NOT RECORDED: the recorded SOAP fault with its ``faultstring`` cut to its label, a
+    form Eurostat was not seen to send (conventions §10, kind 4). Without a count in
+    upstream's text the refusal names none, and the limit is the user guide's 5,000,000
+    cells (``asynchronous-api.md``)."""
+    fixture = load_fixture(SDMX_FIXTURES / "DS-045409_too_big_413.json")
+    body = re.sub(
+        r"<faultstring>[^<]*</faultstring>",
+        "<faultstring>EXTRACTION_TOO_BIG</faultstring>",
+        fixture.response.body,
+    )
+    response = httpx.Response(
+        413,
+        headers=fixture.response.headers,
+        content=body.encode("utf-8"),
+        request=httpx.Request("GET", fixture.request.url),
+    )
+    error = classify(response)
+    assert isinstance(error, QueryTooLarge)
+    assert (error.count, error.limit) == (None, 5_000_000)
+    assert str(error).startswith(
+        f"upstream refused {COMEXT_WHERE}/sdmx/2.1/data/DS-045409/M.AT+DE+FR+IT+NL.US... as "
+        "too large; it serves at most 5,000,000 records per call."
+    )
 
 
 def test_unknown_ds_dataset_is_not_found() -> None:
@@ -390,7 +427,8 @@ def test_a_cube_and_the_empty_cube_are_no_error(case: str) -> None:
     ],
 )
 def test_other_answers_fall_through_to_core(status: int, body: str) -> None:
-    """NOT RECORDED: a 5xx stays core's, so it is retried; a body of no known shape too."""
+    """NOT RECORDED: a 5xx stays core's, so it is retried; a body of no known shape too
+    (conventions §10, kind 5)."""
     assert classify(answer(status, body)) is None
 
 
@@ -401,7 +439,8 @@ def test_sdmx_asynchronous_envelope_is_refused() -> None:
     """Recorded on the Comext base: the envelope that queues an SDMX data request, status
     ``SUBMITTED`` (``asynchronous-api.md``, "Step 1: Initial request"), at HTTP 200 with
     ``application/xml``. Refused from the headers alone, as a download hands it over: the
-    body is never read."""
+    recording served in memory at its own URL, its status and headers as recorded, the
+    body never read (conventions §10, kind 3)."""
     fixture = load_fixture(SDMX_FIXTURES / f"{ASYNCHRONOUS_SDMX}.json")
     assert (fixture.response.status, dict(fixture.response.headers)["content-type"]) == (
         200,
@@ -434,7 +473,8 @@ def test_sdmx_asynchronous_envelope_is_refused_whatever_its_type(
 ) -> None:
     """NOT RECORDED as such: the recorded envelope with its ``Content-Type`` replaced, or
     removed, in memory; the guide names no type for it, so any that is not SDMX-CSV's is
-    refused, on the main base's data path as on the Comext base's."""
+    refused, on the main base's data path as on the Comext base's (conventions §10,
+    kind 4)."""
     error = classify(downloaded(ASYNCHRONOUS_SDMX, content_type))
     assert isinstance(error, InvalidRequestError)
     assert f" with {media or 'no content type'}, not SDMX-CSV: " in str(error)
@@ -464,7 +504,8 @@ def test_sdmx_asynchronous_envelope_is_refused_whatever_its_type(
 )
 def test_an_sdmx_csv_answer_is_no_error(case: str) -> None:
     """The recorded SDMX-CSV answers on both bases, plain and ``compressed=true``, pass,
-    read or not."""
+    read or not: unread, each recording is served in memory at its own URL as a download
+    hands it, its status and headers as recorded (conventions §10, kind 3)."""
     recorded = recorded_sdmx(case)
     assert classify(recorded) is None
     content_type = recorded.headers["content-type"]
@@ -475,7 +516,8 @@ def test_an_sdmx_csv_answer_is_no_error(case: str) -> None:
 def test_the_content_type_rule_reads_sdmx_data_queries_only() -> None:
     """NOT RECORDED as such: the recorded envelope served from the Statistics API at HTTP
     200, and JSON from the SDMX codelist query, are not data queries; neither is a 4xx's
-    body type a matter here."""
+    body type a matter here. Each is a body of no shape upstream sends at its path, to show
+    that ``classify`` leaves it to core (conventions §10, kind 5)."""
     envelope = load_fixture(SDMX_FIXTURES / f"{ASYNCHRONOUS_SDMX}.json").response.body
     assert classify(answer(200, envelope, "application/xml")) is None
     statistics = f"{COMEXT_BASE_URL}/statistics/1.0/data/DS-059358?format=JSON&lang=EN"

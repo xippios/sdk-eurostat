@@ -28,36 +28,37 @@ The answer is one JSON-stat 2.0 dataset (``models.Cube``;
 """
 
 from collections.abc import Mapping, Sequence
-from datetime import datetime
 from typing import NamedTuple
 from urllib.parse import quote
 
 from xippios.core import parse
+from xippios.core.client import Answer
 
 from xippios.eurostat._client import SOURCE, client, url_for
 from xippios.eurostat.models import Cube, GeoLevel, Lang
 
-__all__ = ["DataAnswer", "get_data"]
+__all__ = ["PrintedCube", "get_data"]
 
 ENDPOINT = "getData"
 """The operation's name, the WADL's method id."""
 
 
-class DataAnswer(NamedTuple):
-    """What ``get_data`` returns: the cube and what the task's ``meta`` needs.
+class PrintedCube(NamedTuple):
+    """The answer as read: the cube, and its ``updated`` member as Eurostat printed it.
+
+    ``models.Cube`` reads ``updated`` into a ``datetime`` and keeps no text beside it, while
+    ``meta.vintage`` of ``get_data`` is the release as upstream states it (conventions §4;
+    https://github.com/xippios/sdk-usda-esr/issues/60, part 3), so the wrapper hands the
+    task the text apart from the model, read from the decoded answer.
 
     Attributes:
         cube: The answer, parsed.
-        updated: The ``updated`` member as upstream printed it, e.g.
+        updated: The ``updated`` member exactly as sent, e.g.
             ``"2026-10-05T23:00:00+0200"``; ``None`` when the answer has none.
-        retrieved_at: When the answer was retrieved, timezone-aware UTC: on a cache hit
-            the time the entry was stored, else the time the answer arrived
-            (``AsyncClient.get_answer``); the task's ``meta.retrieved_at``.
     """
 
     cube: Cube
     updated: str | None
-    retrieved_at: datetime
 
 
 async def get_data(
@@ -69,8 +70,13 @@ async def get_data(
     until_time_period: str | None = None,
     last_time_period: int | None = None,
     geo_level: GeoLevel | None = None,
-) -> DataAnswer:
+) -> Answer[PrintedCube]:
     """Call ``getData``: one dataset, or a slice of it, as a JSON-stat cube.
+
+    Reads the decoded answer with ``get_answer`` and parses it itself, so that ``updated``
+    reaches the task as Eurostat printed it, and returns ``Answer(value,
+    answer.retrieved_at)``, the form of core's ``Answer`` for a value a wrapper derives
+    from the payload.
 
     Args:
         dataset_code: ``datasetCode``, the dataset's online data code, e.g.
@@ -86,12 +92,15 @@ async def get_data(
         geo_level: ``geoLevel``, e.g. ``GeoLevel.COUNTRY``.
 
     Returns:
-        The cube, the ``updated`` text as printed and when the answer was retrieved.
+        Core's ``Answer``: the ``PrintedCube`` as ``payload``, and ``retrieved_at``,
+        timezone-aware UTC, on a cache hit the time the entry was stored, else the time
+        the answer arrived.
 
     Raises:
         NotFoundError: No such dataset (HTTP 404).
-        InvalidRequestError: Upstream refused the query (HTTP 400), will answer it
-            asynchronously, or judged it too large (HTTP 413).
+        InvalidRequestError: Upstream refused the query (HTTP 400) or will answer it
+            asynchronously.
+        QueryTooLarge: Upstream judged the query too large (HTTP 413).
     """
     params: dict[str, str | int | list[str]] = {"format": "JSON"}
     if lang is not None:
@@ -110,8 +119,5 @@ async def get_data(
     answer = await client.get_answer(url_for(dataset_code, path), params=params)
     updated = answer.payload.get("updated") if isinstance(answer.payload, dict) else None
     cube = parse(Cube, answer.payload, source=SOURCE, endpoint=ENDPOINT)
-    return DataAnswer(
-        cube=cube,
-        updated=updated if isinstance(updated, str) else None,
-        retrieved_at=answer.retrieved_at,
-    )
+    printed = PrintedCube(cube=cube, updated=updated if isinstance(updated, str) else None)
+    return Answer(printed, answer.retrieved_at)
