@@ -12,8 +12,10 @@ tests and the scripts.
 """
 
 import ast
+import io
 import json
 import re
+import tokenize
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -37,11 +39,13 @@ DATED = re.compile(
     r"\b(?:recorded|probed|seen|observed|answered|measured|read)\b[^.;]*?"
     r"\b20\d\d-\d\d-\d\d\b"
     r"|\b20\d\d-\d\d-\d\d\b[^.;]*?\b(?:recorded|probed)\b"
-    r"|\bnever seen\b|\bprobed\b"
+    r"|\bnever seen\b|\bprobed\b",
+    re.IGNORECASE,
 )
 """How a text tells a probe of Eurostat: a date beside what was recorded, probed, seen,
-answered, measured or read, a probe without one, or what was never seen. A date that an
-example prints, a release time of a recorded answer, and a decision's date tell none."""
+answered, measured or read, a probe without one, or what was never seen, in any case, so
+that a sentence that opens "Recorded on" counts. A date that an example prints, a release
+time of a recorded answer, and a decision's date tell none."""
 FENCE = re.compile(r"^```.*?^```", re.MULTILINE | re.DOTALL)
 
 
@@ -114,20 +118,31 @@ def dated(path: Path) -> list[str]:
 
 
 def docstrings(path: Path) -> list[str]:
-    """The docstrings of a module of the tests or the scripts: the module's, each class's and
-    function's, and each string that stands as a statement, a constant's docstring."""
-    tree = ast.parse(path.read_text(encoding="utf-8"))
-    return [
+    """The docstrings and the comments of a module of the tests or the scripts: the module's,
+    each class's and function's docstring, each string that stands as a statement, a
+    constant's docstring, and each comment, the comments of one block joined."""
+    source = path.read_text(encoding="utf-8")
+    strings = [
         node.value.value
-        for node in ast.walk(tree)
+        for node in ast.walk(ast.parse(source))
         if isinstance(node, ast.Expr)
         and isinstance(node.value, ast.Constant)
         and isinstance(node.value.value, str)
     ]
+    blocks: list[list[str]] = []
+    last = -2
+    for token in tokenize.generate_tokens(io.StringIO(source).readline):
+        if token.type == tokenize.COMMENT:
+            line = token.start[0]
+            if line != last + 1 or not blocks:
+                blocks.append([])
+            blocks[-1].append(token.string.lstrip("#"))
+            last = line
+    return strings + [" ".join(block) for block in blocks]
 
 
 def dated_docstrings(path: Path) -> list[str]:
-    """What tells a probe in the docstrings of ``path``."""
+    """What tells a probe in the docstrings and the comments of ``path``."""
     return [
         f"{path.relative_to(ROOT)}: {match.group(0)}"
         for text in docstrings(path)
@@ -145,8 +160,8 @@ def test_no_dated_note_stands_outside_the_notes() -> None:
 
 def test_no_dated_note_stands_in_the_docstrings_of_the_tests_and_the_scripts() -> None:
     """A test or a script says what it replays or sends and cites the note for what Eurostat
-    answered: no docstring of ``tests/`` or ``scripts/`` tells a probe. This module spells
-    the pattern it looks for and is left out."""
+    answered: no docstring or comment of ``tests/`` or ``scripts/`` tells a probe. This
+    module spells the pattern it looks for and is left out."""
     paths = [
         *sorted((ROOT / "tests").glob("*.py")),
         *sorted((ROOT / "scripts").glob("*.py")),
@@ -162,6 +177,7 @@ def test_a_dated_note_is_found() -> None:
     would repeat."""
     sentence = "the Comext base answers it with HTTP 404 (probed 2026-10-28)"
     assert DATED.search(sentence)
+    assert DATED.search("Recorded on the Comext base on 2026-10-28: an empty cube")
     assert not DATED.search("milk.meta.published_at  # 2026-10-05 23:00+02:00")
 
 
