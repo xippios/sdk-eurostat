@@ -67,7 +67,7 @@ fetch.
 | `strucpro.json` | `sdmx/2.1/codelist/ESTAT/STRUCPRO` | 2026-11-27T07:26:53Z |
 | `milkitem.json` | `sdmx/2.1/codelist/ESTAT/MILKITEM` | 2026-11-27T07:26:55Z |
 | `dairyprod.json` | `sdmx/2.1/codelist/ESTAT/DAIRYPROD` | 2026-11-27T07:26:57Z |
-| `statinfo.json` | `sdmx/2.1/codelist/ESTAT/STATINFO` | 2026-11-27T07:26:59Z |
+| `statinfo.json` | `sdmx/2.1/codelist/ESTAT/STATINFO` | 2026-11-27T07:27:23Z |
 | `leg_form.json` | `sdmx/2.1/codelist/ESTAT/LEG_FORM` | 2026-11-27T07:27:04Z |
 | `farmtype.json` | `sdmx/2.1/codelist/ESTAT/FARMTYPE` | 2026-11-27T07:27:06Z |
 | `so_eur.json` | `sdmx/2.1/codelist/ESTAT/SO_EUR` | 2026-11-27T07:27:08Z |

@@ -1,7 +1,7 @@
 {
   "param": "statinfo",
   "endpoint": "sdmx/2.1/codelist/ESTAT/STATINFO",
-  "fetched": "2026-11-27T07:26:59Z",
+  "fetched": "2026-11-27T07:27:23Z",
   "records": [
     {
       "code": "TOTAL",
