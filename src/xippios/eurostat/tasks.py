@@ -586,7 +586,7 @@ async def list_codes_async(codelist: str, *, search: str | None = None) -> Resul
         for info in params.list_info().values()
         if info.kind == "codelist" and info.id is not None and info.id == name.upper()
     )
-    return _codelist_answer(info, search, {"codelist": info.id, "search": search})
+    return _codelist_answer(info, search, {"codelist": codelist, "search": search})
 
 
 list_codes = sync(list_codes_async)
