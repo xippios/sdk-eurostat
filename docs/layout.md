@@ -52,7 +52,8 @@ tests/
   test_models.py   Cube against the recorded answers, and Lang, GeoLevel and LeafType
                    against the snapshot's pages
   test_observed.py docs/upstream/OBSERVED.md as committed: each note's probe and sample,
-                   and no dated note of what Eurostat answered outside it
+                   no dated note of what Eurostat answered outside it, and each citation
+                   of a note by its heading
   test_parse.py    parse_sdmx_csv on the samples under tests/fixtures/files/sdmx-csv/
   test_readme.py   README.md's scope against the snapshot's WADL files and guide pages:
                    each documented operation once, each parameter and each form of format
