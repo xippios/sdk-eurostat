@@ -6,9 +6,9 @@ a file of the snapshot or a packaged list, or its request where the probe kept n
 Core's family check holds the file's row in ``FETCHED.md``, the label and the date that open
 each note's last paragraph and the files its code spans cite (sdk-core ADR-0044, decision 1).
 What stays here is the package's own (decision 3): each probe's operation and sample, the day
-of each recording it cites, and that no dated note of what Eurostat answered stands outside
+of each recording it cites, that no dated note of what Eurostat answered stands outside
 the file, in ``CLAUDE.md``, the README, a module of the package or the docstrings of the
-tests and the scripts.
+tests and the scripts, and that the first three cite each note by its heading.
 """
 
 import ast
@@ -47,6 +47,12 @@ answered, measured or read, a probe without one, or what was never seen, in any 
 that a sentence that opens "Recorded on" counts. A date that an example prints, a release
 time of a recorded answer, and a decision's date tell none."""
 FENCE = re.compile(r"^```.*?^```", re.MULTILINE | re.DOTALL)
+CITATION = re.compile(
+    r"`docs/upstream/OBSERVED\.md`+(?:, \"(?P<heading>[^\"]+)\"|(?P<alone>\s*[);]))?"
+)
+"""A citation of the notes by their path in code spans, as ``CLAUDE.md``, the README and a
+module write it: the heading of the note it rests on after a comma, or the path alone where a
+parenthesis or a clause closes on it."""
 
 
 def text() -> str:
@@ -179,6 +185,45 @@ def test_a_dated_note_is_found() -> None:
     assert DATED.search(sentence)
     assert DATED.search("Recorded on the Comext base on 2026-10-28: an empty cube")
     assert not DATED.search("milk.meta.published_at  # 2026-10-05 23:00+02:00")
+
+
+def citations(path: Path) -> list[re.Match[str]]:
+    """Each citation of the notes in ``path``, its lines joined by single spaces."""
+    return list(CITATION.finditer(" ".join(path.read_text(encoding="utf-8").split())))
+
+
+def test_every_citation_of_the_notes_names_a_heading_of_the_file() -> None:
+    """``CLAUDE.md``, the README and the package's modules cite a note by its heading, as the
+    file's opening paragraph has it: no citation names the path alone, and each heading named
+    stands in the file as written (https://github.com/xippios/sdk-eurostat/issues/97)."""
+    headings = notes().keys()
+    paths = [ROOT / "CLAUDE.md", ROOT / "README.md", *sorted(PACKAGE.rglob("*.py"))]
+    found = [(path.relative_to(ROOT), match) for path in paths for match in citations(path)]
+    assert [f"{path}: {match.group(0)}" for path, match in found if match["alone"]] == []
+    assert [
+        f"{path}: {match['heading']}"
+        for path, match in found
+        if match["heading"] is not None and match["heading"] not in headings
+    ] == []
+
+
+def test_a_citation_of_the_path_alone_is_found() -> None:
+    """The check finds the path alone where a parenthesis or a clause closes on it, and takes
+    the heading after the path as the note cited."""
+    for alone in (
+        "answers with HTTP 404 (``docs/upstream/OBSERVED.md``).",
+        "(``tests/fixtures/data_query/``; ``docs/upstream/OBSERVED.md``).",
+        "is answered (`docs/upstream/OBSERVED.md`); and",
+    ):
+        match = CITATION.search(alone)
+        assert match is not None
+        assert match["alone"], alone
+    cited = CITATION.search(
+        '(``docs/upstream/OBSERVED.md``, "A leaf may print its number of values empty")'
+    )
+    assert cited is not None
+    assert not cited["alone"]
+    assert cited["heading"] == "A leaf may print its number of values empty"
 
 
 def test_the_rules_point_to_the_notes() -> None:
