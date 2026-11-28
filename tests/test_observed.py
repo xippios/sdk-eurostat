@@ -18,6 +18,8 @@ import re
 import tokenize
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "src" / "xippios" / "eurostat"
 UPSTREAM = ROOT / "docs" / "upstream"
@@ -48,11 +50,15 @@ that a sentence that opens "Recorded on" counts. A date that an example prints, 
 time of a recorded answer, and a decision's date tell none."""
 FENCE = re.compile(r"^```.*?^```", re.MULTILINE | re.DOTALL)
 CITATION = re.compile(
-    r"`docs/upstream/OBSERVED\.md`+(?:, \"(?P<heading>[^\"]+)\"|(?P<alone>\s*[);]))?"
+    r"`docs/upstream/OBSERVED\.md`+(?P<headings>, \"[^\"]+\"(?:(?:,|,? and) \"[^\"]+\")*)?"
 )
-"""A citation of the notes by their path in code spans, as ``CLAUDE.md``, the README and a
-module write it: the heading of the note it rests on after a comma, or the path alone where a
-parenthesis or a clause closes on it."""
+"""The path of the notes in code spans, as ``CLAUDE.md``, the README and a module write it,
+with the headings of the notes it cites after a comma, one or several, ``"<heading>"``,
+``"<heading>" and "<heading>"``; a path that no heading follows cites the file alone, however
+its sentence goes on."""
+DESCRIPTION = "What Eurostat does that its documentation does not state stands in"
+"""How ``CLAUDE.md`` opens its description of the notes, the one place that names their path
+and cites no note: it says what the file holds."""
 
 
 def text() -> str:
@@ -187,9 +193,20 @@ def test_a_dated_note_is_found() -> None:
     assert not DATED.search("milk.meta.published_at  # 2026-10-05 23:00+02:00")
 
 
+def cited(match: re.Match[str]) -> list[str]:
+    """The headings that a citation names, none where it cites the path alone."""
+    return re.findall(r"\"([^\"]+)\"", match["headings"] or "")
+
+
 def citations(path: Path) -> list[re.Match[str]]:
-    """Each citation of the notes in ``path``, its lines joined by single spaces."""
-    return list(CITATION.finditer(" ".join(path.read_text(encoding="utf-8").split())))
+    """Each citation of the notes in ``path``, its lines joined by single spaces, but the
+    description of the notes in ``CLAUDE.md``."""
+    body = " ".join(path.read_text(encoding="utf-8").split())
+    return [
+        match
+        for match in CITATION.finditer(body)
+        if not (path.name == "CLAUDE.md" and body[: match.start()].rstrip().endswith(DESCRIPTION))
+    ]
 
 
 def test_every_citation_of_the_notes_names_a_heading_of_the_file() -> None:
@@ -199,31 +216,61 @@ def test_every_citation_of_the_notes_names_a_heading_of_the_file() -> None:
     headings = notes().keys()
     paths = [ROOT / "CLAUDE.md", ROOT / "README.md", *sorted(PACKAGE.rglob("*.py"))]
     found = [(path.relative_to(ROOT), match) for path in paths for match in citations(path)]
-    assert [f"{path}: {match.group(0)}" for path, match in found if match["alone"]] == []
+    assert [f"{path}: {match.group(0)}" for path, match in found if not cited(match)] == []
     assert [
-        f"{path}: {match['heading']}"
+        f"{path}: {heading}"
         for path, match in found
-        if match["heading"] is not None and match["heading"] not in headings
+        for heading in cited(match)
+        if heading not in headings
     ] == []
 
 
-def test_a_citation_of_the_path_alone_is_found() -> None:
-    """The check finds the path alone where a parenthesis or a clause closes on it, and takes
-    the heading after the path as the note cited."""
-    for alone in (
-        "answers with HTTP 404 (``docs/upstream/OBSERVED.md``).",
+@pytest.mark.parametrize(
+    "alone",
+    [
+        "answers with HTTP 404 (``docs/upstream/OBSERVED.md``)",
         "(``tests/fixtures/data_query/``; ``docs/upstream/OBSERVED.md``).",
         "is answered (`docs/upstream/OBSERVED.md`); and",
-    ):
-        match = CITATION.search(alone)
-        assert match is not None
-        assert match["alone"], alone
-    cited = CITATION.search(
+        "the snapshot does not state it, as ``docs/upstream/OBSERVED.md``.",
+        "(``docs/upstream/OBSERVED.md``, each note with its probe)",
+        "as the notes of ``docs/upstream/OBSERVED.md`` give each with its probe:",
+    ],
+    ids=["parenthesis", "after a semicolon", "before a semicolon", "full stop", "words", "prose"],
+)
+def test_a_citation_of_the_path_alone_is_found(alone: str) -> None:
+    """The check finds the path that no heading follows, however its sentence goes on."""
+    match = CITATION.search(alone)
+    assert match is not None
+    assert cited(match) == []
+
+
+def test_the_headings_after_the_path_are_the_notes_cited() -> None:
+    """One heading after the path, or several joined by commas and ``and``."""
+    one = CITATION.search(
         '(``docs/upstream/OBSERVED.md``, "A leaf may print its number of values empty")'
     )
-    assert cited is not None
-    assert not cited["alone"]
-    assert cited["heading"] == "A leaf may print its number of values empty"
+    assert one is not None
+    assert cited(one) == ["A leaf may print its number of values empty"]
+    three = CITATION.search(
+        '(``docs/upstream/OBSERVED.md``, "The refusal of `geo` with `geoLevel` comes as an'
+        ' array", "The asynchronous answer comes as an `error` array" and "The Comext base'
+        ' reads a filter on a dimension the dataset lacks as none"):'
+    )
+    assert three is not None
+    assert cited(three) == [
+        "The refusal of `geo` with `geoLevel` comes as an array",
+        "The asynchronous answer comes as an `error` array",
+        "The Comext base reads a filter on a dimension the dataset lacks as none",
+    ]
+
+
+def test_the_description_of_the_notes_in_claude_md_cites_none() -> None:
+    """``CLAUDE.md``'s description of the notes names the file and no note, and the check
+    leaves it out, that alone."""
+    path = ROOT / "CLAUDE.md"
+    body = " ".join(path.read_text(encoding="utf-8").split())
+    assert f"{DESCRIPTION} `docs/upstream/OBSERVED.md` once" in body
+    assert len(list(CITATION.finditer(body))) == len(citations(path)) + 1
 
 
 def test_the_rules_point_to_the_notes() -> None:
