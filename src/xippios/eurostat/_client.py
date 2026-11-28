@@ -12,11 +12,12 @@ are those of a client with one base.
 
 ``classify`` maps the Statistics API's documented refusals, and the SDMX 2.1 data API's
 answers that are no SDMX-CSV, onto the family's taxonomy once (sdk-core ADR-0031); ``errors``
-reads them. Both bases answer in the same shapes, though not always to the same request,
-as the notes of ``docs/upstream/OBSERVED.md`` give each with its probe: a filter on a
-dimension the dataset lacks is a semantic error on the main base and an extraction too
-large on the Comext base. Answers of HTTP 200 are cached in core's ``MemoryCache`` with its default
-lifetime of five minutes for every path, up to core's ``cache_max_bytes`` of 8 MiB a body
+reads them. Both bases answer in the same shapes, though not always to the same request: a
+filter on a dimension the dataset lacks is a semantic error on the main base and an
+extraction too large on the Comext base (``docs/upstream/OBSERVED.md``, "The Comext base
+reads a filter on a dimension the dataset lacks as none"). Answers of HTTP 200 are cached in
+core's ``MemoryCache`` with its default lifetime of five minutes for every path, up to
+core's ``cache_max_bytes`` of 8 MiB a body
 and 64 MiB of bodies in all, an expired answer dropped (sdk-core ADR-0040 decision 3), so a
 larger cube is returned and fetched again the next time; a file streamed to disk with
 ``download`` never touches the cache.

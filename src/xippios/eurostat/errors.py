@@ -6,8 +6,9 @@ module only reads them. The shapes, from the user guide
 returned in case of invalid queries", "The geoLevel parameter" and "Asynchronous response
 in case of big extractions"; ``asynchronous-api.md`` beside it for the SOAP fault) and
 from the answers recorded under ``tests/fixtures/get_data/`` on both bases, where Eurostat
-answers otherwise than the guide documents (``docs/upstream/OBSERVED.md``, each note with
-its probe):
+answers otherwise than the guide documents (``docs/upstream/OBSERVED.md``, "The refusal of
+`geo` with `geoLevel` comes as an array", "The asynchronous answer comes as an `error`
+array" and "The Comext base reads a filter on a dimension the dataset lacks as none"):
 
 - ``{"error": [{"status": 404, "id": 100, "label": "ERR_NOT_FOUND_4: ..."}]}``, an array
   of faults: recorded for an unknown dataset (HTTP 404, ``unknown_dataset.json``, and
