@@ -6,9 +6,9 @@ a file of the snapshot or a packaged list, or its request where the probe kept n
 Core's family check holds the file's row in ``FETCHED.md``, the label and the date that open
 each note's last paragraph and the files its code spans cite (sdk-core ADR-0044, decision 1).
 What stays here is the package's own (decision 3): each probe's operation and sample, the day
-of each recording it cites, and that no dated note of what Eurostat answered stands outside
+of each recording it cites, that no dated note of what Eurostat answered stands outside
 the file, in ``CLAUDE.md``, the README, a module of the package or the docstrings of the
-tests and the scripts.
+tests and the scripts, and that the first three cite each note by its heading.
 """
 
 import ast
@@ -17,6 +17,8 @@ import json
 import re
 import tokenize
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "src" / "xippios" / "eurostat"
@@ -47,6 +49,16 @@ answered, measured or read, a probe without one, or what was never seen, in any 
 that a sentence that opens "Recorded on" counts. A date that an example prints, a release
 time of a recorded answer, and a decision's date tell none."""
 FENCE = re.compile(r"^```.*?^```", re.MULTILINE | re.DOTALL)
+CITATION = re.compile(
+    r"`docs/upstream/OBSERVED\.md`+(?P<headings>, \"[^\"]+\"(?:(?:,|,? and) \"[^\"]+\")*)?"
+)
+"""The path of the notes in code spans, as ``CLAUDE.md``, the README and a module write it,
+with the headings of the notes it cites after a comma, one or several, ``"<heading>"``,
+``"<heading>" and "<heading>"``; a path that no heading follows cites the file alone, however
+its sentence goes on."""
+DESCRIPTION = "What Eurostat does that its documentation does not state stands in"
+"""How ``CLAUDE.md`` opens its description of the notes, the one place that names their path
+and cites no note: it says what the file holds."""
 
 
 def text() -> str:
@@ -179,6 +191,86 @@ def test_a_dated_note_is_found() -> None:
     assert DATED.search(sentence)
     assert DATED.search("Recorded on the Comext base on 2026-10-28: an empty cube")
     assert not DATED.search("milk.meta.published_at  # 2026-10-05 23:00+02:00")
+
+
+def cited(match: re.Match[str]) -> list[str]:
+    """The headings that a citation names, none where it cites the path alone."""
+    return re.findall(r"\"([^\"]+)\"", match["headings"] or "")
+
+
+def citations(path: Path) -> list[re.Match[str]]:
+    """Each citation of the notes in ``path``, its lines joined by single spaces, but the
+    description of the notes in ``CLAUDE.md``."""
+    body = " ".join(path.read_text(encoding="utf-8").split())
+    return [
+        match
+        for match in CITATION.finditer(body)
+        if not (path.name == "CLAUDE.md" and body[: match.start()].rstrip().endswith(DESCRIPTION))
+    ]
+
+
+def test_every_citation_of_the_notes_names_a_heading_of_the_file() -> None:
+    """``CLAUDE.md``, the README and the package's modules cite a note by its heading, as the
+    file's opening paragraph has it: no citation names the path alone, and each heading named
+    stands in the file as written (https://github.com/xippios/sdk-eurostat/issues/97)."""
+    headings = notes().keys()
+    paths = [ROOT / "CLAUDE.md", ROOT / "README.md", *sorted(PACKAGE.rglob("*.py"))]
+    found = [(path.relative_to(ROOT), match) for path in paths for match in citations(path)]
+    assert [f"{path}: {match.group(0)}" for path, match in found if not cited(match)] == []
+    assert [
+        f"{path}: {heading}"
+        for path, match in found
+        for heading in cited(match)
+        if heading not in headings
+    ] == []
+
+
+@pytest.mark.parametrize(
+    "alone",
+    [
+        "answers with HTTP 404 (``docs/upstream/OBSERVED.md``)",
+        "(``tests/fixtures/data_query/``; ``docs/upstream/OBSERVED.md``).",
+        "is answered (`docs/upstream/OBSERVED.md`); and",
+        "the snapshot does not state it, as ``docs/upstream/OBSERVED.md``.",
+        "(``docs/upstream/OBSERVED.md``, each note with its probe)",
+        "as the notes of ``docs/upstream/OBSERVED.md`` give each with its probe:",
+    ],
+    ids=["parenthesis", "after a semicolon", "before a semicolon", "full stop", "words", "prose"],
+)
+def test_a_citation_of_the_path_alone_is_found(alone: str) -> None:
+    """The check finds the path that no heading follows, however its sentence goes on."""
+    match = CITATION.search(alone)
+    assert match is not None
+    assert cited(match) == []
+
+
+def test_the_headings_after_the_path_are_the_notes_cited() -> None:
+    """One heading after the path, or several joined by commas and ``and``."""
+    one = CITATION.search(
+        '(``docs/upstream/OBSERVED.md``, "A leaf may print its number of values empty")'
+    )
+    assert one is not None
+    assert cited(one) == ["A leaf may print its number of values empty"]
+    three = CITATION.search(
+        '(``docs/upstream/OBSERVED.md``, "The refusal of `geo` with `geoLevel` comes as an'
+        ' array", "The asynchronous answer comes as an `error` array" and "The Comext base'
+        ' reads a filter on a dimension the dataset lacks as none"):'
+    )
+    assert three is not None
+    assert cited(three) == [
+        "The refusal of `geo` with `geoLevel` comes as an array",
+        "The asynchronous answer comes as an `error` array",
+        "The Comext base reads a filter on a dimension the dataset lacks as none",
+    ]
+
+
+def test_the_description_of_the_notes_in_claude_md_cites_none() -> None:
+    """``CLAUDE.md``'s description of the notes names the file and no note, and the check
+    leaves it out, that alone."""
+    path = ROOT / "CLAUDE.md"
+    body = " ".join(path.read_text(encoding="utf-8").split())
+    assert f"{DESCRIPTION} `docs/upstream/OBSERVED.md` once" in body
+    assert len(list(CITATION.finditer(body))) == len(citations(path)) + 1
 
 
 def test_the_rules_point_to_the_notes() -> None:

@@ -343,7 +343,8 @@ class Dataset(UpstreamModel):
         data_end: The most recent period as printed, e.g. ``"2026-Q2"``; ``None`` where
             the TOC prints none. Upstream's ``dataEnd``.
         values: The number of values the dataset holds, e.g. ``314789``; ``None`` where
-            the TOC prints none (``docs/upstream/OBSERVED.md``). Upstream's ``values``.
+            the TOC prints none (``docs/upstream/OBSERVED.md``, "A leaf may print its
+            number of values empty"). Upstream's ``values``.
     """
 
     code: str

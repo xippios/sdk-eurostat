@@ -22,10 +22,9 @@ always, since the package reads no SDMX-ML (decision D1 of
 https://github.com/xippios/sdk-eurostat/pull/6), and leaves the version out, for the
 latest: the guide's other sentence, that a query without a version returns "all existing
 versions", is not what a JSON-stat answer does, which carries one version
-(``docs/upstream/OBSERVED.md``). The answer is one JSON-stat dimension
-(``models.Codelist``). Only
-``scripts/refresh_reference.py`` calls this operation; ``list_codes`` answers from the
-packaged codelists.
+(``docs/upstream/OBSERVED.md``, "A codelist in JSON-stat carries one version"). The answer
+is one JSON-stat dimension (``models.Codelist``). Only ``scripts/refresh_reference.py``
+calls this operation; ``list_codes`` answers from the packaged codelists.
 
 ``GET sdmx/2.1/data/{flowRef}/{key}``: the resources ``data/{flowRef}`` and
 ``data/{flowRef}/{key}``, method ``GET`` with the id ``dataQuery`` on both, whose query
@@ -39,7 +38,8 @@ takes ``firstNObservations``, ``lastNObservations``, ``detail``, ``format``, ``l
   separated list of dimension filtered values": a dimension left empty is not filtered,
   and "Explicit listing of values for a dimension is done using the plus '+' character"
   (``A.CP_MEUR.B1GQ.BE+LU``); without a key, ``data/{flowRef}``, no dimension is
-  filtered, and the whole dataset is answered (``docs/upstream/OBSERVED.md``);
+  filtered, and the whole dataset is answered (``docs/upstream/OBSERVED.md``, "A data
+  query without a key answered a whole dataset at once");
 - ``startPeriod`` and ``endPeriod`` filter on time (the guide's; the WADL lists
   neither), and ``lastNObservations`` is "The maximum number of observations to be
   returned for each of the matching series, counting back from the most recent
@@ -49,7 +49,8 @@ takes ``firstNObservations``, ``lastNObservations``, ``detail``, ``format``, ``l
 - ``compressed`` gives "responses in .gz compressed format": a gzip file under the
   plain answer's ``Content-Type``, ``application/vnd.sdmx.data+csv;version=1.0.0``,
   that decompresses to the plain answer byte for byte (``tests/fixtures/data_query/``;
-  ``docs/upstream/OBSERVED.md``).
+  ``docs/upstream/OBSERVED.md``, "A data query answers SDMX-CSV under one media type,
+  compressed or not").
 
 The answer is a file, streamed to disk with core's ``download`` and never held in
 memory (sdk-core ADR-0040); ``parse.sdmx_csv`` reads it. A large request is answered

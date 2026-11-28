@@ -15,6 +15,8 @@ import xml.etree.ElementTree as ElementTree
 from collections import Counter
 from pathlib import Path
 
+import pytest
+
 from xippios.eurostat import params, tasks
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +35,10 @@ SERVED = {
 }
 """Each operation the package serves, by its WADL file and id, and the task that serves it."""
 ISSUE = re.compile(r"https://github\.com/xippios/sdk-eurostat/issues/\d+")
+TAKES = re.compile(
+    r"`(?P<task>\w+)` takes (?:the [^`]*?'s )?(?P<names>`\w+`(?:(?:, |,? and )`\w+`)*)"
+)
+"""The scope's word that a task takes parameters, the task and the list of their names."""
 
 
 def operations() -> dict[tuple[str, str], set[str]]:
@@ -88,9 +94,21 @@ def sentences() -> list[str]:
     return re.split(r"(?<=\.) ", scope())
 
 
+def said_taken(sentence: str, task: str) -> set[str]:
+    """The parameters that ``sentence`` says ``task`` takes, as in "`download_dataset` takes
+    the data query's `flowRef`, `key` ... and `lastNObservations`"."""
+    return {
+        name
+        for match in TAKES.finditer(sentence)
+        if match["task"] == task
+        for name in re.findall(r"`(\w+)`", match["names"])
+    }
+
+
 def unnamed(taken: dict[tuple[str, str], set[str]]) -> list[str]:
     """Each documented parameter of a served operation that its task does not take, in
-    ``taken``, by its snake_case name and no sentence of the scope names beside the task."""
+    ``taken``, by its snake_case name, and that no sentence of the scope places beside the
+    task as one it does not take: a sentence that says the task takes it excuses none."""
     found = operations()
     return [
         f"{operation[1]}: {name}"
@@ -98,7 +116,9 @@ def unnamed(taken: dict[tuple[str, str], set[str]]) -> list[str]:
         for name in sorted(found[operation])
         if snake(name) not in arguments
         and not any(
-            f"`{name}`" in sentence and f"`{SERVED[operation]}`" in sentence
+            f"`{name}`" in sentence
+            and f"`{SERVED[operation]}`" in sentence
+            and name not in said_taken(sentence, SERVED[operation])
             for sentence in sentences()
         )
     ]
@@ -163,6 +183,21 @@ def test_a_parameter_that_no_task_takes_is_held_to_the_scope_s_word() -> None:
     taken = arguments()
     taken[("statistics-rest.wadl", "getData")] -= {"dataset_code"}
     assert unnamed(taken) == ["getData: datasetCode"]
+
+
+@pytest.mark.parametrize(
+    ("argument", "parameter"),
+    [("flow_ref", "flowRef"), ("key", "key"), ("last_n_observations", "lastNObservations")],
+)
+def test_a_parameter_the_scope_says_a_task_takes_is_held_to_its_arguments(
+    argument: str, parameter: str
+) -> None:
+    """Were ``argument`` no argument of ``download_dataset``, the scope's sentence that the
+    task takes the data query's ``parameter`` would be false, and it excuses none: the check
+    finds it (https://github.com/xippios/sdk-eurostat/issues/98)."""
+    taken = arguments()
+    taken[("sdmx-rest.wadl", "dataQuery")] -= {argument}
+    assert unnamed(taken) == [f"dataQuery: {parameter}"]
 
 
 def test_each_documented_form_is_placed_beside_its_task() -> None:

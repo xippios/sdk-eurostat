@@ -12,11 +12,12 @@ are those of a client with one base.
 
 ``classify`` maps the Statistics API's documented refusals, and the SDMX 2.1 data API's
 answers that are no SDMX-CSV, onto the family's taxonomy once (sdk-core ADR-0031); ``errors``
-reads them. Both bases answer in the same shapes, though not always to the same request,
-as the notes of ``docs/upstream/OBSERVED.md`` give each with its probe: a filter on a
-dimension the dataset lacks is a semantic error on the main base and an extraction too
-large on the Comext base. Answers of HTTP 200 are cached in core's ``MemoryCache`` with its default
-lifetime of five minutes for every path, up to core's ``cache_max_bytes`` of 8 MiB a body
+reads them. Both bases answer in the same shapes, though not always to the same request: a
+filter on a dimension the dataset lacks is a semantic error on the main base and an
+extraction too large on the Comext base (``docs/upstream/OBSERVED.md``, "The Comext base
+reads a filter on a dimension the dataset lacks as none"). Answers of HTTP 200 are cached in
+core's ``MemoryCache`` with its default lifetime of five minutes for every path, up to
+core's ``cache_max_bytes`` of 8 MiB a body
 and 64 MiB of bodies in all, an expired answer dropped (sdk-core ADR-0040 decision 3), so a
 larger cube is returned and fetched again the next time; a file streamed to disk with
 ``download`` never touches the cache.
@@ -58,7 +59,8 @@ COMEXT_BASE_URL = "https://ec.europa.eu/eurostat/api/comext/dissemination"
 <api_base_uri> is: https://ec.europa.eu/eurostat/api/comext/dissemination"
 (``prefixed-datasets.md``). It serves the main base's services, the Statistics API and
 the SDMX 2.1 API among them, at the same paths; not ``catalogue/toc/xml``, which it
-answers with HTTP 404 (``docs/upstream/OBSERVED.md``)."""
+answers with HTTP 404 (``docs/upstream/OBSERVED.md``, "The Comext base answers the table
+of contents with HTTP 404")."""
 COMEXT_PREFIX = "DS-"
 """How the code of a Comext or Prodcom dataset begins, as upstream writes it: "Comext and
 Prodcom datasets (DS- prefixed dataset code, i.e DS-057555) are separated"
@@ -70,7 +72,8 @@ SDMX_DATA_PATHS = tuple(
 request path begins."""
 SDMX_CSV = "application/vnd.sdmx.data+csv"
 """The media type of an SDMX-CSV answer, plain or ``compressed=true``, with
-``version=1.0.0`` as its parameter (``docs/upstream/OBSERVED.md``)."""
+``version=1.0.0`` as its parameter (``docs/upstream/OBSERVED.md``, "A data query answers
+SDMX-CSV under one media type, compressed or not")."""
 ENV_VARS: tuple[EnvVar, ...] = ()
 """The variables the package reads, for a host (conventions §7; sdk-core ADR-0026, amendment
 2026-11-18, point c): none, since the API is open. An ``EnvVar`` names a variable and reads

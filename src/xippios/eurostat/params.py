@@ -111,7 +111,8 @@ TRADE_PRODUCTS = "CXT_NC"
 CN8) and DS-059341 (International trade of EU and non-EU countries since 2002 by
 HS2-4-6): their ``product`` dimension's codelist, the Combined Nomenclature's eight-digit
 codes with the HS chapters, headings and subheadings above them (the data structures
-DS-045409 6.6 and DS-059341 3.7; ``docs/upstream/OBSERVED.md``)."""
+DS-045409 6.6 and DS-059341 3.7; ``docs/upstream/OBSERVED.md``, "The Comext base's datasets
+take these codelists")."""
 
 TRADE_COUNTRIES = "CXT_FREE_ISO"
 """The reporters and partners of Comext's trade datasets DS-045409 and DS-059341: the

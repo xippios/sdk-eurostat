@@ -6,8 +6,9 @@ module only reads them. The shapes, from the user guide
 returned in case of invalid queries", "The geoLevel parameter" and "Asynchronous response
 in case of big extractions"; ``asynchronous-api.md`` beside it for the SOAP fault) and
 from the answers recorded under ``tests/fixtures/get_data/`` on both bases, where Eurostat
-answers otherwise than the guide documents (``docs/upstream/OBSERVED.md``, each note with
-its probe):
+answers otherwise than the guide documents (``docs/upstream/OBSERVED.md``, "The refusal of
+`geo` with `geoLevel` comes as an array", "The asynchronous answer comes as an `error`
+array" and "The Comext base reads a filter on a dimension the dataset lacks as none"):
 
 - ``{"error": [{"status": 404, "id": 100, "label": "ERR_NOT_FOUND_4: ..."}]}``, an array
   of faults: recorded for an unknown dataset (HTTP 404, ``unknown_dataset.json``, and
@@ -166,8 +167,9 @@ def asynchronous_fault(payload: dict[str, Any]) -> Fault | None:
     The ``warning`` member, as the user guide documents the answer, when its status is 413
     or its label starts ``ASYNCHRONOUS_LABEL``; else the first fault of the ``error``
     member whose label starts so, the shape Eurostat answers in (an ``error`` array at
-    HTTP 413, id 413; ``docs/upstream/OBSERVED.md``). The label, not the id or the status,
-    tells it from ``EXTRACTION_TOO_BIG``, which shares them.
+    HTTP 413, id 413; ``docs/upstream/OBSERVED.md``, "The asynchronous answer comes as an
+    `error` array"). The label, not the id or the status, tells it from
+    ``EXTRACTION_TOO_BIG``, which shares them.
     """
     warning = warning_fault(payload)
     if warning is not None and (
