@@ -58,7 +58,8 @@ COMEXT_BASE_URL = "https://ec.europa.eu/eurostat/api/comext/dissemination"
 <api_base_uri> is: https://ec.europa.eu/eurostat/api/comext/dissemination"
 (``prefixed-datasets.md``). It serves the main base's services, the Statistics API and
 the SDMX 2.1 API among them, at the same paths; not ``catalogue/toc/xml``, which it
-answers with HTTP 404 (``docs/upstream/OBSERVED.md``)."""
+answers with HTTP 404 (``docs/upstream/OBSERVED.md``, "The Comext base answers the table
+of contents with HTTP 404")."""
 COMEXT_PREFIX = "DS-"
 """How the code of a Comext or Prodcom dataset begins, as upstream writes it: "Comext and
 Prodcom datasets (DS- prefixed dataset code, i.e DS-057555) are separated"
@@ -70,7 +71,8 @@ SDMX_DATA_PATHS = tuple(
 request path begins."""
 SDMX_CSV = "application/vnd.sdmx.data+csv"
 """The media type of an SDMX-CSV answer, plain or ``compressed=true``, with
-``version=1.0.0`` as its parameter (``docs/upstream/OBSERVED.md``)."""
+``version=1.0.0`` as its parameter (``docs/upstream/OBSERVED.md``, "A data query answers
+SDMX-CSV under one media type, compressed or not")."""
 ENV_VARS: tuple[EnvVar, ...] = ()
 """The variables the package reads, for a host (conventions §7; sdk-core ADR-0026, amendment
 2026-11-18, point c): none, since the API is open. An ``EnvVar`` names a variable and reads

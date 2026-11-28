@@ -166,8 +166,9 @@ def asynchronous_fault(payload: dict[str, Any]) -> Fault | None:
     The ``warning`` member, as the user guide documents the answer, when its status is 413
     or its label starts ``ASYNCHRONOUS_LABEL``; else the first fault of the ``error``
     member whose label starts so, the shape Eurostat answers in (an ``error`` array at
-    HTTP 413, id 413; ``docs/upstream/OBSERVED.md``). The label, not the id or the status,
-    tells it from ``EXTRACTION_TOO_BIG``, which shares them.
+    HTTP 413, id 413; ``docs/upstream/OBSERVED.md``, "The asynchronous answer comes as an
+    `error` array"). The label, not the id or the status, tells it from
+    ``EXTRACTION_TOO_BIG``, which shares them.
     """
     warning = warning_fault(payload)
     if warning is not None and (

@@ -234,7 +234,8 @@ DS-059341. `list_codes` lists eighteen packaged codelists, twelve of the main ba
 six of the Comext base, CXT_PRODCOM2_SOLD and CXT_NC among them, the products of the
 Prodcom and trade datasets. `list_datasets` lists the main base's table of contents only,
 and does not list the Comext or Prodcom datasets: the Comext base answers
-`catalogue/toc/xml` with HTTP 404, though its WADL lists it (`docs/upstream/OBSERVED.md`).
+`catalogue/toc/xml` with HTTP 404, though its WADL lists it (`docs/upstream/OBSERVED.md`,
+"The Comext base answers the table of contents with HTTP 404").
 
 ## Scope
 
