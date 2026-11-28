@@ -850,6 +850,8 @@ def test_list_datasets_returns_a_new_list_each_call() -> None:
 
 @pytest.mark.parametrize("name", ["GEO", "geo", "Geo"])
 def test_list_codes_geo(name: str) -> None:
+    """The codelist's name is matched without case and recorded in ``meta.request`` as the
+    caller gave it (sdk-core ``docs/conventions.md`` §5)."""
     result = list_codes(name)
     raw = packaged_file("geo")
     info = index_record("geo")
@@ -861,7 +863,7 @@ def test_list_codes_geo(name: str) -> None:
     assert result.meta.published_at == datetime.fromisoformat(info["LAST_UPDATED"])
     assert result.meta.published_at.utcoffset() is not None
     assert result.meta.published_at_naive is False
-    assert result.meta.request == {"codelist": "GEO"}
+    assert result.meta.request == {"codelist": name}
     assert result.meta.total is None
 
 
@@ -881,7 +883,7 @@ def test_list_codes_serves_every_packaged_codelist(codelist: str) -> None:
     assert result.meta.published_at == (
         None if last_updated is None else datetime.fromisoformat(last_updated)
     ), "CXT_EU_FLUX carries no LAST_UPDATED"
-    assert result.meta.request == {"codelist": codelist}
+    assert result.meta.request == {"codelist": codelist.lower()}
 
 
 def test_list_codes_serves_the_comext_codelists() -> None:
@@ -897,7 +899,7 @@ def test_list_codes_serves_the_comext_codelists() -> None:
     fertilisers = list_codes("cxt_prodcom2_total", search="Animal or vegetable fertilisers")
     assert [code.code for code in fertilisers.data] == ["20158000"]
     assert fertilisers.meta.request == {
-        "codelist": "CXT_PRODCOM2_TOTAL",
+        "codelist": "cxt_prodcom2_total",
         "search": "Animal or vegetable fertilisers",
     }
     austria = list_codes("cxt_free_iso", search="austria")
@@ -915,7 +917,7 @@ def test_list_codes_search_keeps_code_or_label_ignoring_case() -> None:
     result = list_codes("geo", search="austria")
     assert Code(code="AT", label="Austria") in result.data
     assert all("austria" in (code.label or "").casefold() for code in result.data)
-    assert result.meta.request == {"codelist": "GEO", "search": "austria"}
+    assert result.meta.request == {"codelist": "geo", "search": "austria"}
     units = list_codes("unit", search="ths_t")
     assert "THS_T" in {code.code for code in units.data}
 
@@ -1026,6 +1028,7 @@ async def test_list_codes_tool_cuts_geo_with_its_note() -> None:
         f"continue with offset={shown}"
     )
     assert payload["meta"]["vintage"] == index_record("geo")["version"]
+    assert payload["meta"]["request"] == {"codelist": "geo"}
 
 
 @pytest.mark.anyio
