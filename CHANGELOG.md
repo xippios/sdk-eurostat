@@ -4,6 +4,196 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/) (pre-1.0: breaking changes bump the minor).
 
+## [0.4.0] - 2026-11-28
+
+### Added
+
+- `xippios.eurostat.parse.sdmx_csv` exports `last_update_as_printed(path)`, the first row's
+  `LAST UPDATE` of a downloaded SDMX-CSV file as Eurostat prints it, `"05/10/26 23:00:00"`,
+  the text that `download_dataset` keeps as `meta.vintage`. It answers `None` for a file
+  without a row.
+  (https://github.com/xippios/sdk-eurostat/issues/99)
+- `get_data`'s `meta.names` names each code of a checked filter with its label in the
+  packaged codelist, `{"geo": {"AT": "Austria"}}`, under the key and the code as the caller
+  gave them.
+  (sdk-core ADR-0067, https://github.com/xippios/sdk-eurostat/issues/82)
+- `eurostat_list_datasets` and `eurostat_list_codes` take `offset`, the rows of a cut
+  answer already shown, and answer the rows after them by running the task again on its
+  packaged table, which sends no request. The note of every page but the last names
+  `search` and the `offset` to continue with, so an answer without a note is whole.
+  (https://github.com/xippios/sdk-core/issues/314, https://github.com/xippios/sdk-eurostat/issues/82)
+
+### Changed
+
+- The README and the docstrings of `_client`, `errors`, `models`, `params` and `api.sdmx`
+  cite the note of `docs/upstream/OBSERVED.md` that each fact rests on by its heading, where
+  nine places named the file alone and two the notes as a group.
+  (https://github.com/xippios/sdk-eurostat/issues/97)
+- The text of `get_data`'s `filters` and the README name Eurostat's two country lists: GEO,
+  the codelist of `geo`, writes Greece and the United Kingdom `EL` and `UK`, and
+  CXT_FREE_ISO, the codelist of `reporter` and `partner`, writes them `GR` and `GB`.
+  (https://github.com/xippios/sdk-eurostat/issues/52)
+- The MCP server's instructions say what each tool lists, `eurostat_list_datasets` the
+  datasets' codes and `eurostat_list_codes` the codes of eighteen codelists, and that the
+  cube of `eurostat_get_data` lists the codes of any other dimension, where they promised a
+  list tool for every value.
+  (https://github.com/xippios/sdk-eurostat/issues/82)
+- The packaged reference data are those of 2026-11-27, and `list_codes` no longer lists the
+  codes Eurostat removed or renamed: MILKITEM 4.0 drops `FCA`, `PCA` and `PAT` and the units
+  in the labels of `FAT`, `USM` and `UWM`, and STRUCPRO 11.0 writes `HLD_THS_NR` and
+  `ANI_THS_NR` where 9.0 wrote `HOL` and `ANI`. GEO 29.0 labels `EUR` "Europe*" and lists
+  `AM`, `AM_CAP`, `AZ` and `AZ_CAP` after `AD`, and the other fifteen codelists keep their
+  records and versions. The table of contents that `list_datasets` reads, `creationDate`
+  `20261126T2200`, holds 10,461 leaves, 7 more than on 2026-11-20 (34 added, 27 removed and
+  1,066 changed in place, counted leaf by leaf at each code and folder path): its seven new
+  codes are house price and rent datasets, `prc_hpi_reg_a` among them, and `road_if_rchtrat`
+  is gone.
+  (https://github.com/xippios/sdk-eurostat/issues/90)
+- The upstream documentation snapshot is captured on core's frame, and
+  `docs/upstream/FETCHED.md` takes the frame's form with a row of `OBSERVED.md` of its own.
+  The user guide and the API documents are as on 2026-10-28, and the samples of
+  `apro_mk_cola` carry Eurostat's update of 2026-11-05, which labels the code `FAT`
+  "Fat content" where it read "Fat content (t)". The snapshot names the two pages of
+  Eurostat's wiki, which require EU Login, and no longer requests them.
+  (https://github.com/xippios/sdk-eurostat/issues/75)
+- The answers of `get_data` are kept in core's cache for five minutes, the lifetime of every
+  path, an expired answer dropped and the bodies held under core's bound of 64 MiB in all.
+  (https://github.com/xippios/sdk-core/issues/479, https://github.com/xippios/sdk-eurostat/issues/82)
+- The entry point's usage line and its error prefix name the command,
+  `xippios-eurostat-mcp`, where they named the server, the help of `--allow-remote` takes
+  core's one wording, and the server's instructions come from the tasks module,
+  `tasks.MCP_INSTRUCTIONS`. The usage line changed with xippios-core 0.4.0 in 0.3.0, whose
+  notes left it out, and 0.3.0's move of the bound to `xippios-core~=0.4.0` was a
+  breaking change, which those notes carried under Changed.
+  (https://github.com/xippios/sdk-core/issues/167, https://github.com/xippios/sdk-core/issues/476, https://github.com/xippios/sdk-eurostat/issues/79)
+- The nightly live run compares each of the eighteen packaged codelists with the list
+  Eurostat serves now, one request each, and leaves the table of contents out, since each of
+  its leaves carries its dataset's last update. With its seven other tests the run asks for
+  25 answers where 0.3.0's asked for 18, and the client's cache answers the second request
+  for STATINFO when it comes within five minutes of the first. The refresh scripts run on
+  core's frames, the snapshot through a client of Eurostat's website that waits as long as a
+  429 asks.
+  (https://github.com/xippios/sdk-eurostat/issues/54, https://github.com/xippios/sdk-eurostat/issues/55, https://github.com/xippios/sdk-eurostat/issues/56)
+- A query that Eurostat refuses as too large, `EXTRACTION_TOO_BIG` at HTTP 413, raises
+  core's `QueryTooLarge`, a subclass of `InvalidRequestError`, with Eurostat's estimate as
+  `count` and its limit as `limit`, in `get_data` and `download_dataset` alike. Its message
+  names the request, the estimate and the limit in core's words, and how to narrow the
+  query. (https://github.com/xippios/sdk-core/issues/481, https://github.com/xippios/sdk-eurostat/issues/82)
+- Every refusal of a call as given says `Nothing was sent.` after its first sentence:
+  `get_data`'s of a filter, of `lang` or `geo_level` and of more than one time parameter,
+  `download_dataset`'s of a key and of `dest`, `list_codes`'s of a codelist, which core's
+  check of a packaged list now makes, and the MCP adapter's of an argument. A refusal of
+  an answer names the request that was sent, and the refusals' classes are unchanged.
+  (https://github.com/xippios/sdk-core/issues/481, https://github.com/xippios/sdk-eurostat/issues/50)
+- The descriptions of `eurostat_get_data`, `eurostat_list_codes` and
+  `eurostat_list_datasets` are their tasks' docstrings before `Args:`, each under 1,000
+  characters, and the text of each of their arguments stands in the input schema.
+  (https://github.com/xippios/sdk-core/issues/485, https://github.com/xippios/sdk-eurostat/issues/82)
+
+### Removed
+
+- `xippios.eurostat.enums` is removed: it held the template's empty `__all__` and no enum,
+  since the package generates no enum from its nineteen packaged lists.
+  `xippios.eurostat._client` no longer declares `API_KEY_ENV`, a key variable that no code
+  read, and `ENV_VARS` names none. (https://github.com/xippios/sdk-template/issues/300)
+
+### Breaking
+
+- `list_codes` records `codelist` in `meta.request` as the caller gave it, `"geo"` for
+  `list_codes("geo")`, where it recorded the packaged id, `"GEO"`. A caller that compares
+  `meta.request["codelist"]` with the id reads it from `meta.endpoint`, which ends in the id.
+  (https://github.com/xippios/sdk-eurostat/issues/96)
+- `download_dataset` takes `flow_ref`, `start_period` and `end_period`, upstream's `flowRef`,
+  `startPeriod` and `endPeriod`, in place of `dataset`, `since` and `until`, and its
+  `meta.request` names `flow_ref`. A call that names `dataset`, `since` or `until` fails, and
+  `key` stays second, by position or by name.
+  (sdk-core ADR-0061, https://github.com/xippios/sdk-eurostat/issues/80,
+  https://github.com/xippios/sdk-eurostat/issues/82)
+- `get_data` raises `NotFoundError` for a cube that holds no cell, Eurostat's answer to a
+  code the dataset does not use or to a period not yet released, where 0.3.0 returned the
+  empty cube. The error names the dataset and the filters sent, and says that the request
+  was sent.
+  (sdk-core ADR-0061, https://github.com/xippios/sdk-eurostat/issues/43,
+  https://github.com/xippios/sdk-eurostat/issues/82)
+- `get_data` refuses before its request a filter's code that the one packaged codelist of
+  its dimension lacks, `filters={"geo": "XX"}` say, with core's `UnknownCode`, which names
+  the closest codes and says that nothing was sent, where 0.3.0 sent it and returned an empty
+  cube. The twelve dimensions of the main base's codelists and `reporter`, `flow` and
+  `indicators` of the Comext base are checked, and `product` and `partner` are sent
+  unchecked. A code that the codelists of 2026-11-27 no longer hold is refused too,
+  STRUCPRO's `HOL` and `ANI`, now `HLD_THS_NR` and `ANI_THS_NR`, and MILKITEM's `FCA`, `PCA`
+  and `PAT`, and the refusal of `HOL` names no code in its place.
+  (sdk-core ADR-0061, https://github.com/xippios/sdk-eurostat/issues/43,
+  https://github.com/xippios/sdk-eurostat/issues/82)
+- `get_data` takes the dataset as `dataset_code`, upstream's `datasetCode`, in place of
+  `dataset`, and so do its MCP tool `eurostat_get_data`, its route and `meta.request`. A call
+  that names `dataset` fails, and one that passes the code first by position works as before.
+  (sdk-core ADR-0061, https://github.com/xippios/sdk-eurostat/issues/80,
+  https://github.com/xippios/sdk-eurostat/issues/82)
+- `get_data` takes `filters` by name alone, as in `get_data("apro_mk_cola", filters={"geo":
+  "AT"})`, since every optional filter of a task is keyword-only. A call that passes the
+  filters second, by position, fails with `TypeError`, and over MCP and HTTP, which take every
+  argument by name, nothing changes.
+  (sdk-core ADR-0061, https://github.com/xippios/sdk-usda-esr/issues/60,
+  https://github.com/xippios/sdk-eurostat/issues/80)
+- `SdmxCsvRow.obs_value` keeps the text that Eurostat prints, `"3247.05"` or `"KG"`, and
+  `obs_value_number` beside it reads it as a `Decimal`, `None` where the text is no number,
+  where 0.3.0 held a `Decimal` or the text in `obs_value`. A caller that reads the number
+  takes `obs_value_number`.
+  (sdk-core ADR-0060, https://github.com/xippios/sdk-eurostat/issues/80)
+- `SdmxCsvRow.last_update` is a naive `datetime` read day first from `LAST UPDATE`, as in
+  `"05/10/26 23:00:00"`, where 0.3.0 held the text, and `meta.vintage` of
+  `download_dataset` keeps the text. A `LAST UPDATE` printed in another form is refused by
+  `parse_sdmx_csv` at its row with `ValidationError`.
+  (https://github.com/xippios/sdk-usda-esr/issues/60, https://github.com/xippios/sdk-eurostat/issues/82)
+- `list_codes` and `list_datasets` take `search` by name alone, as in `list_codes("geo",
+  search="austria")`. A call that passes it by position fails with `TypeError`, and over MCP
+  and HTTP, which take every argument by name, nothing changes.
+  (sdk-core ADR-0061, https://github.com/xippios/sdk-usda-esr/issues/60,
+  https://github.com/xippios/sdk-eurostat/issues/80)
+- `Dataset.last_update` and `Dataset.last_modified`, a leaf's `lastUpdate` and
+  `lastModified` in the table of contents, are dates read day first from `"05.11.2026"`,
+  where 0.3.0 held the text. `eurostat_list_datasets` answers them as ISO dates,
+  `"2026-11-05"`.
+  (https://github.com/xippios/sdk-usda-esr/issues/60, https://github.com/xippios/sdk-eurostat/issues/82)
+- `api.statistics.get_data` and `api.sdmx.code_list_query` return core's `Answer` in place
+  of `DataAnswer` and `CodelistAnswer`, with when the answer was retrieved as
+  `retrieved_at`. The `payload` of `get_data` is a `PrintedCube`, the cube with its
+  `updated` as Eurostat printed it, which `meta.vintage` holds, and that of
+  `code_list_query` the parsed `Codelist`.
+  (https://github.com/xippios/sdk-core/issues/479, https://github.com/xippios/sdk-eurostat/issues/82)
+- The package depends on `xippios-core~=0.5.0`, its extras likewise, is updated to
+  sdk-template v0.5.0 and applies conventions 1.30.
+  (https://github.com/xippios/sdk-eurostat/issues/82)
+- `xippios.eurostat.models.Freq` leaves with `get_trade`, `get_trade_hs` and
+  `download_trade`, the tasks that took it. A `freq` filter of `get_data` takes the code
+  itself, `"M"` or `"A"`, as the dataset's cube lists it.
+  (sdk-core ADR-0060, https://github.com/xippios/sdk-core/issues/474,
+  https://github.com/xippios/sdk-eurostat/issues/84)
+- `list_cn8`, `list_hs` and `list_products` leave, with their MCP tools, their routes and
+  their caps, by the boundary of a source package: each served one packaged codelist under a
+  name of its own, cut by the length of its codes or whole. `list_codes("cxt_nc")` lists
+  CXT_NC's eight-digit CN codes and its HS chapters, headings and subheadings together, and
+  `list_codes("cxt_prodcom2_sold")` the PRODCOM products, each with the same `search`.
+  (sdk-core ADR-0060, https://github.com/xippios/sdk-core/issues/474,
+  https://github.com/xippios/sdk-eurostat/issues/84)
+- `get_sold_production`, `get_total_production`, `get_trade`, `get_trade_hs` and the bulk
+  `download_trade` leave, with their MCP tools, their routes and their caps, by the boundary
+  of a source package: each fixed one Prodcom or Comext dataset and the filters of
+  `get_data` or the series key of `download_dataset`. `get_data("DS-059358",
+  filters={"reporter": "AT", "product": "10411200"})` and `download_dataset("DS-045409",
+  "M.AT.DE.15071090..", dest=...)` read the same records, and `list_codes` lists the codes
+  that the five checked before sending.
+  (sdk-core ADR-0060, https://github.com/xippios/sdk-core/issues/474,
+  https://github.com/xippios/sdk-eurostat/issues/84)
+- `get_series`, `get_latest_period` and `get_cross_section` leave, with their MCP tools, their
+  routes and their caps, by the boundary of a source package: a task that fixes the filters
+  of one upstream operation is not the package's. `get_data` sends the same requests, with
+  `since_time_period` and `until_time_period`, `last_time_period=1` or a `time` filter, and
+  `result.data.observations()` reads the cube's cells with their codes and labels.
+  (sdk-core ADR-0060, https://github.com/xippios/sdk-core/issues/474,
+  https://github.com/xippios/sdk-eurostat/issues/84)
+
 ## [0.3.0] - 2026-11-20
 
 ### Added
