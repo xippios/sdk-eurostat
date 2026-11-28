@@ -15,6 +15,8 @@ import xml.etree.ElementTree as ElementTree
 from collections import Counter
 from pathlib import Path
 
+import pytest
+
 from xippios.eurostat import params, tasks
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -163,6 +165,21 @@ def test_a_parameter_that_no_task_takes_is_held_to_the_scope_s_word() -> None:
     taken = arguments()
     taken[("statistics-rest.wadl", "getData")] -= {"dataset_code"}
     assert unnamed(taken) == ["getData: datasetCode"]
+
+
+@pytest.mark.parametrize(
+    ("argument", "parameter"),
+    [("flow_ref", "flowRef"), ("key", "key"), ("last_n_observations", "lastNObservations")],
+)
+def test_a_parameter_the_scope_says_a_task_takes_is_held_to_its_arguments(
+    argument: str, parameter: str
+) -> None:
+    """Were ``argument`` no argument of ``download_dataset``, the scope's sentence that the
+    task takes the data query's ``parameter`` would be false, and it excuses none: the check
+    finds it (https://github.com/xippios/sdk-eurostat/issues/98)."""
+    taken = arguments()
+    taken[("sdmx-rest.wadl", "dataQuery")] -= {argument}
+    assert unnamed(taken) == [f"dataQuery: {parameter}"]
 
 
 def test_each_documented_form_is_placed_beside_its_task() -> None:
